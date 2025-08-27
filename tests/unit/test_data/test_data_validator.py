@@ -552,6 +552,14 @@ class TestConvenienceFunctions:
         # Create a mock participant that produces invalid Airtable data
         mock_participant = Mock(spec=Participant)
         mock_participant.full_name_ru = "Valid Name"
+        # Set all attributes that business rules might access
+        mock_participant.payment_status = None
+        mock_participant.payment_amount = None
+        mock_participant.payment_date = None
+        mock_participant.role = None
+        mock_participant.contact_information = None
+        mock_participant.department = None
+        mock_participant.full_name_en = None
         mock_participant.to_airtable_fields.return_value = {
             "FullNameRU": "",  # Empty required field - will cause validation error
         }

@@ -79,7 +79,7 @@ def mock_airtable_client():
             "id": "rec234567890123456",
             "fields": {
                 "FullNameRU": "Петр Петров",
-                "Role": "Team"
+                "Role": "TEAM"
             }
         }
     ])
@@ -112,7 +112,7 @@ def mock_airtable_client():
         },
         {
             "id": "rec234567890123456",
-            "fields": {"FullNameRU": "Участник 2", "Role": "Team"}
+            "fields": {"FullNameRU": "Участник 2", "Role": "TEAM"}
         }
     ])
     
@@ -199,6 +199,9 @@ class TestAirtableParticipantRepositoryCreate:
     @pytest.mark.asyncio
     async def test_create_participant_validation_error(self, repository, mock_airtable_client, sample_participant):
         """Test creation with validation error from Airtable."""
+        # Mock the duplicate check to return None (no duplicate found)
+        mock_airtable_client.search_by_field.return_value = []
+        
         # Mock Airtable API error with 422 status
         mock_airtable_client.create_record.side_effect = AirtableAPIError(
             "Validation failed", 
@@ -213,6 +216,9 @@ class TestAirtableParticipantRepositoryCreate:
     @pytest.mark.asyncio
     async def test_create_participant_api_error(self, repository, mock_airtable_client, sample_participant):
         """Test creation with general API error."""
+        # Mock the duplicate check to return None (no duplicate found)
+        mock_airtable_client.search_by_field.return_value = []
+        
         mock_airtable_client.create_record.side_effect = AirtableAPIError("Server error")
         
         with pytest.raises(RepositoryError) as exc_info:
@@ -223,6 +229,9 @@ class TestAirtableParticipantRepositoryCreate:
     @pytest.mark.asyncio
     async def test_create_participant_unexpected_error(self, repository, mock_airtable_client, sample_participant):
         """Test creation with unexpected error."""
+        # Mock the duplicate check to return None (no duplicate found)
+        mock_airtable_client.search_by_field.return_value = []
+        
         mock_airtable_client.create_record.side_effect = RuntimeError("Unexpected error")
         
         with pytest.raises(RepositoryError) as exc_info:
@@ -389,10 +398,10 @@ class TestAirtableParticipantRepositorySearch:
         """Test successful find by contact information."""
         result = await repository.find_by_contact_information("ivan@example.com")
         
-        mock_airtable_client.search_by_field.assert_called_once_with("Email", "ivan@example.com")
+        mock_airtable_client.search_by_field.assert_called_once_with("Contact Information", "ivan@example.com")
         
         assert isinstance(result, Participant)
-        assert result.email == "ivan@example.com"
+        assert result.contact_information == "ivan@example.com"
     
     @pytest.mark.asyncio
     async def test_find_by_contact_information_not_found(self, repository, mock_airtable_client):
@@ -421,8 +430,8 @@ class TestAirtableParticipantRepositorySearch:
         mock_airtable_client.search_by_formula.assert_called_once()
         call_args = mock_airtable_client.search_by_formula.call_args[0][0]
         assert "SEARCH('Иван'" in call_args
-        assert "FullNameRU" in call_args
-        assert "FullNameEN" in call_args
+        assert "Full Name (RU)" in call_args
+        assert "Full Name (EN)" in call_args
         
         assert isinstance(result, list)
         assert len(result) == 1
@@ -624,7 +633,7 @@ class TestAirtableParticipantRepositoryErrorHandling:
             },
             {
                 "id": "rec345678901234567",
-                "fields": {"FullNameRU": "Another Valid", "Role": "Team"}
+                "fields": {"FullNameRU": "Another Valid", "Role": "TEAM"}
             }
         ]
         
