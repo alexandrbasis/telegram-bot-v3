@@ -167,7 +167,7 @@ tasks/
 ```javascript
 mcp__linear__create_issue({
   title: "[Task Name from document]",
-  team: "[Required - prompt if missing]",
+  team: "[AGB]",
   description: "[Business context + technical requirements]",
   priority: 0-4  // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
 })
