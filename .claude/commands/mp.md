@@ -36,15 +36,6 @@ Use only when:
 
 2. **Capture docs updates**: Save the summary of documentation changes from docs-updater
 
-#### **Architecture Decision Review (adr-manager agent)**
-1. **Call adr-manager agent** with task document path:
-   ```
-   Task: "Review task for ADR requirements"
-   Prompt: "Review the task document at [TASK_DOCUMENT_PATH] and determine if an Architecture Decision Record (ADR) needs to be created based on the implementation. If an ADR is needed, create it following the established template and process."
-   Subagent: adr-manager
-   ```
-
-2. **Capture ADR updates**: Save any ADR creation or updates from adr-manager
 
 ### **STEP 3: Merge Execution**
 
@@ -96,10 +87,9 @@ Use only when:
    Prompt: "Generate a comprehensive changelog entry based on:
    1. Task document at [TASK_DOCUMENT_PATH] - review the implementation details
    2. Documentation updates: [DOCS_UPDATES_SUMMARY]
-   3. ADR updates: [ADR_UPDATES_SUMMARY]
-   4. PR merge details: SHA [COMMIT_SHA], merged at [TIMESTAMP], PR URL [PR_URL]
+   3. PR merge details: SHA [COMMIT_SHA], merged at [TIMESTAMP], PR URL [PR_URL]
    
-   Include the main feature implementation, all documentation changes, any ADR decisions, and PR merge information in the changelog entry."
+   Include the main feature implementation, all documentation changes, and PR merge information in the changelog entry."
    Subagent: changelog-generator
    ```
 
