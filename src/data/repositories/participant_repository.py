@@ -260,3 +260,8 @@ class NotFoundError(RepositoryError):
 class ValidationError(RepositoryError):
     """Exception raised when data validation fails."""
     pass
+
+
+class DuplicateError(RepositoryError):
+    """Exception raised when attempting to create a duplicate record."""
+    pass
