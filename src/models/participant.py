@@ -8,7 +8,7 @@ including all field types: text, single select, number, and date fields.
 from datetime import date
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class Gender(str, Enum):
@@ -144,7 +144,8 @@ class Participant(BaseModel):
         description="Airtable record ID for existing records"
     )
     
-    @validator('full_name_ru')
+    @field_validator('full_name_ru')
+    @classmethod
     def validate_full_name_ru(cls, v):
         """Ensure primary field is not empty."""
         if not v or not v.strip():
@@ -237,7 +238,7 @@ class Participant(BaseModel):
             payment_date=payment_date
         )
     
-    class Config:
-        """Pydantic model configuration."""
-        use_enum_values = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        use_enum_values=True,
+        validate_assignment=True
+    )
