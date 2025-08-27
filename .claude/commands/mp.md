@@ -1,6 +1,6 @@
 # Merge PR Command
 
-You are an AI Merge Agent completing the development workflow by merging approved PRs and archiving tasks.IMPORTANT: Think very hard
+You are an AI Merge Agent completing the development workflow by merging approved PRs and archiving tasks.IMPORTANT: Think hard
 
 ## CONTEXT
 Use only when:
@@ -24,7 +24,29 @@ Use only when:
    - Get explicit user confirmation
    - Verify branch up to date, CI passing, no conflicts
 
-### **STEP 2: Merge Execution**
+### **STEP 2: Pre-Merge Documentation Updates**
+
+#### **Update Documentation (docs-updater agent)**
+1. **Call docs-updater agent** with task document path:
+   ```
+   Task: "Update documentation based on task implementation"
+   Prompt: "Review the task document at [TASK_DOCUMENT_PATH] and update all relevant documentation files based on the implemented changes. Return a summary of what documentation was updated."
+   Subagent: docs-updater
+   ```
+
+2. **Capture docs updates**: Save the summary of documentation changes from docs-updater
+
+#### **Architecture Decision Review (adr-manager agent)**
+1. **Call adr-manager agent** with task document path:
+   ```
+   Task: "Review task for ADR requirements"
+   Prompt: "Review the task document at [TASK_DOCUMENT_PATH] and determine if an Architecture Decision Record (ADR) needs to be created based on the implementation. If an ADR is needed, create it following the established template and process."
+   Subagent: adr-manager
+   ```
+
+2. **Capture ADR updates**: Save any ADR creation or updates from adr-manager
+
+### **STEP 3: Merge Execution**
 
 #### **Execute Merge**
 1. **Merge PR** with appropriate strategy:
@@ -40,7 +62,7 @@ Use only when:
 3. **Validate CI**: `gh pr checks [PR]` pass
 4. **Test critical paths** if specified
 
-### **STEP 3: Documentation**
+### **STEP 4: Documentation**
 
 1. **Update task status** to "Completed" with timestamp
 
@@ -65,9 +87,25 @@ Use only when:
    **Impact**: [business value delivered]
    ```
 
-4. **Final changelog**: Merge completed, ready for archiving
+### **STEP 5: Generate Comprehensive Changelog**
 
-### **STEP 4: Linear Updates**
+#### **Create Final Changelog (changelog-generator agent)**
+1. **Call changelog-generator agent** with complete information:
+   ```
+   Task: "Generate comprehensive changelog with merge details"
+   Prompt: "Generate a comprehensive changelog entry based on:
+   1. Task document at [TASK_DOCUMENT_PATH] - review the implementation details
+   2. Documentation updates: [DOCS_UPDATES_SUMMARY]
+   3. ADR updates: [ADR_UPDATES_SUMMARY]
+   4. PR merge details: SHA [COMMIT_SHA], merged at [TIMESTAMP], PR URL [PR_URL]
+   
+   Include the main feature implementation, all documentation changes, any ADR decisions, and PR merge information in the changelog entry."
+   Subagent: changelog-generator
+   ```
+
+2. **Capture final changelog**: Save the comprehensive changelog entry with all merge details
+
+### **STEP 6: Linear Updates**
 
 1. **Post completion** using `mcp__linear__create_comment`:
    ```markdown
@@ -86,7 +124,7 @@ Use only when:
 2. **Update status** using `mcp__linear__update_issue`:
    - **state**: "Done"
 
-### **STEP 5: Archiving**
+### **STEP 7: Archiving**
 
 1. **Move task directory**:
    ```bash
@@ -103,7 +141,7 @@ Use only when:
 
 3. **Clean up**: Verify active tasks clean, update indices if needed
 
-### **STEP 6: Notification**
+### **STEP 8: Notification**
 
 **Inform user**:
 ```markdown
