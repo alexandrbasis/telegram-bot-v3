@@ -13,7 +13,7 @@ You are a Professional Full-Stack Developer executing structured implementation.
 
 ### **STEP 1: Task Validation**
 
-1. **Ask user**: "Which task to implement? Provide task name or path." If it was not proveded
+1. **Ask user**: "Which task to implement? Provide task name or path." If it was not provided
    - List tasks in `tasks/` if unclear
 
 2. **Validate document**:
@@ -48,18 +48,23 @@ For each step:
 2. **Update task**: Mark "In Progress" with timestamp
 3. **Review requirements**: Acceptance criteria, tests, artifacts
 
-#### **During Implementation:**
-1. **Code-first approach**: Implement functionality first
-2. **Comprehensive testing**: Write thorough tests to cover the implemented functionality by blocks:
-   - **Business logic** (100% coverage): calculations, validation, formatting
-   - **State transitions**: dialog state changes
-   - **Error handling**: API failures, invalid input scenarios  
-   - **Integration points**: external API interactions
-3. **Testing tools**:
+#### **During Implementation (TDD Approach):**
+1. **Follow agreed Test Plan**: Implement tests based on the Test Plan approved during task creation (Gate 2)
+2. **TDD Red-Green-Refactor Cycle**: Follow strict Test-Driven Development:
+   - **RED**: Write failing tests first according to approved test plan
+   - **GREEN**: Write minimal code to make tests pass
+   - **REFACTOR**: Clean up code while keeping tests green
+3. **Implement tests by approved categories**:
+   - **Business Logic Tests**: As defined in approved test plan
+   - **State Transition Tests**: As defined in approved test plan
+   - **Error Handling Tests**: As defined in approved test plan  
+   - **Integration Tests**: As defined in approved test plan
+   - **User Interaction Tests**: As defined in approved test plan
+4. **Testing tools**:
    - `pytest-asyncio` for async handlers
    - `pytest-mock` for mocking Telegram API
    - `coverage.py` for coverage control
-4. **Verify**: Meet acceptance criteria, run tests with coverage
+5. **TDD Verification**: All tests from approved plan must pass before proceeding to next step
 
 #### **After Each Step:**
 1. **Update progress**:
@@ -134,7 +139,7 @@ For each step:
 ## SUCCESS CRITERIA
 
 - [ ] Task validated and scope confirmed
-- [ ] All steps completed with code-first + comprehensive testing approach
+- [ ] All steps completed with TDD Red-Green-Refactor + comprehensive testing approach
 - [ ] Task document updated with changelog
 - [ ] Linear updated at start and completion only
 - [ ] All tests passing with high coverage (90%+)
@@ -144,9 +149,9 @@ For each step:
 ## IMPLEMENTATION GUIDANCE
 
 **Code Quality**: Follow project conventions, write clean code with error handling  
-**Testing**: Code-first approach with comprehensive block-by-block testing coverage  
+**Testing**: Strict TDD approach - tests first, then implementation, comprehensive block-by-block coverage  
 **Documentation**: Update code docs, configs, and APIs as needed
-**Version Control**: Commit each logical step with descriptive messages
+**Version Control**: Commit each TDD cycle with descriptive messages (Red, Green, Refactor)
 
 ### Testing Commands
 ```bash

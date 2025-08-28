@@ -28,12 +28,56 @@ Create comprehensive task documents with mandatory business approval gate, techn
 ```
 
 **ACTION:** Present to user with: "Approve business requirements? [Yes/No]"
-**BLOCKING:** Cannot proceed to technical decomposition without explicit approval
+**BLOCKING:** Cannot proceed to test plan review without explicit approval
 
-### GATE 2: Technical Decomposition Approval
-After business approval, create technical task document and get approval before Plan Review.
+### GATE 2: Test Plan Review & Approval (MANDATORY)
+**Must complete AFTER business approval and BEFORE technical decomposition:**
 
-### GATE 3: Technical Plan Review (MANDATORY)
+```markdown
+# Test Plan: [Task Name]
+**Status**: Awaiting Test Plan Approval | **Created**: [Date]
+
+## Test Coverage Strategy
+Target: 90%+ coverage across all implementation areas
+
+## Proposed Test Categories
+### Business Logic Tests
+- [ ] [Core functionality test covering requirement 1]
+- [ ] [Validation test for acceptance criteria A]
+- [ ] [Calculation/formatting test for scenario B]
+
+### State Transition Tests  
+- [ ] [Dialog flow test from state X to Y]
+- [ ] [Command processing state changes]
+- [ ] [Error recovery state transitions]
+
+### Error Handling Tests
+- [ ] [API failure scenario test]
+- [ ] [Invalid input handling test]
+- [ ] [Edge case boundary test]
+
+### Integration Tests
+- [ ] [External API interaction test]
+- [ ] [Database operation test]
+- [ ] [Third-party service integration test]
+
+### User Interaction Tests
+- [ ] [Command processing test]
+- [ ] [Response formatting test]
+- [ ] [User journey end-to-end test]
+
+## Test-to-Requirement Mapping
+- Business Requirement 1 → Tests: [list test names]
+- Business Requirement 2 → Tests: [list test names]
+```
+
+**ACTION:** Present test plan to user with: "Do these tests adequately cover the business requirements before technical implementation begins? Type 'approve' to proceed or provide feedback."
+**BLOCKING:** Cannot proceed to technical decomposition without explicit test plan approval
+
+### GATE 3: Technical Decomposition Approval
+After business and test plan approval, create technical task document and get approval before Plan Review.
+
+### GATE 4: Technical Plan Review (MANDATORY)
 **Must complete AFTER technical decomposition and BEFORE task splitting evaluation:**
 
 **ACTION:** After technical requirements are created, automatically invoke Plan Reviewer agent to:
@@ -51,7 +95,7 @@ After business approval, create technical task document and get approval before 
 
 **INTEGRATION:** Use `Task` tool with `plan-reviewer` agent type after technical decomposition is complete
 
-### GATE 4: Task Splitting Evaluation (MANDATORY)
+### GATE 5: Task Splitting Evaluation (MANDATORY)
 **Must complete AFTER plan review and BEFORE Linear creation:**
 
 **ACTION:** After Plan Reviewer approval, automatically invoke Task Splitter agent to:
