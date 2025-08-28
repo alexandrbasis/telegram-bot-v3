@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Universal Search Enhancement with Language Detection** - Complete overhaul of participant search functionality with multilingual support (PR #5, SHA: dc640d8, merged 2025-08-28)
+  - Automatic language detection with Cyrillic vs Latin character analysis (`src/services/search_service.py:18-47`)
+  - Multi-field search capability across Russian names, English names, first/last names with intelligent parsing (`src/services/search_service.py:50-67, 183-260`)
+  - Rich participant result formatting showing "Name (Alt Name) - Role, Department | Context" with language-aware prioritization (`src/services/search_service.py:70-125`)
+  - Enhanced repository layer with new `search_by_name_enhanced()` method for comprehensive search results (`src/data/repositories/participant_repository.py:273-299`, `src/data/airtable/airtable_participant_repo.py:812-873`)
+  - Bot message handlers upgraded with rich display and graceful fallback to legacy search (`src/bot/handlers/search_handlers.py:122-229`)
+  - Users can now search "Александр" (Russian) or "Alexander" (English) and receive identical comprehensive results
+  - First name OR last name search functionality - "Александр" (first) or "Басис" (last) both return relevant participants
+  - Up to 5 ranked results with match confidence scoring and complete participant context
+  - 100% backward compatibility with existing search workflow and automatic fallback system
+- **Comprehensive Testing Suite Expansion** - 67 total tests with 100% pass rate across enhanced search functionality
+  - Search service tests expanded from 18 to 37 tests covering language detection, name parsing, multi-field search, rich formatting (`tests/unit/test_services/test_search_service.py`)
+  - Repository tests enhanced from 11 to 16 tests with enhanced search method coverage (`tests/unit/test_data/test_airtable/test_airtable_participant_repo_fuzzy.py:268-402`)
+  - Bot handler tests increased from 9 to 14 tests with rich result display validation (`tests/unit/test_bot_handlers/test_search_handlers.py`)
+  - Complete TDD implementation approach with comprehensive coverage across all enhancement layers
+- **Enhanced Documentation Suite** - 5 comprehensive documentation files updated by docs-updater agent
+  - Universal search command documentation with multilingual examples and conversation flow details (`docs/technical/bot-commands.md`)
+  - Complete business requirements specification with use cases, success metrics, and constraints for universal search (`docs/business/feature-specifications.md`)
+  - Detailed API documentation for enhanced search service, language detection, and repository layer APIs (`docs/architecture/api-design.md`)
+  - Comprehensive testing documentation covering all 67 tests with TDD methodology and quality metrics (`docs/development/testing-strategy.md`)
+  - Participant field mappings with search implementation details and fuzzy matching configuration (`docs/data-integration/field-mappings.md`)
 - **Russian Name Search Feature** - First user-facing bot functionality with fuzzy matching capabilities (PR #4, SHA: f640e2a, merged 2025-08-28)
   - Complete conversation flow implementation using ConversationHandler pattern (`src/bot/handlers/search_conversation.py:1-75`, `src/bot/handlers/search_handlers.py:1-125`)
   - Fuzzy name matching service with Russian Cyrillic normalization using rapidfuzz library (`src/services/search_service.py:1-95`)
