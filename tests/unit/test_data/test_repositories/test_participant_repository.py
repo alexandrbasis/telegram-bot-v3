@@ -45,7 +45,8 @@ class TestParticipantRepositoryInterface:
             'get_by_payment_status',
             'count_total',
             'bulk_create',
-            'bulk_update'
+            'bulk_update',
+            'search_by_name_fuzzy'
         }
         
         repository_methods = set(dir(ParticipantRepository))
