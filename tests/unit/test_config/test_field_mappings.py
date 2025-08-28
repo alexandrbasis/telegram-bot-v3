@@ -310,6 +310,119 @@ class TestFieldMappingInstances:
         assert len(searchable_fields) > 0
 
 
+class TestSelectOptionIDs:
+    """Test suite for Select Option ID mappings."""
+    
+    def test_gender_option_ids(self):
+        """Test Gender field Option ID mappings."""
+        # RED phase - this test will fail until we implement OPTION_ID_MAPPINGS
+        
+        # Test Gender options (2 total)
+        assert AirtableFieldMapping.get_option_id("Gender", "M") == "selZClW1ZQ0574g1o"
+        assert AirtableFieldMapping.get_option_id("Gender", "F") == "sellCtTlpLKDRs7Uw"
+        
+        # Test invalid option
+        assert AirtableFieldMapping.get_option_id("Gender", "Invalid") is None
+    
+    def test_size_option_ids(self):
+        """Test Size field Option ID mappings."""
+        # RED phase - this test will fail until we implement OPTION_ID_MAPPINGS
+        
+        # Test Size options (7 total)
+        assert AirtableFieldMapping.get_option_id("Size", "XS") == "selNuViDUBjuth8lP"
+        assert AirtableFieldMapping.get_option_id("Size", "S") == "selKoQLAR5xH9jQvg"
+        assert AirtableFieldMapping.get_option_id("Size", "M") == "sel0Ci7MTtsPBtPi0"
+        assert AirtableFieldMapping.get_option_id("Size", "L") == "sel5Zd5JF5WD8Y5ab"
+        assert AirtableFieldMapping.get_option_id("Size", "XL") == "selmHioiHTrhhmpOO"
+        assert AirtableFieldMapping.get_option_id("Size", "XXL") == "selPsyMnT0h7wyOly"
+        assert AirtableFieldMapping.get_option_id("Size", "3XL") == "sel1NSFzQbfWVUEuS"
+    
+    def test_role_option_ids(self):
+        """Test Role field Option ID mappings."""
+        # RED phase - this test will fail until we implement OPTION_ID_MAPPINGS
+        
+        # Test Role options (2 total)
+        assert AirtableFieldMapping.get_option_id("Role", "CANDIDATE") == "seleMsONuukNzmB2M"
+        assert AirtableFieldMapping.get_option_id("Role", "TEAM") == "selycaljF0Qnq0tdD"
+    
+    def test_department_option_ids(self):
+        """Test Department field Option ID mappings.""" 
+        # RED phase - this test will fail until we implement OPTION_ID_MAPPINGS
+        
+        # Test Department options (13 total)
+        assert AirtableFieldMapping.get_option_id("Department", "ROE") == "selfaZRN9JukJMcZ5"
+        assert AirtableFieldMapping.get_option_id("Department", "Chapel") == "sel6IPXCbLoWR5Ugd"
+        assert AirtableFieldMapping.get_option_id("Department", "Setup") == "selAtROQz5C6CMZMk"
+        assert AirtableFieldMapping.get_option_id("Department", "Palanka") == "sel1E7vNA7wgVDFLl"
+        assert AirtableFieldMapping.get_option_id("Department", "Administration") == "selJBiWzoJiFmMlL6"
+        assert AirtableFieldMapping.get_option_id("Department", "Kitchen") == "selBmfVPB1Jr6jTtQ"
+        assert AirtableFieldMapping.get_option_id("Department", "Decoration") == "selrCvE3jP1Lxg5z5"
+        assert AirtableFieldMapping.get_option_id("Department", "Bell") == "selX89NOZuBVjYD07"
+        assert AirtableFieldMapping.get_option_id("Department", "Refreshment") == "selanq3i2UJWrsmkj"
+        assert AirtableFieldMapping.get_option_id("Department", "Worship") == "selCKwn2YGIYqQRs8"
+        assert AirtableFieldMapping.get_option_id("Department", "Media") == "selq5zRZtZ6LXMhN2"
+        assert AirtableFieldMapping.get_option_id("Department", "Clergy") == "selksIu0oBzHq9Blm"
+        assert AirtableFieldMapping.get_option_id("Department", "Rectorate") == "seliF8wxKVKpY2za3"
+    
+    def test_payment_status_option_ids(self):
+        """Test PaymentStatus field Option ID mappings."""
+        # RED phase - this test will fail until we implement OPTION_ID_MAPPINGS
+        
+        # Test PaymentStatus options (3 total)
+        assert AirtableFieldMapping.get_option_id("PaymentStatus", "Paid") == "sel4ZcXLVs973Gizi"
+        assert AirtableFieldMapping.get_option_id("PaymentStatus", "Partial") == "sel1WOFITijjZqaPQ"
+        assert AirtableFieldMapping.get_option_id("PaymentStatus", "Unpaid") == "selFWmvtAQC7EEB72"
+    
+    def test_translate_option_to_id(self):
+        """Test translation of option value to Option ID."""
+        # RED phase - this test will fail until we implement translation methods
+        
+        assert AirtableFieldMapping.translate_option_to_id("Gender", "M") == "selZClW1ZQ0574g1o"
+        assert AirtableFieldMapping.translate_option_to_id("Size", "L") == "sel5Zd5JF5WD8Y5ab"
+        assert AirtableFieldMapping.translate_option_to_id("Role", "CANDIDATE") == "seleMsONuukNzmB2M"
+        
+        # Test fallback for unknown option
+        assert AirtableFieldMapping.translate_option_to_id("Gender", "Unknown") == "Unknown"
+        
+        # Test fallback for non-select field
+        assert AirtableFieldMapping.translate_option_to_id("FullNameRU", "Some Name") == "Some Name"
+    
+    def test_option_id_completeness(self):
+        """Test that all select fields have complete Option ID mappings."""
+        # RED phase - this test will fail until we implement complete mapping
+        
+        # Verify total count: 2 Gender + 7 Size + 2 Role + 13 Department + 3 PaymentStatus = 27 Option IDs
+        total_option_ids = 0
+        
+        # Count Gender options (2)
+        gender_options = AirtableFieldMapping.get_all_option_ids("Gender")
+        assert len(gender_options) == 2
+        total_option_ids += len(gender_options)
+        
+        # Count Size options (7)  
+        size_options = AirtableFieldMapping.get_all_option_ids("Size")
+        assert len(size_options) == 7
+        total_option_ids += len(size_options)
+        
+        # Count Role options (2)
+        role_options = AirtableFieldMapping.get_all_option_ids("Role") 
+        assert len(role_options) == 2
+        total_option_ids += len(role_options)
+        
+        # Count Department options (13)
+        dept_options = AirtableFieldMapping.get_all_option_ids("Department")
+        assert len(dept_options) == 13
+        total_option_ids += len(dept_options)
+        
+        # Count PaymentStatus options (3)
+        payment_options = AirtableFieldMapping.get_all_option_ids("PaymentStatus")
+        assert len(payment_options) == 3
+        total_option_ids += len(payment_options)
+        
+        # Verify total is 27 Option IDs
+        assert total_option_ids == 27
+
+
 class TestAirtableFieldIDs:
     """Test suite for Airtable Field ID mappings."""
     

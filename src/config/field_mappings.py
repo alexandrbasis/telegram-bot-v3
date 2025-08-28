@@ -56,6 +56,56 @@ class AirtableFieldMapping:
         "PaymentDate": "fldylOQLqcBwkmzlh"
     }
     
+    # Select option value -> Option ID mapping (exact Option IDs from Airtable base)
+    OPTION_ID_MAPPINGS: Dict[str, Dict[str, str]] = {
+        # Gender field options (2 total)
+        "Gender": {
+            "M": "selZClW1ZQ0574g1o",      # Male
+            "F": "sellCtTlpLKDRs7Uw"       # Female
+        },
+        
+        # Size field options (7 total)
+        "Size": {
+            "XS": "selNuViDUBjuth8lP",
+            "S": "selKoQLAR5xH9jQvg", 
+            "M": "sel0Ci7MTtsPBtPi0",
+            "L": "sel5Zd5JF5WD8Y5ab",
+            "XL": "selmHioiHTrhhmpOO",
+            "XXL": "selPsyMnT0h7wyOly",
+            "3XL": "sel1NSFzQbfWVUEuS"
+        },
+        
+        # Role field options (2 total)
+        "Role": {
+            "CANDIDATE": "seleMsONuukNzmB2M",
+            "TEAM": "selycaljF0Qnq0tdD"
+        },
+        
+        # Department field options (13 total)
+        "Department": {
+            "ROE": "selfaZRN9JukJMcZ5",
+            "Chapel": "sel6IPXCbLoWR5Ugd",
+            "Setup": "selAtROQz5C6CMZMk",
+            "Palanka": "sel1E7vNA7wgVDFLl",
+            "Administration": "selJBiWzoJiFmMlL6",
+            "Kitchen": "selBmfVPB1Jr6jTtQ",
+            "Decoration": "selrCvE3jP1Lxg5z5",
+            "Bell": "selX89NOZuBVjYD07",
+            "Refreshment": "selanq3i2UJWrsmkj",
+            "Worship": "selCKwn2YGIYqQRs8",
+            "Media": "selq5zRZtZ6LXMhN2",
+            "Clergy": "selksIu0oBzHq9Blm",
+            "Rectorate": "seliF8wxKVKpY2za3"
+        },
+        
+        # PaymentStatus field options (3 total)  
+        "PaymentStatus": {
+            "Paid": "sel4ZcXLVs973Gizi",
+            "Partial": "sel1WOFITijjZqaPQ",
+            "Unpaid": "selFWmvtAQC7EEB72"
+        }
+    }
+    
     # Python field name -> Airtable field name mapping
     PYTHON_TO_AIRTABLE: Dict[str, str] = {
         # Primary text fields
@@ -345,6 +395,52 @@ class AirtableFieldMapping:
             key = field_id if field_id else field_name
             translated[key] = value
         return translated
+    
+    @classmethod
+    def get_option_id(cls, field_name: str, option_value: str) -> Optional[str]:
+        """
+        Get Airtable Option ID from field name and option value.
+        
+        Args:
+            field_name: Airtable field name
+            option_value: Option value to look up
+            
+        Returns:
+            Airtable Option ID or None if not found
+        """
+        field_options = cls.OPTION_ID_MAPPINGS.get(field_name)
+        if not field_options:
+            return None
+        return field_options.get(option_value)
+    
+    @classmethod
+    def translate_option_to_id(cls, field_name: str, option_value: str) -> str:
+        """
+        Translate select option value to Option ID for API calls.
+        
+        Args:
+            field_name: Airtable field name
+            option_value: Option value to translate
+            
+        Returns:
+            Option ID if found, otherwise returns original value as fallback
+        """
+        option_id = cls.get_option_id(field_name, option_value)
+        return option_id if option_id else option_value
+    
+    @classmethod
+    def get_all_option_ids(cls, field_name: str) -> List[str]:
+        """
+        Get all Option IDs for a select field.
+        
+        Args:
+            field_name: Airtable field name
+            
+        Returns:
+            List of all Option IDs for the field, empty if not a select field
+        """
+        field_options = cls.OPTION_ID_MAPPINGS.get(field_name, {})
+        return list(field_options.values())
 
 
 class SearchFieldMapping:
