@@ -148,30 +148,41 @@ Enable flexible universal participant search supporting Russian/English input ac
       - **Rich Info Fields**: `role` (Role enum), `department` (Department enum), `church`, `country_and_city`
       - **Strategy**: Parse full names to enable first/last name searches, add rich formatting
 
-- [ ] Step 2: **Implement Enhanced Search Service**
-  - [ ] Sub-step 2.1: Add language detection functionality
+- [x] ✅ Step 2: **Implement Enhanced Search Service** - Completed 2025-08-28
+  - [x] ✅ Sub-step 2.1: Add language detection functionality  
     - **Directory**: `src/services/`
     - **Files to create/modify**: `search_service.py`
     - **Accept**: Function detects Cyrillic (Russian) vs Latin (English) characters
     - **Tests**: Write tests in `tests/unit/services/test_search_service.py`
     - **Done**: Language detection returns 'ru' or 'en' for input strings
-    - **Changelog**: [Record new function with line ranges]
+    - **Changelog**: **Language Detection Added** - `src/services/search_service.py:18-47`
+      - **Function**: `detect_language()` - Cyrillic vs Latin character detection
+      - **Logic**: Counts Cyrillic (\u0400-\u04FF) vs Latin (A-Z, a-z) characters  
+      - **Tests**: 5 comprehensive tests covering Russian, English, mixed, edge cases
 
-  - [ ] Sub-step 2.2: Implement multi-field search logic
+  - [x] ✅ Sub-step 2.2: Implement multi-field search logic
     - **Directory**: `src/services/`
     - **Files to modify**: `search_service.py`
     - **Accept**: Search function queries all relevant name fields based on detected language
     - **Tests**: Add comprehensive multi-field tests
     - **Done**: Search works across Russian names, English names, first/last names
-    - **Changelog**: [Record enhanced search logic with line ranges]
+    - **Changelog**: **Multi-Field Search Enhanced** - `src/services/search_service.py:50-67, 183-260`
+      - **Function**: `parse_name_parts()` - Splits full names into individual parts
+      - **Function**: `search_participants_enhanced()` - Language-aware multi-field search
+      - **Features**: Primary/secondary field prioritization, individual name part matching
+      - **Tests**: 8 tests covering name parsing, first/last name search, language optimization
 
-  - [ ] Sub-step 2.3: Add rich result formatting
+  - [x] ✅ Sub-step 2.3: Add rich result formatting
     - **Directory**: `src/services/`
     - **Files to modify**: `search_service.py`
     - **Accept**: Results include formatted strings with Name + Role + Department
     - **Tests**: Test result formatting in multiple scenarios
     - **Done**: Results show complete participant information
-    - **Changelog**: [Record formatting logic with examples]
+    - **Changelog**: **Rich Result Formatting Added** - `src/services/search_service.py:70-125`
+      - **Function**: `format_participant_result()` - Creates rich formatted strings
+      - **Format**: "Primary Name (Secondary Name) - Role, Department | Church/Location"
+      - **Features**: Language-aware name prioritization, enum value handling
+      - **Tests**: 5 tests covering basic info, role/department, missing fields, church info
 
 - [ ] Step 3: **Update Repository Layer**  
   - [ ] Sub-step 3.1: Enhance participant repository search method

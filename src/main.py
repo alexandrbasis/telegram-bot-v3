@@ -24,7 +24,7 @@ def configure_logging(settings) -> None:
     Args:
         settings: Application settings with logging configuration
     """
-    log_level = getattr(logging, settings.logging.level.upper())
+    log_level = getattr(logging, settings.logging.log_level.upper())
     
     logging.basicConfig(
         level=log_level,
@@ -36,7 +36,7 @@ def configure_logging(settings) -> None:
     logging.getLogger('telegram').setLevel(logging.INFO)
     logging.getLogger('httpx').setLevel(logging.WARNING)
     
-    logger.info(f"Logging configured with level: {settings.logging.level}")
+    logger.info(f"Logging configured with level: {settings.logging.log_level}")
 
 
 def create_application() -> Application:
@@ -62,7 +62,7 @@ def create_application() -> Application:
     configure_logging(settings)
     
     # Validate bot token
-    if not settings.telegram.token:
+    if not settings.telegram.bot_token:
         raise ValueError("Bot token is required but not configured")
     
     logger.info("Building Telegram Application")
@@ -70,7 +70,7 @@ def create_application() -> Application:
     # Create Application
     app = (
         Application.builder()
-        .token(settings.telegram.token)
+        .token(settings.telegram.bot_token)
         .build()
     )
     
@@ -83,7 +83,7 @@ def create_application() -> Application:
     return app
 
 
-async def run_bot() -> None:
+def run_bot() -> None:
     """
     Run the Telegram bot with polling.
     
@@ -99,9 +99,9 @@ async def run_bot() -> None:
         # Create and configure application
         app = create_application()
         
-        # Start the bot with polling
+        # Start the bot with polling - this handles everything
         logger.info("Bot starting with polling mode")
-        await app.run_polling()
+        app.run_polling()
         
     except KeyboardInterrupt:
         logger.info("Bot stopped by user interrupt")
@@ -121,7 +121,7 @@ def main() -> NoReturn:
     """
     try:
         # Run the bot
-        asyncio.run(run_bot())
+        run_bot()
         
     except KeyboardInterrupt:
         print("\nBot stopped by user")
