@@ -26,6 +26,70 @@ from src.config.settings import (
 from src.data.airtable.airtable_client import AirtableConfig
 
 
+class TestDatabaseTableID:
+    """Test suite for Airtable Table ID configuration."""
+    
+    def test_default_table_id(self):
+        """Test that default Table ID is set correctly."""
+        # RED phase - this test will fail until we implement airtable_table_id
+        
+        with patch.dict(os.environ, {}, clear=True):
+            settings = DatabaseSettings()
+            
+            # Should have the exact Table ID from task requirements
+            assert hasattr(settings, 'airtable_table_id')
+            assert settings.airtable_table_id == "tbl8ivwOdAUvMi3Jy"
+    
+    def test_environment_table_id_override(self):
+        """Test that Table ID can be overridden via environment variable."""
+        # RED phase - this test will fail until we implement AIRTABLE_TABLE_ID env var
+        
+        env_vars = {
+            'AIRTABLE_TABLE_ID': 'tblCustomTableID123'
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = DatabaseSettings()
+            
+            assert settings.airtable_table_id == "tblCustomTableID123"
+    
+    def test_table_id_validation(self):
+        """Test that Table ID is validated during settings validation."""
+        # RED phase - this test will fail until we implement Table ID validation
+        
+        env_vars = {
+            'AIRTABLE_API_KEY': 'valid_key',
+            'AIRTABLE_BASE_ID': 'valid_base',
+            'AIRTABLE_TABLE_ID': ''  # Empty Table ID should fail validation
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = DatabaseSettings()
+            
+            with pytest.raises(ValueError) as exc_info:
+                settings.validate()
+            
+            assert "AIRTABLE_TABLE_ID" in str(exc_info.value)
+    
+    def test_airtable_config_includes_table_id(self):
+        """Test that AirtableConfig includes the Table ID."""
+        # RED phase - this test will fail until we pass table_id to AirtableConfig
+        
+        env_vars = {
+            'AIRTABLE_API_KEY': 'test_key',
+            'AIRTABLE_BASE_ID': 'test_base',
+            'AIRTABLE_TABLE_ID': 'tbl8ivwOdAUvMi3Jy'
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = DatabaseSettings()
+            config = settings.to_airtable_config()
+            
+            # AirtableConfig should have table_id attribute
+            assert hasattr(config, 'table_id')
+            assert config.table_id == "tbl8ivwOdAUvMi3Jy"
+
+
 class TestDatabaseSettings:
     """Test suite for DatabaseSettings functionality."""
     

@@ -24,6 +24,155 @@ from src.data.airtable.airtable_client import (
 )
 
 
+class TestAirtableFieldIDSupport:
+    """Test suite for Field ID translation in AirtableClient."""
+    
+    @pytest.mark.asyncio
+    async def test_translate_fields_to_ids_in_create_data(self):
+        """Test that create operations translate field names to Field IDs."""
+        # RED phase - this test will fail until we implement Field ID translation in AirtableClient
+        
+        config = AirtableConfig(
+            api_key="test_api_key",
+            base_id="test_base_id",
+            table_name="TestTable"
+        )
+        
+        with patch('src.data.airtable.airtable_client.AirtableClient.table') as mock_table:
+            client = AirtableClient(config)
+            
+            # Mock the create method
+            mock_table.create.return_value = {"id": "rec123", "fields": {}}
+            
+            # Test data with field names
+            test_data = {
+                "FullNameRU": "Иван Иванов",
+                "Gender": "M",
+                "PaymentAmount": 500
+            }
+            
+            # This should internally translate to Field IDs
+            await client.create_record(test_data)
+            
+            # Verify that the mock was called with Field IDs, not field names
+            mock_table.create.assert_called_once()
+            call_args = mock_table.create.call_args[0][0]
+            
+            # Should have Field IDs as keys
+            assert "fldOcpA3JW5MRmR6R" in call_args  # FullNameRU Field ID
+            assert "fldOAGXoU0DqqFRmB" in call_args  # Gender Field ID  
+            assert "fldyP24ZbeGD8nnaZ" in call_args  # PaymentAmount Field ID
+            
+            # Should not have field names as keys
+            assert "FullNameRU" not in call_args
+            assert "Gender" not in call_args
+            assert "PaymentAmount" not in call_args
+    
+    @pytest.mark.asyncio
+    async def test_translate_select_options_to_ids_in_create(self):
+        """Test that create operations translate select option values to Option IDs.""" 
+        # RED phase - this test will fail until we implement Option ID translation
+        
+        config = AirtableConfig(
+            api_key="test_api_key", 
+            base_id="test_base_id",
+            table_name="TestTable"
+        )
+        
+        with patch('src.data.airtable.airtable_client.AirtableClient.table') as mock_table:
+            client = AirtableClient(config)
+            
+            mock_table.create.return_value = {"id": "rec123", "fields": {}}
+            
+            # Test data with select field values
+            test_data = {
+                "Gender": "M",
+                "Size": "L", 
+                "Role": "CANDIDATE"
+            }
+            
+            await client.create_record(test_data)
+            
+            # Verify that select values were translated to Option IDs
+            call_args = mock_table.create.call_args[0][0]
+            
+            # Should have Option IDs as values for select fields
+            assert call_args["fldOAGXoU0DqqFRmB"] == "selZClW1ZQ0574g1o"  # Gender M -> Option ID
+            assert call_args["fldZyNgaaa1snp6s7"] == "sel5Zd5JF5WD8Y5ab"   # Size L -> Option ID
+            assert call_args["fldetbIGOkKFK0hYq"] == "seleMsONuukNzmB2M"   # Role CANDIDATE -> Option ID
+    
+    @pytest.mark.asyncio
+    async def test_translate_fields_to_ids_in_update_data(self):
+        """Test that update operations translate field names to Field IDs."""
+        # RED phase - this test will fail until we implement Field ID translation in update
+        
+        config = AirtableConfig(
+            api_key="test_api_key",
+            base_id="test_base_id", 
+            table_name="TestTable"
+        )
+        
+        with patch('src.data.airtable.airtable_client.AirtableClient.table') as mock_table:
+            client = AirtableClient(config)
+            
+            mock_table.update.return_value = {"id": "rec123", "fields": {}}
+            
+            # Test data with field names
+            test_data = {
+                "FullNameRU": "Updated Name",
+                "PaymentStatus": "Paid"
+            }
+            
+            await client.update_record("rec123", test_data)
+            
+            # Verify that the mock was called with Field IDs
+            mock_table.update.assert_called_once()
+            call_args = mock_table.update.call_args[0]  # (record_id, fields_dict)
+            fields_dict = call_args[1]
+            
+            # Should have Field IDs as keys and Option IDs for select values
+            assert "fldOcpA3JW5MRmR6R" in fields_dict  # FullNameRU Field ID
+            assert "fldQzc7m7eO0JzRZf" in fields_dict  # PaymentStatus Field ID
+            assert fields_dict["fldQzc7m7eO0JzRZf"] == "sel4ZcXLVs973Gizi"  # Paid Option ID
+    
+    @pytest.mark.asyncio
+    async def test_field_id_translation_preserves_unknown_fields(self):
+        """Test that Field ID translation preserves unknown/custom fields."""
+        # RED phase - this test will fail until we implement fallback behavior
+        
+        config = AirtableConfig(
+            api_key="test_api_key",
+            base_id="test_base_id",
+            table_name="TestTable"
+        )
+        
+        with patch('src.data.airtable.airtable_client.AirtableClient.table') as mock_table:
+            client = AirtableClient(config)
+            
+            mock_table.create.return_value = {"id": "rec123", "fields": {}}
+            
+            # Test data with known and unknown fields
+            test_data = {
+                "FullNameRU": "Test Name",  # Known field -> should be translated
+                "CustomField": "Custom Value",  # Unknown field -> should be preserved  
+                "fldDirectID": "Direct Value"  # Already Field ID -> should be preserved
+            }
+            
+            await client.create_record(test_data)
+            
+            call_args = mock_table.create.call_args[0][0]
+            
+            # Known field should be translated
+            assert "fldOcpA3JW5MRmR6R" in call_args
+            assert call_args["fldOcpA3JW5MRmR6R"] == "Test Name"
+            
+            # Unknown fields should be preserved
+            assert "CustomField" in call_args
+            assert call_args["CustomField"] == "Custom Value"
+            assert "fldDirectID" in call_args
+            assert call_args["fldDirectID"] == "Direct Value"
+
+
 class TestAirtableConfig:
     """Test suite for AirtableConfig dataclass."""
     
