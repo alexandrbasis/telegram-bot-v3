@@ -57,6 +57,49 @@ def get_search_button_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(keyboard)
 
 
+def create_participant_selection_keyboard(search_results: List[SearchResult]) -> InlineKeyboardMarkup:
+    """
+    Create interactive keyboard with participant selection buttons.
+    
+    Generates clickable buttons for each search result (up to 5 participants)
+    with Russian name labels and callback data for selection handling.
+    
+    Args:
+        search_results: List of SearchResult objects from participant search
+        
+    Returns:
+        InlineKeyboardMarkup with participant selection buttons and main menu button
+    """
+    keyboard = []
+    
+    # Limit to maximum 5 results
+    limited_results = search_results[:5]
+    
+    # Create participant selection buttons
+    for result in limited_results:
+        participant = result.participant
+        
+        # Prioritize Russian name for button label, fallback to English
+        button_text = (participant.full_name_ru and participant.full_name_ru.strip()) or \
+                     (participant.full_name_en and participant.full_name_en.strip()) or \
+                     "Неизвестный участник"
+            
+        # Use participant record_id for callback data if available, otherwise use name hash
+        participant_id = getattr(participant, 'record_id', None)
+        if not participant_id:
+            # Fallback: create identifier from name (this is for testing mostly)
+            participant_id = str(hash(participant.full_name_ru or participant.full_name_en or ""))
+            
+        callback_data = f"select_participant:{participant_id}"
+        
+        keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
+    
+    # Always add main menu button at the end
+    keyboard.append([InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")])
+    
+    return InlineKeyboardMarkup(keyboard)
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Handle /start command.
