@@ -27,6 +27,7 @@ class AirtableConfig:
     api_key: str
     base_id: str
     table_name: str = "Participants"
+    table_id: Optional[str] = None
     rate_limit_per_second: int = 5
     timeout_seconds: int = 30
     max_retries: int = 3
@@ -91,7 +92,9 @@ class AirtableClient:
     def table(self) -> Table:
         """Get or create Airtable table instance."""
         if self._table is None:
-            self._table = self.api.table(self.config.base_id, self.config.table_name)
+            # Use table_id if available, otherwise fall back to table_name
+            table_identifier = self.config.table_id if self.config.table_id else self.config.table_name
+            self._table = self.api.table(self.config.base_id, table_identifier)
         return self._table
     
     async def test_connection(self) -> bool:

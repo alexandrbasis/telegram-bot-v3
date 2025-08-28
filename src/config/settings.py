@@ -22,6 +22,7 @@ class DatabaseSettings:
     airtable_api_key: str = field(default_factory=lambda: os.getenv('AIRTABLE_API_KEY', ''))
     airtable_base_id: str = field(default_factory=lambda: os.getenv('AIRTABLE_BASE_ID', 'appRp7Vby2JMzN0mC'))
     airtable_table_name: str = field(default_factory=lambda: os.getenv('AIRTABLE_TABLE_NAME', 'Participants'))
+    airtable_table_id: str = field(default_factory=lambda: os.getenv('AIRTABLE_TABLE_ID', 'tbl8ivwOdAUvMi3Jy'))
     
     # Rate limiting and performance
     rate_limit_per_second: int = field(default_factory=lambda: int(os.getenv('AIRTABLE_RATE_LIMIT', '5')))
@@ -49,6 +50,9 @@ class DatabaseSettings:
         if not self.airtable_table_name:
             raise ValueError("AIRTABLE_TABLE_NAME must be specified")
         
+        if not self.airtable_table_id:
+            raise ValueError("AIRTABLE_TABLE_ID must be specified")
+        
         if self.rate_limit_per_second <= 0 or self.rate_limit_per_second > 100:
             raise ValueError("Rate limit must be between 1 and 100 requests per second")
         
@@ -69,6 +73,7 @@ class DatabaseSettings:
             api_key=self.airtable_api_key,
             base_id=self.airtable_base_id,
             table_name=self.airtable_table_name,
+            table_id=self.airtable_table_id,
             rate_limit_per_second=self.rate_limit_per_second,
             timeout_seconds=self.timeout_seconds,
             max_retries=self.max_retries,
