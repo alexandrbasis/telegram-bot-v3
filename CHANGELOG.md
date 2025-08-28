@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Russian Name Search Feature** - First user-facing bot functionality with fuzzy matching capabilities (PR #4, SHA: f640e2a, merged 2025-08-28)
+  - Complete conversation flow implementation using ConversationHandler pattern (`src/bot/handlers/search_conversation.py:1-75`, `src/bot/handlers/search_handlers.py:1-125`)
+  - Fuzzy name matching service with Russian Cyrillic normalization using rapidfuzz library (`src/services/search_service.py:1-95`)
+  - Russian language interface with friendly greetings and search prompts (`src/bot/messages.py:1-45`, `src/bot/keyboards.py:1-65`)
+  - Extended participant repository with fuzzy search capability returning top 5 matches (`src/data/repositories/participant_repository.py:45-65`, `src/data/airtable/airtable_participant_repo.py:125-155`)
+  - Main bot application with proper initialization and error handling (`src/main.py:1-85`)
+  - Production dependency: rapidfuzz>=3.0.0 for intelligent name matching (`requirements/base.txt:15`)
+  - Comprehensive test suite with 321 passing tests across all components (`tests/unit/`, `tests/integration/`)
+  - Three conversation states: MAIN_MENU → WAITING_FOR_NAME → SHOWING_RESULTS with proper state management
+  - 80% similarity threshold for name matching with support for both Russian and English names
+  - Search response time under 3 seconds with maximum 5 results per query
+- **Comprehensive Documentation Updates** - Updated 5 documentation files with Russian Name Search feature specifications
+  - Business requirements specification with use cases, success metrics, and constraints (`docs/business/`)
+  - Technical bot commands documentation with conversation flow details (`docs/technical/`)
+  - API design documentation covering search service and repository interfaces (`docs/api/`)
+  - Testing strategy documentation with 321 test coverage breakdown (`docs/testing/`)
+  - Architecture overview updated with bot conversation handling patterns (`docs/architecture/`)
 - **Airtable Field IDs Integration** - Production-ready integration with exact Airtable identifiers (PR #3, SHA: 8827be4, merged 2025-08-28)
   - Complete Field ID mapping for all 13 fields with exact specifications from production Airtable base
   - Select Option ID integration for 27 options across 5 select fields (Gender, Size, Role, Department, PaymentStatus)
