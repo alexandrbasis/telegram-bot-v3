@@ -6,7 +6,7 @@ on participant data, mapping between Participant domain objects and Airtable
 record format.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 import logging
 
 from src.data.repositories.participant_repository import (
@@ -18,6 +18,7 @@ from src.data.repositories.participant_repository import (
 )
 from src.data.airtable.airtable_client import AirtableClient, AirtableAPIError
 from src.models.participant import Participant
+from src.services.search_service import SearchService
 
 logger = logging.getLogger(__name__)
 
@@ -751,3 +752,59 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(f"Repository health check failed: {e}", e.original_error)
         except Exception as e:
             raise RepositoryError(f"Unexpected error in health check: {e}", e)
+    
+    async def search_by_name_fuzzy(
+        self, 
+        query: str, 
+        threshold: float = 0.8,
+        limit: int = 5
+    ) -> List[Tuple[Participant, float]]:
+        """
+        Search participants by name with fuzzy matching.
+        
+        Uses SearchService to perform fuzzy matching on both Russian and English names
+        with configurable similarity threshold and result limit.
+        
+        Args:
+            query: Name or partial name to search for
+            threshold: Minimum similarity score (0.0-1.0) to include in results
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of tuples containing (Participant, similarity_score) sorted by 
+            similarity score in descending order
+            
+        Raises:
+            RepositoryError: If search fails
+        """
+        try:
+            logger.debug(f"Fuzzy search for '{query}' (threshold={threshold}, limit={limit})")
+            
+            if not query or not query.strip():
+                logger.debug("Empty query, returning no results")
+                return []
+            
+            # Get all participants from Airtable
+            all_participants = await self.list_all()
+            
+            if not all_participants:
+                logger.debug("No participants in database")
+                return []
+            
+            # Use SearchService for fuzzy matching
+            search_service = SearchService(similarity_threshold=threshold, max_results=limit)
+            search_results = search_service.search_participants(query, all_participants)
+            
+            # Convert SearchResult objects to (Participant, float) tuples
+            fuzzy_results = [
+                (result.participant, result.similarity_score) 
+                for result in search_results
+            ]
+            
+            logger.debug(f"Fuzzy search found {len(fuzzy_results)} matches")
+            return fuzzy_results
+            
+        except Exception as e:
+            if isinstance(e, RepositoryError):
+                raise
+            raise RepositoryError(f"Failed to perform fuzzy name search: {e}", e)

@@ -7,7 +7,7 @@ without changing business logic.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from src.models.participant import Participant
 
 
@@ -240,6 +240,33 @@ class ParticipantRepository(ABC):
             RepositoryError: If bulk update fails
             ValidationError: If any participant data is invalid
             NotFoundError: If any record_id doesn't exist
+        """
+        pass
+    
+    @abstractmethod
+    async def search_by_name_fuzzy(
+        self, 
+        query: str, 
+        threshold: float = 0.8,
+        limit: int = 5
+    ) -> List[Tuple[Participant, float]]:
+        """
+        Search participants by name with fuzzy matching.
+        
+        Uses fuzzy string matching to find participants whose names are similar
+        to the query string. Searches both Russian and English names.
+        
+        Args:
+            query: Name or partial name to search for
+            threshold: Minimum similarity score (0.0-1.0) to include in results
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of tuples containing (Participant, similarity_score) sorted by 
+            similarity score in descending order
+            
+        Raises:
+            RepositoryError: If search fails
         """
         pass
 

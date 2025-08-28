@@ -45,7 +45,8 @@ class TestParticipantRepositoryInterface:
             'get_by_payment_status',
             'count_total',
             'bulk_create',
-            'bulk_update'
+            'bulk_update',
+            'search_by_name_fuzzy'
         }
         
         repository_methods = set(dir(ParticipantRepository))
@@ -199,6 +200,7 @@ class TestConcreteImplementationRequirements:
             async def count_total(self): pass
             async def bulk_create(self, participants): pass
             async def bulk_update(self, participants): pass
+            async def search_by_name_fuzzy(self, query, threshold=0.8, limit=5): pass
         
         # Should be able to instantiate complete implementation
         repo = CompleteRepository()
