@@ -16,6 +16,7 @@ from pyairtable.api.types import RecordDict
 import httpx
 
 from src.data.repositories.participant_repository import RepositoryError
+from src.config.field_mappings import AirtableFieldMapping
 
 
 logger = logging.getLogger(__name__)
@@ -97,6 +98,31 @@ class AirtableClient:
             self._table = self.api.table(self.config.base_id, table_identifier)
         return self._table
     
+    def _translate_fields_for_api(self, fields: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Translate field names to Field IDs and option values to Option IDs for API calls.
+        
+        Args:
+            fields: Dictionary with field names and values
+            
+        Returns:
+            Dictionary with Field IDs as keys and Option IDs for select values
+        """
+        # First translate field names to Field IDs
+        translated_fields = AirtableFieldMapping.translate_fields_to_ids(fields)
+        
+        # Then translate select option values to Option IDs
+        for field_name, value in fields.items():
+            field_id = AirtableFieldMapping.get_field_id(field_name)
+            key = field_id if field_id else field_name
+            
+            if isinstance(value, str):
+                # Try to translate as select option
+                option_id = AirtableFieldMapping.translate_option_to_id(field_name, value)
+                translated_fields[key] = option_id
+        
+        return translated_fields
+    
     async def test_connection(self) -> bool:
         """
         Test the connection to Airtable API.
@@ -142,9 +168,12 @@ class AirtableClient:
         try:
             logger.debug(f"Creating record with fields: {list(fields.keys())}")
             
+            # Translate field names to Field IDs and option values to Option IDs
+            translated_fields = self._translate_fields_for_api(fields)
+            
             record = await asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: self.table.create(fields)
+                lambda: self.table.create(translated_fields)
             )
             
             logger.debug(f"Created record with ID: {record['id']}")
@@ -210,9 +239,12 @@ class AirtableClient:
         try:
             logger.debug(f"Updating record {record_id} with fields: {list(fields.keys())}")
             
+            # Translate field names to Field IDs and option values to Option IDs
+            translated_fields = self._translate_fields_for_api(fields)
+            
             record = await asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: self.table.update(record_id, fields)
+                lambda: self.table.update(record_id, translated_fields)
             )
             
             logger.debug(f"Updated record with ID: {record['id']}")
