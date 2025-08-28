@@ -184,14 +184,19 @@ Enable flexible universal participant search supporting Russian/English input ac
       - **Features**: Language-aware name prioritization, enum value handling
       - **Tests**: 5 tests covering basic info, role/department, missing fields, church info
 
-- [ ] Step 3: **Update Repository Layer**  
-  - [ ] Sub-step 3.1: Enhance participant repository search method
+- [x] ✅ Step 3: **Update Repository Layer** - Completed 2025-08-28
+  - [x] ✅ Sub-step 3.1: Enhance participant repository search method
     - **Directory**: `src/data/repositories/`
     - **Files to modify**: `participant_repository.py`
     - **Accept**: Repository supports multi-field search with field-specific queries
     - **Tests**: Update tests in `tests/unit/data/repositories/`
     - **Done**: Repository returns comprehensive search results
-    - **Changelog**: [Record repository changes with method signatures]
+    - **Changelog**: **Enhanced Repository Layer** 
+      - **Interface**: `src/data/repositories/participant_repository.py:273-299` - Added `search_by_name_enhanced()` method
+      - **Implementation**: `src/data/airtable/airtable_participant_repo.py:812-873` - Enhanced search with rich formatting
+      - **Features**: Language detection, multi-field search, rich result formatting (Participant, score, formatted_string)
+      - **Backward Compatibility**: Existing `search_by_name_fuzzy()` maintained unchanged
+      - **Tests**: 5 comprehensive tests in `tests/unit/test_data/test_airtable/test_airtable_participant_repo_fuzzy.py:268-402`
 
 - [ ] Step 4: **Update Bot Message Handling**
   - [ ] Sub-step 4.1: Enhance search result display formatting

@@ -269,6 +269,34 @@ class ParticipantRepository(ABC):
             RepositoryError: If search fails
         """
         pass
+    
+    @abstractmethod
+    async def search_by_name_enhanced(
+        self, 
+        query: str, 
+        threshold: float = 0.8,
+        limit: int = 5
+    ) -> List[Tuple[Participant, float, str]]:
+        """
+        Enhanced search with language detection, multi-field search, and rich formatting.
+        
+        Uses enhanced search capabilities including automatic language detection,
+        first/last name search, and rich participant information formatting.
+        
+        Args:
+            query: Name or partial name to search for
+            threshold: Minimum similarity score (0.0-1.0) to include in results
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of tuples containing (Participant, similarity_score, formatted_result) 
+            where formatted_result includes name, role, department, and other info
+            sorted by similarity score in descending order
+            
+        Raises:
+            RepositoryError: If search fails
+        """
+        pass
 
 
 class RepositoryError(Exception):

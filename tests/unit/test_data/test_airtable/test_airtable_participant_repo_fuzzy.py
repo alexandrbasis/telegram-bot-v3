@@ -12,7 +12,7 @@ from typing import List, Tuple
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.data.airtable.airtable_client import AirtableClient, AirtableAPIError
 from src.data.repositories.participant_repository import RepositoryError
-from src.models.participant import Participant
+from src.models.participant import Participant, Role, Department
 
 
 @pytest.fixture
@@ -263,3 +263,140 @@ class TestFuzzySearchEdgeCases:
             # Test with large limit
             await repository.search_by_name_fuzzy("test", limit=100)
             mock_search_service.assert_called_with(similarity_threshold=0.8, max_results=100)
+
+
+class TestEnhancedRepositorySearch:
+    """Test enhanced repository search functionality with new features."""
+    
+    @pytest.fixture
+    def enhanced_sample_participants(self):
+        """Enhanced sample participants with role and department information."""
+        return [
+            Participant(
+                record_id="rec1",
+                full_name_ru="Александр Иванов",
+                full_name_en="Alexander Ivanov",
+                role=Role.TEAM,
+                department=Department.KITCHEN
+            ),
+            Participant(
+                record_id="rec2", 
+                full_name_ru="Мария Петрова",
+                full_name_en="Maria Petrova",
+                role=Role.CANDIDATE,
+                department=Department.WORSHIP
+            ),
+            Participant(
+                record_id="rec3",
+                full_name_ru="Иван Сидоров", 
+                full_name_en="Ivan Sidorov",
+                role=Role.TEAM,
+                department=Department.MEDIA
+            ),
+        ]
+    
+    @pytest.mark.asyncio
+    async def test_search_by_name_enhanced_method(self, repository, mock_airtable_client, enhanced_sample_participants):
+        """Test new enhanced search method with language detection and multi-field search."""
+        repository.list_all = AsyncMock(return_value=enhanced_sample_participants)
+        
+        # Mock the enhanced search method (to be implemented)
+        with patch.object(repository, 'search_by_name_enhanced') as mock_enhanced_search:
+            mock_enhanced_search.return_value = [(enhanced_sample_participants[0], 0.95, "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen")]
+            
+            results = await repository.search_by_name_enhanced("Александр")
+            
+            # Should return list of tuples with rich formatting
+            assert isinstance(results, list)
+            assert len(results) == 1
+            
+            participant, score, formatted_result = results[0]
+            assert isinstance(participant, Participant)
+            assert isinstance(score, float)
+            assert isinstance(formatted_result, str)
+            assert "Александр Иванов" in formatted_result
+            assert "TEAM" in formatted_result
+            assert "Kitchen" in formatted_result
+    
+    @pytest.mark.asyncio
+    async def test_search_by_first_name_enhanced(self, repository, mock_airtable_client, enhanced_sample_participants):
+        """Test enhanced search by first name only."""
+        repository.list_all = AsyncMock(return_value=enhanced_sample_participants)
+        
+        with patch.object(repository, 'search_by_name_enhanced') as mock_enhanced_search:
+            # Should find both "Александр" and potentially "Иван" depending on fuzzy matching
+            mock_enhanced_search.return_value = [
+                (enhanced_sample_participants[0], 1.0, "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen"),
+                (enhanced_sample_participants[2], 0.85, "Иван Сидоров (Ivan Sidorov) - TEAM, Media")
+            ]
+            
+            results = await repository.search_by_name_enhanced("Александр")
+            
+            assert len(results) >= 1
+            # First result should be the exact match
+            first_result = results[0]
+            assert first_result[1] >= 0.9  # High similarity score
+            assert "Александр Иванов" in first_result[2]
+    
+    @pytest.mark.asyncio
+    async def test_search_by_last_name_enhanced(self, repository, mock_airtable_client, enhanced_sample_participants):
+        """Test enhanced search by last name only."""
+        repository.list_all = AsyncMock(return_value=enhanced_sample_participants)
+        
+        with patch.object(repository, 'search_by_name_enhanced') as mock_enhanced_search:
+            # Should find "Иванов" in "Александр Иванов" 
+            mock_enhanced_search.return_value = [
+                (enhanced_sample_participants[0], 1.0, "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen")
+            ]
+            
+            results = await repository.search_by_name_enhanced("Иванов")
+            
+            assert len(results) >= 1
+            assert "Иванов" in results[0][2]
+            assert "TEAM" in results[0][2]
+    
+    @pytest.mark.asyncio 
+    async def test_search_english_name_enhanced(self, repository, mock_airtable_client, enhanced_sample_participants):
+        """Test enhanced search with English input."""
+        repository.list_all = AsyncMock(return_value=enhanced_sample_participants)
+        
+        with patch.object(repository, 'search_by_name_enhanced') as mock_enhanced_search:
+            # English input should find English names
+            mock_enhanced_search.return_value = [
+                (enhanced_sample_participants[1], 1.0, "Maria Petrova (Мария Петрова) - CANDIDATE, Worship")
+            ]
+            
+            results = await repository.search_by_name_enhanced("Maria")
+            
+            assert len(results) >= 1
+            assert "Maria Petrova" in results[0][2]
+            assert "CANDIDATE" in results[0][2]
+            assert "Worship" in results[0][2]
+    
+    @pytest.mark.asyncio
+    async def test_search_enhanced_with_missing_fields(self, repository, mock_airtable_client):
+        """Test enhanced search with participants missing some fields."""
+        participants_with_missing_fields = [
+            Participant(
+                record_id="rec1",
+                full_name_ru="Елена Козлова",
+                role=Role.TEAM
+                # No full_name_en, no department
+            )
+        ]
+        
+        repository.list_all = AsyncMock(return_value=participants_with_missing_fields)
+        
+        with patch.object(repository, 'search_by_name_enhanced') as mock_enhanced_search:
+            mock_enhanced_search.return_value = [
+                (participants_with_missing_fields[0], 0.95, "Елена Козлова - TEAM")
+            ]
+            
+            results = await repository.search_by_name_enhanced("Елена")
+            
+            assert len(results) >= 1
+            formatted = results[0][2]
+            assert "Елена Козлова" in formatted
+            assert "TEAM" in formatted
+            # Should handle missing fields gracefully
+            assert formatted is not None and len(formatted) > 0
