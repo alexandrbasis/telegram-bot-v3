@@ -52,14 +52,17 @@ Using changelog entries:
 1. **Navigate to files** using specific paths/line ranges
 2. **Verify business impact** matches documentation
 3. **Check verification steps** were completed
-4. **Validate test coverage** claims
+4. **Execute actual tests** - do not just validate claims, run them
+5. **Perform functional testing** of implemented features when possible
 
 #### **Quality Assessment**
 1. **Requirements compliance** and architecture patterns
 2. **Code quality standards** and best practices
 3. **Performance/security** - no issues introduced
-4. **Testing** - adequate coverage and quality
+4. **Testing** - MUST perform actual test execution, not just code inspection
 5. **Documentation** - all required updates completed
+
+**CRITICAL TESTING REQUIREMENT**: Do not just review test code or assume tests pass. You MUST actually run the test suite and verify results. Use appropriate test commands (pytest, npm test, etc.) to execute tests and report actual results, including any failures or issues discovered.
 
 #### **Specialized Compliance Checks**
 For comprehensive code review, invoke these sub-agents when relevant:
@@ -91,6 +94,7 @@ Create `Code Review - [Task Title].md` in task directory:
 
 ## Testing & Documentation
 **Testing**: ✅ Adequate / 🔄 Partial / ❌ Insufficient  
+**Test Execution Results**: [Report actual test run results, including pass/fail counts and any discovered issues]  
 **Documentation**: ✅ Complete / 🔄 Partial / ❌ Missing
 
 ## Issues Checklist
@@ -126,9 +130,11 @@ Create `Code Review - [Task Title].md` in task directory:
 3. **Test thoroughly** and request re-review
 
 ### Testing Checklist:
-- [ ] Complete test suite passes
-- [ ] Manual testing completed
+- [ ] Complete test suite executed and passes
+- [ ] Manual testing of implemented features completed
+- [ ] Performance impact assessed (if applicable)
 - [ ] No regressions introduced
+- [ ] Test results documented with actual output
 
 ### Re-Review:
 1. Complete fixes, update changelog, ensure tests pass
@@ -198,7 +204,9 @@ When review status is **❌ NEEDS FIXES**:
 
 **Be Constructive**: Specific feedback, explain "why", give examples, acknowledge good work  
 **Focus on Impact**: Prioritize by user/stability impact, consider maintenance burden  
-**Stay Professional**: Review as valued teammate, help developer improve
+**Stay Professional**: Review as valued teammate, help developer improve  
+**Be Honest**: Report actual findings, do not assume or guess - verify through execution and testing  
+**Test Thoroughly**: Always run tests and verify functionality - code inspection alone is insufficient
 
 ## LINEAR SYNCHRONIZATION CHECKLIST
 

@@ -1,6 +1,6 @@
 # Start Implementation Command
 
-You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches.
+You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches. IMPORTANT: Think hard
 
 ## CONSTRAINTS
 - Follow existing task document in `tasks/` directory
@@ -111,8 +111,8 @@ For each step:
    - **issueId**: Linear issue ID
    - **body**: Implementation completed summary with key changes and test coverage
 3. **Push feature branch**: `git push origin feature/[branch-name]`
-4. **Create PR automatically** using the create-pr-agent:
-   - Call: `/agent create-pr-agent`
+4. **Call create-pr-agent to create a PR**:
+   - Use Task tool with subagent_type: "create-pr-agent"
    - **IMPORTANT**: Provide the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
    - Agent will create PR, update task document with PR links, and sync with Linear
 5. **Present completion**: "Implementation complete. All tests passing with [X]% coverage. PR created and ready for code review."
