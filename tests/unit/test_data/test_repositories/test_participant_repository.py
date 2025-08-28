@@ -200,6 +200,7 @@ class TestConcreteImplementationRequirements:
             async def count_total(self): pass
             async def bulk_create(self, participants): pass
             async def bulk_update(self, participants): pass
+            async def search_by_name_fuzzy(self, query, threshold=0.8, limit=5): pass
         
         # Should be able to instantiate complete implementation
         repo = CompleteRepository()

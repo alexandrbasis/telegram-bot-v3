@@ -80,20 +80,33 @@ After business and test plan approval, create technical task document and get ap
 ### GATE 4: Technical Plan Review (MANDATORY)
 **Must complete AFTER technical decomposition and BEFORE task splitting evaluation:**
 
-**ACTION:** After technical requirements are created, automatically invoke Plan Reviewer agent to:
+**INITIAL REVIEW ACTION:** After technical requirements are created, automatically invoke Plan Reviewer agent to:
 1. Review technical decomposition and implementation steps
 2. Validate file paths, testing strategy, and acceptance criteria
 3. Identify critical issues, clarifications, or improvements needed
 4. Create comprehensive review document in task directory
 5. Provide implementation readiness assessment
 
-**BLOCKING:** Cannot proceed to task splitting evaluation without Plan Reviewer approval
+**ITERATIVE FEEDBACK LOOP:** When Plan Reviewer provides feedback requiring revisions:
+1. **Address Feedback**: Make necessary updates to the task document based on feedback
+2. **Re-submit for Review**: Automatically invoke Plan Reviewer agent again with:
+   - Updated task document (full content with changes highlighted)
+   - Path to the task document
+   - Path to the previous plan review document for context
+   - Clear summary of what was updated since last review
+3. **Context Provision**: Provide comprehensive information to plan reviewer including:
+   - Complete updated task content
+   - Reference to original plan review feedback
+   - Specific changes made to address each point
+4. **Repeat Until Approved**: Continue this cycle until Plan Reviewer confirms approval
+
+**BLOCKING:** Cannot proceed to task splitting evaluation without Plan Reviewer final approval
 **DECISION OUTCOMES:**
 - ✅ **APPROVED**: Proceed to task splitting evaluation
-- ❌ **NEEDS REVISIONS**: Address critical issues before resubmitting 
-- 🔄 **NEEDS CLARIFICATIONS**: Make minor updates then proceed
+- ❌ **NEEDS REVISIONS**: Address critical issues and re-submit for another review cycle
+- 🔄 **NEEDS CLARIFICATIONS**: Make minor updates and re-submit for confirmation
 
-**INTEGRATION:** Use `Task` tool with `plan-reviewer` agent type after technical decomposition is complete
+**INTEGRATION:** Use `Task` tool with `plan-reviewer` agent type for both initial review and all subsequent feedback iterations
 
 ### GATE 5: Task Splitting Evaluation (MANDATORY)
 **Must complete AFTER plan review and BEFORE Linear creation:**
@@ -211,7 +224,7 @@ tasks/
 ```javascript
 mcp__linear__create_issue({
   title: "[Task Name from document]",
-  team: "[AGB]",
+  team: "ABasis",
   description: "[Business context + technical requirements]",
   priority: 0-4  // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
 })
@@ -220,7 +233,7 @@ mcp__linear__create_issue({
 **Note**: If task was split into sub-tasks, create separate Linear issues for each sub-task following the same format.
 
 ### Status Progression
-1. **Ready for Implementation**: Business approved, technical plan reviewed by Plan Reviewer agent, task automatically evaluated for splitting by Task Splitter agent, Linear issue(s) created, awaiting development
+1. **Ready for Implementation**: Business approved, technical plan iteratively reviewed and approved by Plan Reviewer agent, task automatically evaluated for splitting by Task Splitter agent, Linear issue(s) created, awaiting development
 2. **In Progress**: Developer assigns self, begins work
 3. **In Review**: PR created, code review requested
 4. **Testing**: UAT/QA validation in progress
