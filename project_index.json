@@ -1,0 +1,351 @@
+{
+  "project_overview": {
+    "name": "telegram-bot-v3",
+    "description": "Telegram bot for participant management with Airtable integration and Russian/English fuzzy search",
+    "architecture": "3-layer architecture (bot/services/data) with repository pattern",
+    "main_language": "python",
+    "last_updated": "2025-08-28T23:36:43.394787"
+  },
+  "project_structure": {
+    "tree": "telegram-bot-v3/\n├── .claude/\n    ├── agents/\n        ├── adr-manager.md\n        ├── changelog-generator.md\n        ├── code-review-responder.md\n        ├── comprehensive-researcher.md\n        ├── create-pr-agent.md\n        ├── debugger.md\n        ├── docs-updater.md\n        ├── error-detective.md\n        ├── plan-reviewer.md\n        ├── prompt-optimizer.md\n        ├── search-specialist.md\n        └── task-splitter.md\n    ├── commands/\n        ├── README.md\n        ├── ar.md\n        ├── cda.md\n        ├── ci.md\n        ├── cp.md\n        ├── create-pull-request.md\n        ├── ct.md\n        ├── jb.md\n        ├── mp.md\n        ├── ph.md\n        ├── si.md\n        └── sr.md\n    ├── hooks/\n        ├── debug-hook.sh\n        ├── telegram_notify.py\n        ├── telegram_notify_wrapper.sh\n        ├── test-hook.sh\n        ├── update-index.py\n        ├── update-index.sh\n        └── wrapper.sh\n    ├── config.json\n    ├── settings.json\n    └── settings.local.json\n├── .obsidian/\n    ├── app.json\n    ├── appearance.json\n    ├── core-plugins.json\n    └── workspace.json\n├── data/\n    ├── backups/\n    ├── cache/\n    └── exports/\n├── docs/\n    ├── architecture/\n        ├── api-design.md\n        ├── architecture-overview.md\n        ├── database-design.md\n        └── migration-strategy.md\n    ├── business/\n        ├── business-requirements.md\n        ├── feature-specifications.md\n        └── user-stories.md\n    ├── data-integration/\n        ├── airtable-setup.md\n        ├── airtable_database_structure.md\n        ├── data-backup-restore.md\n        └── field-mappings.md\n    ├── development/\n        ├── coding-standards.md\n        ├── deployment-guide.md\n        ├── development-workflow.md\n        └── testing-strategy.md\n    └── technical/\n        ├── bot-commands.md\n        ├── configuration.md\n        ├── performance-considerations.md\n        └── troubleshooting.md\n├── requirements/\n    ├── base.txt\n    ├── dev.txt\n    └── test.txt\n├── scripts/\n├── src/\n    ├── bot/\n        ├── handlers/\n        └── __init__.py\n    ├── config/\n        ├── __init__.py\n        ├── field_mappings.py (Airtable field ID mappings)\n        └── settings.py (centralized app configuration)\n    ├── data/\n        ├── airtable/\n        ├── repositories/\n        ├── __init__.py\n        └── data_validator.py\n    ├── models/\n        ├── __init__.py\n        └── participant.py (participant data model with enums)\n    ├── services/\n        ├── __init__.py\n        └── search_service.py (fuzzy search with Russian/English support)\n    ├── utils/\n        ├── __init__.py\n        └── test_helper.py\n    ├── __init__.py\n    └── main.py (application entry point)\n├── tasks/\n    ├── completed/\n        ├── task-2025-08-27-airtable-field-ids-integration/\n        ├── task-2025-08-27-database-setup/\n        ├── task-2025-08-27-phase-1-foundation/\n        ├── task-2025-08-28-fix-russian-search/\n        └── task-2025-08-28-russian-name-search/\n    ├── task-2025-08-28-search-results-enhancement/\n        ├── subtask-1-enhanced-search-display/\n        ├── subtask-2-participant-editing-interface/\n        ├── subtask-3-save-update-integration/\n        ├── Enhanced Search Results with Participant Editing.md\n        └── Plan Review - Enhanced Search Results with Participant Editing.md\n    └── task-2025-08-28-indexer-hook.md\n├── tests/\n    ├── fixtures/\n        └── __init__.py\n    ├── integration/\n        ├── test_bot_handlers/\n        ├── __init__.py\n        └── test_main.py\n    ├── unit/\n        ├── test_bot_handlers/\n        ├── test_config/\n        ├── test_data/\n        ├── test_models/\n        ├── test_services/\n        └── __init__.py\n    ├── __init__.py\n    └── test_project_structure.py\n├── CHANGELOG.md\n├── CLAUDE.md (project guidance for Claude Code)\n├── PROJECT_PLAN.md\n├── README.md\n├── hook_test.txt\n├── project_index.json\n├── pyproject.toml\n└── start_bot.sh (bot startup script)",
+    "directory_details": {
+      "src/": "Main application source code organized in layers",
+      "src/bot/": "Telegram bot presentation layer - handles user interactions",
+      "src/bot/handlers/": "Specific Telegram conversation and command handlers",
+      "src/models/": "Domain models with Pydantic validation and Airtable integration",
+      "src/services/": "Business logic layer - core application functionality",
+      "src/data/": "Data access layer with repository pattern implementation",
+      "src/data/airtable/": "Airtable-specific data access implementation",
+      "src/data/repositories/": "Abstract repository interfaces for data layer abstraction",
+      "src/config/": "Configuration management and environment settings",
+      "src/utils/": "Common utility functions shared across the application",
+      "tests/": "Comprehensive test suite with clear separation of concerns",
+      "tests/unit/": "Unit tests that mirror the src/ directory structure",
+      "tests/integration/": "End-to-end integration tests for complete workflows",
+      "tests/fixtures/": "Shared test data and mock objects",
+      "docs/": "Comprehensive project documentation including architecture and business requirements",
+      "tasks/": "Development task tracking with markdown files for each feature/bug",
+      "requirements/": "Dependency management split by environment (base/dev/test)",
+      ".claude/": "Claude Code configuration and automation hooks"
+    },
+    "key_files": {
+      "src/main.py": "Application entry point - initializes bot, loads config, starts polling",
+      "src/models/participant.py": "Core domain model with all participant fields, enums, and Airtable mapping",
+      "src/services/search_service.py": "Advanced fuzzy search with Russian/English language detection",
+      "src/data/airtable/airtable_client.py": "Low-level Airtable API client with rate limiting and error handling",
+      "src/data/airtable/airtable_participant_repo.py": "Repository implementation for participant CRUD operations",
+      "src/bot/handlers/search_conversation.py": "Main conversation flow for participant search functionality",
+      "src/config/settings.py": "Centralized configuration using Pydantic settings with environment variables",
+      "src/config/field_mappings.py": "Maps internal field names to Airtable field IDs",
+      "tests/conftest.py": "Pytest configuration with fixtures and test setup",
+      "CLAUDE.md": "Comprehensive guidance for Claude Code on project patterns and commands",
+      "start_bot.sh": "Production-ready bot startup script with environment validation"
+    }
+  },
+  "key_modules": {
+    "src/main.py": {
+      "role": "application_entry_point",
+      "purpose": "",
+      "key_exports": [
+        "configure_logging",
+        "create_application",
+        "run_bot",
+        "main"
+      ],
+      "dependencies": [
+        "src.config.settings",
+        "src.bot.handlers.search_conversation"
+      ],
+      "features": [
+        "logging"
+      ]
+    },
+    "src/config/field_mappings.py": {
+      "role": "configuration",
+      "purpose": "",
+      "key_exports": [
+        "FieldType",
+        "AirtableFieldMapping",
+        "SearchFieldMapping",
+        "TEXT",
+        "LONG_TEXT"
+      ],
+      "dependencies": [
+        "src.models.participant"
+      ],
+      "features": [
+        "enum_types",
+        "airtable_integration"
+      ]
+    },
+    "src/config/settings.py": {
+      "role": "configuration",
+      "purpose": "",
+      "key_exports": [
+        "DatabaseSettings",
+        "TelegramSettings",
+        "LoggingSettings",
+        "ApplicationSettings",
+        "Settings"
+      ],
+      "dependencies": [
+        "src.data.airtable.airtable_client"
+      ],
+      "features": [
+        "airtable_integration",
+        "logging"
+      ]
+    },
+    "src/utils/test_helper.py": {
+      "role": "test",
+      "purpose": "",
+      "key_exports": [
+        "test_function",
+        "debug_hook_test",
+        "test_hook_trigger",
+        "another_test",
+        "final_hook_test"
+      ],
+      "dependencies": [],
+      "features": []
+    },
+    "src/models/participant.py": {
+      "role": "domain_model",
+      "purpose": "",
+      "key_exports": [
+        "Gender",
+        "Size",
+        "Role",
+        "Department",
+        "PaymentStatus"
+      ],
+      "dependencies": [],
+      "features": [
+        "pydantic_validation",
+        "enum_types",
+        "airtable_integration"
+      ]
+    },
+    "src/data/data_validator.py": {
+      "role": "data_access_layer",
+      "purpose": "",
+      "key_exports": [
+        "ValidationResult",
+        "DataValidator",
+        "validate_participant",
+        "validate_participant_strict",
+        "validate_field_value"
+      ],
+      "dependencies": [
+        "src.models.participant",
+        "src.config.field_mappings",
+        "src.data.repositories.participant_repository",
+        "src.config.field_mappings"
+      ],
+      "features": [
+        "airtable_integration",
+        "logging"
+      ]
+    },
+    "src/services/search_service.py": {
+      "role": "business_service",
+      "purpose": "",
+      "key_exports": [
+        "detect_language",
+        "parse_name_parts",
+        "format_participant_result",
+        "normalize_russian",
+        "SearchResult"
+      ],
+      "dependencies": [
+        "src.models.participant"
+      ],
+      "features": [
+        "pydantic_validation",
+        "logging"
+      ]
+    },
+    "src/data/repositories/participant_repository.py": {
+      "role": "data_access_layer",
+      "purpose": "",
+      "key_exports": [
+        "ParticipantRepository",
+        "RepositoryError",
+        "NotFoundError",
+        "ValidationError",
+        "DuplicateError"
+      ],
+      "dependencies": [
+        "src.models.participant"
+      ],
+      "features": [
+        "async_patterns",
+        "airtable_integration"
+      ]
+    },
+    "src/data/airtable/airtable_client.py": {
+      "role": "data_access_layer",
+      "purpose": "",
+      "key_exports": [
+        "AirtableConfig",
+        "RateLimiter",
+        "AirtableAPIError",
+        "AirtableClient",
+        "api"
+      ],
+      "dependencies": [
+        "src.data.repositories.participant_repository",
+        "src.config.field_mappings"
+      ],
+      "features": [
+        "async_patterns",
+        "airtable_integration",
+        "logging"
+      ]
+    },
+    "src/data/airtable/airtable_participant_repo.py": {
+      "role": "data_access_layer",
+      "purpose": "",
+      "key_exports": [
+        "AirtableParticipantRepository"
+      ],
+      "dependencies": [
+        "src.data.repositories.participant_repository",
+        "src.data.airtable.airtable_client",
+        "src.models.participant",
+        "src.services.search_service"
+      ],
+      "features": [
+        "async_patterns",
+        "airtable_integration",
+        "logging"
+      ]
+    },
+    "src/bot/handlers/search_handlers.py": {
+      "role": "presentation_layer",
+      "purpose": "",
+      "key_exports": [
+        "SearchStates",
+        "get_participant_repository",
+        "get_main_menu_keyboard",
+        "get_search_button_keyboard",
+        "create_participant_selection_keyboard"
+      ],
+      "dependencies": [
+        "src.services.search_service",
+        "src.data.repositories.participant_repository",
+        "src.data.airtable.airtable_client",
+        "src.data.airtable.airtable_participant_repo",
+        "src.config.settings"
+      ],
+      "features": [
+        "async_patterns",
+        "enum_types",
+        "airtable_integration",
+        "logging"
+      ]
+    },
+    "src/bot/handlers/search_conversation.py": {
+      "role": "presentation_layer",
+      "purpose": "",
+      "key_exports": [
+        "get_search_conversation_handler"
+      ],
+      "dependencies": [
+        "src.bot.handlers.search_handlers"
+      ],
+      "features": [
+        "logging"
+      ]
+    }
+  },
+  "architecture_patterns": {
+    "error_handling": "Structured logging with custom exception hierarchy",
+    "data_validation": "Pydantic models with enum validation and custom validators",
+    "async_patterns": "Full async/await throughout bot layer",
+    "configuration": "Environment-based settings with dataclass validation",
+    "repository_pattern": "Abstract repository interface with Airtable implementation",
+    "rate_limiting": "Built into Airtable client (5 requests/second default)"
+  },
+  "key_features": {
+    "multilingual_search": {
+      "description": "Russian/English name search with automatic language detection",
+      "implementation": "src/services/search_service.py:detect_language",
+      "algorithms": [
+        "cyrillic_character_detection",
+        "fuzzy_matching",
+        "name_normalization"
+      ]
+    },
+    "airtable_integration": {
+      "description": "Complete CRUD operations with participant data",
+      "tables": [
+        "Participants"
+      ],
+      "field_mapping": "src/config/field_mappings.py"
+    },
+    "conversation_flow": {
+      "description": "Multi-step Telegram conversation for participant search",
+      "states": [
+        "search_input",
+        "result_display",
+        "participant_selection"
+      ],
+      "implementation": "src/bot/handlers/search_conversation.py"
+    }
+  },
+  "current_development_context": {
+    "phase": "Feature enhancement and optimization",
+    "recent_completions": [
+      "Enhanced Russian name search with fuzzy matching",
+      "Language detection for Cyrillic vs Latin scripts",
+      "Improved search result formatting"
+    ],
+    "active_tasks": [
+      "Indexer hook implementation for automated project indexing",
+      "Search result enhancement with editing capabilities"
+    ],
+    "known_issues": []
+  },
+  "testing_approach": {
+    "framework": "pytest",
+    "structure": "tests/unit/ mirrors src/ structure, tests/integration/ for end-to-end flows",
+    "commands": {
+      "run_tests": "./venv/bin/pytest tests/ -v",
+      "coverage": "./venv/bin/pytest tests/ --cov=src --cov-report=html",
+      "type_check": "./venv/bin/mypy src --no-error-summary",
+      "lint": "./venv/bin/flake8 src tests"
+    }
+  },
+  "environment_requirements": {
+    "required_vars": [
+      "TELEGRAM_BOT_TOKEN",
+      "AIRTABLE_API_KEY"
+    ],
+    "optional_vars": [
+      "AIRTABLE_BASE_ID",
+      "AIRTABLE_TABLE_NAME",
+      "LOG_LEVEL",
+      "ENVIRONMENT"
+    ],
+    "setup": "python -m venv venv && source venv/bin/activate && pip install -r requirements/dev.txt"
+  },
+  "project_statistics": {
+    "total_python_files": 12,
+    "main_directories": [
+      "src/bot",
+      "src/services",
+      "src/data",
+      "src/models",
+      "src/config",
+      "tests"
+    ],
+    "key_dependencies": [
+      "telegram",
+      "airtable",
+      "pydantic",
+      "rapidfuzz",
+      "pytest"
+    ]
+  }
+}

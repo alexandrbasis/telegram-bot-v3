@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/update-index.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "description": "Claude Code configuration for telegram-bot-v3 project with automatic index updating"
+}

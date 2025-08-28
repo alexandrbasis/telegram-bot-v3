@@ -476,3 +476,10 @@ class TestSearchServiceIntegration:
         # This should work without import errors
         results = service.search_participants("Тест", participants)
         assert isinstance(results, list)
+        assert len(results) >= 1
+        assert results[0].similarity_score > 0.8
+        assert "Тест Участник" in results[0].participant.full_name_ru
+        
+        # Дополнительная проверка интеграции с rapidfuzz
+        assert hasattr(service, 'similarity_threshold')
+        assert service.similarity_threshold > 0
