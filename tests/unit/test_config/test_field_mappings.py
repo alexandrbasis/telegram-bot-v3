@@ -310,6 +310,81 @@ class TestFieldMappingInstances:
         assert len(searchable_fields) > 0
 
 
+class TestAirtableFieldIDs:
+    """Test suite for Airtable Field ID mappings."""
+    
+    def test_airtable_field_id_mapping(self):
+        """Test Field ID mapping for all 13 fields."""
+        # RED phase - this test will fail until we implement AIRTABLE_FIELD_IDS
+        
+        # Test text fields (6)
+        assert AirtableFieldMapping.get_field_id("FullNameRU") == "fldOcpA3JW5MRmR6R"
+        assert AirtableFieldMapping.get_field_id("FullNameEN") == "fldrFVukSmk0i9sqj"
+        assert AirtableFieldMapping.get_field_id("Church") == "fld4CXL9InW0ogAQh"
+        assert AirtableFieldMapping.get_field_id("CountryAndCity") == "fldJ7dFRzx7bR9U6g"
+        assert AirtableFieldMapping.get_field_id("SubmittedBy") == "flduADiTl7jpiy8OH"
+        assert AirtableFieldMapping.get_field_id("ContactInformation") == "fldSy0Hbwl49VtZvf"
+        
+        # Test single select fields (5)
+        assert AirtableFieldMapping.get_field_id("Gender") == "fldOAGXoU0DqqFRmB"
+        assert AirtableFieldMapping.get_field_id("Size") == "fldZyNgaaa1snp6s7"
+        assert AirtableFieldMapping.get_field_id("Role") == "fldetbIGOkKFK0hYq"
+        assert AirtableFieldMapping.get_field_id("Department") == "fldIh0eyPspgr1TWk"
+        assert AirtableFieldMapping.get_field_id("PaymentStatus") == "fldQzc7m7eO0JzRZf"
+        
+        # Test number field (1)
+        assert AirtableFieldMapping.get_field_id("PaymentAmount") == "fldyP24ZbeGD8nnaZ"
+        
+        # Test date field (1)
+        assert AirtableFieldMapping.get_field_id("PaymentDate") == "fldylOQLqcBwkmzlh"
+        
+        # Test non-existent field
+        assert AirtableFieldMapping.get_field_id("NonExistent") is None
+    
+    def test_translate_fields_to_ids(self):
+        """Test translation of field names to Field IDs."""
+        # RED phase - this test will fail until we implement translation methods
+        
+        data = {
+            "FullNameRU": "Иван Иванов",
+            "Gender": "M",
+            "PaymentAmount": 500
+        }
+        
+        expected = {
+            "fldOcpA3JW5MRmR6R": "Иван Иванов",
+            "fldOAGXoU0DqqFRmB": "M", 
+            "fldyP24ZbeGD8nnaZ": 500
+        }
+        
+        result = AirtableFieldMapping.translate_fields_to_ids(data)
+        assert result == expected
+    
+    def test_field_id_completeness(self):
+        """Test that all 13 fields have Field ID mappings."""
+        # RED phase - this test will fail until we implement complete mapping
+        
+        expected_field_ids = {
+            "FullNameRU": "fldOcpA3JW5MRmR6R",
+            "FullNameEN": "fldrFVukSmk0i9sqj", 
+            "Church": "fld4CXL9InW0ogAQh",
+            "CountryAndCity": "fldJ7dFRzx7bR9U6g",
+            "SubmittedBy": "flduADiTl7jpiy8OH",
+            "ContactInformation": "fldSy0Hbwl49VtZvf",
+            "Gender": "fldOAGXoU0DqqFRmB",
+            "Size": "fldZyNgaaa1snp6s7",
+            "Role": "fldetbIGOkKFK0hYq",
+            "Department": "fldIh0eyPspgr1TWk",
+            "PaymentStatus": "fldQzc7m7eO0JzRZf",
+            "PaymentAmount": "fldyP24ZbeGD8nnaZ",
+            "PaymentDate": "fldylOQLqcBwkmzlh"
+        }
+        
+        for field_name, expected_id in expected_field_ids.items():
+            actual_id = AirtableFieldMapping.get_field_id(field_name)
+            assert actual_id == expected_id, f"Field {field_name}: expected {expected_id}, got {actual_id}"
+
+
 class TestFieldMappingCompleteness:
     """Test suite for field mapping completeness and consistency."""
     

@@ -32,6 +32,30 @@ class AirtableFieldMapping:
     Defines the bidirectional mapping and validation rules for each field.
     """
     
+    # Airtable field name -> Field ID mapping (exact Field IDs from Airtable base)
+    AIRTABLE_FIELD_IDS: Dict[str, str] = {
+        # Text fields (6)
+        "FullNameRU": "fldOcpA3JW5MRmR6R",      # Primary field, required
+        "FullNameEN": "fldrFVukSmk0i9sqj",
+        "Church": "fld4CXL9InW0ogAQh",
+        "CountryAndCity": "fldJ7dFRzx7bR9U6g",
+        "SubmittedBy": "flduADiTl7jpiy8OH", 
+        "ContactInformation": "fldSy0Hbwl49VtZvf",
+        
+        # Single select fields (5)
+        "Gender": "fldOAGXoU0DqqFRmB",
+        "Size": "fldZyNgaaa1snp6s7",
+        "Role": "fldetbIGOkKFK0hYq",
+        "Department": "fldIh0eyPspgr1TWk",
+        "PaymentStatus": "fldQzc7m7eO0JzRZf",
+        
+        # Number field (1)
+        "PaymentAmount": "fldyP24ZbeGD8nnaZ",
+        
+        # Date field (1)
+        "PaymentDate": "fldylOQLqcBwkmzlh"
+    }
+    
     # Python field name -> Airtable field name mapping
     PYTHON_TO_AIRTABLE: Dict[str, str] = {
         # Primary text fields
@@ -290,6 +314,37 @@ class AirtableFieldMapping:
             List of all Python model field names  
         """
         return list(cls.PYTHON_TO_AIRTABLE.keys())
+    
+    @classmethod
+    def get_field_id(cls, airtable_field: str) -> Optional[str]:
+        """
+        Get Airtable Field ID from field name.
+        
+        Args:
+            airtable_field: Airtable field name
+            
+        Returns:
+            Airtable Field ID or None if not found
+        """
+        return cls.AIRTABLE_FIELD_IDS.get(airtable_field)
+    
+    @classmethod
+    def translate_fields_to_ids(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Translate field names to Field IDs for API calls.
+        
+        Args:
+            data: Dictionary with field names as keys
+            
+        Returns:
+            Dictionary with Field IDs as keys, preserving unknown fields
+        """
+        translated = {}
+        for field_name, value in data.items():
+            field_id = cls.get_field_id(field_name)
+            key = field_id if field_id else field_name
+            translated[key] = value
+        return translated
 
 
 class SearchFieldMapping:
