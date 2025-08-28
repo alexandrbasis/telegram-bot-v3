@@ -18,7 +18,7 @@ from src.data.repositories.participant_repository import (
 )
 from src.data.airtable.airtable_client import AirtableClient, AirtableAPIError
 from src.models.participant import Participant
-from src.services.search_service import SearchService
+from src.services.search_service import SearchService, detect_language, format_participant_result
 
 logger = logging.getLogger(__name__)
 
@@ -791,11 +791,11 @@ class AirtableParticipantRepository(ParticipantRepository):
                 logger.debug("No participants in database")
                 return []
             
-            # Use SearchService for fuzzy matching
+            # Use SearchService for fuzzy matching (maintaining backward compatibility)
             search_service = SearchService(similarity_threshold=threshold, max_results=limit)
             search_results = search_service.search_participants(query, all_participants)
             
-            # Convert SearchResult objects to (Participant, float) tuples
+            # Convert SearchResult objects to (Participant, float) tuples (backward compatible)
             fuzzy_results = [
                 (result.participant, result.similarity_score) 
                 for result in search_results
@@ -808,3 +808,66 @@ class AirtableParticipantRepository(ParticipantRepository):
             if isinstance(e, RepositoryError):
                 raise
             raise RepositoryError(f"Failed to perform fuzzy name search: {e}", e)
+    
+    async def search_by_name_enhanced(
+        self, 
+        query: str, 
+        threshold: float = 0.8,
+        limit: int = 5
+    ) -> List[Tuple[Participant, float, str]]:
+        """
+        Enhanced search with language detection, multi-field search, and rich formatting.
+        
+        Uses the enhanced search service with language detection, first/last name search,
+        and returns results with rich participant information formatting.
+        
+        Args:
+            query: Name or partial name to search for
+            threshold: Minimum similarity score (0.0-1.0) to include in results
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of tuples containing (Participant, similarity_score, formatted_result) 
+            sorted by similarity score in descending order
+            
+        Raises:
+            RepositoryError: If search fails
+        """
+        try:
+            logger.debug(f"Enhanced search for '{query}' (threshold={threshold}, limit={limit})")
+            
+            if not query or not query.strip():
+                logger.debug("Empty query, returning no results")
+                return []
+            
+            # Get all participants from Airtable
+            all_participants = await self.list_all()
+            
+            if not all_participants:
+                logger.debug("No participants in database")
+                return []
+            
+            # Detect query language for optimized formatting
+            detected_lang = detect_language(query.strip())
+            
+            # Use enhanced SearchService for multi-field matching
+            search_service = SearchService(similarity_threshold=threshold, max_results=limit)
+            search_results = search_service.search_participants_enhanced(query, all_participants)
+            
+            # Convert SearchResult objects to (Participant, float, str) tuples with rich formatting
+            enhanced_results = []
+            for result in search_results:
+                formatted_result = format_participant_result(result.participant, detected_lang)
+                enhanced_results.append((
+                    result.participant, 
+                    result.similarity_score,
+                    formatted_result
+                ))
+            
+            logger.debug(f"Enhanced search found {len(enhanced_results)} matches")
+            return enhanced_results
+            
+        except Exception as e:
+            if isinstance(e, RepositoryError):
+                raise
+            raise RepositoryError(f"Failed to perform enhanced name search: {e}", e)

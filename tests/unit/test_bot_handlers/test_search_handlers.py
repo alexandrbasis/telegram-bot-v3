@@ -15,6 +15,7 @@ from src.bot.handlers.search_handlers import (
     search_button,
     process_name_search,
     main_menu_button,
+    process_name_search_enhanced,
     SearchStates
 )
 from src.services.search_service import SearchResult
@@ -203,6 +204,8 @@ class TestProcessNameSearchHandler:
                 Participant(full_name_ru="Александр Иванов"),
                 Participant(full_name_ru="Мария Сидорова"),
             ]
+            # Mock enhanced search to not exist (triggers fallback)
+            mock_repo.search_by_name_enhanced.side_effect = AttributeError("Enhanced search not available")
             mock_repo_getter.return_value = mock_repo
             
             # Mock search service
@@ -248,6 +251,8 @@ class TestProcessNameSearchHandler:
             # Mock repository
             mock_repo = AsyncMock()
             mock_repo.list_all.return_value = [Participant(full_name_ru="Мария Сидорова")]
+            # Mock enhanced search to not exist (triggers fallback)
+            mock_repo.search_by_name_enhanced.side_effect = AttributeError("Enhanced search not available")
             mock_repo_getter.return_value = mock_repo
             
             # Mock search service - no results
@@ -279,6 +284,8 @@ class TestProcessNameSearchHandler:
             # Mock repository that raises error
             mock_repo = AsyncMock()
             mock_repo.list_all.side_effect = Exception("Database error")
+            # Mock enhanced search to not exist (triggers fallback)
+            mock_repo.search_by_name_enhanced.side_effect = AttributeError("Enhanced search not available")
             mock_repo_getter.return_value = mock_repo
             
             result = await process_name_search(mock_update_message, mock_context)
@@ -390,3 +397,216 @@ class TestHandlerIntegration:
             
             search_button_result = await search_button(mock_update, mock_context)
             assert search_button_result == SearchStates.WAITING_FOR_NAME
+
+
+class TestEnhancedSearchHandlers:
+    """Test enhanced search functionality with rich results."""
+    
+    @pytest.fixture
+    def enhanced_sample_search_results(self):
+        """Enhanced sample search results with rich formatting."""
+        from src.models.participant import Role, Department
+        
+        participants = [
+            Participant(
+                full_name_ru="Александр Иванов",
+                full_name_en="Alexander Ivanov", 
+                role=Role.TEAM,
+                department=Department.KITCHEN
+            ),
+            Participant(
+                full_name_ru="Мария Петрова",
+                full_name_en="Maria Petrova",
+                role=Role.CANDIDATE, 
+                department=Department.WORSHIP
+            )
+        ]
+        
+        return [
+            (participants[0], 0.95, "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen"),
+            (participants[1], 0.87, "Мария Петрова (Maria Petrova) - CANDIDATE, Worship")
+        ]
+    
+    @pytest.fixture
+    def mock_update_message(self):
+        """Mock Update object for text message."""
+        update = Mock(spec=Update)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        
+        user.id = 123456
+        user.first_name = "Test"
+        
+        message.text = "Александр"
+        message.reply_text = AsyncMock()
+        
+        update.message = message
+        update.effective_user = user
+        update.callback_query = None
+        
+        return update
+    
+    @pytest.fixture  
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+    
+    @pytest.mark.asyncio
+    async def test_process_name_search_enhanced_with_rich_results(self, mock_update_message, mock_context, enhanced_sample_search_results):
+        """Test enhanced search processing with rich participant information."""
+        # Mock the enhanced repository method (to be implemented)
+        with patch('src.bot.handlers.search_handlers.get_participant_repository') as mock_repo_getter, \
+             patch.object(mock_update_message.message, 'reply_text') as mock_reply:
+            
+            # Mock repository with enhanced search method
+            mock_repo = AsyncMock()
+            mock_repo.search_by_name_enhanced.return_value = enhanced_sample_search_results
+            mock_repo_getter.return_value = mock_repo
+            
+            result = await process_name_search_enhanced(mock_update_message, mock_context)
+            
+            # Should call enhanced search method
+            mock_repo.search_by_name_enhanced.assert_called_once_with("Александр", threshold=0.8, limit=5)
+            
+            # Should reply with rich formatted results
+            mock_reply.assert_called_once()
+            call_args = mock_reply.call_args
+            
+            message_text = call_args[1]['text']
+            assert "Найдено участников: 2" in message_text
+            assert "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen" in message_text
+            assert "Мария Петрова (Maria Petrova) - CANDIDATE, Worship" in message_text
+            assert "95%" in message_text  # Similarity score
+            assert "87%" in message_text
+            
+            # Should return SHOWING_RESULTS state
+            assert result == SearchStates.SHOWING_RESULTS
+    
+    @pytest.mark.asyncio
+    async def test_process_name_search_enhanced_language_detection(self, mock_context):
+        """Test enhanced search with different language inputs."""
+        # Test Russian input
+        russian_update = Mock(spec=Update)
+        russian_update.message = Mock()
+        russian_update.message.text = "Александр"
+        russian_update.message.reply_text = AsyncMock()
+        russian_update.effective_user = Mock()
+        russian_update.effective_user.id = 123
+        
+        # Test English input  
+        english_update = Mock(spec=Update)
+        english_update.message = Mock()
+        english_update.message.text = "Alexander"
+        english_update.message.reply_text = AsyncMock()
+        english_update.effective_user = Mock()
+        english_update.effective_user.id = 124
+        
+        with patch('src.bot.handlers.search_handlers.get_participant_repository') as mock_repo_getter:
+            mock_repo = AsyncMock()
+            mock_repo.search_by_name_enhanced.return_value = []
+            mock_repo_getter.return_value = mock_repo
+            
+            # Test Russian input
+            await process_name_search_enhanced(russian_update, mock_context)
+            mock_repo.search_by_name_enhanced.assert_called_with("Александр", threshold=0.8, limit=5)
+            
+            # Reset mock
+            mock_repo.search_by_name_enhanced.reset_mock()
+            
+            # Test English input
+            await process_name_search_enhanced(english_update, mock_context)
+            mock_repo.search_by_name_enhanced.assert_called_with("Alexander", threshold=0.8, limit=5)
+    
+    @pytest.mark.asyncio
+    async def test_process_name_search_enhanced_no_results(self, mock_update_message, mock_context):
+        """Test enhanced search with no results found."""
+        with patch('src.bot.handlers.search_handlers.get_participant_repository') as mock_repo_getter:
+            
+            mock_repo = AsyncMock()
+            mock_repo.search_by_name_enhanced.return_value = []
+            mock_repo_getter.return_value = mock_repo
+            
+            result = await process_name_search_enhanced(mock_update_message, mock_context)
+            
+            # Should reply with no results message
+            mock_update_message.message.reply_text.assert_called_once()
+            call_args = mock_update_message.message.reply_text.call_args
+            
+            message_text = call_args[1]['text']
+            assert "Участники не найдены" in message_text
+            
+            # Should return SHOWING_RESULTS state
+            assert result == SearchStates.SHOWING_RESULTS
+    
+    @pytest.mark.asyncio
+    async def test_process_name_search_enhanced_error_handling(self, mock_update_message, mock_context):
+        """Test enhanced search error handling."""
+        with patch('src.bot.handlers.search_handlers.get_participant_repository') as mock_repo_getter:
+            
+            # Mock repository that raises error
+            mock_repo = AsyncMock()
+            mock_repo.search_by_name_enhanced.side_effect = Exception("Enhanced search error")
+            mock_repo_getter.return_value = mock_repo
+            
+            result = await process_name_search_enhanced(mock_update_message, mock_context)
+            
+            # Should reply with error message
+            mock_update_message.message.reply_text.assert_called_once()
+            call_args = mock_update_message.message.reply_text.call_args
+            
+            message_text = call_args[1]['text']
+            assert "Ошибка" in message_text
+            assert "Попробуйте позже" in message_text
+            
+            # Should return SHOWING_RESULTS state
+            assert result == SearchStates.SHOWING_RESULTS
+    
+    @pytest.mark.asyncio
+    async def test_process_name_search_enhanced_partial_name_matching(self, mock_context):
+        """Test enhanced search with partial names (first/last name only)."""
+        # Test first name search
+        first_name_update = Mock(spec=Update)
+        first_name_update.message = Mock()
+        first_name_update.message.text = "Александр"  # First name only
+        first_name_update.message.reply_text = AsyncMock()
+        first_name_update.effective_user = Mock()
+        first_name_update.effective_user.id = 123
+        
+        # Test last name search
+        last_name_update = Mock(spec=Update)
+        last_name_update.message = Mock()
+        last_name_update.message.text = "Иванов"  # Last name only
+        last_name_update.message.reply_text = AsyncMock()
+        last_name_update.effective_user = Mock()
+        last_name_update.effective_user.id = 124
+        
+        with patch('src.bot.handlers.search_handlers.get_participant_repository') as mock_repo_getter:
+            
+            from src.models.participant import Role, Department
+            enhanced_participant = Participant(
+                full_name_ru="Александр Иванов",
+                full_name_en="Alexander Ivanov",
+                role=Role.TEAM,
+                department=Department.KITCHEN
+            )
+            
+            mock_repo = AsyncMock()
+            mock_repo.search_by_name_enhanced.return_value = [
+                (enhanced_participant, 0.92, "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen")
+            ]
+            mock_repo_getter.return_value = mock_repo
+            
+            # Test first name search
+            result = await process_name_search_enhanced(first_name_update, mock_context)
+            assert result == SearchStates.SHOWING_RESULTS
+            mock_repo.search_by_name_enhanced.assert_called_with("Александр", threshold=0.8, limit=5)
+            
+            # Reset and test last name search
+            mock_repo.search_by_name_enhanced.reset_mock()
+            result = await process_name_search_enhanced(last_name_update, mock_context)
+            assert result == SearchStates.SHOWING_RESULTS
+            mock_repo.search_by_name_enhanced.assert_called_with("Иванов", threshold=0.8, limit=5)
+
+

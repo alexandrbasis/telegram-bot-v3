@@ -12,9 +12,221 @@ from typing import List, Tuple
 from src.services.search_service import (
     SearchService,
     normalize_russian,
-    SearchResult
+    SearchResult,
+    detect_language,
+    parse_name_parts,
+    format_participant_result
 )
-from src.models.participant import Participant
+from src.models.participant import Participant, Role, Department
+
+
+class TestLanguageDetection:
+    """Test automatic language detection for input strings."""
+    
+    def test_detect_russian_cyrillic(self):
+        """Test detection of Russian/Cyrillic text."""
+        assert detect_language("Александр") == "ru"
+        assert detect_language("Басис") == "ru"
+        assert detect_language("Лия Глеева") == "ru"
+        assert detect_language("АЛЕКСАНДР БАСИС") == "ru"
+        assert detect_language("алёксей петров") == "ru"
+    
+    def test_detect_english_latin(self):
+        """Test detection of English/Latin text."""
+        assert detect_language("Alexander") == "en"
+        assert detect_language("Basis") == "en"
+        assert detect_language("Liya Gleyeva") == "en"
+        assert detect_language("ALEXANDER BASIS") == "en"
+        assert detect_language("john smith") == "en"
+    
+    def test_detect_mixed_defaults_to_predominant(self):
+        """Test mixed language input defaults to predominant language."""
+        assert detect_language("Александр Smith") == "ru"  # 9 Cyrillic vs 5 Latin
+        assert detect_language("John Иванов") == "ru"  # 6 Cyrillic vs 4 Latin  
+        assert detect_language("John Smith Б") == "en"  # 9 Latin vs 1 Cyrillic
+        assert detect_language("A Б В Г Д") == "ru"  # 4 Cyrillic vs 1 Latin
+    
+    def test_detect_empty_and_special_chars(self):
+        """Test detection with empty strings and special characters."""
+        assert detect_language("") == "en"  # Default to English
+        assert detect_language("   ") == "en"  # Whitespace defaults to English
+        assert detect_language("123 456") == "en"  # Numbers default to English
+        assert detect_language("@#$%") == "en"  # Special chars default to English
+    
+    def test_detect_numbers_with_text(self):
+        """Test detection with numbers mixed with text."""
+        assert detect_language("Александр 123") == "ru"
+        assert detect_language("Alexander 456") == "en"
+
+
+class TestNameParsing:
+    """Test name parsing functionality for multi-field search."""
+    
+    def test_parse_russian_full_names(self):
+        """Test parsing Russian full names into first/last parts."""
+        assert parse_name_parts("Александр Иванов") == ["Александр", "Иванов"]
+        assert parse_name_parts("Мария Петровна Сидорова") == ["Мария", "Петровна", "Сидорова"]
+        assert parse_name_parts("Иван") == ["Иван"]  # Single name
+        
+    def test_parse_english_full_names(self):
+        """Test parsing English full names into first/last parts."""
+        assert parse_name_parts("Alexander Ivanov") == ["Alexander", "Ivanov"]
+        assert parse_name_parts("Mary Jane Smith") == ["Mary", "Jane", "Smith"]
+        assert parse_name_parts("John") == ["John"]  # Single name
+    
+    def test_parse_with_extra_whitespace(self):
+        """Test parsing with extra whitespace handling."""
+        assert parse_name_parts("  Александр   Иванов  ") == ["Александр", "Иванов"]
+        assert parse_name_parts("Alexander\t\tIvanov") == ["Alexander", "Ivanov"]
+        
+    def test_parse_empty_and_invalid(self):
+        """Test parsing edge cases."""
+        assert parse_name_parts("") == []
+        assert parse_name_parts("   ") == []
+        assert parse_name_parts("123") == ["123"]  # Numbers treated as name parts
+
+
+class TestMultiFieldSearch:
+    """Test multi-field search functionality."""
+    
+    def test_enhanced_search_russian_first_name(self):
+        """Test searching by Russian first name matches both full names."""
+        service = SearchService()
+        participants = [
+            Participant(full_name_ru="Александр Иванов", full_name_en="Alexander Ivanov"),
+            Participant(full_name_ru="Мария Петрова", full_name_en="Maria Petrova"),
+            Participant(full_name_ru="Александра Сидорова", full_name_en="Alexandra Sidorova"),
+        ]
+        
+        results = service.search_participants_enhanced("Александр", participants)
+        
+        # Should find both "Александр Иванов" and potentially "Александра" as fuzzy match
+        assert len(results) >= 1
+        assert any("Александр Иванов" in r.participant.full_name_ru for r in results)
+        
+    def test_enhanced_search_russian_last_name(self):
+        """Test searching by Russian last name."""
+        service = SearchService()
+        participants = [
+            Participant(full_name_ru="Александр Иванов", full_name_en="Alexander Ivanov"),
+            Participant(full_name_ru="Петр Иванов", full_name_en="Peter Ivanov"),
+            Participant(full_name_ru="Мария Петрова", full_name_en="Maria Petrova"),
+        ]
+        
+        results = service.search_participants_enhanced("Иванов", participants)
+        
+        # Should find both participants with last name "Иванов"
+        assert len(results) >= 2
+        ivanov_results = [r for r in results if "Иванов" in r.participant.full_name_ru]
+        assert len(ivanov_results) >= 2
+        
+    def test_enhanced_search_english_first_name(self):
+        """Test searching by English first name."""
+        service = SearchService()
+        participants = [
+            Participant(full_name_ru="Александр Иванов", full_name_en="Alexander Ivanov"),
+            Participant(full_name_ru="Мария Петрова", full_name_en="Maria Petrova"),
+            Participant(full_name_ru="Алекс Смирнов", full_name_en="Alex Smirnov"),
+        ]
+        
+        results = service.search_participants_enhanced("Alexander", participants)
+        
+        # Should find "Alexander Ivanov" and potentially "Alex" as fuzzy match
+        assert len(results) >= 1
+        assert any("Alexander Ivanov" in (r.participant.full_name_en or "") for r in results)
+        
+    def test_enhanced_search_language_detection_optimization(self):
+        """Test that language detection optimizes search fields."""
+        service = SearchService()
+        participants = [
+            Participant(full_name_ru="Александр Иванов", full_name_en="Alexander Ivanov"),
+            Participant(full_name_ru="Мария Петрова", full_name_en="Maria Petrova"),
+        ]
+        
+        # Russian input should focus on Russian fields
+        ru_results = service.search_participants_enhanced("Александр", participants)
+        # English input should focus on English fields  
+        en_results = service.search_participants_enhanced("Alexander", participants)
+        
+        # Both should find results, potentially with different scores
+        assert len(ru_results) >= 1
+        assert len(en_results) >= 1
+
+
+class TestRichResultFormatting:
+    """Test rich result formatting for participant information display."""
+    
+    def test_format_participant_basic_info(self):
+        """Test basic participant formatting with name only."""
+        participant = Participant(full_name_ru="Александр Иванов", full_name_en="Alexander Ivanov")
+        
+        result = format_participant_result(participant, "ru")
+        
+        assert "Александр Иванов" in result
+        assert "Alexander Ivanov" in result
+        
+    def test_format_participant_with_role_and_department(self):
+        """Test formatting with role and department information."""
+        participant = Participant(
+            full_name_ru="Мария Петрова", 
+            full_name_en="Maria Petrova",
+            role=Role.TEAM,
+            department=Department.KITCHEN
+        )
+        
+        result = format_participant_result(participant, "ru")
+        
+        assert "Мария Петрова" in result
+        assert "TEAM" in result
+        assert "Kitchen" in result
+        
+    def test_format_participant_english_priority(self):
+        """Test formatting with English language priority."""
+        participant = Participant(
+            full_name_ru="Иван Смирнов",
+            full_name_en="Ivan Smirnov", 
+            role=Role.CANDIDATE,
+            department=Department.MEDIA
+        )
+        
+        result = format_participant_result(participant, "en")
+        
+        # Should prioritize English name first
+        assert "Ivan Smirnov" in result
+        assert "Иван Смирнов" in result  # But still include Russian
+        assert "CANDIDATE" in result
+        assert "Media" in result
+        
+    def test_format_participant_missing_fields(self):
+        """Test formatting when some fields are missing."""
+        participant = Participant(
+            full_name_ru="Елена Козлова",
+            role=Role.TEAM
+            # No full_name_en, no department
+        )
+        
+        result = format_participant_result(participant, "ru")
+        
+        assert "Елена Козлова" in result
+        assert "TEAM" in result
+        # Should handle missing fields gracefully
+        assert result is not None and len(result) > 0
+        
+    def test_format_participant_with_church_info(self):
+        """Test formatting including church and location information."""
+        participant = Participant(
+            full_name_ru="Сергей Волков",
+            full_name_en="Sergey Volkov",
+            role=Role.CANDIDATE,
+            department=Department.WORSHIP,
+            church="St. Nicholas Cathedral",
+            country_and_city="Moscow, Russia"
+        )
+        
+        result = format_participant_result(participant, "ru")
+        
+        assert "Сергей Волков" in result
+        assert "St. Nicholas Cathedral" in result or "Moscow, Russia" in result
 
 
 class TestRussianNormalization:
