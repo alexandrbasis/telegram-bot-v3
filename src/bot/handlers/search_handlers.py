@@ -331,3 +331,57 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
     
     return SearchStates.MAIN_MENU
+
+
+async def handle_participant_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handle participant selection from search results.
+    
+    Stores selected participant in context and shows editing interface.
+    
+    Args:
+        update: Telegram update object
+        context: Bot context
+        
+    Returns:
+        Next conversation state (editing state)
+    """
+    query = update.callback_query
+    await query.answer()
+    
+    user = query.from_user
+    logger.info(f"User {user.id} selected participant from results")
+    
+    # Parse participant ID from callback data
+    participant_id = query.data.split(':')[1]
+    
+    # Find participant in stored search results
+    search_results = context.user_data.get('search_results', [])
+    selected_participant = None
+    
+    for result in search_results:
+        participant = result.participant
+        # Match by record_id or fallback to name hash
+        current_id = getattr(participant, 'record_id', None)
+        if not current_id:
+            current_id = str(hash(participant.full_name_ru or participant.full_name_en or ""))
+        
+        if current_id == participant_id:
+            selected_participant = participant
+            break
+    
+    if not selected_participant:
+        logger.error(f"Participant not found for ID {participant_id}")
+        await query.message.edit_text(
+            text="❌ Участник не найден.",
+            reply_markup=get_search_button_keyboard()
+        )
+        return SearchStates.SHOWING_RESULTS
+    
+    # Store selected participant for editing
+    context.user_data['current_participant'] = selected_participant
+    logger.info(f"Selected participant: {selected_participant.full_name_ru} (ID: {participant_id})")
+    
+    # Import and show edit menu (dynamic import to avoid circular dependency)
+    from src.bot.handlers.edit_participant_handlers import show_participant_edit_menu
+    return await show_participant_edit_menu(update, context)

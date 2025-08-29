@@ -1,5 +1,5 @@
 # Task: Participant Editing Interface
-**Created**: 2025-08-28 | **Status**: Ready for Implementation
+**Created**: 2025-08-28 | **Status**: In Progress | **Branch**: feature/agb-15-participant-editing-interface
 
 ## Business Requirements ✅ **APPROVED**
 ### Primary Objective
