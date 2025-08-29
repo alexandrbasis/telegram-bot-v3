@@ -160,6 +160,109 @@ class AirtableParticipantRepository(ParticipantRepository):
                 raise
             raise RepositoryError(f"Unexpected error updating participant: {e}", e)
     
+    async def update_by_id(self, record_id: str, field_updates: Dict[str, Any]) -> bool:
+        """
+        Update specific fields of a participant by record ID.
+        
+        Updates only the specified fields, leaving other fields unchanged.
+        Uses Airtable's partial update functionality.
+        
+        Args:
+            record_id: Airtable record ID
+            field_updates: Dictionary of field names and new values
+            
+        Returns:
+            True if update was successful, False otherwise
+            
+        Raises:
+            RepositoryError: If update operation fails
+            NotFoundError: If record_id doesn't exist
+            ValidationError: If field_updates contains invalid data
+        """
+        if not record_id:
+            raise ValidationError("Record ID cannot be empty")
+        
+        if not field_updates:
+            logger.info(f"No field updates provided for record {record_id}")
+            return True
+        
+        try:
+            logger.info(f"Updating fields for participant {record_id}: {list(field_updates.keys())}")
+            
+            # Convert field updates to Airtable format
+            # We need to handle the field name mapping between model fields and Airtable fields
+            airtable_fields = self._convert_field_updates_to_airtable(field_updates)
+            
+            # Update record in Airtable
+            updated_record = await self.client.update_record(record_id, airtable_fields)
+            
+            if updated_record:
+                logger.info(f"Successfully updated participant {record_id}")
+                return True
+            else:
+                logger.warning(f"No record returned from update for {record_id}")
+                return False
+                
+        except AirtableAPIError as e:
+            if e.status_code == 404:
+                raise NotFoundError(f"Participant {record_id} not found")
+            elif e.status_code == 422:
+                raise ValidationError(f"Invalid field updates: {e}", e.original_error)
+            else:
+                raise RepositoryError(f"Failed to update participant fields: {e}", e.original_error)
+        except Exception as e:
+            if isinstance(e, (ValidationError, NotFoundError)):
+                raise
+            raise RepositoryError(f"Unexpected error updating participant fields: {e}", e)
+    
+    def _convert_field_updates_to_airtable(self, field_updates: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convert model field names and values to Airtable field format.
+        
+        Maps between participant model field names and Airtable API field names.
+        
+        Args:
+            field_updates: Dictionary with model field names as keys
+            
+        Returns:
+            Dictionary with Airtable field names as keys
+        """
+        # Field name mapping from model to Airtable
+        field_mapping = {
+            'full_name_ru': 'FullNameRU',
+            'full_name_en': 'FullNameEN',
+            'church': 'Church',
+            'country_and_city': 'CountryAndCity',
+            'contact_information': 'ContactInformation',
+            'submitted_by': 'SubmittedBy',
+            'gender': 'Gender',
+            'size': 'Size',
+            'role': 'Role',
+            'department': 'Department',
+            'payment_status': 'PaymentStatus',
+            'payment_amount': 'PaymentAmount',
+            'payment_date': 'PaymentDate'
+        }
+        
+        airtable_fields = {}
+        
+        for field_name, value in field_updates.items():
+            airtable_field_name = field_mapping.get(field_name)
+            if not airtable_field_name:
+                raise ValidationError(f"Unknown field name: {field_name}")
+            
+            # Convert value to appropriate format for Airtable
+            if field_name == 'payment_date' and value is not None:
+                # Convert date to ISO format string
+                airtable_fields[airtable_field_name] = value.isoformat() if hasattr(value, 'isoformat') else str(value)
+            elif hasattr(value, 'value'):
+                # Handle enum values (Gender, Size, Role, Department, PaymentStatus)
+                airtable_fields[airtable_field_name] = value.value
+            else:
+                airtable_fields[airtable_field_name] = value
+                
+        return airtable_fields
+    
     async def delete(self, participant_id: str) -> bool:
         """
         Delete a participant record.

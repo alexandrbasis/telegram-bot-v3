@@ -128,8 +128,8 @@ def format_tool_action(tool_name, params):
 
 def send_telegram_message(message):
     """Send message to Telegram"""
-    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    bot_token = os.environ.get("CLAUDE_HOOK_BOT_TOKEN")
+    chat_id = os.environ.get("CLAUDE_HOOK_CHAT_ID")
     
     if not bot_token or not chat_id:
         print("⚠️ Telegram credentials not set", file=sys.stderr)

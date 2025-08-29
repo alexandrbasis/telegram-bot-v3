@@ -1,0 +1,218 @@
+"""
+Keyboard builders for participant editing functionality.
+
+Provides inline keyboard layouts for field selection, value selection,
+and editing workflow control with Russian labels.
+"""
+
+from typing import List
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+from src.models.participant import Gender, Size, Role, Department, PaymentStatus
+
+
+def create_participant_edit_keyboard() -> InlineKeyboardMarkup:
+    """
+    Create keyboard with edit buttons for all participant fields.
+    
+    Generates buttons for all 13 participant fields with Russian labels
+    and includes save/cancel options.
+    
+    Returns:
+        InlineKeyboardMarkup with field edit buttons
+    """
+    keyboard = []
+    
+    # Text fields - row by row layout
+    keyboard.append([
+        InlineKeyboardButton("✏️ Имя (русское)", callback_data="edit_field:full_name_ru"),
+        InlineKeyboardButton("✏️ Имя (английское)", callback_data="edit_field:full_name_en")
+    ])
+    
+    keyboard.append([
+        InlineKeyboardButton("✏️ Церковь", callback_data="edit_field:church"),
+        InlineKeyboardButton("✏️ Местоположение", callback_data="edit_field:country_and_city")
+    ])
+    
+    keyboard.append([
+        InlineKeyboardButton("✏️ Контакты", callback_data="edit_field:contact_information"),
+        InlineKeyboardButton("✏️ Отправитель", callback_data="edit_field:submitted_by")
+    ])
+    
+    # Selection fields
+    keyboard.append([
+        InlineKeyboardButton("✏️ Пол", callback_data="edit_field:gender"),
+        InlineKeyboardButton("✏️ Размер", callback_data="edit_field:size")
+    ])
+    
+    keyboard.append([
+        InlineKeyboardButton("✏️ Роль", callback_data="edit_field:role"),
+        InlineKeyboardButton("✏️ Отдел", callback_data="edit_field:department")
+    ])
+    
+    # Payment fields
+    keyboard.append([
+        InlineKeyboardButton("✏️ Статус платежа", callback_data="edit_field:payment_status"),
+        InlineKeyboardButton("✏️ Сумма платежа", callback_data="edit_field:payment_amount")
+    ])
+    
+    keyboard.append([
+        InlineKeyboardButton("✏️ Дата платежа", callback_data="edit_field:payment_date")
+    ])
+    
+    # Control buttons
+    keyboard.append([
+        InlineKeyboardButton("💾 Сохранить изменения", callback_data="save_changes"),
+        InlineKeyboardButton("❌ Отмена", callback_data="cancel_edit")
+    ])
+    
+    return InlineKeyboardMarkup(keyboard)
+
+
+def create_field_edit_keyboard(field_name: str) -> InlineKeyboardMarkup:
+    """
+    Create keyboard with options for specific field type.
+    
+    Generates inline keyboards with predefined values for selection fields
+    (gender, size, role, department, payment_status).
+    
+    Args:
+        field_name: Name of the field to create options for
+        
+    Returns:
+        InlineKeyboardMarkup with field-specific options
+        
+    Raises:
+        ValueError: If field_name is not a button-based field
+    """
+    if field_name == 'gender':
+        return _create_gender_keyboard()
+    elif field_name == 'size':
+        return _create_size_keyboard()
+    elif field_name == 'role':
+        return _create_role_keyboard()
+    elif field_name == 'department':
+        return _create_department_keyboard()
+    elif field_name == 'payment_status':
+        return _create_payment_status_keyboard()
+    else:
+        raise ValueError(f"Unknown field type for keyboard creation: {field_name}")
+
+
+def _create_gender_keyboard() -> InlineKeyboardMarkup:
+    """Create keyboard for gender selection."""
+    keyboard = [
+        [
+            InlineKeyboardButton("🧔 Мужской", callback_data="select_value:M"),
+            InlineKeyboardButton("👩 Женский", callback_data="select_value:F")
+        ],
+        [
+            InlineKeyboardButton("❌ Отмена", callback_data="cancel_edit")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def _create_size_keyboard() -> InlineKeyboardMarkup:
+    """Create keyboard for size selection."""
+    keyboard = [
+        [
+            InlineKeyboardButton("XS", callback_data="select_value:XS"),
+            InlineKeyboardButton("S", callback_data="select_value:S"),
+            InlineKeyboardButton("M", callback_data="select_value:M")
+        ],
+        [
+            InlineKeyboardButton("L", callback_data="select_value:L"),
+            InlineKeyboardButton("XL", callback_data="select_value:XL"),
+            InlineKeyboardButton("XXL", callback_data="select_value:XXL")
+        ],
+        [
+            InlineKeyboardButton("3XL", callback_data="select_value:3XL")
+        ],
+        [
+            InlineKeyboardButton("❌ Отмена", callback_data="cancel_edit")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def _create_role_keyboard() -> InlineKeyboardMarkup:
+    """Create keyboard for role selection."""
+    keyboard = [
+        [
+            InlineKeyboardButton("👤 Кандидат", callback_data="select_value:CANDIDATE"),
+            InlineKeyboardButton("👥 Команда", callback_data="select_value:TEAM")
+        ],
+        [
+            InlineKeyboardButton("❌ Отмена", callback_data="cancel_edit")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def _create_department_keyboard() -> InlineKeyboardMarkup:
+    """Create keyboard for department selection."""
+    keyboard = [
+        [
+            InlineKeyboardButton("ROE", callback_data="select_value:ROE"),
+            InlineKeyboardButton("Chapel", callback_data="select_value:Chapel"),
+            InlineKeyboardButton("Setup", callback_data="select_value:Setup")
+        ],
+        [
+            InlineKeyboardButton("Palanka", callback_data="select_value:Palanka"),
+            InlineKeyboardButton("Administration", callback_data="select_value:Administration"),
+            InlineKeyboardButton("Kitchen", callback_data="select_value:Kitchen")
+        ],
+        [
+            InlineKeyboardButton("Decoration", callback_data="select_value:Decoration"),
+            InlineKeyboardButton("Bell", callback_data="select_value:Bell"),
+            InlineKeyboardButton("Refreshment", callback_data="select_value:Refreshment")
+        ],
+        [
+            InlineKeyboardButton("Worship", callback_data="select_value:Worship"),
+            InlineKeyboardButton("Media", callback_data="select_value:Media"),
+            InlineKeyboardButton("Clergy", callback_data="select_value:Clergy")
+        ],
+        [
+            InlineKeyboardButton("Rectorate", callback_data="select_value:Rectorate")
+        ],
+        [
+            InlineKeyboardButton("❌ Отмена", callback_data="cancel_edit")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def _create_payment_status_keyboard() -> InlineKeyboardMarkup:
+    """Create keyboard for payment status selection."""
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Оплачено", callback_data="select_value:Paid"),
+            InlineKeyboardButton("⏳ Частично", callback_data="select_value:Partial")
+        ],
+        [
+            InlineKeyboardButton("❌ Не оплачено", callback_data="select_value:Unpaid")
+        ],
+        [
+            InlineKeyboardButton("❌ Отмена", callback_data="cancel_edit")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def create_save_cancel_keyboard() -> InlineKeyboardMarkup:
+    """
+    Create simple save/cancel keyboard.
+    
+    Used in confirmation dialogs and error states.
+    
+    Returns:
+        InlineKeyboardMarkup with save and cancel buttons
+    """
+    keyboard = [
+        [
+            InlineKeyboardButton("💾 Сохранить", callback_data="save_changes"),
+            InlineKeyboardButton("❌ Отмена", callback_data="cancel_edit")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)

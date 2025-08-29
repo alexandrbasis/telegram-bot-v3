@@ -297,6 +297,27 @@ class ParticipantRepository(ABC):
             RepositoryError: If search fails
         """
         pass
+    
+    @abstractmethod
+    async def update_by_id(self, record_id: str, field_updates: Dict[str, Any]) -> bool:
+        """
+        Update specific fields of a participant by record ID.
+        
+        Updates only the specified fields, leaving other fields unchanged.
+        
+        Args:
+            record_id: Unique record identifier
+            field_updates: Dictionary of field names and new values to update
+            
+        Returns:
+            True if update was successful, False otherwise
+            
+        Raises:
+            RepositoryError: If update operation fails
+            NotFoundError: If record_id doesn't exist
+            ValidationError: If field_updates contains invalid data
+        """
+        pass
 
 
 class RepositoryError(Exception):
