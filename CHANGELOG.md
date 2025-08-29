@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Participant Editing Interface** - Complete participant data editing functionality with field-specific input methods (PR #7, SHA: fe7c2441d, merged 2025-08-29T11:05:55Z)
+  - Full-featured editing interface with 13 individual field edit buttons accessible from search results (`src/bot/handlers/edit_participant_handlers.py:1-501`)
+  - 4-state ConversationHandler with robust state management: FIELD_SELECTION → TEXT_INPUT/BUTTON_SELECTION → back to FIELD_SELECTION → save/cancel workflow (`src/bot/handlers/edit_participant_handlers.py:45-120`)
+  - Field-specific keyboard system with Russian labels for predefined fields: Gender (2 options), Size (7 options), Role (2 options), Department (13 options), PaymentStatus (3 options) (`src/bot/keyboards/edit_keyboards.py:1-160`)
+  - Text input workflow for free-form fields with validation: Russian/English names, Church, Country/City, Contact information, Submitted by (`src/bot/handlers/edit_participant_handlers.py:200-350`)
+  - Special validation for numeric and date fields: Payment amount (integer ≥ 0) and Payment date (YYYY-MM-DD format) (`src/services/participant_update_service.py:85-151`)
+  - Comprehensive field validation service with Russian error messages and enum conversion (`src/services/participant_update_service.py:1-151`)
+  - Repository layer enhancement with selective field updates via `update_by_id` method (`src/data/airtable/airtable_participant_repo.py:163-265`, `src/data/repositories/participant_repository.py:301-320`)
+  - Seamless integration with existing search conversation flow allowing direct editing from search results (`src/bot/handlers/search_handlers.py:333-387`, `src/bot/handlers/search_conversation.py:17-94`)
+  - Save/cancel workflow with change confirmation and proper state cleanup
+  - Complete Russian localization across all user interactions with field-specific prompts and error messages
+  - Users can now edit all participant fields directly through the bot: names, contact info, roles, departments, payment details, and personal information
+- **Extensive Testing Suite** - 56 comprehensive unit tests with 100% pass rate covering all editing functionality
+  - Handler logic testing with state transition validation (`tests/unit/test_bot_handlers/test_edit_participant_handlers.py:1-17` tests)
+  - Keyboard generation testing with layout and button validation (`tests/unit/test_bot_keyboards/test_edit_keyboards.py:1-13` tests)
+  - Field validation and conversion testing with comprehensive error condition coverage (`tests/unit/test_services/test_participant_update_service.py:1-26` tests)
+  - Complete TDD implementation with edge case coverage and error handling validation
+- **Comprehensive Documentation Updates** - 6 documentation files updated with participant editing interface specifications
+  - Bot commands documentation with editing workflow and Russian interface details (`docs/technical/bot-commands.md`)
+  - Feature specifications with business requirements, use cases, and acceptance criteria (`docs/business/feature-specifications.md`)
+  - User stories documentation covering editing workflows and field-specific interactions (`docs/business/user-stories.md`)
+  - Architecture overview updated with editing conversation patterns and state management (`docs/architecture/architecture-overview.md`)
+  - Testing strategy documentation updated with editing test coverage and validation approaches (`docs/development/testing-strategy.md`)
+  - API design documentation covering editing service interfaces and validation logic (`docs/architecture/api-design.md`)
 - **Universal Search Enhancement with Language Detection** - Complete overhaul of participant search functionality with multilingual support (PR #5, SHA: dc640d8, merged 2025-08-28)
   - Automatic language detection with Cyrillic vs Latin character analysis (`src/services/search_service.py:18-47`)
   - Multi-field search capability across Russian names, English names, first/last names with intelligent parsing (`src/services/search_service.py:50-67, 183-260`)
