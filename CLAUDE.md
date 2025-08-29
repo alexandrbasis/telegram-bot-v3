@@ -123,3 +123,27 @@ Optional:
 3. Rate limiting is built into the Airtable client (5 requests/second default)
 4. Error handling follows consistent patterns with custom exception hierarchy
 5. Logging is configured per module with appropriate levels
+
+### Recent Features
+
+#### Enhanced Search Results with Participant Editing
+The bot now features:
+- Interactive search results with match quality indicators
+- Inline participant editing capabilities with real-time field updates
+- Save/cancel workflow with confirmation prompts and retry mechanisms
+- Comprehensive error handling and user feedback
+- Rich formatting for improved user experience
+
+Key components:
+- `src/services/participant_update_service.py`: Handles participant updates with validation
+- Enhanced search handlers with editing interface integration
+- Complete save/cancel workflow with change tracking and confirmation screens
+
+#### Save/Cancel Workflow with Airtable Integration
+Advanced editing workflow features:
+- Change confirmation screens showing "Current Value → **New Value**" format
+- Explicit save confirmation before committing changes to Airtable
+- Cancel workflow that discards changes and returns to main menu
+- Retry mechanism for failed save operations with user-friendly error messages
+- Complete state management preventing data loss during error recovery
+- Integration with existing conversation flows and main menu navigation

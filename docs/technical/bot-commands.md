@@ -109,9 +109,22 @@ Each participant field can be edited through dedicated "Изменить [Field]
 
 ### Save/Cancel Actions
 
-- **"Сохранить изменения" (Save Changes)**: Commits all field changes to Airtable
-- **"Отмена" (Cancel)**: Discards changes and returns to search results
+#### Save Confirmation Workflow
+- **"Сохранить изменения" (Save Changes)**: Displays confirmation screen showing all pending changes
+- **Confirmation Screen**: Shows "Current Value → **New Value**" format for all modified fields
+- **"Подтвердить сохранение" (Confirm Save)**: Commits all changes to Airtable
+- **Save Success**: Displays "Участник успешно обновлен" and returns to search results
+
+#### Cancel and Navigation
+- **"Отмена" (Cancel)**: Discards all changes and returns to main menu
 - **"Назад к поиску" (Back to Search)**: Returns to search results without saving
+- **"Вернуться в главное меню" (Return to Main Menu)**: Cancel confirmation option
+
+#### Error Handling and Retry
+- **Save Failure**: Automatic retry buttons appear on Airtable update errors
+- **"Попробовать снова" (Try Again)**: Retry failed save operation preserving changes
+- **Error Messages**: User-friendly Russian error messages with actionable instructions
+- **Data Preservation**: User changes maintained during retry operations
 
 ## Error Handling
 
@@ -135,5 +148,18 @@ Each participant field can be edited through dedicated "Изменить [Field]
 6. Bot shows role options: "Кандидат", "Команда"
 7. User selects "Команда"
 8. Bot updates field and returns to participant profile
-9. User clicks "Сохранить изменения" to commit all changes
-10. Bot confirms: "Участник успешно обновлен" and returns to search
+9. User clicks "Сохранить изменения" to review changes
+10. **Confirmation Screen**: Shows "Роль: Кандидат → **Команда**"
+11. User clicks "Подтвердить сохранение" to commit changes
+12. Bot saves to Airtable and confirms: "Участник успешно обновлен"
+13. User returns to search results with context preserved
+
+### Error Recovery Flow
+
+1. User attempts to save changes
+2. **Airtable Error Occurs** (network/API issue)
+3. Bot displays: "Ошибка при сохранении данных в Airtable" 
+4. **Retry Button**: "Попробовать снова" appears automatically
+5. User clicks retry → Bot attempts save again with preserved changes
+6. Success: Changes saved and user notified
+7. Failure: Retry option remains available

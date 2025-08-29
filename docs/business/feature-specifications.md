@@ -120,9 +120,12 @@ Fields:
 - [x] ✅ Text fields accept and validate input with Russian prompts
 - [x] ✅ State management maintains editing context properly
 - [x] ✅ Field validation prevents invalid data with clear error messages
-- [x] ✅ Complete test coverage (56 tests, 100% pass rate)
-- [x] ✅ Russian localization across all UI elements
-- [x] ✅ Integration with existing search functionality
+- [x] ✅ **Save confirmation workflow** with change preview and explicit user confirmation
+- [x] ✅ **Cancel workflow** discards changes and returns to main menu cleanly
+- [x] ✅ **Error handling with retry** preserves user changes during failed save operations
+- [x] ✅ Complete test coverage (33 tests total including integration, 100% pass rate)
+- [x] ✅ Russian localization across all UI elements including error messages
+- [x] ✅ Integration with existing search functionality and conversation flows
 
 ### Future Enhancements
 
@@ -137,3 +140,68 @@ Fields:
 - Integration with participant import/export
 - Reporting dashboard for field changes
 - Notification system for significant updates
+
+## Save/Cancel Workflow with Airtable Integration
+
+### Overview
+Complete save/cancel workflow system with change confirmation, error handling, and Airtable integration for the participant editing feature.
+
+**Status**: ✅ Implemented (2025-08-29)
+**Implementation**: Enhanced edit_participant_handlers.py with confirmation screens and retry logic
+**Test Coverage**: 33 tests total (21 unit + 8 repository + 4 integration tests) - 100% pass rate
+
+### Core Features
+
+#### 1. Save Confirmation Screen
+- **Change Preview**: Shows all pending changes in "Current Value → **New Value**" format
+- **Explicit Confirmation**: Requires user confirmation before committing to Airtable
+- **Change Summary**: Groups all field modifications in a single confirmation view
+- **Actions**: "Подтвердить сохранение" (Confirm) or "Отмена" (Cancel)
+
+#### 2. Cancel Workflow
+- **Change Discard**: Cancel discards all pending changes without saving
+- **Clean State**: Returns user to main menu with clean conversation state
+- **Confirmation**: "Вернуться в главное меню" confirmation option
+- **Context Reset**: Clears editing context to prevent state conflicts
+
+#### 3. Error Handling and Retry
+- **Automatic Retry**: Failed save operations show "Попробовать снова" (Try Again) button
+- **Change Preservation**: User changes preserved during retry attempts
+- **Error Details**: Clear Russian error messages explaining failure reasons
+- **Recovery Path**: Multiple retry attempts allowed until success or user cancellation
+
+#### 4. Airtable Integration
+- **Atomic Updates**: All changes committed in single Airtable update operation
+- **Rate Limiting**: Respects Airtable API rate limits (5 requests/second)
+- **Field Mapping**: Proper translation between internal models and Airtable schema
+- **Error Classification**: Network, validation, and API errors handled appropriately
+
+### Technical Implementation
+
+#### Save Confirmation Flow
+- **Function**: `show_save_confirmation()` (lines 506-591)
+- **Change Tracking**: Modified fields tracked in conversation context
+- **Confirmation Display**: Russian field names with before/after values
+- **User Actions**: Confirmation or cancellation buttons
+
+#### Retry Mechanism
+- **Function**: `retry_save()` (lines 594-614)
+- **Error Classification**: Distinguishes between different failure types
+- **User Feedback**: Specific error messages for network vs validation issues
+- **State Recovery**: Maintains editing context through retry cycles
+
+#### Integration Testing
+- **Test Suite**: `tests/integration/test_search_to_edit_flow.py` (314 lines)
+- **Coverage**: Complete user journeys from search through edit to save
+- **Scenarios**: Success, cancel, retry, and validation workflows
+- **Quality Assurance**: All 4 integration tests passing
+
+### Acceptance Criteria
+
+- [x] ✅ Save confirmation displays all pending changes clearly
+- [x] ✅ Cancel workflow discards changes and returns to main menu
+- [x] ✅ Error recovery allows retry without data loss
+- [x] ✅ Airtable integration handles all error scenarios gracefully
+- [x] ✅ Complete conversation flow integration without state conflicts
+- [x] ✅ Russian localization for all user-facing messages
+- [x] ✅ Comprehensive test coverage (100% pass rate)

@@ -41,9 +41,9 @@ tests/
 ## Participant Editing Interface Testing
 
 ### Test Coverage Summary (2025-08-29)
-**Total Tests**: 56 unit tests  
+**Total Tests**: 33 tests (21 unit + 8 repository + 4 integration)
 **Pass Rate**: 100%  
-**Coverage Areas**: Handler logic, keyboard generation, field validation
+**Coverage Areas**: Handler logic, keyboard generation, field validation, save/cancel workflow, integration flows
 
 #### Handler Testing (`test_edit_participant_handlers.py`)
 **Tests**: 17 unit tests
@@ -129,20 +129,41 @@ test_update_error_handling()
 
 ## Integration Testing
 
-### End-to-End Conversation Flows
-- Complete search → edit → save workflows
-- Cross-state data persistence
-- Error recovery across conversation boundaries
+### End-to-End Conversation Flows (`test_search_to_edit_flow.py`)
+**Tests**: 4 integration tests (314 lines)
+**Coverage**:
+- Complete search → edit → save workflows with real conversation states
+- Cancel workflow testing with state cleanup verification
+- Error recovery and retry mechanisms with change preservation
+- Integration between search results and editing interface
 
-### Airtable Integration
-- Real API interaction testing (development environment)
-- Rate limiting behavior validation
-- Data consistency checks
+**Key Test Scenarios**:
+```python
+# Complete workflow testing
+test_complete_search_to_edit_to_save_flow()     # Happy path end-to-end
+test_search_to_edit_cancel_flow()              # Cancel workflow validation
+test_search_to_edit_save_retry_flow()          # Error recovery with retry
+test_search_to_edit_validation_error_flow()    # Validation error handling
+```
+
+### Airtable Integration Testing
+**Tests**: 8 repository tests covering `update_by_id()` method
+**Coverage**:
+- Successful field updates with proper field mapping
+- Validation error handling and error message generation
+- Network error simulation and retry behavior
+- Edge cases and boundary conditions
+
+### Save/Cancel Workflow Integration
+- **Change Confirmation**: Verification that confirmation screen shows all pending changes
+- **Data Preservation**: Changes maintained through error scenarios and retries
+- **State Cleanup**: Clean conversation state transitions on cancel operations
+- **Error Recovery**: Failed save operations recoverable without data loss
 
 ### Future Integration Test Areas
-- Full conversation flow simulation
 - Multi-user concurrent editing scenarios  
 - Performance testing under load
+- Long conversation session stability testing
 
 ## Test Execution Commands
 
@@ -233,11 +254,13 @@ def test_field_validation():
 ## Testing Roadmap
 
 ### Current Status
-- [x] ✅ Comprehensive unit testing (56 tests, 100% pass)
-- [x] ✅ Handler conversation flow testing
+- [x] ✅ Comprehensive unit testing (21 unit tests, 100% pass)
+- [x] ✅ Handler conversation flow testing with save/cancel workflow
 - [x] ✅ Service layer validation testing
 - [x] ✅ Keyboard generation testing
-- [ ] ⏳ Integration testing implementation
+- [x] ✅ Repository integration testing (8 update_by_id tests)
+- [x] ✅ End-to-end integration testing (4 workflow tests)
+- [x] ✅ Save confirmation and retry mechanism testing
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 

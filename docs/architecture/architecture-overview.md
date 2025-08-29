@@ -77,19 +77,24 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 
 ## Component Integration
 
-### Search → Edit Workflow
+### Search → Edit → Save Workflow
 1. User searches via `/search` command
 2. Results display with "Подробнее" (Details) buttons  
 3. Button click transitions to participant editing interface
 4. Editing interface shows complete profile with 13 edit buttons
 5. Field editing uses appropriate input method (buttons vs text)
-6. Changes saved via repository `update_by_id()` method
-7. User returns to search results with context preserved
+6. **Save confirmation screen** displays all pending changes in "Current → **New**" format
+7. User confirms save operation or cancels to discard changes
+8. Changes committed via repository `update_by_id()` method with retry mechanism
+9. User returns to search results with context preserved
 
 ### State Management
 - **Context Preservation**: User data maintained across state transitions
-- **Error Recovery**: Validation failures return to appropriate input state
-- **Cancellation Handling**: Clean state cleanup on cancel operations
+- **Error Recovery**: Validation failures return to appropriate input state with retry options
+- **Change Tracking**: All field modifications tracked until explicit save confirmation
+- **Cancellation Handling**: Clean state cleanup on cancel operations with change discard
+- **Save Confirmation**: Explicit user confirmation required before Airtable updates
+- **Retry Mechanism**: Failed save operations preserve changes and offer retry with error details
 - **Back Navigation**: Seamless return to previous conversation states
 
 ### Data Flow
