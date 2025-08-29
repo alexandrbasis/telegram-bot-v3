@@ -23,8 +23,35 @@ from src.services.participant_update_service import (
     ParticipantUpdateService,
     ValidationError
 )
+from src.services.user_interaction_logger import UserInteractionLogger
+from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+def get_user_interaction_logger():
+    """
+    Get user interaction logger instance if logging is enabled.
+    
+    Returns:
+        UserInteractionLogger instance or None if disabled
+    """
+    try:
+        # Reset settings to pick up new environment variables
+        from src.config.settings import reset_settings
+        reset_settings()
+        
+        settings = get_settings()
+        if not settings.logging.enable_user_interaction_logging:
+            return None
+        
+        # Use configured log level for user interactions
+        import logging
+        log_level = getattr(logging, settings.logging.user_interaction_log_level.upper(), logging.INFO)
+        return UserInteractionLogger(log_level=log_level)
+    except Exception as e:
+        logger.error(f"Failed to initialize user interaction logger: {e}")
+        return None
 
 
 class EditStates(IntEnum):
@@ -159,11 +186,22 @@ async def handle_field_edit_selection(update: Update, context: ContextTypes.DEFA
     query = update.callback_query
     await query.answer()
     
+    user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
     # Parse field name from callback data
     field_name = query.data.split(':')[1]
     context.user_data['editing_field'] = field_name
     
-    logger.info(f"User {query.from_user.id} selected field for editing: {field_name}")
+    logger.info(f"User {user.id} selected field for editing: {field_name}")
     
     # Define field types and their input methods
     BUTTON_FIELDS = ['gender', 'size', 'role', 'department', 'payment_status']
@@ -172,11 +210,33 @@ async def handle_field_edit_selection(update: Update, context: ContextTypes.DEFA
     
     if field_name in BUTTON_FIELDS:
         # Show button selection interface
-        return await show_field_button_selection(update, context, field_name)
+        next_state = await show_field_button_selection(update, context, field_name)
+        
+        # Log bot response if logging is enabled
+        if user_logger:
+            user_logger.log_bot_response(
+                user_id=user.id,
+                response_type="edit_message",
+                content=f"Field button selection for {field_name}",
+                keyboard_info=f"Button options for field: {field_name}"
+            )
+        
+        return next_state
     
     elif field_name in TEXT_FIELDS:
         # Show text input prompt
-        return await show_field_text_prompt(update, context, field_name)
+        next_state = await show_field_text_prompt(update, context, field_name)
+        
+        # Log bot response if logging is enabled
+        if user_logger:
+            user_logger.log_bot_response(
+                user_id=user.id,
+                response_type="edit_message",
+                content=f"Text input prompt for {field_name}",
+                keyboard_info="Cancel button"
+            )
+        
+        return next_state
     
     else:
         logger.error(f"Unknown field type for editing: {field_name}")
@@ -184,6 +244,15 @@ async def handle_field_edit_selection(update: Update, context: ContextTypes.DEFA
             text="Ошибка: неизвестное поле для редактирования.",
             reply_markup=create_participant_edit_keyboard()
         )
+        
+        # Log missing response if logging is enabled
+        if user_logger:
+            user_logger.log_missing_response(
+                user_id=user.id,
+                expected_action="field_edit_selection",
+                error_context=f"Unknown field type: {field_name}"
+            )
+        
         return EditStates.FIELD_SELECTION
 
 
@@ -336,15 +405,35 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
     query = update.callback_query
     await query.answer()
     
+    user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
     field_name = context.user_data.get('editing_field')
     if not field_name:
-        logger.error(f"No editing field set for user {query.from_user.id}")
+        logger.error(f"No editing field set for user {user.id}")
+        
+        # Log missing response if logging is enabled
+        if user_logger:
+            user_logger.log_missing_response(
+                user_id=user.id,
+                expected_action="button_field_selection",
+                error_context="No editing field set in context"
+            )
+        
         return EditStates.FIELD_SELECTION
     
     # Parse selected value from callback data
     selected_value = query.data.split(':')[1]
     
-    logger.info(f"User {query.from_user.id} selected {selected_value} for field {field_name}")
+    logger.info(f"User {user.id} selected {selected_value} for field {field_name}")
     
     # Convert string value to appropriate enum/type
     try:
@@ -374,6 +463,15 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
             reply_markup=create_participant_edit_keyboard()
         )
         
+        # Log bot response if logging is enabled
+        if user_logger:
+            user_logger.log_bot_response(
+                user_id=user.id,
+                response_type="edit_message",
+                content=f"Field {field_name} updated to {display_value}",
+                keyboard_info="Participant edit menu"
+            )
+        
         return EditStates.FIELD_SELECTION
         
     except (ValueError, KeyError) as e:
@@ -383,6 +481,14 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
             text=f"❌ Ошибка: неверное значение для поля {field_name}.",
             reply_markup=create_field_edit_keyboard(field_name)
         )
+        
+        # Log missing response if logging is enabled
+        if user_logger:
+            user_logger.log_missing_response(
+                user_id=user.id,
+                expected_action="button_field_selection",
+                error_context=f"Invalid button value {selected_value} for field {field_name}: {e}"
+            )
         
         return EditStates.BUTTON_SELECTION
 
@@ -404,6 +510,16 @@ async def cancel_editing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await query.answer()
     
     user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
     logger.info(f"User {user.id} cancelled editing")
     
     # Clear editing state
@@ -417,6 +533,15 @@ async def cancel_editing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         text="❌ Редактирование отменено.",
         reply_markup=get_search_button_keyboard()
     )
+    
+    # Log bot response if logging is enabled
+    if user_logger:
+        user_logger.log_bot_response(
+            user_id=user.id,
+            response_type="edit_message",
+            content="Editing cancelled",
+            keyboard_info="Search results keyboard"
+        )
     
     return SearchStates.SHOWING_RESULTS
 
@@ -438,6 +563,16 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     await query.answer()
     
     user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
     changes = context.user_data.get('editing_changes', {})
     participant = context.user_data.get('current_participant')
     
@@ -485,6 +620,15 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 ]])
             )
             
+            # Log successful save response if logging is enabled
+            if user_logger:
+                user_logger.log_bot_response(
+                    user_id=user.id,
+                    response_type="edit_message",
+                    content=f"Changes saved successfully: {len(changes)} fields updated",
+                    keyboard_info="Main menu button"
+                )
+            
         else:
             # Create retry keyboard
             retry_keyboard = [
@@ -499,6 +643,14 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 text="❌ Ошибка при сохранении изменений. Проверьте подключение и попробуйте еще раз.",
                 reply_markup=InlineKeyboardMarkup(retry_keyboard)
             )
+            
+            # Log failed save response if logging is enabled
+            if user_logger:
+                user_logger.log_missing_response(
+                    user_id=user.id,
+                    expected_action="save_changes",
+                    error_context="Save operation failed"
+                )
             
     except Exception as e:
         logger.error(f"Error saving changes for user {user.id}: {e}")
@@ -516,6 +668,14 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             text="❌ Произошла ошибка при сохранении. Проверьте подключение и попробуйте еще раз.",
             reply_markup=InlineKeyboardMarkup(retry_keyboard)
         )
+        
+        # Log exception response if logging is enabled
+        if user_logger:
+            user_logger.log_missing_response(
+                user_id=user.id,
+                expected_action="save_changes",
+                error_context=f"Exception during save: {e}"
+            )
     
     from src.bot.handlers.search_handlers import SearchStates
     return SearchStates.SHOWING_RESULTS
@@ -538,6 +698,16 @@ async def show_save_confirmation(update: Update, context: ContextTypes.DEFAULT_T
     await query.answer()
     
     user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
     changes = context.user_data.get('editing_changes', {})
     participant = context.user_data.get('current_participant')
     
@@ -550,6 +720,16 @@ async def show_save_confirmation(update: Update, context: ContextTypes.DEFAULT_T
                 InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
             ]])
         )
+        
+        # Log bot response if logging is enabled
+        if user_logger:
+            user_logger.log_bot_response(
+                user_id=user.id,
+                response_type="edit_message",
+                content="No changes to save",
+                keyboard_info="Main menu button"
+            )
+        
         from src.bot.handlers.search_handlers import SearchStates
         return SearchStates.SHOWING_RESULTS
     
@@ -606,6 +786,15 @@ async def show_save_confirmation(update: Update, context: ContextTypes.DEFAULT_T
         parse_mode='Markdown'
     )
     
+    # Log bot response if logging is enabled
+    if user_logger:
+        user_logger.log_bot_response(
+            user_id=user.id,
+            response_type="edit_message",
+            content=f"Save confirmation for {len(changes)} changes",
+            keyboard_info="Save/Cancel confirmation buttons"
+        )
+    
     return EditStates.CONFIRMATION
 
 
@@ -626,6 +815,16 @@ async def retry_save(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer()
     
     user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
     logger.info(f"User {user.id} retrying save operation")
     
     # Call the regular save_changes function
