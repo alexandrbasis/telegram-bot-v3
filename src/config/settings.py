@@ -127,6 +127,10 @@ class LoggingSettings:
     airtable_log_level: str = field(default_factory=lambda: os.getenv('AIRTABLE_LOG_LEVEL', 'INFO'))
     telegram_log_level: str = field(default_factory=lambda: os.getenv('TELEGRAM_LOG_LEVEL', 'INFO'))
     
+    # User interaction logging settings
+    enable_user_interaction_logging: bool = field(default_factory=lambda: os.getenv('ENABLE_USER_INTERACTION_LOGGING', 'true').lower() == 'true')
+    user_interaction_log_level: str = field(default_factory=lambda: os.getenv('USER_INTERACTION_LOG_LEVEL', 'INFO'))
+    
     def validate(self) -> None:
         """
         Validate logging settings.
@@ -144,6 +148,9 @@ class LoggingSettings:
         
         if self.telegram_log_level.upper() not in valid_levels:
             raise ValueError(f"TELEGRAM_LOG_LEVEL must be one of {valid_levels}")
+        
+        if self.user_interaction_log_level.upper() not in valid_levels:
+            raise ValueError(f"USER_INTERACTION_LOG_LEVEL must be one of {valid_levels}")
 
 
 @dataclass
