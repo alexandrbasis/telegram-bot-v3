@@ -486,18 +486,147 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             )
             
         else:
+            # Create retry keyboard
+            retry_keyboard = [
+                [
+                    InlineKeyboardButton("🔄 Повторить", callback_data="retry_save"),
+                    InlineKeyboardButton("❌ Отменить", callback_data="cancel_editing")
+                ],
+                [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+            ]
+            
             await query.message.edit_text(
-                text="❌ Ошибка при сохранении изменений. Попробуйте позже.",
-                reply_markup=create_save_cancel_keyboard()
+                text="❌ Ошибка при сохранении изменений. Проверьте подключение и попробуйте еще раз.",
+                reply_markup=InlineKeyboardMarkup(retry_keyboard)
             )
             
     except Exception as e:
         logger.error(f"Error saving changes for user {user.id}: {e}")
         
+        # Create retry keyboard for exceptions
+        retry_keyboard = [
+            [
+                InlineKeyboardButton("🔄 Повторить", callback_data="retry_save"),
+                InlineKeyboardButton("❌ Отменить", callback_data="cancel_editing")
+            ],
+            [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+        ]
+        
         await query.message.edit_text(
-            text="❌ Произошла ошибка при сохранении. Попробуйте позже.",
-            reply_markup=create_save_cancel_keyboard()
+            text="❌ Произошла ошибка при сохранении. Проверьте подключение и попробуйте еще раз.",
+            reply_markup=InlineKeyboardMarkup(retry_keyboard)
         )
     
     from src.bot.handlers.search_handlers import SearchStates
     return SearchStates.SHOWING_RESULTS
+
+
+async def show_save_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Show save confirmation with summary of pending changes.
+    
+    Displays all pending changes and asks user to confirm before saving to Airtable.
+    
+    Args:
+        update: Telegram update object
+        context: Bot context
+        
+    Returns:
+        CONFIRMATION state to wait for user confirmation
+    """
+    query = update.callback_query
+    await query.answer()
+    
+    user = query.from_user
+    changes = context.user_data.get('editing_changes', {})
+    participant = context.user_data.get('current_participant')
+    
+    logger.info(f"User {user.id} requesting save confirmation for {len(changes)} changes")
+    
+    if not changes:
+        await query.message.edit_text(
+            text="ℹ️ Нет изменений для сохранения.",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+            ]])
+        )
+        from src.bot.handlers.search_handlers import SearchStates
+        return SearchStates.SHOWING_RESULTS
+    
+    # Build changes summary
+    changes_text = "📝 **Изменения для сохранения:**\n\n"
+    
+    # Field name translations for user display
+    field_translations = {
+        'full_name_ru': 'Имя (рус)',
+        'full_name_en': 'Имя (англ)',
+        'role': 'Роль',
+        'gender': 'Пол',
+        'size': 'Размер',
+        'department': 'Отдел',
+        'church': 'Церковь',
+        'country_and_city': 'Страна/город',
+        'contact_information': 'Контакты',
+        'payment_amount': 'Сумма оплаты',
+        'payment_date': 'Дата оплаты',
+        'payment_status': 'Статус оплаты',
+        'submitted_by': 'Подано'
+    }
+    
+    for field, new_value in changes.items():
+        field_name = field_translations.get(field, field)
+        
+        # Get current value for comparison
+        current_value = getattr(participant, field, 'Не задано') if participant else 'Не задано'
+        
+        # Format value display
+        if isinstance(new_value, str):
+            display_value = new_value
+        elif hasattr(new_value, 'value'):  # Enum values
+            display_value = new_value.value
+        else:
+            display_value = str(new_value)
+            
+        changes_text += f"• **{field_name}**: {current_value} → **{display_value}**\n"
+    
+    changes_text += f"\n💾 Подтвердить сохранение {len(changes)} изменений?"
+    
+    # Create confirmation keyboard
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Сохранить", callback_data="confirm_save"),
+            InlineKeyboardButton("❌ Отменить", callback_data="cancel_editing")
+        ],
+        [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+    ]
+    
+    await query.message.edit_text(
+        text=changes_text,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode='Markdown'
+    )
+    
+    return EditStates.CONFIRMATION
+
+
+async def retry_save(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Retry save operation after previous failure.
+    
+    Retries the save operation with the same pending changes.
+    
+    Args:
+        update: Telegram update object
+        context: Bot context
+        
+    Returns:
+        Previous conversation state (SHOWING_RESULTS)
+    """
+    query = update.callback_query
+    await query.answer()
+    
+    user = query.from_user
+    logger.info(f"User {user.id} retrying save operation")
+    
+    # Call the regular save_changes function
+    return await save_changes(update, context)

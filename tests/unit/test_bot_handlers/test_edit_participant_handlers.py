@@ -383,3 +383,117 @@ class TestSaveChanges:
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
         assert 'ошибка' in message_text
+
+
+class TestSaveConfirmation:
+    """Test save confirmation workflow."""
+    
+    @pytest.mark.asyncio
+    @patch('src.bot.handlers.edit_participant_handlers.get_participant_repository')
+    async def test_save_confirmation_shows_pending_changes(self, mock_get_repo, mock_update, mock_context):
+        """Test that save confirmation shows all pending changes before save."""
+        participant = Participant(
+            record_id="rec123",
+            full_name_ru="Тест Участник",
+            role=Role.CANDIDATE
+        )
+        changes = {
+            'full_name_ru': 'Новое Имя', 
+            'role': Role.TEAM,
+            'payment_amount': 500
+        }
+        mock_context.user_data['editing_changes'] = changes
+        mock_context.user_data['current_participant'] = participant
+        
+        from src.bot.handlers.edit_participant_handlers import show_save_confirmation
+        
+        result = await show_save_confirmation(mock_update, mock_context)
+        
+        # Should show confirmation with changes summary
+        mock_update.callback_query.message.edit_text.assert_called()
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        
+        assert 'подтвердить' in message_text.lower()
+        assert 'Новое Имя' in message_text  # Should show new value
+        assert 'TEAM' in message_text  # Should show role change
+        assert '500' in message_text  # Should show payment amount
+    
+    @pytest.mark.asyncio 
+    async def test_save_confirmation_no_changes(self, mock_update, mock_context):
+        """Test save confirmation with no changes."""
+        mock_context.user_data['editing_changes'] = {}
+        mock_context.user_data['current_participant'] = None
+        
+        from src.bot.handlers.edit_participant_handlers import show_save_confirmation
+        
+        result = await show_save_confirmation(mock_update, mock_context)
+        
+        mock_update.callback_query.message.edit_text.assert_called()
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        assert 'нет изменений' in message_text.lower()
+
+
+class TestErrorHandlingWithRetry:
+    """Test error handling and retry functionality."""
+    
+    @pytest.mark.asyncio
+    @patch('src.bot.handlers.edit_participant_handlers.get_participant_repository')
+    async def test_save_with_retry_option_on_failure(self, mock_get_repo, mock_update, mock_context):
+        """Test that save failure shows retry option."""
+        participant = Participant(record_id="rec123", full_name_ru="Test")
+        changes = {'full_name_ru': 'New Name'}
+        mock_context.user_data['editing_changes'] = changes
+        mock_context.user_data['current_participant'] = participant
+        
+        # Mock repository failure
+        mock_repo = Mock()
+        mock_repo.update_by_id = AsyncMock(return_value=False)
+        mock_get_repo.return_value = mock_repo
+        
+        from src.bot.handlers.edit_participant_handlers import save_changes
+        
+        result = await save_changes(mock_update, mock_context)
+        
+        # Should show error with retry button
+        mock_update.callback_query.message.edit_text.assert_called()
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        
+        # Check message has retry option
+        reply_markup = call_args[1]['reply_markup']
+        buttons = reply_markup.inline_keyboard
+        
+        # Should have retry button
+        retry_found = any(
+            any('повтор' in btn.text.lower() or 'retry' in btn.callback_data.lower() 
+                for btn in row) 
+            for row in buttons
+        )
+        assert retry_found, "Should have retry button in keyboard"
+    
+    @pytest.mark.asyncio
+    @patch('src.bot.handlers.edit_participant_handlers.get_participant_repository')
+    async def test_retry_save_operation(self, mock_get_repo, mock_update, mock_context):
+        """Test retry save operation after previous failure."""
+        participant = Participant(record_id="rec123", full_name_ru="Test")
+        changes = {'full_name_ru': 'New Name'}
+        mock_context.user_data['editing_changes'] = changes
+        mock_context.user_data['current_participant'] = participant
+        
+        # Mock repository success on retry
+        mock_repo = Mock()
+        mock_repo.update_by_id = AsyncMock(return_value=True)
+        mock_get_repo.return_value = mock_repo
+        
+        from src.bot.handlers.edit_participant_handlers import retry_save
+        
+        result = await retry_save(mock_update, mock_context)
+        
+        # Should retry and succeed
+        mock_repo.update_by_id.assert_called_once()
+        
+        mock_update.callback_query.message.edit_text.assert_called()
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        assert 'сохранен' in message_text.lower()
