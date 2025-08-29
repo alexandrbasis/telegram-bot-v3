@@ -16,6 +16,7 @@ from src.bot.handlers.search_handlers import (
     process_name_search,
     main_menu_button,
     process_name_search_enhanced,
+    create_participant_selection_keyboard,
     SearchStates
 )
 from src.services.search_service import SearchResult
@@ -478,8 +479,8 @@ class TestEnhancedSearchHandlers:
             assert "Найдено участников: 2" in message_text
             assert "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen" in message_text
             assert "Мария Петрова (Maria Petrova) - CANDIDATE, Worship" in message_text
-            assert "95%" in message_text  # Similarity score
-            assert "87%" in message_text
+            assert "Высокое совпадение" in message_text  # Match quality labels instead of percentages
+            assert "Высокое совпадение" in message_text
             
             # Should return SHOWING_RESULTS state
             assert result == SearchStates.SHOWING_RESULTS
@@ -608,5 +609,139 @@ class TestEnhancedSearchHandlers:
             result = await process_name_search_enhanced(last_name_update, mock_context)
             assert result == SearchStates.SHOWING_RESULTS
             mock_repo.search_by_name_enhanced.assert_called_with("Иванов", threshold=0.8, limit=5)
+
+
+class TestParticipantSelectionButtons:
+    """Test participant selection button generation for interactive search results."""
+    
+    def test_create_participant_selection_keyboard_single_result(self):
+        """Test button generation for single search result."""
+        results = [
+            SearchResult(
+                participant=Participant(full_name_ru="Александр Иванов", full_name_en="Alexander Ivanov"),
+                similarity_score=0.95
+            )
+        ]
+        
+        keyboard = create_participant_selection_keyboard(results)
+        
+        # Should have 1 button with participant name
+        assert isinstance(keyboard, InlineKeyboardMarkup)
+        assert len(keyboard.inline_keyboard) == 2  # 1 participant button + 1 main menu button
+        assert len(keyboard.inline_keyboard[0]) == 1  # 1 button in first row
+        
+        participant_button = keyboard.inline_keyboard[0][0]
+        assert participant_button.text == "Александр Иванов"
+        assert participant_button.callback_data.startswith("select_participant:")
+        
+    def test_create_participant_selection_keyboard_multiple_results(self):
+        """Test button generation for multiple search results (2-5)."""
+        results = [
+            SearchResult(
+                participant=Participant(full_name_ru="Александр Иванов", full_name_en="Alexander Ivanov"),
+                similarity_score=0.95
+            ),
+            SearchResult(
+                participant=Participant(full_name_ru="Александра Петрова", full_name_en="Alexandra Petrova"),
+                similarity_score=0.87
+            ),
+            SearchResult(
+                participant=Participant(full_name_ru="Алексей Сидоров", full_name_en="Alexey Sidorov"),
+                similarity_score=0.82
+            )
+        ]
+        
+        keyboard = create_participant_selection_keyboard(results)
+        
+        # Should have 3 participant buttons + 1 main menu button = 4 rows
+        assert isinstance(keyboard, InlineKeyboardMarkup)
+        assert len(keyboard.inline_keyboard) == 4
+        
+        # Check participant buttons
+        for i in range(3):
+            participant_button = keyboard.inline_keyboard[i][0]
+            assert participant_button.callback_data.startswith("select_participant:")
+            
+        # Check names are correct
+        assert keyboard.inline_keyboard[0][0].text == "Александр Иванов"
+        assert keyboard.inline_keyboard[1][0].text == "Александра Петрова"  
+        assert keyboard.inline_keyboard[2][0].text == "Алексей Сидоров"
+        
+    def test_create_participant_selection_keyboard_max_results(self):
+        """Test button generation for maximum 5 results."""
+        results = []
+        for i in range(7):  # Create 7 results but should limit to 5
+            results.append(SearchResult(
+                participant=Participant(full_name_ru=f"Участник {i+1}", full_name_en=f"Participant {i+1}"),
+                similarity_score=0.9 - i * 0.01
+            ))
+            
+        keyboard = create_participant_selection_keyboard(results)
+        
+        # Should limit to 5 participant buttons + 1 main menu = 6 rows
+        assert isinstance(keyboard, InlineKeyboardMarkup)
+        assert len(keyboard.inline_keyboard) == 6
+        
+        # Check first 5 are participant buttons
+        for i in range(5):
+            participant_button = keyboard.inline_keyboard[i][0]
+            assert participant_button.callback_data.startswith("select_participant:")
+            assert f"Участник {i+1}" in participant_button.text
+            
+    def test_create_participant_selection_keyboard_callback_data_format(self):
+        """Test callback data format for participant selection."""
+        results = [
+            SearchResult(
+                participant=Participant(
+                    full_name_ru="Мария Козлова",
+                    full_name_en="Maria Kozlova",
+                    record_id="test_id_123"
+                ),
+                similarity_score=0.89
+            )
+        ]
+        
+        keyboard = create_participant_selection_keyboard(results)
+        participant_button = keyboard.inline_keyboard[0][0]
+        
+        # Callback data should include participant identifier
+        assert participant_button.callback_data == "select_participant:test_id_123"
+        
+    def test_create_participant_selection_keyboard_name_priority_russian(self):
+        """Test that Russian names are prioritized for button labels."""
+        results = [
+            SearchResult(
+                participant=Participant(
+                    full_name_ru="Сергей Волков",
+                    full_name_en="Sergey Volkov"
+                ),
+                similarity_score=0.91
+            ),
+            SearchResult(
+                participant=Participant(
+                    full_name_ru="John Smith"  # English name in Russian field (some data may be like this)
+                ),
+                similarity_score=0.88
+            )
+        ]
+        
+        keyboard = create_participant_selection_keyboard(results)
+        
+        # First button should show Russian name
+        assert keyboard.inline_keyboard[0][0].text == "Сергей Волков"
+        # Second button should show full_name_ru field content (always prioritized)
+        assert keyboard.inline_keyboard[1][0].text == "John Smith"
+        
+    def test_create_participant_selection_keyboard_empty_results(self):
+        """Test keyboard generation with empty results list."""
+        results = []
+        
+        keyboard = create_participant_selection_keyboard(results)
+        
+        # Should only have main menu button
+        assert isinstance(keyboard, InlineKeyboardMarkup)
+        assert len(keyboard.inline_keyboard) == 1
+        assert keyboard.inline_keyboard[0][0].text == "🏠 Главное меню"
+        assert keyboard.inline_keyboard[0][0].callback_data == "main_menu"
 
 

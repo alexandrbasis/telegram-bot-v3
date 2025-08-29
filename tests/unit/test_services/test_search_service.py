@@ -407,6 +407,62 @@ class TestSearchService:
         assert abs(results_lower[0].similarity_score - results_upper[0].similarity_score) < 0.1
 
 
+class TestMatchQualityFormatting:
+    """Test match quality label formatting for enhanced search display."""
+    
+    def test_format_match_quality_exact_match(self):
+        """Test formatting exact match (100%) to Russian label."""
+        from src.services.search_service import format_match_quality
+        
+        # 100% should be "Точное совпадение"
+        assert format_match_quality(1.0) == "Точное совпадение"
+        assert format_match_quality(0.99) == "Точное совпадение"
+        
+    def test_format_match_quality_high_match(self):
+        """Test formatting high quality match (85-98%) to Russian label."""
+        from src.services.search_service import format_match_quality
+        
+        # 85-98% should be "Высокое совпадение"
+        assert format_match_quality(0.98) == "Высокое совпадение"
+        assert format_match_quality(0.90) == "Высокое совпадение"
+        assert format_match_quality(0.85) == "Высокое совпадение"
+        
+    def test_format_match_quality_medium_match(self):
+        """Test formatting medium quality match (70-84%) to Russian label."""
+        from src.services.search_service import format_match_quality
+        
+        # 70-84% should be "Совпадение"
+        assert format_match_quality(0.84) == "Совпадение"
+        assert format_match_quality(0.80) == "Совпадение"
+        assert format_match_quality(0.70) == "Совпадение"
+        
+    def test_format_match_quality_low_match(self):
+        """Test formatting low quality match (<70%) to Russian label."""
+        from src.services.search_service import format_match_quality
+        
+        # <70% should be "Слабое совпадение"
+        assert format_match_quality(0.69) == "Слабое совпадение"
+        assert format_match_quality(0.50) == "Слабое совпадение"
+        assert format_match_quality(0.30) == "Слабое совпадение"
+        
+    def test_format_match_quality_edge_cases(self):
+        """Test formatting edge cases for match quality labels."""
+        from src.services.search_service import format_match_quality
+        
+        # Test boundaries
+        assert format_match_quality(0.0) == "Слабое совпадение"
+        assert format_match_quality(1.0) == "Точное совпадение"
+        
+    def test_format_match_quality_invalid_input(self):
+        """Test handling of invalid input for match quality formatting.""" 
+        from src.services.search_service import format_match_quality
+        
+        # Should handle negative values gracefully
+        assert format_match_quality(-0.1) == "Слабое совпадение"
+        # Should handle values > 1.0 gracefully  
+        assert format_match_quality(1.1) == "Точное совпадение"
+
+
 class TestSearchServiceIntegration:
     """Integration tests for SearchService."""
     
@@ -420,3 +476,10 @@ class TestSearchServiceIntegration:
         # This should work without import errors
         results = service.search_participants("Тест", participants)
         assert isinstance(results, list)
+        assert len(results) >= 1
+        assert results[0].similarity_score > 0.8
+        assert "Тест Участник" in results[0].participant.full_name_ru
+        
+        # Дополнительная проверка интеграции с rapidfuzz
+        assert hasattr(service, 'similarity_threshold')
+        assert service.similarity_threshold > 0

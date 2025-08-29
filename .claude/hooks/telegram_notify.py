@@ -11,28 +11,53 @@ import re
 from datetime import datetime
 import subprocess
 
-def get_last_action_summary():
-    """Extract last meaningful action from transcript"""
-    transcript_path = sys.stdin_data.get("transcript_path", "")
-    if not transcript_path or not os.path.exists(transcript_path):
-        return None
+def get_last_action_summary(stdin_data):
+    """Extract last meaningful action from various sources"""
     
+    # Try git status to see what files were modified
     try:
-        with open(transcript_path, 'r') as f:
-            lines = f.readlines()
+        cwd = stdin_data.get("cwd", "")
+        if cwd and os.path.exists(cwd):
+            result = subprocess.run(
+                ["git", "status", "--porcelain"], 
+                cwd=cwd, 
+                capture_output=True, 
+                text=True, 
+                timeout=5
+            )
             
-        # Look at last few messages for tool usage
-        for line in reversed(lines[-20:]):
-            try:
-                entry = json.loads(line.strip())
-                if entry.get("type") == "tool_use":
-                    tool_name = entry.get("name", "")
-                    params = entry.get("input", {})
-                    return format_tool_action(tool_name, params)
-            except json.JSONDecodeError:
-                continue
+            if result.returncode == 0 and result.stdout.strip():
+                lines = result.stdout.strip().split('\n')
+                modified_files = []
+                new_files = []
+                
+                for line in lines:
+                    if line.startswith(' M') or line.startswith('M '):
+                        filename = os.path.basename(line[3:].strip())
+                        modified_files.append(filename)
+                    elif line.startswith('A ') or line.startswith('??'):
+                        filename = os.path.basename(line[3:].strip())
+                        new_files.append(filename)
+                
+                if new_files:
+                    return f"📝 Created {new_files[0]}"
+                elif modified_files:
+                    return f"✏️ Updated {modified_files[0]}"
+                    
     except Exception:
         pass
+    
+    # Fallback: try to infer from current directory
+    cwd = stdin_data.get("cwd", "")
+    if cwd:
+        if "telegram-bot" in cwd:
+            return "🤖 Updated telegram bot"
+        elif "claude" in cwd.lower():
+            return "🔧 Updated Claude Code settings"
+        else:
+            project_name = os.path.basename(cwd)
+            if project_name and project_name != "/":
+                return f"💻 Updated {project_name}"
     
     return None
 
@@ -49,28 +74,37 @@ def format_tool_action(tool_name, params):
         file_path = params.get("file_path", "")
         if file_path:
             filename = os.path.basename(file_path)
-            return f"📝 Created {filename}"
+            return f"📝 Created new file: {filename}"
     
     elif tool_name in ["Edit", "MultiEdit"]:
         file_path = params.get("file_path", "")
         if file_path:
             filename = os.path.basename(file_path)
-            return f"✏️ Modified {filename}"
+            return f"✏️ Updated file: {filename}"
     
     elif tool_name == "Bash":
         command = params.get("command", "")
+        description = params.get("description", "")
+        
         if "git commit" in command:
-            return "📦 Committed changes"
+            return "📦 Committed changes to repository"
         elif "git push" in command:
-            return "🚀 Pushed to remote"
+            return "🚀 Pushed changes to remote repository"
         elif "pytest" in command or "test" in command:
-            return "🧪 Ran tests"
+            if "coverage" in command:
+                return "🧪 Ran tests with coverage analysis"
+            else:
+                return "🧪 Ran test suite"
         elif "npm run" in command or "yarn" in command:
-            return "⚙️ Build/compile"
+            return "⚙️ Built and compiled project"
+        elif "flake8" in command or "mypy" in command:
+            return "🔍 Code quality check completed"
+        elif description and len(description) > 10:
+            return f"💻 {description}"
         elif command:
             # Truncate long commands
-            cmd_short = command[:30] + "..." if len(command) > 30 else command
-            return f"💻 Ran: {cmd_short}"
+            cmd_short = command[:40] + "..." if len(command) > 40 else command
+            return f"💻 Executed: {cmd_short}"
     
     elif tool_name.startswith("mcp__linear__"):
         if "create_issue" in tool_name:
@@ -104,61 +138,66 @@ def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     
     try:
-        subprocess.run([
+        # Use proper URL encoding to avoid issues with special characters
+        import urllib.parse
+        encoded_message = urllib.parse.quote_plus(message)
+        
+        result = subprocess.run([
             "curl", "-s", "-X", "POST", url,
             "-d", f"chat_id={chat_id}",
-            "-d", f"text={message}",
+            "-d", f"text={encoded_message}",
             "-d", "parse_mode=HTML"
-        ], capture_output=True, check=True)
+        ], capture_output=True, check=True, text=True)
+        print(f"✅ Sent: {message}", file=sys.stderr)
         return True
-    except subprocess.CalledProcessError:
-        print("❌ Failed to send Telegram message", file=sys.stderr)
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to send Telegram message: {e.stderr}", file=sys.stderr)
         return False
 
 def main():
-    global sys.stdin_data
-    
     try:
-        sys.stdin_data = json.load(sys.stdin)
+        stdin_data = json.load(sys.stdin)
     except json.JSONDecodeError:
-        print("❌ Invalid JSON input", file=sys.stderr)
+        send_telegram_message("❌ Hook: Invalid JSON input")
         sys.exit(1)
     
-    hook_event = sys.stdin_data.get("hook_event_name", "")
-    time_str = datetime.now().strftime("%H:%M")
+    hook_event = stdin_data.get("hook_event_name", "")
     
-    # Handle Notification events
+    # Handle permission requests and important notifications
     if hook_event == "Notification":
-        notification_msg = sys.stdin_data.get("message", "")
-        if "permission" in notification_msg.lower():
-            message = f"🔐 Needs permission {time_str}"
-        elif "waiting" in notification_msg.lower():
-            message = f"⏳ Waiting for input {time_str}"
+        notification_msg = stdin_data.get("message", "")
+        if "permission" in notification_msg.lower() or "confirm" in notification_msg.lower():
+            message = "🔐 Waiting for permission"
+        elif "waiting" in notification_msg.lower() or "input" in notification_msg.lower():
+            message = "⏳ Waiting for input"
         else:
-            message = f"ℹ️ {notification_msg[:30]}... {time_str}"
+            # Skip other notification types
+            return
         send_telegram_message(message)
         return
     
     # Get action summary for Stop/SubagentStop
-    action = get_last_action_summary()
+    action = get_last_action_summary(stdin_data)
     
     if hook_event == "Stop":
         if action:
-            message = f"{action} ✅ {time_str}"
+            message = f"{action}"
         else:
-            message = f"🤖 Claude finished ✅ {time_str}"
+            message = "🤖 Task completed"
     
     elif hook_event == "SubagentStop":
         if action and action.startswith("🎯"):
-            message = f"{action} ✅ {time_str}"
+            message = f"{action}"
         else:
-            message = f"🎯 Subagent finished ✅ {time_str}"
+            message = "🎯 Subtask completed"
     
     else:
-        message = f"🤖 {hook_event} ✅ {time_str}"
+        # Skip other events
+        return
     
     # Send notification
     send_telegram_message(message)
 
 if __name__ == "__main__":
     main()
+    sys.exit(0)

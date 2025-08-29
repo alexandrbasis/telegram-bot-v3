@@ -334,3 +334,37 @@ class SearchService:
         target_norm = normalize_russian(target)
         
         return fuzz.token_sort_ratio(query_norm, target_norm) / 100.0
+
+
+def format_match_quality(similarity_score: float) -> str:
+    """
+    Convert similarity score to human-readable Russian match quality label.
+    
+    Transforms raw percentage scores into user-friendly Russian labels for 
+    better search result presentation.
+    
+    Args:
+        similarity_score: Similarity score from 0.0 to 1.0
+        
+    Returns:
+        Russian match quality label:
+        - >= 0.99: "Точное совпадение" (Exact match) 
+        - 0.85-0.98: "Высокое совпадение" (High match)
+        - 0.70-0.84: "Совпадение" (Match)
+        - < 0.70: "Слабое совпадение" (Low match)
+    """
+    # Handle edge cases
+    if similarity_score < 0:
+        similarity_score = 0.0
+    elif similarity_score > 1.0:
+        similarity_score = 1.0
+        
+    # Convert to Russian match quality labels
+    if similarity_score >= 0.99:
+        return "Точное совпадение"
+    elif similarity_score >= 0.85:
+        return "Высокое совпадение" 
+    elif similarity_score >= 0.70:
+        return "Совпадение"
+    else:
+        return "Слабое совпадение"
