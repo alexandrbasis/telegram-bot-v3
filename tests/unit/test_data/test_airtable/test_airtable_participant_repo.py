@@ -648,3 +648,113 @@ class TestAirtableParticipantRepositoryErrorHandling:
         mock_logger.warning.assert_called_once()
         warning_call = mock_logger.warning.call_args[0][0]
         assert "Skipping invalid participant record" in warning_call
+
+
+class TestAirtableParticipantRepositoryUpdateById:
+    """Test suite for update_by_id functionality."""
+    
+    @pytest.mark.asyncio
+    async def test_update_by_id_success(self, repository, mock_airtable_client):
+        """Test successful update by ID with field changes."""
+        field_updates = {
+            'full_name_ru': 'Новое Имя',
+            'role': Role.TEAM,
+            'payment_amount': 500
+        }
+        
+        # Mock successful update
+        mock_airtable_client.update_record.return_value = {
+            "id": "rec123456789012345",
+            "fields": {"FullNameRU": "Новое Имя", "Role": "TEAM", "PaymentAmount": 500}
+        }
+        
+        result = await repository.update_by_id("rec123456789012345", field_updates)
+        
+        assert result is True
+        
+        # Verify client was called with correct parameters
+        mock_airtable_client.update_record.assert_called_once()
+        call_args = mock_airtable_client.update_record.call_args
+        assert call_args[0][0] == "rec123456789012345"  # record_id
+        
+        # Check that field mapping was applied
+        airtable_fields = call_args[0][1]
+        assert 'FullNameRU' in airtable_fields
+        assert 'Role' in airtable_fields
+        assert 'PaymentAmount' in airtable_fields
+    
+    @pytest.mark.asyncio
+    async def test_update_by_id_empty_record_id(self, repository, mock_airtable_client):
+        """Test update with empty record ID raises ValidationError."""
+        field_updates = {'full_name_ru': 'Test Name'}
+        
+        with pytest.raises(ValidationError, match="Record ID cannot be empty"):
+            await repository.update_by_id("", field_updates)
+        
+        # Client should not be called
+        mock_airtable_client.update_record.assert_not_called()
+    
+    @pytest.mark.asyncio
+    async def test_update_by_id_no_updates(self, repository, mock_airtable_client):
+        """Test update with no field updates returns True without API call."""
+        result = await repository.update_by_id("rec123456789012345", {})
+        
+        assert result is True
+        # Client should not be called for empty updates
+        mock_airtable_client.update_record.assert_not_called()
+    
+    @pytest.mark.asyncio
+    async def test_update_by_id_record_not_found(self, repository, mock_airtable_client):
+        """Test update with non-existent record raises NotFoundError."""
+        field_updates = {'full_name_ru': 'Test Name'}
+        
+        # Mock 404 error
+        mock_airtable_client.update_record.side_effect = AirtableAPIError("Not Found", status_code=404)
+        
+        with pytest.raises(NotFoundError, match="Participant rec999999 not found"):
+            await repository.update_by_id("rec999999", field_updates)
+    
+    @pytest.mark.asyncio
+    async def test_update_by_id_validation_error(self, repository, mock_airtable_client):
+        """Test update with invalid data raises ValidationError."""
+        field_updates = {'invalid_field': 'value'}
+        
+        # Mock 422 validation error
+        mock_airtable_client.update_record.side_effect = AirtableAPIError("Validation Error", status_code=422)
+        
+        with pytest.raises(ValidationError, match="Unknown field name: invalid_field"):
+            await repository.update_by_id("rec123456789012345", field_updates)
+    
+    @pytest.mark.asyncio
+    async def test_update_by_id_api_error(self, repository, mock_airtable_client):
+        """Test update with API error raises RepositoryError."""
+        field_updates = {'full_name_ru': 'Test Name'}
+        
+        # Mock general API error (500)
+        mock_airtable_client.update_record.side_effect = AirtableAPIError("Server Error", status_code=500)
+        
+        with pytest.raises(RepositoryError, match="Failed to update participant"):
+            await repository.update_by_id("rec123456789012345", field_updates)
+    
+    @pytest.mark.asyncio
+    async def test_update_by_id_no_record_returned(self, repository, mock_airtable_client):
+        """Test update when no record is returned from API."""
+        field_updates = {'full_name_ru': 'Test Name'}
+        
+        # Mock client returning None
+        mock_airtable_client.update_record.return_value = None
+        
+        result = await repository.update_by_id("rec123456789012345", field_updates)
+        
+        assert result is False
+    
+    @pytest.mark.asyncio
+    async def test_update_by_id_unexpected_error(self, repository, mock_airtable_client):
+        """Test update with unexpected exception raises RepositoryError."""
+        field_updates = {'full_name_ru': 'Test Name'}
+        
+        # Mock unexpected error
+        mock_airtable_client.update_record.side_effect = Exception("Unexpected error")
+        
+        with pytest.raises(RepositoryError, match="Unexpected error updating participant"):
+            await repository.update_by_id("rec123456789012345", field_updates)

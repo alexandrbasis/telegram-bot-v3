@@ -4,10 +4,10 @@
     "description": "Telegram bot for participant management with Airtable integration and Russian/English fuzzy search",
     "architecture": "3-layer architecture (bot/services/data) with repository pattern",
     "main_language": "python",
-    "last_updated": "2025-08-28T23:36:43.394787"
+    "last_updated": "2025-08-29T16:08:32.106314"
   },
   "project_structure": {
-    "tree": "telegram-bot-v3/\n├── .claude/\n    ├── agents/\n        ├── adr-manager.md\n        ├── changelog-generator.md\n        ├── code-review-responder.md\n        ├── comprehensive-researcher.md\n        ├── create-pr-agent.md\n        ├── debugger.md\n        ├── docs-updater.md\n        ├── error-detective.md\n        ├── plan-reviewer.md\n        ├── prompt-optimizer.md\n        ├── search-specialist.md\n        └── task-splitter.md\n    ├── commands/\n        ├── README.md\n        ├── ar.md\n        ├── cda.md\n        ├── ci.md\n        ├── cp.md\n        ├── create-pull-request.md\n        ├── ct.md\n        ├── jb.md\n        ├── mp.md\n        ├── ph.md\n        ├── si.md\n        └── sr.md\n    ├── hooks/\n        ├── debug-hook.sh\n        ├── telegram_notify.py\n        ├── telegram_notify_wrapper.sh\n        ├── test-hook.sh\n        ├── update-index.py\n        ├── update-index.sh\n        └── wrapper.sh\n    ├── config.json\n    ├── settings.json\n    └── settings.local.json\n├── .obsidian/\n    ├── app.json\n    ├── appearance.json\n    ├── core-plugins.json\n    └── workspace.json\n├── data/\n    ├── backups/\n    ├── cache/\n    └── exports/\n├── docs/\n    ├── architecture/\n        ├── api-design.md\n        ├── architecture-overview.md\n        ├── database-design.md\n        └── migration-strategy.md\n    ├── business/\n        ├── business-requirements.md\n        ├── feature-specifications.md\n        └── user-stories.md\n    ├── data-integration/\n        ├── airtable-setup.md\n        ├── airtable_database_structure.md\n        ├── data-backup-restore.md\n        └── field-mappings.md\n    ├── development/\n        ├── coding-standards.md\n        ├── deployment-guide.md\n        ├── development-workflow.md\n        └── testing-strategy.md\n    └── technical/\n        ├── bot-commands.md\n        ├── configuration.md\n        ├── performance-considerations.md\n        └── troubleshooting.md\n├── requirements/\n    ├── base.txt\n    ├── dev.txt\n    └── test.txt\n├── scripts/\n├── src/\n    ├── bot/\n        ├── handlers/\n        └── __init__.py\n    ├── config/\n        ├── __init__.py\n        ├── field_mappings.py (Airtable field ID mappings)\n        └── settings.py (centralized app configuration)\n    ├── data/\n        ├── airtable/\n        ├── repositories/\n        ├── __init__.py\n        └── data_validator.py\n    ├── models/\n        ├── __init__.py\n        └── participant.py (participant data model with enums)\n    ├── services/\n        ├── __init__.py\n        └── search_service.py (fuzzy search with Russian/English support)\n    ├── utils/\n        ├── __init__.py\n        └── test_helper.py\n    ├── __init__.py\n    └── main.py (application entry point)\n├── tasks/\n    ├── completed/\n        ├── task-2025-08-27-airtable-field-ids-integration/\n        ├── task-2025-08-27-database-setup/\n        ├── task-2025-08-27-phase-1-foundation/\n        ├── task-2025-08-28-fix-russian-search/\n        └── task-2025-08-28-russian-name-search/\n    ├── task-2025-08-28-search-results-enhancement/\n        ├── subtask-1-enhanced-search-display/\n        ├── subtask-2-participant-editing-interface/\n        ├── subtask-3-save-update-integration/\n        ├── Enhanced Search Results with Participant Editing.md\n        └── Plan Review - Enhanced Search Results with Participant Editing.md\n    └── task-2025-08-28-indexer-hook.md\n├── tests/\n    ├── fixtures/\n        └── __init__.py\n    ├── integration/\n        ├── test_bot_handlers/\n        ├── __init__.py\n        └── test_main.py\n    ├── unit/\n        ├── test_bot_handlers/\n        ├── test_config/\n        ├── test_data/\n        ├── test_models/\n        ├── test_services/\n        └── __init__.py\n    ├── __init__.py\n    └── test_project_structure.py\n├── CHANGELOG.md\n├── CLAUDE.md (project guidance for Claude Code)\n├── PROJECT_PLAN.md\n├── README.md\n├── hook_test.txt\n├── project_index.json\n├── pyproject.toml\n└── start_bot.sh (bot startup script)",
+    "tree": "telegram-bot-v3/\n├── .claude/\n    ├── agents/\n        ├── adr-manager.md\n        ├── changelog-generator.md\n        ├── code-review-responder.md\n        ├── comprehensive-researcher.md\n        ├── create-pr-agent.md\n        ├── debugger.md\n        ├── docs-updater.md\n        ├── error-detective.md\n        ├── plan-reviewer.md\n        ├── prompt-optimizer.md\n        ├── search-specialist.md\n        └── task-splitter.md\n    ├── commands/\n        ├── README.md\n        ├── ar.md\n        ├── cda.md\n        ├── ci.md\n        ├── cp.md\n        ├── create-pull-request.md\n        ├── ct.md\n        ├── jb.md\n        ├── mp.md\n        ├── ph.md\n        ├── si.md\n        └── sr.md\n    ├── hooks/\n        ├── ct-context-injector.py\n        ├── log_action.sh\n        ├── telegram_notify.py\n        ├── telegram_notify_wrapper.sh\n        ├── update-index.py\n        └── update-index.sh\n    ├── config.json\n    └── settings.local.json\n├── .obsidian/\n    ├── app.json\n    ├── appearance.json\n    ├── core-plugins.json\n    └── workspace.json\n├── data/\n    ├── backups/\n    ├── cache/\n    └── exports/\n├── docs/\n    ├── architecture/\n        ├── api-design.md\n        ├── architecture-overview.md\n        ├── database-design.md\n        └── migration-strategy.md\n    ├── business/\n        ├── business-requirements.md\n        ├── feature-specifications.md\n        └── user-stories.md\n    ├── data-integration/\n        ├── airtable-setup.md\n        ├── airtable_database_structure.md\n        ├── data-backup-restore.md\n        └── field-mappings.md\n    ├── development/\n        ├── coding-standards.md\n        ├── deployment-guide.md\n        ├── development-workflow.md\n        └── testing-strategy.md\n    └── technical/\n        ├── bot-commands.md\n        ├── configuration.md\n        ├── performance-considerations.md\n        └── troubleshooting.md\n├── requirements/\n    ├── base.txt\n    ├── dev.txt\n    └── test.txt\n├── scripts/\n├── src/\n    ├── bot/\n        ├── handlers/\n        ├── keyboards/\n        └── __init__.py\n    ├── config/\n        ├── __init__.py\n        ├── field_mappings.py (Airtable field ID mappings)\n        └── settings.py (centralized app configuration)\n    ├── data/\n        ├── airtable/\n        ├── repositories/\n        ├── __init__.py\n        └── data_validator.py\n    ├── models/\n        ├── __init__.py\n        └── participant.py (participant data model with enums)\n    ├── services/\n        ├── __init__.py\n        ├── participant_update_service.py\n        └── search_service.py (fuzzy search with Russian/English support)\n    ├── utils/\n        ├── __init__.py\n        └── test_helper.py\n    ├── __init__.py\n    └── main.py (application entry point)\n├── tasks/\n    ├── completed/\n        ├── task-2025-08-27-airtable-field-ids-integration/\n        ├── task-2025-08-27-database-setup/\n        ├── task-2025-08-27-phase-1-foundation/\n        ├── task-2025-08-28-fix-russian-search/\n        └── task-2025-08-28-russian-name-search/\n    ├── task-2025-08-28-search-results-enhancement/\n        ├── subtask-1-enhanced-search-display/\n        ├── subtask-2-participant-editing-interface/\n        ├── subtask-3-save-update-integration/\n        ├── Enhanced Search Results with Participant Editing.md\n        └── Plan Review - Enhanced Search Results with Participant Editing.md\n    └── task-2025-08-28-indexer-hook.md\n├── tests/\n    ├── fixtures/\n        └── __init__.py\n    ├── integration/\n        ├── test_bot_handlers/\n        ├── __init__.py\n        ├── test_main.py\n        └── test_search_to_edit_flow.py\n    ├── unit/\n        ├── test_bot_handlers/\n        ├── test_bot_keyboards/\n        ├── test_config/\n        ├── test_data/\n        ├── test_models/\n        ├── test_services/\n        └── __init__.py\n    ├── __init__.py\n    └── test_project_structure.py\n├── CHANGELOG.md\n├── CLAUDE.md (project guidance for Claude Code)\n├── PROJECT_PLAN.md\n├── README.md\n├── project_index.json\n├── pyproject.toml\n└── start_bot.sh (bot startup script)",
     "directory_details": {
       "src/": "Main application source code organized in layers",
       "src/bot/": "Telegram bot presentation layer - handles user interactions",
@@ -147,6 +147,23 @@
         "logging"
       ]
     },
+    "src/services/participant_update_service.py": {
+      "role": "business_service",
+      "purpose": "",
+      "key_exports": [
+        "ValidationError",
+        "ParticipantUpdateService",
+        "TEXT_FIELDS",
+        "BUTTON_FIELDS",
+        "SPECIAL_FIELDS"
+      ],
+      "dependencies": [
+        "src.models.participant"
+      ],
+      "features": [
+        "logging"
+      ]
+    },
     "src/services/search_service.py": {
       "role": "business_service",
       "purpose": "",
@@ -221,6 +238,19 @@
         "logging"
       ]
     },
+    "src/bot/keyboards/edit_keyboards.py": {
+      "role": "presentation_layer",
+      "purpose": "",
+      "key_exports": [
+        "create_participant_edit_keyboard",
+        "create_field_edit_keyboard",
+        "create_save_cancel_keyboard"
+      ],
+      "dependencies": [
+        "src.models.participant"
+      ],
+      "features": []
+    },
     "src/bot/handlers/search_handlers.py": {
       "role": "presentation_layer",
       "purpose": "",
@@ -236,7 +266,8 @@
         "src.data.repositories.participant_repository",
         "src.data.airtable.airtable_client",
         "src.data.airtable.airtable_participant_repo",
-        "src.config.settings"
+        "src.config.settings",
+        "src.bot.handlers.edit_participant_handlers"
       ],
       "features": [
         "async_patterns",
@@ -252,9 +283,40 @@
         "get_search_conversation_handler"
       ],
       "dependencies": [
+        "src.bot.handlers.search_handlers",
+        "src.bot.handlers.edit_participant_handlers"
+      ],
+      "features": [
+        "logging"
+      ]
+    },
+    "src/bot/handlers/edit_participant_handlers.py": {
+      "role": "presentation_layer",
+      "purpose": "",
+      "key_exports": [
+        "EditStates",
+        "get_participant_repository",
+        "FIELD_SELECTION",
+        "TEXT_INPUT",
+        "BUTTON_SELECTION"
+      ],
+      "dependencies": [
+        "src.models.participant",
+        "src.bot.keyboards.edit_keyboards",
+        "src.services.participant_update_service",
+        "src.data.airtable.airtable_client",
+        "src.data.airtable.airtable_participant_repo",
+        "src.config.settings",
+        "src.bot.handlers.search_handlers",
+        "src.bot.handlers.search_handlers",
+        "src.bot.handlers.search_handlers",
+        "src.bot.handlers.search_handlers",
         "src.bot.handlers.search_handlers"
       ],
       "features": [
+        "async_patterns",
+        "enum_types",
+        "airtable_integration",
         "logging"
       ]
     }
@@ -331,7 +393,7 @@
     "setup": "python -m venv venv && source venv/bin/activate && pip install -r requirements/dev.txt"
   },
   "project_statistics": {
-    "total_python_files": 12,
+    "total_python_files": 15,
     "main_directories": [
       "src/bot",
       "src/services",
