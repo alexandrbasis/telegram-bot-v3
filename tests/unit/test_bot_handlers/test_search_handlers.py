@@ -479,8 +479,8 @@ class TestEnhancedSearchHandlers:
             assert "Найдено участников: 2" in message_text
             assert "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen" in message_text
             assert "Мария Петрова (Maria Petrova) - CANDIDATE, Worship" in message_text
-            assert "95%" in message_text  # Similarity score
-            assert "87%" in message_text
+            assert "Высокое совпадение" in message_text  # Match quality labels instead of percentages
+            assert "Высокое совпадение" in message_text
             
             # Should return SHOWING_RESULTS state
             assert result == SearchStates.SHOWING_RESULTS

@@ -12,7 +12,7 @@ from typing import List
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from src.services.search_service import SearchService, SearchResult
+from src.services.search_service import SearchService, SearchResult, format_match_quality
 from src.data.repositories.participant_repository import RepositoryError
 
 logger = logging.getLogger(__name__)
@@ -200,10 +200,11 @@ async def process_name_search(update: Update, context: ContextTypes.DEFAULT_TYPE
                 results_message = f"Найдено участников: {len(enhanced_results)}\n\n"
                 
                 for i, (participant, score, formatted_result) in enumerate(enhanced_results, 1):
-                    score_percentage = int(score * 100)
+                    # Use match quality labels instead of raw percentages
+                    match_quality = format_match_quality(score)
                     
                     # Use rich formatted result from repository
-                    participant_info = f"{i}. {formatted_result} - {score_percentage}%"
+                    participant_info = f"{i}. {formatted_result} - {match_quality}"
                     
                     results_message += participant_info + "\n"
                 
@@ -233,7 +234,8 @@ async def process_name_search(update: Update, context: ContextTypes.DEFAULT_TYPE
                 
                 for i, result in enumerate(results, 1):
                     participant = result.participant
-                    score_percentage = int(result.similarity_score * 100)
+                    # Use match quality labels instead of raw percentages
+                    match_quality = format_match_quality(result.similarity_score)
                     
                     # Format participant info
                     name_ru = participant.full_name_ru or "Неизвестно"
@@ -243,7 +245,7 @@ async def process_name_search(update: Update, context: ContextTypes.DEFAULT_TYPE
                     if name_en and name_en != name_ru:
                         participant_info += f" ({name_en})"
                     
-                    participant_info += f" - {score_percentage}%"
+                    participant_info += f" - {match_quality}"
                     
                     results_message += participant_info + "\n"
                 
@@ -253,10 +255,17 @@ async def process_name_search(update: Update, context: ContextTypes.DEFAULT_TYPE
                 results_message = "Участники не найдены."
                 logger.info(f"No participants found for user {user.id} query: '{query}'")
         
-        # Send results with main menu button
+        # Send results with appropriate keyboard
+        # Use interactive participant selection if we have results, otherwise show main menu
+        search_results = context.user_data.get('search_results', [])
+        if search_results:
+            keyboard = create_participant_selection_keyboard(search_results)
+        else:
+            keyboard = get_search_button_keyboard()
+            
         await update.message.reply_text(
             text=results_message,
-            reply_markup=get_search_button_keyboard()
+            reply_markup=keyboard
         )
         
     except Exception as e:
