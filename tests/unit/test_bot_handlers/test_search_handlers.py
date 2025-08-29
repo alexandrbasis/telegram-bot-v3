@@ -21,6 +21,7 @@ from src.bot.handlers.search_handlers import (
 )
 from src.services.search_service import SearchResult
 from src.models.participant import Participant
+from src.services.user_interaction_logger import UserInteractionLogger
 
 
 class TestSearchStates:
@@ -743,5 +744,262 @@ class TestParticipantSelectionButtons:
         assert len(keyboard.inline_keyboard) == 1
         assert keyboard.inline_keyboard[0][0].text == "🏠 Главное меню"
         assert keyboard.inline_keyboard[0][0].callback_data == "main_menu"
+
+
+class TestUserInteractionLogging:
+    """Test user interaction logging integration in search handlers."""
+    
+    @pytest.fixture
+    def mock_callback_query_with_user_details(self):
+        """Mock callback query with detailed user information."""
+        update = Mock(spec=Update)
+        callback_query = Mock(spec=CallbackQuery)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        
+        user.id = 12345
+        user.first_name = "John"
+        user.last_name = "Doe"
+        user.username = "johndoe"
+        
+        message.edit_text = AsyncMock()
+        
+        callback_query.from_user = user
+        callback_query.data = "search"
+        callback_query.message = message
+        callback_query.answer = AsyncMock()
+        
+        update.callback_query = callback_query
+        update.message = None
+        
+        return update
+    
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {'search_results': []}
+        return context
+    
+    @patch('src.bot.handlers.search_handlers.UserInteractionLogger')
+    @pytest.mark.asyncio
+    async def test_search_button_logs_button_click(self, mock_logger_class, mock_callback_query_with_user_details, mock_context):
+        """Test that search button click is logged with user interaction logger."""
+        # Setup mock logger instance
+        mock_logger_instance = Mock()
+        mock_logger_class.return_value = mock_logger_instance
+        
+        # Execute search button handler
+        await search_button(mock_callback_query_with_user_details, mock_context)
+        
+        # Verify logger was instantiated
+        mock_logger_class.assert_called_once()
+        
+        # Verify button click was logged with correct parameters
+        mock_logger_instance.log_button_click.assert_called_once_with(
+            user_id=12345,
+            button_data="search",
+            username="johndoe"
+        )
+        
+        # Verify bot response was logged
+        mock_logger_instance.log_bot_response.assert_called_once()
+        response_call = mock_logger_instance.log_bot_response.call_args
+        
+        assert response_call[1]['user_id'] == 12345
+        assert response_call[1]['response_type'] == "edit_message"
+        assert "Введите имя участника" in response_call[1]['content']
+    
+    @patch('src.bot.handlers.search_handlers.UserInteractionLogger')
+    @pytest.mark.asyncio
+    async def test_main_menu_button_logs_interaction(self, mock_logger_class, mock_callback_query_with_user_details, mock_context):
+        """Test that main menu button click is logged."""
+        # Setup mock
+        mock_callback_query_with_user_details.callback_query.data = "main_menu"
+        mock_logger_instance = Mock()
+        mock_logger_class.return_value = mock_logger_instance
+        
+        # Execute handler
+        await main_menu_button(mock_callback_query_with_user_details, mock_context)
+        
+        # Verify button click logging
+        mock_logger_instance.log_button_click.assert_called_once_with(
+            user_id=12345,
+            button_data="main_menu",
+            username="johndoe"
+        )
+        
+        # Verify bot response logging
+        mock_logger_instance.log_bot_response.assert_called_once()
+        response_call = mock_logger_instance.log_bot_response.call_args
+        assert response_call[1]['response_type'] == "edit_message"
+        assert "Добро пожаловать" in response_call[1]['content']
+    
+    @patch('src.bot.handlers.search_handlers.UserInteractionLogger')
+    @patch('src.bot.handlers.search_handlers.get_participant_repository')
+    @pytest.mark.asyncio
+    async def test_participant_selection_logs_interaction(self, mock_repo, mock_logger_class):
+        """Test that participant selection from search results is logged."""
+        # Setup participant selection callback
+        update = Mock(spec=Update)
+        callback_query = Mock(spec=CallbackQuery)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        
+        user.id = 67890
+        user.username = "testuser"
+        message.edit_text = AsyncMock()
+        
+        callback_query.from_user = user
+        callback_query.data = "select_participant:rec123456"
+        callback_query.message = message
+        callback_query.answer = AsyncMock()
+        
+        update.callback_query = callback_query
+        
+        # Mock search results in context
+        mock_participant = Participant(
+            record_id="rec123456",
+            full_name_ru="Тест Участник"
+        )
+        context.user_data = {
+            'search_results': [
+                SearchResult(participant=mock_participant, similarity_score=0.9)
+            ]
+        }
+        
+        # Mock logger
+        mock_logger_instance = Mock()
+        mock_logger_class.return_value = mock_logger_instance
+        
+        # Import handler and execute
+        from src.bot.handlers.search_handlers import handle_participant_selection
+        
+        with patch('src.bot.handlers.search_handlers.show_participant_edit_menu', new=AsyncMock(return_value=1)):
+            await handle_participant_selection(update, context)
+        
+        # Verify participant selection was logged
+        mock_logger_instance.log_button_click.assert_called_once_with(
+            user_id=67890,
+            button_data="select_participant:rec123456",
+            username="testuser"
+        )
+        
+        # Verify journey step logging
+        mock_logger_instance.log_journey_step.assert_called_once_with(
+            user_id=67890,
+            step="participant_selected",
+            context={'participant_id': 'rec123456', 'participant_name': 'Тест Участник'}
+        )
+    
+    @patch('src.bot.handlers.search_handlers.UserInteractionLogger')
+    @pytest.mark.asyncio 
+    async def test_search_button_without_username_logs_correctly(self, mock_logger_class):
+        """Test logging when user has no username."""
+        # Setup user without username
+        update = Mock(spec=Update)
+        callback_query = Mock(spec=CallbackQuery)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        
+        user.id = 99999
+        user.username = None  # No username
+        message.edit_text = AsyncMock()
+        
+        callback_query.from_user = user
+        callback_query.data = "search"
+        callback_query.message = message
+        callback_query.answer = AsyncMock()
+        
+        update.callback_query = callback_query
+        context.user_data = {}
+        
+        mock_logger_instance = Mock()
+        mock_logger_class.return_value = mock_logger_instance
+        
+        # Execute handler
+        await search_button(update, context)
+        
+        # Verify logging called with None username
+        mock_logger_instance.log_button_click.assert_called_once_with(
+            user_id=99999,
+            button_data="search",
+            username=None
+        )
+    
+    @patch('src.bot.handlers.search_handlers.UserInteractionLogger')
+    @patch('src.bot.handlers.search_handlers.get_participant_repository')
+    @pytest.mark.asyncio
+    async def test_search_error_logs_missing_response(self, mock_repo, mock_logger_class):
+        """Test that search errors are logged as missing responses."""
+        # Setup search failure
+        mock_repo_instance = Mock()
+        mock_repo_instance.list_all = AsyncMock(side_effect=Exception("Database error"))
+        mock_repo.return_value = mock_repo_instance
+        
+        # Setup update and context for name search
+        update = Mock(spec=Update)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        
+        user.id = 11111
+        user.username = "erroruser"
+        message.text = "John"
+        message.reply_text = AsyncMock()
+        
+        update.message = message
+        update.effective_user = user
+        
+        context.user_data = {'last_button_click': 'search'}
+        
+        mock_logger_instance = Mock()
+        mock_logger_class.return_value = mock_logger_instance
+        
+        # Execute handler
+        await process_name_search(update, context)
+        
+        # Verify error was logged as missing response
+        mock_logger_instance.log_missing_response.assert_called_once_with(
+            user_id=11111,
+            button_data="search",
+            error_type="handler_error",
+            error_message="Error during search for user 11111: Database error"
+        )
+    
+    @patch('src.bot.handlers.search_handlers.get_settings')
+    @patch('src.bot.handlers.search_handlers.UserInteractionLogger')
+    @pytest.mark.asyncio
+    async def test_logging_disabled_by_configuration(self, mock_logger_class, mock_get_settings):
+        """Test that logging is disabled when configuration is set to false."""
+        # Mock settings with logging disabled
+        mock_settings = Mock()
+        mock_settings.logging.enable_user_interaction_logging = False
+        mock_get_settings.return_value = mock_settings
+        
+        # Setup callback
+        update = Mock(spec=Update)
+        callback_query = Mock(spec=CallbackQuery)
+        user = Mock(spec=User)
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        
+        user.id = 12345
+        user.username = "testuser"
+        callback_query.from_user = user
+        callback_query.data = "search"
+        callback_query.answer = AsyncMock()
+        callback_query.message = Mock()
+        callback_query.message.edit_text = AsyncMock()
+        
+        update.callback_query = callback_query
+        context.user_data = {}
+        
+        # Execute handler
+        await search_button(update, context)
+        
+        # Verify logger was not instantiated when disabled
+        mock_logger_class.assert_not_called()
 
 
