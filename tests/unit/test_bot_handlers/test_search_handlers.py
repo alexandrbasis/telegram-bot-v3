@@ -876,7 +876,7 @@ class TestUserInteractionLogging:
         # Import handler and execute
         from src.bot.handlers.search_handlers import handle_participant_selection
         
-        with patch('src.bot.handlers.search_handlers.show_participant_edit_menu', new=AsyncMock(return_value=1)):
+        with patch('src.bot.handlers.edit_participant_handlers.show_participant_edit_menu', new=AsyncMock(return_value=1)):
             await handle_participant_selection(update, context)
         
         # Verify participant selection was logged
@@ -936,6 +936,7 @@ class TestUserInteractionLogging:
         """Test that search errors are logged as missing responses."""
         # Setup search failure
         mock_repo_instance = Mock()
+        mock_repo_instance.search_by_name_enhanced = AsyncMock(side_effect=Exception("Database error"))
         mock_repo_instance.list_all = AsyncMock(side_effect=Exception("Database error"))
         mock_repo.return_value = mock_repo_instance
         
