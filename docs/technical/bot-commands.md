@@ -2,8 +2,10 @@
 
 ## Search Commands
 
-### /search [query]
-Search for participants by name (Russian or English), nickname, or other details.
+### /search [query] and Search Button
+Search for participants by name (Russian or English), nickname, or other details. Available via command or main menu "🔍 Поиск участников" button.
+
+**Button Functionality**: The search button uses ConversationHandler with proper state management (SearchStates: 10-12) and per_message configuration to ensure reliable button response.
 
 **Usage Examples:**
 - `/search Иван` - Find participants with "Иван" in their name

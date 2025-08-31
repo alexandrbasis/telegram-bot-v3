@@ -165,7 +165,13 @@ class TestSearchConversationFlow:
             
             # Mock dependencies
             mock_repo = AsyncMock()
-            mock_repo.list_all.return_value = [Participant(full_name_ru="Test User")]
+            test_participant = Participant(full_name_ru="Test User")
+            
+            # Mock the enhanced search method that is called first
+            mock_repo.search_by_name_enhanced.return_value = [
+                (test_participant, 0.9, "Test User")  # (participant, score, formatted_result)
+            ]
+            mock_repo.list_all.return_value = [test_participant]
             mock_repo_getter.return_value = mock_repo
             
             mock_service = Mock()

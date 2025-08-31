@@ -160,10 +160,40 @@ test_search_to_edit_validation_error_flow()    # Validation error handling
 - **State Cleanup**: Clean conversation state transitions on cancel operations
 - **Error Recovery**: Failed save operations recoverable without data loss
 
+### Regression Testing
+
+#### Button Functionality Regression Tests (`test_search_button_regression.py`)
+**Tests**: 2 regression tests
+**Coverage**:
+- ConversationHandler per_message configuration validation
+- Search button callback_data pattern matching
+- Handler registration in correct state verification
+- State collision prevention (SearchStates 10-12 vs EditStates 0-2)
+
+**Key Test Scenarios**:
+```python
+# ConversationHandler configuration testing
+test_conversation_handler_per_message_configuration()
+  # Validates per_message=None prevents CallbackQueryHandler tracking issues
+  # Confirms mixed handler types work correctly
+
+test_search_button_callback_data_pattern_match()
+  # Verifies callback_data="search" matches pattern="^search$"
+  # Ensures proper handler registration in SearchStates.MAIN_MENU
+```
+
+#### State Management Regression Tests
+**Coverage**:
+- State enum collision detection and prevention
+- ConversationHandler registration conflict avoidance
+- CallbackQueryHandler tracking functionality validation
+- Button response verification across different conversation states
+
 ### Future Integration Test Areas
 - Multi-user concurrent editing scenarios  
 - Performance testing under load
 - Long conversation session stability testing
+- State collision stress testing with multiple ConversationHandlers
 
 ## Test Execution Commands
 
@@ -261,6 +291,9 @@ def test_field_validation():
 - [x] ✅ Repository integration testing (8 update_by_id tests)
 - [x] ✅ End-to-end integration testing (4 workflow tests)
 - [x] ✅ Save confirmation and retry mechanism testing
+- [x] ✅ Regression testing for search button functionality (2 tests)
+- [x] ✅ State collision prevention testing and validation
+- [x] ✅ ConversationHandler configuration testing (per_message parameter)
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 
