@@ -32,18 +32,38 @@
 
 ### Conversation State Issues
 
+#### Search Button Not Responding
+**Problem**: "Поиск Участников" (Participant Search) button click does not respond or trigger search functionality
+**Causes**:
+- ConversationHandler state collision between different enum states (SearchStates vs EditStates)
+- Improper ConversationHandler per_message configuration causing CallbackQueryHandler tracking issues
+- Handler registration conflicts
+
+**Resolution**:
+1. **State Collision Fix**: Ensure different ConversationHandler state enums use non-overlapping values
+   - Example: SearchStates (10,11,12) vs EditStates (0,1,2)
+   - Check `src/bot/handlers/search_handlers.py` for SearchStates enum values
+2. **ConversationHandler Configuration**: Verify per_message parameter is set correctly
+   - For mixed handler types (MessageHandler + CallbackQueryHandler): use `per_message=None`
+   - Check `src/bot/handlers/search_conversation.py` ConversationHandler initialization
+3. **Handler Pattern Verification**: Confirm CallbackQueryHandler pattern matches button callback_data
+   - Search button uses `callback_data="search"` with pattern `"^search$"`
+4. **Testing**: Run regression test `tests/unit/test_search_button_regression.py` to validate functionality
+
 #### Lost Editing Context
 **Problem**: User editing session becomes unresponsive or shows unexpected behavior
 **Causes**:
 - Bot restart during active editing session
 - Conversation timeout (ConversationHandler timeout)
 - Multiple concurrent editing sessions
+- State collision between different ConversationHandler instances
 
 **Resolution**:
 1. Use "Отмена" (Cancel) button to cleanly exit editing mode
 2. Return to main menu via "Вернуться в главное меню"
 3. Start fresh search session with `/search` command
 4. Changes not explicitly saved are automatically discarded
+5. **State Collision Check**: If issue persists, verify ConversationHandler state enum values don't conflict
 
 #### Cancel Operation Not Working
 **Problem**: Cancel button doesn't return user to main menu
@@ -99,6 +119,49 @@
 3. Check network connectivity if consistently slow
 4. Monitor Airtable API response times
 
+### ConversationHandler Configuration Issues
+
+#### CallbackQueryHandler Not Tracked
+**Problem**: Callback queries (button clicks) not processed by ConversationHandler
+**Causes**:
+- Missing or incorrect per_message parameter in ConversationHandler
+- Mixed handler types without proper configuration
+
+**Resolution**:
+1. **Configuration Check**: Verify ConversationHandler uses proper per_message setting:
+   ```python
+   conversation_handler = ConversationHandler(
+       entry_points=[...],
+       states={...},
+       fallbacks=[...],
+       per_message=None  # Allows auto-detection for mixed handler types
+   )
+   ```
+2. **Handler Type Analysis**: For ConversationHandlers with both MessageHandler and CallbackQueryHandler:
+   - Use `per_message=None` for automatic detection
+   - Avoid `per_message=False` which can cause CallbackQueryHandler tracking issues
+3. **Testing**: PTB may emit warnings about per_message configuration - these are often informational
+
+#### State Enum Collision Detection
+**Problem**: Multiple ConversationHandlers with overlapping state values causing handler conflicts
+**Diagnostic Steps**:
+1. Check all ConversationHandler state enums for value conflicts:
+   ```python
+   # Example conflict:
+   class SearchStates(IntEnum):
+       MAIN_MENU = 0          # Conflicts with EditStates.FIELD_SELECTION = 0
+       WAITING_FOR_NAME = 1
+       SHOWING_RESULTS = 2
+   ```
+2. **Resolution Pattern**: Use non-overlapping ranges for different handlers:
+   ```python
+   # Fixed version:
+   class SearchStates(IntEnum):
+       MAIN_MENU = 10         # No longer conflicts
+       WAITING_FOR_NAME = 11
+       SHOWING_RESULTS = 12
+   ```
+
 ### Logging and Debugging
 
 #### Enable Debug Logging
@@ -109,6 +172,8 @@ Set environment variable: `LOG_LEVEL=DEBUG`
 - **Error Handling**: Search for "Error occurred" in error handling functions
 - **State Transitions**: Conversation handler state change logs
 - **Retry Operations**: Retry attempt logs with error details
+- **ConversationHandler Issues**: Search for "ConversationHandler" and "CallbackQueryHandler" logs
+- **State Conflicts**: Look for handler registration and state transition errors
 
 #### Common Log Patterns
 ```
@@ -116,4 +181,18 @@ INFO - Saving changes for participant [ID]
 ERROR - Airtable update failed: [error details]
 DEBUG - Retry attempt [N] for participant save
 INFO - Changes saved successfully, returning to search results
+WARN - per_message=False with mixed handler types (informational)
+ERROR - Handler registration conflict for state [N]
+```
+
+#### ConversationHandler Debugging
+```bash
+# Check for state conflicts
+grep -r "class.*States.*IntEnum" src/bot/handlers/
+
+# Verify handler registration
+grep -r "ConversationHandler" src/bot/handlers/ -A 10
+
+# Test specific button functionality
+./venv/bin/pytest tests/unit/test_search_button_regression.py -v
 ```

@@ -28,6 +28,8 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - State transitions: SEARCH → RESULTS → DETAILS → EDITING → CONFIRMATION
 - Context preservation across state changes
 - Integration between search and editing workflows
+- **State Collision Prevention**: SearchStates uses values 10-12 to avoid conflicts with EditStates 0-2
+- **Mixed Handler Support**: ConversationHandler configured with per_message=None for proper CallbackQueryHandler tracking
 
 **Participant Editing Handler** (New - 2025-08-29):
 - 4-state ConversationHandler for comprehensive field editing
@@ -96,6 +98,8 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Save Confirmation**: Explicit user confirmation required before Airtable updates
 - **Retry Mechanism**: Failed save operations preserve changes and offer retry with error details
 - **Back Navigation**: Seamless return to previous conversation states
+- **State Collision Management**: Non-overlapping state enum values prevent handler conflicts (SearchStates: 10-12, EditStates: 0-2)
+- **ConversationHandler Configuration**: Proper per_message parameter configuration ensures mixed handler types (MessageHandler + CallbackQueryHandler) work correctly
 
 ### Data Flow
 ```
