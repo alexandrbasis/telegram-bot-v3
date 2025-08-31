@@ -149,7 +149,7 @@ Restore functionality to the "Поиск Участников" (Participant Sear
     - **Accept**: Error messages, exceptions, or warnings captured related to button handling
     - **Tests**: `./start_bot.sh` with logging enabled to capture errors
     - **Done**: Log analysis completed and relevant errors identified
-    - **Changelog**: [Record log analysis findings and error messages]
+    - **Changelog**: ✅ **Completed** 2025-08-31T12:00:00 - ROOT CAUSE CONFIRMED: ConversationHandler configured with per_message=False at src/bot/handlers/search_conversation.py:91 causing CallbackQueryHandler to not be properly tracked, preventing search button from responding to clicks
 
 ### Phase 1: Root Cause Analysis
 - [ ] Step 1: Analyze conversation handler configuration

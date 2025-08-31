@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 class SearchStates(IntEnum):
     """Conversation states for search flow."""
-    MAIN_MENU = 0
-    WAITING_FOR_NAME = 1
-    SHOWING_RESULTS = 2
+    MAIN_MENU = 10
+    WAITING_FOR_NAME = 11
+    SHOWING_RESULTS = 12
 
 
 def get_participant_repository():

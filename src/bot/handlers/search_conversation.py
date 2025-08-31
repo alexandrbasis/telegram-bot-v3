@@ -88,7 +88,7 @@ def get_search_conversation_handler() -> ConversationHandler:
         fallbacks=[
             CommandHandler("start", start_command)
         ],
-        per_message=False
+        per_message=None
     )
     
     logger.info("Search conversation handler configured successfully")

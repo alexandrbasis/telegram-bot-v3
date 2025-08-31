@@ -43,10 +43,23 @@ WARNING: /Users/alexandrbasis/.../search_conversation.py:53: PTBUserWarning: If 
 2025-08-31 11:58:01 - src.bot.handlers.search_conversation - INFO - Search conversation handler configured successfully
 ```
 
-**POTENTIAL ROOT CAUSE IDENTIFIED**: 
-- ConversationHandler configuration issue with `per_message=False` setting
-- CallbackQueryHandler may not be properly tracked, causing button clicks to be ignored
-- Location: `src/bot/handlers/search_conversation.py:53`
+**ROOT CAUSE CONFIRMED** ⚠️: 
+- **Location**: `src/bot/handlers/search_conversation.py:91`
+- **Issue**: `per_message=False` in ConversationHandler configuration
+- **Impact**: CallbackQueryHandler for search button not properly tracked
+- **Result**: Button clicks ignored, no response to user interaction
+
+**Technical Details**:
+```python
+conversation_handler = ConversationHandler(
+    entry_points=[...],
+    states={...},
+    fallbacks=[...],
+    per_message=False  # ← THIS IS THE PROBLEM
+)
+```
+
+**Fix Required**: Change `per_message=False` to `per_message=True` or remove parameter entirely (defaults to True)
 
 ## Manual Testing Steps
 
