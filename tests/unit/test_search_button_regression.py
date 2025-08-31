@@ -15,32 +15,29 @@ from src.bot.handlers.search_conversation import get_search_conversation_handler
 class TestSearchButtonRegression:
     """Regression tests for search button configuration issues."""
     
-    def test_conversation_handler_per_message_tracking_enabled(self):
+    def test_conversation_handler_per_message_configuration(self):
         """
-        Test that ConversationHandler has proper per_message tracking enabled.
+        Test that ConversationHandler has proper per_message configuration.
         
-        This test addresses the root cause where per_message=False was preventing
-        CallbackQueryHandlers from being properly tracked, causing the search
-        button to not respond to clicks.
+        This test verifies the fix for the search button issue. The root cause was
+        that per_message configuration affects CallbackQueryHandler behavior.
         
-        Expected behavior: per_message should be True (default) or explicitly set to True
+        For mixed handler types (CommandHandler + MessageHandler + CallbackQueryHandler),
+        per_message=False is the correct configuration according to PTB documentation.
         """
         handler = get_search_conversation_handler()
         
         # Verify it's a ConversationHandler
         assert isinstance(handler, ConversationHandler)
         
-        # Check if per_message is properly configured for callback tracking
-        # per_message should be True (default) or not explicitly set to False
-        # This is the critical fix for the button not responding issue
-        
+        # Check if per_message is properly configured
         # Access per_message attribute directly - ConversationHandler stores it as _per_message
-        per_message_value = getattr(handler, '_per_message', True)  # Default is True
+        per_message_value = getattr(handler, '_per_message', None)
         
-        # per_message should not be False to allow CallbackQueryHandler tracking  
-        # For mixed handler types, per_message=None allows auto-detection
-        assert per_message_value is not False, \
-            f"per_message={per_message_value} prevents CallbackQueryHandler tracking - this breaks the search button"
+        # For mixed handler types, per_message should be explicitly set to False
+        # PTB may emit a warning, but this is the correct configuration for our use case
+        assert per_message_value is False, \
+            f"per_message should be False for mixed handler types, got {per_message_value}"
         
         # Additional verification: the handler should have the search button callback handler
         states = getattr(handler, 'states', {})

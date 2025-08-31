@@ -31,8 +31,8 @@ class TestMainBotApplication:
         with patch('src.main.get_settings') as mock_get_settings:
             # Mock settings with proper structure
             mock_settings = Mock()
-            mock_settings.telegram.token = "test_token"
-            mock_settings.logging.level = "INFO"
+            mock_settings.telegram.bot_token = "test_token"
+            mock_settings.logging.log_level = "INFO"  # Fixed: was .level, should be .log_level
             mock_get_settings.return_value = mock_settings
             
             from src.main import create_application
@@ -48,8 +48,8 @@ class TestMainBotApplication:
             
             # Mock settings with proper structure
             mock_settings = Mock()
-            mock_settings.telegram.token = "test_bot_token_123"
-            mock_settings.logging.level = "INFO"
+            mock_settings.telegram.bot_token = "test_bot_token_123"
+            mock_settings.logging.log_level = "INFO"
             mock_get_settings.return_value = mock_settings
             
             # Mock builder chain
@@ -73,8 +73,8 @@ class TestMainBotApplication:
             
             # Mock settings with proper structure
             mock_settings = Mock()
-            mock_settings.telegram.token = "test_token"
-            mock_settings.logging.level = "INFO"
+            mock_settings.telegram.bot_token = "test_token"
+            mock_settings.logging.log_level = "INFO"
             mock_get_settings.return_value = mock_settings
             
             # Mock conversation handler
@@ -103,7 +103,7 @@ class TestMainBotApplication:
              patch('src.main.configure_logging') as mock_configure_logging:
             
             mock_settings = Mock()
-            mock_settings.telegram.token = "test_token"
+            mock_settings.telegram.bot_token = "test_token"
             mock_get_settings.return_value = mock_settings
             
             from src.main import create_application
@@ -174,7 +174,7 @@ class TestLoggingConfiguration:
         with patch('logging.basicConfig') as mock_basic_config:
             
             mock_settings = Mock()
-            mock_settings.logging.level = "DEBUG"
+            mock_settings.logging.log_level = "DEBUG"
             
             from src.main import configure_logging
             configure_logging(mock_settings)
@@ -191,7 +191,7 @@ class TestLoggingConfiguration:
         with patch('logging.basicConfig') as mock_basic_config:
             
             mock_settings = Mock()
-            mock_settings.logging.level = "INFO"
+            mock_settings.logging.log_level = "INFO"
             
             from src.main import configure_logging
             configure_logging(mock_settings)
@@ -215,8 +215,8 @@ class TestErrorHandling:
             
             # Mock settings with no token but proper logging structure
             mock_settings = Mock()
-            mock_settings.telegram.token = None
-            mock_settings.logging.level = "INFO"  # Proper string value
+            mock_settings.telegram.bot_token = None
+            mock_settings.logging.log_level = "INFO"  # Proper string value
             mock_get_settings.return_value = mock_settings
             
             from src.main import create_application
@@ -256,8 +256,8 @@ class TestBotIntegration:
             
             # Mock all dependencies
             mock_settings = Mock()
-            mock_settings.telegram.token = "test_token"
-            mock_settings.logging.level = "INFO"  # Proper string value
+            mock_settings.telegram.bot_token = "test_token"
+            mock_settings.logging.log_level = "INFO"  # Proper string value
             mock_get_settings.return_value = mock_settings
             
             mock_conversation_handler = Mock(spec=ConversationHandler)
@@ -283,8 +283,8 @@ class TestBotIntegration:
              patch('src.main.get_search_conversation_handler') as mock_get_handler:
             
             mock_settings = Mock()
-            mock_settings.telegram.token = "test_token"
-            mock_settings.logging.level = "INFO"  # Proper string value
+            mock_settings.telegram.bot_token = "test_token"
+            mock_settings.logging.log_level = "INFO"  # Proper string value
             mock_get_settings.return_value = mock_settings
             
             # Create a real ConversationHandler mock

@@ -249,8 +249,9 @@ async def handle_field_edit_selection(update: Update, context: ContextTypes.DEFA
         if user_logger:
             user_logger.log_missing_response(
                 user_id=user.id,
-                expected_action="field_edit_selection",
-                error_context=f"Unknown field type: {field_name}"
+                button_data="field_edit_selection",
+                error_type="handler_error",
+                error_message=f"Unknown field type: {field_name}"
             )
         
         return EditStates.FIELD_SELECTION
@@ -424,8 +425,9 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         if user_logger:
             user_logger.log_missing_response(
                 user_id=user.id,
-                expected_action="button_field_selection",
-                error_context="No editing field set in context"
+                button_data="button_field_selection",
+                error_type="context_error",
+                error_message="No editing field set in context"
             )
         
         return EditStates.FIELD_SELECTION
@@ -486,8 +488,9 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         if user_logger:
             user_logger.log_missing_response(
                 user_id=user.id,
-                expected_action="button_field_selection",
-                error_context=f"Invalid button value {selected_value} for field {field_name}: {e}"
+                button_data="button_field_selection",
+                error_type="validation_error",
+                error_message=f"Invalid button value {selected_value} for field {field_name}: {e}"
             )
         
         return EditStates.BUTTON_SELECTION
@@ -648,8 +651,9 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             if user_logger:
                 user_logger.log_missing_response(
                     user_id=user.id,
-                    expected_action="save_changes",
-                    error_context="Save operation failed"
+                    button_data="save_changes",
+                    error_type="save_error",
+                    error_message="Save operation failed"
                 )
             
     except Exception as e:
@@ -673,8 +677,9 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         if user_logger:
             user_logger.log_missing_response(
                 user_id=user.id,
-                expected_action="save_changes",
-                error_context=f"Exception during save: {e}"
+                button_data="save_changes",
+                error_type="exception",
+                error_message=f"Exception during save: {e}"
             )
     
     from src.bot.handlers.search_handlers import SearchStates
