@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Save/Cancel Workflow with Airtable Integration** - Complete participant editing workflow with confirmation screens, retry mechanisms, and robust error handling (PR #8, SHA: 4ddf3f3, merged 2025-08-29T13:30:00Z)
+  - Save confirmation system displaying all pending changes in "Current → **New**" format before Airtable commit (`src/bot/handlers/edit_participant_handlers.py:506-591`)
+  - Comprehensive retry mechanism with user-friendly Russian error messages on save failures (`src/bot/handlers/edit_participant_handlers.py:594-614`)
+  - Enhanced Airtable integration with robust update_by_id method supporting atomic field updates (`src/data/airtable/airtable_participant_repo.py`, extensive test coverage in `tests/unit/test_data/test_airtable/test_airtable_participant_repo.py:656-760`)
+  - Complete error handling for network failures, validation errors, and API rate limits with automatic retry options
+  - Seamless conversation flow integration ensuring clean state transitions between search, edit, and save operations
+  - Full Russian localization for all confirmation dialogs, error messages, and user prompts
+  - Enterprise-grade data consistency with changes saved only after explicit user confirmation
+  - Complete integration test suite covering end-to-end workflows from search through edit to save (`tests/integration/test_search_to_edit_flow.py:1-314`)
+  - 33 comprehensive tests (21 unit + 8 repository + 4 integration) with 100% pass rate ensuring robust functionality
+  - Users can now confidently edit participant data with full transparency, error recovery, and data loss prevention
+- **Comprehensive Documentation Updates** - Updated 7 files (CLAUDE.md, README.md, architecture docs, command reference, feature specs, troubleshooting guide, testing strategy) to reflect save/cancel workflow features with confirmation screens, retry mechanisms, and Russian localization
 - **Comprehensive Participant Editing Interface** - Complete participant data editing functionality with field-specific input methods (PR #7, SHA: fe7c2441d, merged 2025-08-29T11:05:55Z)
   - Full-featured editing interface with 13 individual field edit buttons accessible from search results (`src/bot/handlers/edit_participant_handlers.py:1-501`)
   - 4-state ConversationHandler with robust state management: FIELD_SELECTION → TEXT_INPUT/BUTTON_SELECTION → back to FIELD_SELECTION → save/cancel workflow (`src/bot/handlers/edit_participant_handlers.py:45-120`)

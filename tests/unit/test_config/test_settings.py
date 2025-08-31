@@ -313,6 +313,46 @@ class TestLoggingSettings:
                 settings.validate()
             
             assert "LOG_LEVEL must be one of" in str(exc_info.value)
+    
+    def test_user_interaction_logging_default_values(self):
+        """Test default values for user interaction logging settings."""
+        with patch.dict(os.environ, {}, clear=True):
+            settings = LoggingSettings()
+            
+            # Should have user interaction logging enabled by default
+            assert hasattr(settings, 'enable_user_interaction_logging')
+            assert settings.enable_user_interaction_logging is True
+            
+            # Should have user interaction log level default to INFO
+            assert hasattr(settings, 'user_interaction_log_level')
+            assert settings.user_interaction_log_level == "INFO"
+    
+    def test_user_interaction_logging_environment_loading(self):
+        """Test loading user interaction logging settings from environment."""
+        env_vars = {
+            'ENABLE_USER_INTERACTION_LOGGING': 'false',
+            'USER_INTERACTION_LOG_LEVEL': 'DEBUG'
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = LoggingSettings()
+            
+            assert settings.enable_user_interaction_logging is False
+            assert settings.user_interaction_log_level == "DEBUG"
+    
+    def test_user_interaction_log_level_validation(self):
+        """Test validation of user interaction log level."""
+        env_vars = {
+            'USER_INTERACTION_LOG_LEVEL': 'INVALID_LEVEL'
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = LoggingSettings()
+            
+            with pytest.raises(ValueError) as exc_info:
+                settings.validate()
+            
+            assert "USER_INTERACTION_LOG_LEVEL must be one of" in str(exc_info.value)
 
 
 class TestApplicationSettings:

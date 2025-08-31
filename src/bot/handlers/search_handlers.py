@@ -14,6 +14,8 @@ from telegram.ext import ContextTypes
 
 from src.services.search_service import SearchService, SearchResult, format_match_quality
 from src.data.repositories.participant_repository import RepositoryError
+from src.services.user_interaction_logger import UserInteractionLogger
+from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,31 @@ def get_participant_repository():
     settings = get_settings()
     client = AirtableClient(settings.get_airtable_config())
     return AirtableParticipantRepository(client)
+
+
+def get_user_interaction_logger():
+    """
+    Get user interaction logger instance if logging is enabled.
+    
+    Returns:
+        UserInteractionLogger instance or None if disabled
+    """
+    try:
+        # Reset settings to pick up new environment variables
+        from src.config.settings import reset_settings
+        reset_settings()
+        
+        settings = get_settings()
+        if not settings.logging.enable_user_interaction_logging:
+            return None
+        
+        # Use configured log level for user interactions
+        import logging
+        log_level = getattr(logging, settings.logging.user_interaction_log_level.upper(), logging.INFO)
+        return UserInteractionLogger(log_level=log_level)
+    except Exception as e:
+        logger.error(f"Failed to initialize user interaction logger: {e}")
+        return None
 
 
 def get_main_menu_keyboard() -> InlineKeyboardMarkup:
@@ -149,7 +176,18 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     query = update.callback_query
     await query.answer()
     
-    logger.info(f"User {query.from_user.id} clicked search button")
+    user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
+    logger.info(f"User {user.id} clicked search button")
     
     # Send search prompt
     search_prompt = "Введите имя участника:"
@@ -158,6 +196,14 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         text=search_prompt,
         reply_markup=None
     )
+    
+    # Log bot response if logging is enabled
+    if user_logger:
+        user_logger.log_bot_response(
+            user_id=user.id,
+            response_type="edit_message",
+            content=search_prompt
+        )
     
     return SearchStates.WAITING_FOR_NAME
 
@@ -271,6 +317,18 @@ async def process_name_search(update: Update, context: ContextTypes.DEFAULT_TYPE
     except Exception as e:
         logger.error(f"Error during search for user {user.id}: {e}")
         
+        # Log missing response if logging is enabled
+        user_logger = get_user_interaction_logger()
+        if user_logger:
+            # Try to get the last button click from context or use 'search' as fallback
+            last_button = context.user_data.get('last_button_click', 'search')
+            user_logger.log_missing_response(
+                user_id=user.id,
+                button_data=last_button,
+                error_type="handler_error",
+                error_message=f"Error during search for user {user.id}: {e}"
+            )
+        
         # Send error message
         error_message = "Ошибка. Попробуйте позже."
         await update.message.reply_text(
@@ -314,7 +372,18 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     query = update.callback_query
     await query.answer()
     
-    logger.info(f"User {query.from_user.id} returned to main menu")
+    user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
+    logger.info(f"User {user.id} returned to main menu")
     
     # Clear search results
     context.user_data['search_results'] = []
@@ -329,6 +398,15 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         text=welcome_message,
         reply_markup=get_main_menu_keyboard()
     )
+    
+    # Log bot response if logging is enabled
+    if user_logger:
+        user_logger.log_bot_response(
+            user_id=user.id,
+            response_type="edit_message",
+            content=welcome_message,
+            keyboard_info="1 button: search"
+        )
     
     return SearchStates.MAIN_MENU
 
@@ -350,6 +428,16 @@ async def handle_participant_selection(update: Update, context: ContextTypes.DEF
     await query.answer()
     
     user = query.from_user
+    user_logger = get_user_interaction_logger()
+    
+    # Log button click if logging is enabled
+    if user_logger:
+        user_logger.log_button_click(
+            user_id=user.id,
+            button_data=query.data,
+            username=getattr(user, 'username', None)
+        )
+    
     logger.info(f"User {user.id} selected participant from results")
     
     # Parse participant ID from callback data
@@ -372,6 +460,16 @@ async def handle_participant_selection(update: Update, context: ContextTypes.DEF
     
     if not selected_participant:
         logger.error(f"Participant not found for ID {participant_id}")
+        
+        # Log missing response if logging is enabled
+        if user_logger:
+            user_logger.log_missing_response(
+                user_id=user.id,
+                button_data=query.data,
+                error_type="data_error",
+                error_message=f"Participant not found for ID {participant_id}"
+            )
+        
         await query.message.edit_text(
             text="❌ Участник не найден.",
             reply_markup=get_search_button_keyboard()
@@ -381,6 +479,17 @@ async def handle_participant_selection(update: Update, context: ContextTypes.DEF
     # Store selected participant for editing
     context.user_data['current_participant'] = selected_participant
     logger.info(f"Selected participant: {selected_participant.full_name_ru} (ID: {participant_id})")
+    
+    # Log user journey step if logging is enabled
+    if user_logger:
+        user_logger.log_journey_step(
+            user_id=user.id,
+            step="participant_selected",
+            context={
+                'participant_id': participant_id,
+                'participant_name': selected_participant.full_name_ru or selected_participant.full_name_en or "Unknown"
+            }
+        )
     
     # Import and show edit menu (dynamic import to avoid circular dependency)
     from src.bot.handlers.edit_participant_handlers import show_participant_edit_menu
