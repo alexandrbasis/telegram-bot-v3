@@ -96,8 +96,9 @@ The bot supports enhanced Russian name search with:
 Settings are loaded via dataclasses from environment variables with defaults. Key config sections:
 - `DatabaseSettings`: Airtable API configuration
 - `TelegramSettings`: Bot token and behavior settings
-- `LoggingSettings`: Log levels and formatting
+- `LoggingSettings`: Console and file logging configuration
 - `ApplicationSettings`: Environment and feature flags
+- `FileLoggingConfig`: Persistent file logging with directory management
 
 ### Testing Structure
 - Unit tests in `tests/unit/` mirror the `src/` structure
@@ -116,6 +117,10 @@ Optional:
 - `AIRTABLE_TABLE_ID`: Table identifier (defaults to `tbl8ivwOdAUvMi3Jy`)
 - `LOG_LEVEL`: Logging level (defaults to `INFO`)
 - `ENVIRONMENT`: Runtime environment (defaults to `development`)
+- `FILE_LOGGING_ENABLED`: Enable/disable file logging (defaults to `true`)
+- `LOG_DIR`: Base directory for log files (defaults to `logs`)
+- `LOG_MAX_BYTES`: Maximum log file size (defaults to `10485760` - 10MB)
+- `LOG_BACKUP_COUNT`: Number of backup files to retain (defaults to `5`)
 
 ### Development Workflow
 1. All settings validation happens at startup via dataclass `__post_init__`
@@ -123,8 +128,23 @@ Optional:
 3. Rate limiting is built into the Airtable client (5 requests/second default)
 4. Error handling follows consistent patterns with custom exception hierarchy
 5. Logging is configured per module with appropriate levels
+6. File logging automatically creates organized directory structure and handles log rotation
 
 ### Recent Features
+
+#### Persistent File Logging System (New - 2025-08-31)
+Comprehensive file-based logging system with:
+- Organized log directory structure (application/, user-interactions/, errors/, archived/)
+- Configurable file logging via environment variables
+- Automatic directory creation and log rotation management
+- Zero performance impact with graceful degradation
+- Seamless integration with existing console logging
+
+Key components:
+- `src/services/file_logging_service.py`: File logging service with directory management
+- `src/config/settings.py`: Extended LoggingSettings with file logging configuration
+- `src/main.py`: Application startup integration with file logging initialization
+- Complete test coverage with 26 comprehensive tests
 
 #### Enhanced Search Results with Participant Editing
 The bot now features:

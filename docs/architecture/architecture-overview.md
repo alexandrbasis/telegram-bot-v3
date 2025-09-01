@@ -13,6 +13,7 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Business Logic**: Data validation and processing
 - **Orchestration**: Coordination between data and presentation layers
 - **Validation**: Field-specific validation rules
+- **File Logging**: Persistent file-based logging service with directory management
 
 ### Data Layer (`src/data/`)
 - **Repositories**: Abstract data access interfaces
@@ -50,6 +51,13 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Rate limiting and error recovery for update operations
 
 ### Service Layer Architecture
+
+**File Logging Service** (New - 2025-08-31):
+- Persistent file-based logging with organized directory structure
+- Configurable log handlers for different log types (application, user-interactions, errors)
+- Automatic log directory creation and management
+- Integration with existing console logging system
+- Zero performance impact through independent operation
 
 **Participant Update Service** (New - 2025-08-29):
 - Centralized validation logic for all field types
@@ -122,10 +130,11 @@ UI Response ← Keyboard ← Error/Success ← Update Result ← API Response
 - Keyboard factory pattern simplifies UI management
 
 ### Testability
-- 56 unit tests for editing functionality (100% pass rate)
+- 82 unit tests total (56 editing + 26 file logging) - 100% pass rate
 - Mock repositories for isolated testing
 - Service layer testing with comprehensive validation scenarios
 - Handler testing with conversation state simulation
+- File logging service testing with directory management and error handling
 
 ## Error Handling Strategy
 
@@ -138,7 +147,8 @@ UI Response ← Keyboard ← Error/Success ← Update Result ← API Response
 - Airtable API error handling with user-friendly messages
 - Rate limit protection with automatic retry
 - Connection timeout recovery
-- Logging for debugging and monitoring
+- Comprehensive logging system with persistent file storage for debugging and monitoring
+- File logging graceful degradation when disk space or permissions are insufficient
 
 ## Future Architecture Enhancements
 

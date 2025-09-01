@@ -32,7 +32,9 @@ tests/
 │   │   ├── test_handlers/
 │   │   └── test_keyboards/
 │   ├── test_services/
-│   └── test_data/
+│   ├── test_data/
+│   ├── test_config/
+│   └── test_main.py
 ├── integration/
 ├── fixtures/
 └── conftest.py
@@ -40,10 +42,10 @@ tests/
 
 ## Participant Editing Interface Testing
 
-### Test Coverage Summary (2025-08-29)
-**Total Tests**: 33 tests (21 unit + 8 repository + 4 integration)
+### Test Coverage Summary (2025-08-31)
+**Total Tests**: 59 tests (47 unit + 8 repository + 4 integration)
 **Pass Rate**: 100%  
-**Coverage Areas**: Handler logic, keyboard generation, field validation, save/cancel workflow, integration flows
+**Coverage Areas**: Handler logic, keyboard generation, field validation, save/cancel workflow, integration flows, file logging service
 
 #### Handler Testing (`test_edit_participant_handlers.py`)
 **Tests**: 17 unit tests
@@ -97,6 +99,63 @@ test_payment_status_keyboard()  # Оплачено/Частично/Не опл�
 test_keyboard_column_layout()
 test_cancel_button_presence()
 test_russian_label_mapping()
+```
+
+#### File Logging Service Testing (`test_file_logging_service.py`)
+**Tests**: 11 unit tests (New - 2025-08-31)
+**Coverage**:
+- File logging service initialization and configuration
+- Directory creation and management (application/, user-interactions/, errors/, archived/)
+- Log handler setup and file writing
+- Error handling (disk space, permissions, file system issues)
+- Integration with existing logging system
+- Performance validation (zero impact on application)
+
+**Key Test Scenarios**:
+```python
+# File logging service testing
+test_file_logging_service_initialization()
+test_log_directory_creation()
+test_file_handler_setup_and_configuration()
+test_log_writing_to_correct_files()
+test_error_handling_disk_space_insufficient()
+test_error_handling_permission_denied()
+test_integration_with_console_logging()
+test_performance_impact_measurement()
+```
+
+#### Configuration Testing (`test_settings.py`)
+**Tests**: 6 unit tests for file logging configuration (New - 2025-08-31)
+**Coverage**:
+- File logging settings default values
+- Environment variable loading and parsing
+- Configuration validation and error handling
+- FileLoggingConfig creation and integration
+
+**Key Test Scenarios**:
+```python
+# Configuration testing
+test_file_logging_default_settings()
+test_file_logging_environment_variables()
+test_file_logging_validation_errors()
+test_get_file_logging_config_creation()
+```
+
+#### Main Application Integration Testing (`test_main.py`)
+**Tests**: 9 unit tests (New - 2025-08-31)
+**Coverage**:
+- File logging initialization during application startup
+- Integration with existing console logging configuration
+- Error handling when file logging setup fails
+- Graceful degradation scenarios
+
+**Key Test Scenarios**:
+```python
+# Main application testing
+test_configure_logging_with_file_logging()
+test_file_logging_initialization_failure_handling()
+test_get_file_logging_service_access()
+test_console_logging_preservation()
 ```
 
 #### Service Testing (`test_participant_update_service.py`) 
@@ -284,7 +343,7 @@ def test_field_validation():
 ## Testing Roadmap
 
 ### Current Status
-- [x] ✅ Comprehensive unit testing (21 unit tests, 100% pass)
+- [x] ✅ Comprehensive unit testing (47 unit tests, 100% pass)
 - [x] ✅ Handler conversation flow testing with save/cancel workflow
 - [x] ✅ Service layer validation testing
 - [x] ✅ Keyboard generation testing
@@ -294,6 +353,9 @@ def test_field_validation():
 - [x] ✅ Regression testing for search button functionality (2 tests)
 - [x] ✅ State collision prevention testing and validation
 - [x] ✅ ConversationHandler configuration testing (per_message parameter)
+- [x] ✅ File logging service testing (11 comprehensive tests)
+- [x] ✅ Configuration system testing for file logging (6 tests)
+- [x] ✅ Main application integration testing (9 tests)
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 
