@@ -596,3 +596,131 @@ class TestConvenienceFunctions:
                 
                 assert is_debug_mode() is True
                 assert is_production() is True
+
+
+class TestFileLoggingSettings:
+    """Test suite for FileLoggingSettings functionality."""
+    
+    def test_default_file_logging_values(self):
+        """Test default values for file logging when environment variables are not set."""
+        # RED phase - this test will fail until we implement FileLoggingSettings
+        
+        env_vars = {
+            'AIRTABLE_API_KEY': 'test_key',  # Required for Settings validation
+            'TELEGRAM_BOT_TOKEN': 'test_token'  # Required for Settings validation
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import Settings
+            settings = Settings()
+            
+            # Should have file_logging section
+            assert hasattr(settings.logging, 'enable_file_logging')
+            assert hasattr(settings.logging, 'file_log_dir')
+            assert hasattr(settings.logging, 'file_max_size')
+            assert hasattr(settings.logging, 'file_backup_count')
+            
+            # Default values
+            assert settings.logging.enable_file_logging is True
+            assert str(settings.logging.file_log_dir) == "logs"
+            assert settings.logging.file_max_size == 10 * 1024 * 1024  # 10MB
+            assert settings.logging.file_backup_count == 5
+    
+    def test_file_logging_environment_variable_loading(self):
+        """Test loading file logging values from environment variables."""
+        # RED phase - this test will fail until we implement environment variable support
+        
+        env_vars = {
+            'AIRTABLE_API_KEY': 'test_key',
+            'TELEGRAM_BOT_TOKEN': 'test_token',
+            'ENABLE_FILE_LOGGING': 'false',
+            'FILE_LOG_DIR': '/custom/log/path',
+            'FILE_LOG_MAX_SIZE': '20971520',  # 20MB
+            'FILE_LOG_BACKUP_COUNT': '10'
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import Settings
+            settings = Settings()
+            
+            assert settings.logging.enable_file_logging is False
+            assert str(settings.logging.file_log_dir) == "/custom/log/path"
+            assert settings.logging.file_max_size == 20 * 1024 * 1024
+            assert settings.logging.file_backup_count == 10
+    
+    def test_file_logging_validation_success(self):
+        """Test successful validation with valid file logging settings."""
+        env_vars = {
+            'AIRTABLE_API_KEY': 'test_key',
+            'TELEGRAM_BOT_TOKEN': 'test_token',
+            'ENABLE_FILE_LOGGING': 'true',
+            'FILE_LOG_MAX_SIZE': '5242880',  # 5MB
+            'FILE_LOG_BACKUP_COUNT': '3'
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import Settings
+            settings = Settings()
+            # Should not raise during validation
+            settings.logging.validate()
+    
+    def test_file_logging_validation_invalid_size(self):
+        """Test validation failure when file size is invalid."""
+        env_vars = {
+            'AIRTABLE_API_KEY': 'test_key',
+            'TELEGRAM_BOT_TOKEN': 'test_token',
+            'ENABLE_FILE_LOGGING': 'true',
+            'FILE_LOG_MAX_SIZE': '-1'  # Invalid negative size
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import Settings
+            
+            with pytest.raises(ValueError) as exc_info:
+                settings = Settings()
+            
+            assert "file_max_size must be positive" in str(exc_info.value)
+    
+    def test_file_logging_validation_invalid_backup_count(self):
+        """Test validation failure when backup count is invalid."""
+        env_vars = {
+            'AIRTABLE_API_KEY': 'test_key',
+            'TELEGRAM_BOT_TOKEN': 'test_token',
+            'ENABLE_FILE_LOGGING': 'true',
+            'FILE_LOG_BACKUP_COUNT': '-5'  # Invalid negative count
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import Settings
+            
+            with pytest.raises(ValueError) as exc_info:
+                settings = Settings()
+            
+            assert "file_backup_count cannot be negative" in str(exc_info.value)
+    
+    def test_file_logging_config_creation(self):
+        """Test creation of FileLoggingConfig from settings."""
+        # RED phase - this test will fail until we implement get_file_logging_config method
+        
+        env_vars = {
+            'AIRTABLE_API_KEY': 'test_key',
+            'TELEGRAM_BOT_TOKEN': 'test_token',
+            'ENABLE_FILE_LOGGING': 'true',
+            'FILE_LOG_DIR': '/test/logs',
+            'FILE_LOG_MAX_SIZE': '1048576',  # 1MB
+            'FILE_LOG_BACKUP_COUNT': '2'
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import Settings
+            settings = Settings()
+            
+            # Should be able to create FileLoggingConfig
+            file_config = settings.get_file_logging_config()
+            
+            from src.services.file_logging_service import FileLoggingConfig
+            assert isinstance(file_config, FileLoggingConfig)
+            assert file_config.enabled is True
+            assert str(file_config.log_dir) == "/test/logs"
+            assert file_config.max_file_size == 1048576
+            assert file_config.backup_count == 2
