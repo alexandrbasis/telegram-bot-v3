@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Persistent File Logging System** - Comprehensive file-based logging infrastructure with organized directory structure and configurable behavior (PR #11, SHA: 12848a8, 235f1ab, 6260efc, merged 2025-09-01)
+  - Complete file logging service with automated directory management creating organized subdirectories: application/, user-interactions/, errors/, archived/ (`src/services/file_logging_service.py:1-204`)
+  - FileLoggingConfig dataclass with validation supporting configurable log rotation, file size limits, and backup retention (`src/services/file_logging_service.py:15-71`)
+  - Extended LoggingSettings with file logging configuration fields and environment variable support (`src/config/settings.py:135-161`)
+  - get_file_logging_config() method in Settings class providing seamless integration between configuration and service layers (`src/config/settings.py:236-251`)
+  - Main application startup integration with file logging initialization and graceful error handling (`src/main.py:46-64`)
+  - Global file logging service accessor method for application-wide logging coordination (`src/main.py:67-74`)
+  - Environment variable configuration support: ENABLE_FILE_LOGGING, FILE_LOG_DIR, FILE_LOG_MAX_SIZE, FILE_LOG_BACKUP_COUNT with sensible defaults
+  - Automatic log directory creation with proper error handling and permission management preventing application crashes
+  - Zero performance impact design with independent operation ensuring no interference with bot response times
+  - Graceful degradation when disk space insufficient or directory permissions denied - bot continues normal operation with console logging
+  - Complete backward compatibility preserving all existing console logging behavior without modifications
+  - Production-ready log rotation and archival system preventing disk space issues with configurable retention policies
+  - 26 comprehensive tests (11 service + 9 integration + 6 configuration) with 100% pass rate covering all functionality and error scenarios (`tests/unit/test_services/test_file_logging_service.py`, `tests/unit/test_main.py`, `tests/unit/test_config/test_settings.py`)
+  - Developers can now access persistent log files organized by type for debugging, monitoring, and historical analysis without relying on console output
+- **Comprehensive Documentation Updates** - Updated 5 technical documentation files with detailed persistent file logging specifications and configuration guidance
+  - Enhanced CLAUDE.md with persistent file logging system overview and environment variable specifications (`CLAUDE.md:134-146`)
+  - Updated architecture documentation with file logging service integration and service layer architecture details (`docs/architecture/architecture-overview.md:54-60`)
+  - Enhanced configuration documentation with complete file logging environment variables and validation procedures (`docs/technical/configuration.md:30-224`)
+  - Updated testing strategy with file logging test coverage breakdown and methodology details (`docs/development/testing-strategy.md:102-157`)
+  - Enhanced feature specifications with persistent file logging business requirements and technical implementation overview (`docs/business/feature-specifications.md:1-82`)
+  - Updated project index with file logging service module registration and dependency tracking (`project_index.json:185-199,51-63`)
 - **Detailed User Interaction Logging System** - Comprehensive debugging and monitoring system for all user button clicks and bot responses (PR #9, SHA: 3e28398, merged 2025-08-31T08:13:00Z)
   - Complete user interaction logging service with structured log formatting for debugging button interaction flows (`src/services/user_interaction_logger.py:1-229`)
   - Button click logging capturing user ID, callback data, username, and timestamps for every callback_query event
