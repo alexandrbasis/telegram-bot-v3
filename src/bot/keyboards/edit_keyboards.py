@@ -11,53 +11,79 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from src.models.participant import Gender, Size, Role, Department, PaymentStatus
 
 
+def get_field_icon(field_name: str) -> str:
+    """
+    Get the display icon for a specific field.
+    
+    Maps field names to their corresponding display icons used in participant
+    information display, ensuring consistent visual language across the interface.
+    
+    Args:
+        field_name: Name of the participant field
+        
+    Returns:
+        Unicode emoji icon for the field, or default pencil icon if unknown
+    """
+    field_icons = {
+        'full_name_ru': '👤',        # person
+        'full_name_en': '🌍',        # globe
+        'church': '⛪',              # church
+        'country_and_city': '📍',    # location pin
+        'contact_information': '📞', # telephone
+        'submitted_by': '👨‍💼',      # business person
+        'gender': '👫',              # people
+        'size': '👕',               # t-shirt
+        'role': '👥',               # group
+        'department': '📋',         # clipboard
+        'payment_amount': '💵'      # money
+    }
+    
+    return field_icons.get(field_name, '✏️')  # Default to pencil for unknown fields
+
+
 def create_participant_edit_keyboard() -> InlineKeyboardMarkup:
     """
-    Create keyboard with edit buttons for all participant fields.
+    Create keyboard with edit buttons for participant fields.
     
-    Generates buttons for all 13 participant fields with Russian labels
-    and includes save/cancel options.
+    Generates buttons for editable participant fields with field-specific icons
+    and Russian labels. Payment status and date are excluded as they are
+    automatically handled when payment amount is entered.
     
     Returns:
         InlineKeyboardMarkup with field edit buttons
     """
     keyboard = []
     
-    # Text fields - row by row layout
+    # Text fields - row by row layout with field-specific icons
     keyboard.append([
-        InlineKeyboardButton("✏️ Имя (русское)", callback_data="edit_field:full_name_ru"),
-        InlineKeyboardButton("✏️ Имя (английское)", callback_data="edit_field:full_name_en")
+        InlineKeyboardButton(f"{get_field_icon('full_name_ru')} Имя (русское)", callback_data="edit_field:full_name_ru"),
+        InlineKeyboardButton(f"{get_field_icon('full_name_en')} Имя (английское)", callback_data="edit_field:full_name_en")
     ])
     
     keyboard.append([
-        InlineKeyboardButton("✏️ Церковь", callback_data="edit_field:church"),
-        InlineKeyboardButton("✏️ Местоположение", callback_data="edit_field:country_and_city")
+        InlineKeyboardButton(f"{get_field_icon('church')} Церковь", callback_data="edit_field:church"),
+        InlineKeyboardButton(f"{get_field_icon('country_and_city')} Местоположение", callback_data="edit_field:country_and_city")
     ])
     
     keyboard.append([
-        InlineKeyboardButton("✏️ Контакты", callback_data="edit_field:contact_information"),
-        InlineKeyboardButton("✏️ Отправитель", callback_data="edit_field:submitted_by")
+        InlineKeyboardButton(f"{get_field_icon('contact_information')} Контакты", callback_data="edit_field:contact_information"),
+        InlineKeyboardButton(f"{get_field_icon('submitted_by')} Отправитель", callback_data="edit_field:submitted_by")
     ])
     
-    # Selection fields
+    # Selection fields with field-specific icons
     keyboard.append([
-        InlineKeyboardButton("✏️ Пол", callback_data="edit_field:gender"),
-        InlineKeyboardButton("✏️ Размер", callback_data="edit_field:size")
-    ])
-    
-    keyboard.append([
-        InlineKeyboardButton("✏️ Роль", callback_data="edit_field:role"),
-        InlineKeyboardButton("✏️ Отдел", callback_data="edit_field:department")
-    ])
-    
-    # Payment fields
-    keyboard.append([
-        InlineKeyboardButton("✏️ Статус платежа", callback_data="edit_field:payment_status"),
-        InlineKeyboardButton("✏️ Сумма платежа", callback_data="edit_field:payment_amount")
+        InlineKeyboardButton(f"{get_field_icon('gender')} Пол", callback_data="edit_field:gender"),
+        InlineKeyboardButton(f"{get_field_icon('size')} Размер", callback_data="edit_field:size")
     ])
     
     keyboard.append([
-        InlineKeyboardButton("✏️ Дата платежа", callback_data="edit_field:payment_date")
+        InlineKeyboardButton(f"{get_field_icon('role')} Роль", callback_data="edit_field:role"),
+        InlineKeyboardButton(f"{get_field_icon('department')} Отдел", callback_data="edit_field:department")
+    ])
+    
+    # Payment amount field only (status/date are automated)
+    keyboard.append([
+        InlineKeyboardButton(f"{get_field_icon('payment_amount')} Сумма платежа", callback_data="edit_field:payment_amount")
     ])
     
     # Control buttons

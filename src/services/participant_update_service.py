@@ -77,7 +77,15 @@ class ParticipantUpdateService:
         return user_input
     
     def _validate_payment_amount(self, user_input: str) -> int:
-        """Validate payment amount field."""
+        """
+        Validate payment amount field.
+        
+        Returns just the validated amount as an integer. Payment automation
+        is handled separately during the save process via get_automated_payment_fields.
+        
+        Returns:
+            int: The validated payment amount
+        """
         if not user_input:
             return 0  # Default to 0 for empty input
         
@@ -85,6 +93,8 @@ class ParticipantUpdateService:
             amount = int(user_input)
             if amount < 0:
                 raise ValidationError("Сумма платежа не может быть отрицательной")
+            
+            logger.info(f"Payment amount validated: {amount}")
             return amount
         except ValueError:
             raise ValidationError("Сумма платежа должна быть числом (только цифры)")
@@ -182,6 +192,33 @@ class ParticipantUpdateService:
             return field_value.value
         
         return str(field_value)
+    
+    def is_paid_amount(self, amount: int) -> bool:
+        """
+        Determine if payment amount qualifies for automatic payment processing.
+        
+        Args:
+            amount: Payment amount to check
+            
+        Returns:
+            bool: True if amount >= 1, False otherwise
+        """
+        return amount >= 1
+    
+    def get_automated_payment_fields(self, amount: int) -> dict:
+        """
+        Generate automated field values when payment amount indicates payment.
+        
+        Args:
+            amount: Payment amount that triggered automation
+            
+        Returns:
+            dict: Automated field values with payment_status and payment_date
+        """
+        return {
+            'payment_status': PaymentStatus.PAID,
+            'payment_date': date.today()
+        }
     
     def _is_text_field(self, field_name: str) -> bool:
         """Check if field is a text input field."""

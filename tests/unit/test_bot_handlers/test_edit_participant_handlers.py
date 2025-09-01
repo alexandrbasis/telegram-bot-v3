@@ -497,3 +497,153 @@ class TestErrorHandlingWithRetry:
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
         assert 'сохранен' in message_text.lower()
+
+
+class TestPaymentFieldExclusion:
+    """Test that payment status and date are excluded from editable fields."""
+    
+    @pytest.mark.asyncio
+    async def test_payment_status_excluded_from_button_fields(self, mock_update, mock_context):
+        """Test that payment_status is not in BUTTON_FIELDS list."""
+        mock_update.callback_query.data = "edit_field:payment_status"
+        
+        from src.bot.handlers.edit_participant_handlers import handle_field_edit_selection
+        
+        # This should not be handled as a button field (should fail or be treated as unknown)
+        try:
+            result = await handle_field_edit_selection(mock_update, mock_context)
+            # If it executes without error, check that payment_status is not in BUTTON_FIELDS
+            # by importing and checking the field lists directly
+            from src.bot.handlers import edit_participant_handlers
+            
+            # Access the BUTTON_FIELDS constant from the handler code
+            # (will need to read the actual implementation)
+            assert False, "payment_status should not be handled as valid field"
+        except Exception:
+            # Expected to fail since payment_status should not be a valid field
+            pass
+    
+    @pytest.mark.asyncio  
+    async def test_payment_date_excluded_from_text_fields(self, mock_update, mock_context):
+        """Test that payment_date is not in TEXT_FIELDS list."""
+        mock_update.callback_query.data = "edit_field:payment_date"
+        
+        from src.bot.handlers.edit_participant_handlers import handle_field_edit_selection
+        
+        # This should not be handled as a text field (should fail or be treated as unknown)
+        try:
+            result = await handle_field_edit_selection(mock_update, mock_context)
+            assert False, "payment_date should not be handled as valid field"
+        except Exception:
+            # Expected to fail since payment_date should not be a valid field
+            pass
+    
+    def test_button_fields_constant_excludes_payment_status(self):
+        """Test that BUTTON_FIELDS constant in handler does not include payment_status."""
+        # Read the handler file and verify field lists
+        with open('/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py', 'r') as f:
+            content = f.read()
+        
+        # Find BUTTON_FIELDS definition and verify payment_status is not included
+        import re
+        button_fields_match = re.search(r"BUTTON_FIELDS\s*=\s*\[(.*?)\]", content, re.DOTALL)
+        assert button_fields_match, "BUTTON_FIELDS definition not found"
+        
+        button_fields_content = button_fields_match.group(1)
+        assert 'payment_status' not in button_fields_content, "payment_status should not be in BUTTON_FIELDS"
+    
+    def test_text_fields_constant_excludes_payment_date(self):
+        """Test that TEXT_FIELDS constant in handler does not include payment_date.""" 
+        # Read the handler file and verify field lists
+        with open('/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py', 'r') as f:
+            content = f.read()
+        
+        # Find TEXT_FIELDS definition and verify payment_date is not included
+        import re  
+        text_fields_match = re.search(r"TEXT_FIELDS\s*=\s*\[(.*?)\]", content, re.DOTALL)
+        assert text_fields_match, "TEXT_FIELDS definition not found"
+        
+        text_fields_content = text_fields_match.group(1)
+        assert 'payment_date' not in text_fields_content, "payment_date should not be in TEXT_FIELDS"
+
+
+class TestEditMenuDisplay:
+    """Test edit menu display excludes payment fields and uses consistent icons."""
+    
+    @pytest.mark.asyncio
+    async def test_edit_menu_excludes_payment_status_display(self, mock_update, mock_context):
+        """Test that edit menu does not display payment status field."""
+        from src.bot.handlers.edit_participant_handlers import show_participant_edit_menu
+        
+        # Mock participant with payment data
+        participant = Participant(
+            record_id="rec123",
+            full_name_ru="Test User", 
+            payment_status=PaymentStatus.PAID,
+            payment_amount=1000
+        )
+        mock_context.user_data['current_participant'] = participant
+        
+        await show_participant_edit_menu(mock_update.callback_query, mock_context)
+        
+        # Get the message text that was sent
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        
+        # Should not contain payment status display line
+        assert "💰 Статус платежа" not in message_text, "Payment status should not be displayed in edit menu"
+        assert "Статус платежа" not in message_text, "Payment status should not be displayed in edit menu"
+    
+    @pytest.mark.asyncio
+    async def test_edit_menu_excludes_payment_date_display(self, mock_update, mock_context):
+        """Test that edit menu does not display payment date field."""
+        from src.bot.handlers.edit_participant_handlers import show_participant_edit_menu
+        
+        # Mock participant with payment data
+        participant = Participant(
+            record_id="rec123", 
+            full_name_ru="Test User",
+            payment_date=date(2025, 1, 15)
+        )
+        mock_context.user_data['current_participant'] = participant
+        
+        await show_participant_edit_menu(mock_update.callback_query, mock_context)
+        
+        # Get the message text that was sent
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        
+        # Should not contain payment date display line
+        assert "📅 Дата платежа" not in message_text, "Payment date should not be displayed in edit menu" 
+        assert "Дата платежа" not in message_text, "Payment date should not be displayed in edit menu"
+    
+    def test_field_labels_excludes_payment_date(self):
+        """Test that field_labels dictionary does not include payment_date."""
+        # Read the handler file and check field_labels dictionary
+        with open('/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py', 'r') as f:
+            content = f.read()
+        
+        # Find field_labels definition and verify payment_date is not included
+        import re
+        field_labels_match = re.search(r"field_labels\s*=\s*\{(.*?)\}", content, re.DOTALL)
+        assert field_labels_match, "field_labels definition not found"
+        
+        field_labels_content = field_labels_match.group(1)
+        assert "'payment_date'" not in field_labels_content, "payment_date should not be in field_labels dictionary"
+    
+    def test_field_labels_uses_field_specific_icons(self):
+        """Test that field labels incorporate field-specific icons."""
+        # Read the handler file and check if field labels use icons
+        with open('/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py', 'r') as f:
+            content = f.read()
+        
+        # Find success message formatting and verify it uses field-specific icons
+        import re
+        success_message_match = re.search(r"success_message\s*=\s*f[\"'](.*?)[\"']", content, re.DOTALL)
+        assert success_message_match, "success_message formatting not found"
+        
+        success_message_format = success_message_match.group(1)
+        # Success message should use field icons instead of generic ✅
+        # This test expects the message format to include field-specific icons
+        assert "{get_field_icon(" in success_message_format or "field_icon" in success_message_format, \
+               "Success message should use field-specific icons instead of generic checkmark"

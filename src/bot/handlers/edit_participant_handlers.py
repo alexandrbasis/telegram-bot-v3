@@ -17,7 +17,8 @@ from src.models.participant import Participant, Gender, Size, Role, Department, 
 from src.bot.keyboards.edit_keyboards import (
     create_participant_edit_keyboard,
     create_field_edit_keyboard,
-    create_save_cancel_keyboard
+    create_save_cancel_keyboard,
+    get_field_icon
 )
 from src.services.participant_update_service import (
     ParticipantUpdateService,
@@ -139,15 +140,8 @@ async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAU
     message_text += f"👥 Роль: {role_display}\n"
     message_text += f"📋 Отдел: {participant.department or 'Не указано'}\n"
     
-    payment_status_display = {
-        PaymentStatus.PAID: "Оплачено",
-        PaymentStatus.PARTIAL: "Частично",
-        PaymentStatus.UNPAID: "Не оплачено"
-    }.get(participant.payment_status, "Не указано")
-    message_text += f"💰 Статус платежа: {payment_status_display}\n"
-    
+    # Payment amount is still editable, but status/date are automated
     message_text += f"💵 Сумма платежа: {participant.payment_amount or 'Не указано'}\n"
-    message_text += f"📅 Дата платежа: {participant.payment_date or 'Не указано'}\n"
     
     # Show pending changes if any
     pending_changes = context.user_data.get('editing_changes', {})
@@ -204,9 +198,11 @@ async def handle_field_edit_selection(update: Update, context: ContextTypes.DEFA
     logger.info(f"User {user.id} selected field for editing: {field_name}")
     
     # Define field types and their input methods
-    BUTTON_FIELDS = ['gender', 'size', 'role', 'department', 'payment_status']
+    # Note: payment_status and payment_date are excluded as they are automatically 
+    # handled when payment_amount is entered (payment automation)
+    BUTTON_FIELDS = ['gender', 'size', 'role', 'department']
     TEXT_FIELDS = ['full_name_ru', 'full_name_en', 'church', 'country_and_city', 
-                   'contact_information', 'submitted_by', 'payment_amount', 'payment_date']
+                   'contact_information', 'submitted_by', 'payment_amount']
     
     if field_name in BUTTON_FIELDS:
         # Show button selection interface
@@ -348,17 +344,18 @@ async def handle_text_field_input(update: Update, context: ContextTypes.DEFAULT_
         # Confirm the change and return to edit menu
         field_labels = {
             'full_name_ru': 'Имя на русском',
-            'full_name_en': 'Имя на английском',
+            'full_name_en': 'Имя на английском', 
             'church': 'Церковь',
             'country_and_city': 'Местоположение',
             'contact_information': 'Контакты',
             'submitted_by': 'Отправитель',
-            'payment_amount': 'Сумма платежа',
-            'payment_date': 'Дата платежа'
+            'payment_amount': 'Сумма платежа'
+            # Note: payment_date removed as it's now automated
         }
         
         field_label = field_labels.get(field_name, field_name)
-        success_message = f"✅ {field_label} обновлено: {user_input}"
+        field_icon = get_field_icon(field_name)
+        success_message = f"{field_icon} {field_label} обновлено: {user_input}"
         
         await update.message.reply_text(
             text=success_message,
@@ -603,6 +600,15 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return SearchStates.SHOWING_RESULTS
     
     try:
+        # Apply payment automation if payment_amount is being updated
+        if 'payment_amount' in changes:
+            service = ParticipantUpdateService()
+            amount = changes['payment_amount']
+            if service.is_paid_amount(amount):
+                automated_fields = service.get_automated_payment_fields(amount)
+                changes.update(automated_fields)
+                logger.info(f"Payment automation triggered for user {user.id}: amount={amount}, automated {automated_fields}")
+        
         # Update participant in repository
         repository = get_participant_repository()
         success = await repository.update_by_id(participant.record_id, changes)

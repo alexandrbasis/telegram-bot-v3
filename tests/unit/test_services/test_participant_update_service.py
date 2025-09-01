@@ -55,10 +55,12 @@ class TestValidateFieldInput:
             self.service.validate_field_input('full_name_ru', '   ')
     
     def test_validate_payment_amount_valid_integer(self):
-        """Test validation of valid payment amount."""
+        """Test validation of valid payment amount returns integer."""
+        # Test paid amount returns just the integer (automation handled separately)
         result = self.service.validate_field_input('payment_amount', '1000')
         assert result == 1000
         
+        # Test zero amount returns just the integer
         result = self.service.validate_field_input('payment_amount', '0')
         assert result == 0
     
@@ -277,3 +279,62 @@ class TestValidationErrorClass:
         except Exception as e:
             assert isinstance(e, ValidationError)
             assert str(e) == "Test error"
+
+
+class TestPaymentAutomation:
+    """Test payment automation logic in field validation."""
+    
+    def setup_method(self):
+        """Set up test instance."""
+        self.service = ParticipantUpdateService()
+    
+    def test_validate_payment_amount_returns_integer_for_paid_amount(self):
+        """Test that payment amount validation returns integer for paid amounts."""
+        # Test payment amount >= 1 returns integer (automation handled separately)
+        result = self.service.validate_field_input('payment_amount', '1')
+        
+        # Should return just the amount as integer
+        assert result == 1
+        assert isinstance(result, int)
+    
+    def test_validate_payment_amount_returns_integer_for_large_amount(self):
+        """Test that large payment amounts also return integer."""
+        result = self.service.validate_field_input('payment_amount', '5000')
+        
+        assert result == 5000
+        assert isinstance(result, int)
+    
+    def test_validate_payment_amount_returns_integer_for_zero_amount(self):
+        """Test that zero payment amount returns integer."""
+        result = self.service.validate_field_input('payment_amount', '0')
+        
+        # Should return just the amount as integer
+        assert result == 0
+        assert isinstance(result, int)
+    
+    def test_validate_payment_amount_returns_integer_for_empty_amount(self):
+        """Test that empty payment amount returns integer."""
+        result = self.service.validate_field_input('payment_amount', '')
+        
+        # Should return just the amount (0) as integer  
+        assert result == 0
+        assert isinstance(result, int)
+    
+    def test_get_automated_payment_fields_returns_correct_data(self):
+        """Test helper method that generates automated payment fields."""
+        # This method should exist to generate automation data
+        automated_fields = self.service.get_automated_payment_fields(100)
+        
+        assert 'payment_status' in automated_fields
+        assert 'payment_date' in automated_fields
+        assert automated_fields['payment_status'] == PaymentStatus.PAID
+        assert automated_fields['payment_date'] == date.today()
+    
+    def test_is_paid_amount_detection(self):
+        """Test helper method that detects if an amount qualifies as paid."""
+        # This method should exist to determine if amount triggers automation
+        assert self.service.is_paid_amount(1) == True
+        assert self.service.is_paid_amount(100) == True
+        assert self.service.is_paid_amount(5000) == True
+        assert self.service.is_paid_amount(0) == False
+        assert self.service.is_paid_amount(-1) == False  # Invalid but tested for completeness
