@@ -689,7 +689,7 @@ class TestEditMenuDisplay:
         )
         mock_context.user_data['current_participant'] = participant
         
-        await show_participant_edit_menu(mock_update.callback_query, mock_context)
+        await show_participant_edit_menu(mock_update, mock_context)
         
         # Get the message text that was sent
         call_args = mock_update.callback_query.message.edit_text.call_args
@@ -712,7 +712,7 @@ class TestEditMenuDisplay:
         )
         mock_context.user_data['current_participant'] = participant
         
-        await show_participant_edit_menu(mock_update.callback_query, mock_context)
+        await show_participant_edit_menu(mock_update, mock_context)
         
         # Get the message text that was sent
         call_args = mock_update.callback_query.message.edit_text.call_args
