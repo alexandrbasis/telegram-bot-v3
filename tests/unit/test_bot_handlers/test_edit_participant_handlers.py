@@ -187,6 +187,16 @@ class TestHandleTextFieldInput:
     @pytest.mark.asyncio
     async def test_handle_text_input_valid_text_field(self, mock_update, mock_context):
         """Test handling valid text input for text field."""
+        # Add participant to context for complete display
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            full_name_en='Ivan Ivanov',
+            role=Role.TEAM,
+            department=Department.WORSHIP,
+            church='Грейс'
+        )
+        mock_context.user_data['current_participant'] = participant
         mock_context.user_data['editing_field'] = 'full_name_ru'
         mock_update.message.text = 'Петр Петров'
         
@@ -196,11 +206,12 @@ class TestHandleTextFieldInput:
         assert mock_context.user_data['editing_changes']['full_name_ru'] == 'Петр Петров'
         assert mock_context.user_data['editing_field'] is None
         
-        # Should confirm change and return to edit menu
+        # Should show complete participant display instead of simple message
         mock_update.message.reply_text.assert_called()
         call_args = mock_update.message.reply_text.call_args
         message_text = call_args[1]['text']
-        assert 'обновлено' in message_text
+        assert 'Петр Петров' in message_text  # Updated name should appear
+        assert 'Ivan Ivanov' in message_text  # Should show complete participant info
     
     @pytest.mark.asyncio
     async def test_handle_text_input_valid_number_field(self, mock_update, mock_context):
@@ -248,6 +259,43 @@ class TestHandleTextFieldInput:
         message_text = call_args[1]['text']
         assert 'Ошибка' in message_text
         assert 'ГГГГ-ММ-ДД' in message_text
+    
+    @pytest.mark.asyncio
+    async def test_text_field_success_shows_complete_participant(self, mock_update, mock_context):
+        """Test that text input success displays complete participant info instead of single field message."""
+        # Setup participant and editing state
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            full_name_en='Ivan Ivanov',
+            role=Role.CANDIDATE,
+            department=Department.KITCHEN,
+            church='Тестовая церковь'
+        )
+        mock_context.user_data['current_participant'] = participant
+        mock_context.user_data['editing_field'] = 'full_name_ru'
+        mock_context.user_data['editing_changes'] = {}
+        mock_update.message.text = 'Петр Петров'
+        
+        result = await handle_text_field_input(mock_update, mock_context)
+        
+        # Should return to field selection state
+        assert result == EditStates.FIELD_SELECTION
+        assert mock_context.user_data['editing_changes']['full_name_ru'] == 'Петр Петров'
+        
+        # Should reply with complete participant display, not simple success message
+        mock_update.message.reply_text.assert_called()
+        call_args = mock_update.message.reply_text.call_args
+        message_text = call_args[1]['text']
+        
+        # Should contain updated participant information (complete display)
+        assert 'Петр Петров' in message_text  # Updated name should be displayed
+        assert 'Ivan Ivanov' in message_text  # English name should be displayed
+        assert 'CANDIDATE' in message_text or 'Кандидат' in message_text  # Role should be displayed
+        assert 'Kitchen' in message_text or 'Кухня' in message_text  # Department should be displayed
+        
+        # Should NOT contain simple success message format
+        assert 'обновлено:' not in message_text  # Old simple format should not appear
 
 
 class TestHandleButtonFieldSelection:
@@ -256,6 +304,15 @@ class TestHandleButtonFieldSelection:
     @pytest.mark.asyncio
     async def test_handle_button_selection_gender(self, mock_update, mock_context):
         """Test handling gender button selection."""
+        # Add participant to context for complete display
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            full_name_en='Ivan Ivanov',
+            role=Role.CANDIDATE,
+            gender=Gender.MALE
+        )
+        mock_context.user_data['current_participant'] = participant
         mock_context.user_data['editing_field'] = 'gender'
         mock_update.callback_query.data = 'select_value:F'
         
@@ -265,12 +322,22 @@ class TestHandleButtonFieldSelection:
         assert mock_context.user_data['editing_changes']['gender'] == Gender.FEMALE
         assert mock_context.user_data['editing_field'] is None
         
-        # Should confirm change
+        # Should show complete participant display
         mock_update.callback_query.message.edit_text.assert_called()
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        assert 'Иван Иванов' in message_text  # Should show complete participant info
     
     @pytest.mark.asyncio
     async def test_handle_button_selection_size(self, mock_update, mock_context):
         """Test handling size button selection."""
+        # Add participant to context for complete display
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            size=Size.L
+        )
+        mock_context.user_data['current_participant'] = participant
         mock_context.user_data['editing_field'] = 'size'
         mock_update.callback_query.data = 'select_value:XL'
         
@@ -383,6 +450,44 @@ class TestSaveChanges:
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
         assert 'ошибка' in message_text
+    
+    @pytest.mark.asyncio
+    async def test_button_field_success_shows_complete_participant(self, mock_update, mock_context):
+        """Test that button selection success displays complete participant info instead of single field message."""
+        # Setup participant and editing state
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            full_name_en='Ivan Ivanov',
+            role=Role.CANDIDATE,
+            gender=Gender.MALE,
+            department=Department.KITCHEN,
+            church='Тестовая церковь'
+        )
+        mock_context.user_data['current_participant'] = participant
+        mock_context.user_data['editing_field'] = 'role'
+        mock_context.user_data['editing_changes'] = {}
+        mock_update.callback_query.data = 'select_value:TEAM'
+        
+        result = await handle_button_field_selection(mock_update, mock_context)
+        
+        # Should return to field selection state
+        assert result == EditStates.FIELD_SELECTION
+        assert mock_context.user_data['editing_changes']['role'] == Role.TEAM
+        
+        # Should edit message with complete participant display, not simple success message
+        mock_update.callback_query.message.edit_text.assert_called()
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        
+        # Should contain updated participant information (complete display)
+        assert 'Иван Иванов' in message_text  # Name should be displayed
+        assert 'Ivan Ivanov' in message_text  # English name should be displayed
+        assert 'TEAM' in message_text or 'Команда' in message_text  # Updated role should be displayed
+        assert 'Kitchen' in message_text or 'Кухня' in message_text  # Department should be displayed
+        
+        # Should NOT contain simple success message format
+        assert 'обновлено:' not in message_text  # Old simple format should not appear
 
 
 class TestSaveConfirmation:

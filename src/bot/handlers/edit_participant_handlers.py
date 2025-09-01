@@ -381,26 +381,35 @@ async def handle_text_field_input(update: Update, context: ContextTypes.DEFAULT_
         context.user_data['editing_changes'][field_name] = validated_value
         context.user_data['editing_field'] = None
         
-        # Confirm the change and return to edit menu
-        field_labels = {
-            'full_name_ru': 'Имя на русском',
-            'full_name_en': 'Имя на английском', 
-            'church': 'Церковь',
-            'country_and_city': 'Местоположение',
-            'contact_information': 'Контакты',
-            'submitted_by': 'Отправитель',
-            'payment_amount': 'Сумма платежа'
-            # Note: payment_date removed as it's now automated
-        }
-        
-        field_label = field_labels.get(field_name, field_name)
-        field_icon = get_field_icon(field_name)
-        success_message = f"{field_icon} {field_label} обновлено: {user_input}"
-        
-        await update.message.reply_text(
-            text=success_message,
-            reply_markup=create_participant_edit_keyboard()
-        )
+        # Display complete participant information with updated values
+        participant = context.user_data.get('current_participant')
+        if participant:
+            complete_display = display_updated_participant(participant, context)
+            
+            await update.message.reply_text(
+                text=complete_display,
+                reply_markup=create_participant_edit_keyboard()
+            )
+        else:
+            # Fallback to simple message if participant not available
+            field_labels = {
+                'full_name_ru': 'Имя на русском',
+                'full_name_en': 'Имя на английском', 
+                'church': 'Церковь',
+                'country_and_city': 'Местоположение',
+                'contact_information': 'Контакты',
+                'submitted_by': 'Отправитель',
+                'payment_amount': 'Сумма платежа'
+            }
+            
+            field_label = field_labels.get(field_name, field_name)
+            field_icon = get_field_icon(field_name)
+            success_message = f"{field_icon} {field_label} обновлено: {user_input}"
+            
+            await update.message.reply_text(
+                text=success_message,
+                reply_markup=create_participant_edit_keyboard()
+            )
         
         return EditStates.FIELD_SELECTION
         
@@ -483,24 +492,35 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         context.user_data['editing_changes'][field_name] = validated_value
         context.user_data['editing_field'] = None
         
-        # Confirm the change and return to edit menu
-        field_labels = {
-            'gender': 'Пол',
-            'size': 'Размер',
-            'role': 'Роль',
-            'department': 'Отдел',
-            'payment_status': 'Статус платежа'
-        }
-        
-        field_label = field_labels.get(field_name, field_name)
-        # Convert value back to Russian for display
+        # Convert value back to Russian for display (needed for logging)
         display_value = update_service.get_russian_display_value(field_name, validated_value)
-        success_message = f"✅ {field_label} обновлено: {display_value}"
         
-        await query.message.edit_text(
-            text=success_message,
-            reply_markup=create_participant_edit_keyboard()
-        )
+        # Display complete participant information with updated values
+        participant = context.user_data.get('current_participant')
+        if participant:
+            complete_display = display_updated_participant(participant, context)
+            
+            await query.message.edit_text(
+                text=complete_display,
+                reply_markup=create_participant_edit_keyboard()
+            )
+        else:
+            # Fallback to simple message if participant not available
+            field_labels = {
+                'gender': 'Пол',
+                'size': 'Размер',
+                'role': 'Роль',
+                'department': 'Отдел',
+                'payment_status': 'Статус платежа'
+            }
+            
+            field_label = field_labels.get(field_name, field_name)
+            success_message = f"✅ {field_label} обновлено: {display_value}"
+            
+            await query.message.edit_text(
+                text=success_message,
+                reply_markup=create_participant_edit_keyboard()
+            )
         
         # Log bot response if logging is enabled
         if user_logger:
