@@ -600,6 +600,15 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return SearchStates.SHOWING_RESULTS
     
     try:
+        # Apply payment automation if payment_amount is being updated
+        if 'payment_amount' in changes:
+            service = ParticipantUpdateService()
+            amount = changes['payment_amount']
+            if service.is_paid_amount(amount):
+                automated_fields = service.get_automated_payment_fields(amount)
+                changes.update(automated_fields)
+                logger.info(f"Payment automation triggered for user {user.id}: amount={amount}, automated {automated_fields}")
+        
         # Update participant in repository
         repository = get_participant_repository()
         success = await repository.update_by_id(participant.record_id, changes)
