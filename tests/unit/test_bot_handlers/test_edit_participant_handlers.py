@@ -647,3 +647,97 @@ class TestEditMenuDisplay:
         # This test expects the message format to include field-specific icons
         assert "{get_field_icon(" in success_message_format or "field_icon" in success_message_format, \
                "Success message should use field-specific icons instead of generic checkmark"
+
+
+class TestDisplayUpdatedParticipant:
+    """Test display_updated_participant helper function."""
+    
+    def test_display_updated_participant_function(self):
+        """Test that display_updated_participant function returns formatted participant result."""
+        # Import the function we're testing (will fail initially - RED phase)
+        from src.bot.handlers.edit_participant_handlers import display_updated_participant
+        
+        # Create mock participant
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            full_name_en='Ivan Ivanov',
+            role=Role.CANDIDATE,
+            department=Department.KITCHEN
+        )
+        
+        # Create mock context with editing changes
+        context = Mock()
+        context.user_data = {
+            'editing_changes': {
+                'full_name_ru': 'Петр Петров',
+                'role': Role.TEAM
+            }
+        }
+        
+        # Call the function
+        result = display_updated_participant(participant, context)
+        
+        # Should return formatted result with updated values
+        assert isinstance(result, str)
+        assert 'Петр Петров' in result  # Updated name should be in result
+        assert 'TEAM' in result or 'Команда' in result  # Updated role should be in result
+        assert len(result) > 0
+        
+    def test_display_updated_participant_with_no_changes(self):
+        """Test display_updated_participant with no pending changes."""
+        from src.bot.handlers.edit_participant_handlers import display_updated_participant
+        
+        # Create mock participant
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            role=Role.CANDIDATE
+        )
+        
+        # Create mock context with no editing changes
+        context = Mock()
+        context.user_data = {'editing_changes': {}}
+        
+        # Call the function
+        result = display_updated_participant(participant, context)
+        
+        # Should return formatted result with original values
+        assert isinstance(result, str)
+        assert 'Иван Иванов' in result
+        assert 'CANDIDATE' in result or 'Кандидат' in result
+        
+    def test_display_updated_participant_reconstruction_with_edits(self):
+        """Test that participant object is properly reconstructed with all current session edits."""
+        from src.bot.handlers.edit_participant_handlers import display_updated_participant
+        
+        # Create original participant
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            full_name_en='Ivan Ivanov',
+            role=Role.CANDIDATE,
+            gender=Gender.MALE,
+            church='Старая церковь'
+        )
+        
+        # Create context with multiple editing changes
+        context = Mock()
+        context.user_data = {
+            'editing_changes': {
+                'full_name_ru': 'Петр Петров',
+                'role': Role.TEAM,
+                'church': 'Новая церковь',
+                'gender': Gender.FEMALE
+            }
+        }
+        
+        # Call the function
+        result = display_updated_participant(participant, context)
+        
+        # Should display updated values, not original ones
+        assert 'Петр Петров' in result  # Updated name
+        assert 'Иван Иванов' not in result  # Original name should not appear
+        assert 'Новая церковь' in result  # Updated church
+        assert 'Старая церковь' not in result  # Original church should not appear
+        # Role and gender changes should be reflected in formatting

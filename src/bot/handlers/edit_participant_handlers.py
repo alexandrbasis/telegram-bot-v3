@@ -26,6 +26,7 @@ from src.services.participant_update_service import (
 )
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.config.settings import get_settings
+from src.services.search_service import format_participant_result
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,45 @@ def get_participant_repository():
     settings = get_settings()
     client = AirtableClient(settings.get_airtable_config())
     return AirtableParticipantRepository(client)
+
+
+def display_updated_participant(participant: Participant, context: ContextTypes.DEFAULT_TYPE) -> str:
+    """
+    Display complete participant information with current editing changes applied.
+    
+    Reconstructs participant object with all pending changes from the editing context
+    and returns a formatted display string using format_participant_result().
+    
+    Args:
+        participant: Original participant object
+        context: Bot context containing editing_changes
+        
+    Returns:
+        Formatted string with complete participant information including applied changes
+    """
+    # Get pending changes from context
+    editing_changes = context.user_data.get('editing_changes', {})
+    
+    # Create a copy of the participant with changes applied
+    updated_participant = Participant(
+        record_id=participant.record_id,
+        full_name_ru=editing_changes.get('full_name_ru', participant.full_name_ru),
+        full_name_en=editing_changes.get('full_name_en', participant.full_name_en),
+        church=editing_changes.get('church', participant.church),
+        country_and_city=editing_changes.get('country_and_city', participant.country_and_city),
+        contact_information=editing_changes.get('contact_information', participant.contact_information),
+        submitted_by=editing_changes.get('submitted_by', participant.submitted_by),
+        gender=editing_changes.get('gender', participant.gender),
+        size=editing_changes.get('size', participant.size),
+        role=editing_changes.get('role', participant.role),
+        department=editing_changes.get('department', participant.department),
+        payment_amount=editing_changes.get('payment_amount', participant.payment_amount),
+        payment_status=editing_changes.get('payment_status', participant.payment_status),
+        payment_date=editing_changes.get('payment_date', participant.payment_date)
+    )
+    
+    # Use format_participant_result to create formatted display
+    return format_participant_result(updated_participant, language="ru")
 
 
 async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
