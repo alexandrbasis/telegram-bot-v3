@@ -204,9 +204,11 @@ async def handle_field_edit_selection(update: Update, context: ContextTypes.DEFA
     logger.info(f"User {user.id} selected field for editing: {field_name}")
     
     # Define field types and their input methods
-    BUTTON_FIELDS = ['gender', 'size', 'role', 'department', 'payment_status']
+    # Note: payment_status and payment_date are excluded as they are automatically 
+    # handled when payment_amount is entered (payment automation)
+    BUTTON_FIELDS = ['gender', 'size', 'role', 'department']
     TEXT_FIELDS = ['full_name_ru', 'full_name_en', 'church', 'country_and_city', 
-                   'contact_information', 'submitted_by', 'payment_amount', 'payment_date']
+                   'contact_information', 'submitted_by', 'payment_amount']
     
     if field_name in BUTTON_FIELDS:
         # Show button selection interface
