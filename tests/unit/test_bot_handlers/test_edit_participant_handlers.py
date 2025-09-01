@@ -846,3 +846,97 @@ class TestDisplayUpdatedParticipant:
         assert 'Новая церковь' in result  # Updated church
         assert 'Старая церковь' not in result  # Original church should not appear
         # Role and gender changes should be reflected in formatting
+
+
+class TestDisplayRegressionIssue:
+    """Test for critical regression where participant display fails during editing."""
+    
+    @pytest.mark.asyncio
+    async def test_text_field_edit_with_missing_participant_context(self, mock_update):
+        """
+        REGRESSION TEST: Reproduce issue where current_participant becomes None during editing.
+        
+        This test simulates the production issue where participants see no information 
+        after field edits because current_participant is missing from context.
+        """
+        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
+        
+        # Create context WITHOUT current_participant (reproducing the regression)
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            'editing_changes': {},
+            'editing_field': 'full_name_ru'  # User is editing this field
+            # NOTE: 'current_participant' is MISSING - this is the regression!
+        }
+        
+        # Mock update for text input
+        mock_update.message.text = "Новое имя"
+        mock_update.effective_user.id = 12345
+        
+        # Mock the update service
+        with patch('src.bot.handlers.edit_participant_handlers.ParticipantUpdateService') as mock_service:
+            mock_service.return_value.validate_field_input.return_value = "Новое имя"
+            
+            # This should trigger the fallback behavior (simple message instead of complete display)
+            result = await handle_text_field_input(mock_update, context)
+            
+            # Should return to field selection state
+            from src.bot.handlers.edit_participant_handlers import EditStates
+            assert result == EditStates.FIELD_SELECTION
+            
+            # Verify fallback message was sent (not complete participant display)
+            mock_update.message.reply_text.assert_called_once()
+            call_args = mock_update.message.reply_text.call_args
+            message_text = call_args[1]['text']
+            
+            # Should be simple success message, not complete participant info
+            assert "Имя на русском обновлено:" in message_text
+            assert "Новое имя" in message_text
+            
+            # Should NOT contain formatted participant information
+            assert "📋" not in message_text  # No participant display formatting
+            assert "🏠" not in message_text  # No complete info display
+    
+    @pytest.mark.asyncio 
+    async def test_button_field_edit_with_missing_participant_context(self, mock_update):
+        """
+        REGRESSION TEST: Button field editing also fails when current_participant is None.
+        """
+        from src.bot.handlers.edit_participant_handlers import handle_button_field_selection
+        
+        # Create context WITHOUT current_participant 
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            'editing_changes': {},
+            'editing_field': 'gender'  # User is editing this field
+            # NOTE: 'current_participant' is MISSING - this is the regression!
+        }
+        
+        # Mock callback query for button selection
+        mock_update.callback_query.data = "gender:male"
+        mock_update.callback_query.from_user.id = 12345
+        
+        # Mock the update service
+        with patch('src.bot.handlers.edit_participant_handlers.ParticipantUpdateService') as mock_service:
+            mock_service.return_value.convert_button_value.return_value = "MALE"
+            mock_service.return_value.get_russian_display_value.return_value = "Мужской"
+            
+            # This should trigger the fallback behavior
+            result = await handle_button_field_selection(mock_update, context)
+            
+            # Should return to field selection state  
+            from src.bot.handlers.edit_participant_handlers import EditStates
+            assert result == EditStates.FIELD_SELECTION
+            
+            # Verify fallback message was sent (not complete participant display)
+            mock_update.callback_query.message.edit_text.assert_called_once()
+            call_args = mock_update.callback_query.message.edit_text.call_args
+            message_text = call_args[1]['text']
+            
+            # Should be simple success message, not complete participant info
+            assert "Пол обновлено:" in message_text
+            assert "Мужской" in message_text
+            
+            # Should NOT contain formatted participant information
+            assert "📋" not in message_text  # No participant display formatting
+            assert "🏠" not in message_text  # No complete info display
