@@ -159,6 +159,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- **Participant Search Button Functionality Restoration** - Fixed critical search button malfunction preventing users from initiating participant searches (PR #10, SHA: 001b1e5, merged 2025-08-31T17:40:00)
+  - Resolved state collision between SearchStates enum (0-2) and EditStates enum (0-2) causing ConversationHandler conflicts where EditStates handlers overwrote SearchStates handlers at identical numeric values (`src/bot/handlers/search_handlers.py:25-27`)
+  - Fixed ConversationHandler CallbackQueryHandler tracking issue by adding proper per_message=None configuration for mixed handler types (`src/bot/handlers/search_conversation.py:91`)
+  - Updated SearchStates enum values from (0,1,2) to (10,11,12) preventing future state collisions with other conversation handlers
+  - Restored "🔍 Поиск участников" button functionality enabling successful transition from MAIN_MENU → WAITING_FOR_NAME states
+  - Fixed UserInteractionLogger method signatures resolving runtime errors in production code (`src/bot/handlers/edit_participant_handlers.py`)
+  - Corrected integration test mocking for `repository.search_by_name_enhanced` method ensuring proper test result validation (`tests/integration/test_bot_handlers/test_search_conversation.py:166-175`)
+  - Resolved main application test failures by fixing settings mock configurations: `settings.logging.level` → `settings.logging.log_level` and `settings.telegram.token` → `settings.telegram.bot_token` (`tests/integration/test_main.py`)
+  - Added comprehensive regression test suite preventing future search button failures (`tests/unit/test_search_button_regression.py`, `tests/unit/test_per_message_functionality.py`)
+  - Complete code review resolution addressing 2 critical, 2 major, and 1 minor issue with all tests passing (16+ tests including new regression coverage)
+  - Users can now successfully click the search button to initiate participant search conversations without errors or non-responsive behavior
+- **Enhanced Documentation with Troubleshooting and Architecture Updates** - Updated 4 technical documentation files with ConversationHandler diagnostics, state collision prevention patterns, and regression testing procedures
+  - Enhanced troubleshooting guide with ConversationHandler state diagnostics and callback handler debugging procedures (`docs/technical/troubleshooting.md`)
+  - Updated architecture overview with state collision prevention best practices and ConversationHandler configuration guidance (`docs/architecture/architecture-overview.md`)  
+  - Enhanced testing strategy with regression testing methodology for button functionality and conversation handler validation (`docs/development/testing-strategy.md`)
+  - Updated bot commands documentation with search button functionality specifications and user interaction flow details (`docs/technical/bot-commands.md`)
 
 ### Removed
 
