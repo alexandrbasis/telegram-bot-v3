@@ -2,30 +2,37 @@
 Main bot application entry point.
 
 Initializes and runs the Telegram bot with search conversation functionality,
-proper error handling, and logging configuration.
+proper error handling, and logging configuration including persistent file logging.
 """
 
 import asyncio
 import logging
-from typing import NoReturn
+from typing import NoReturn, Optional
 
 from telegram.ext import Application
 
 from src.config.settings import get_settings
 from src.bot.handlers.search_conversation import get_search_conversation_handler
+from src.services.file_logging_service import FileLoggingService
 
 logger = logging.getLogger(__name__)
+
+# Global file logging service instance
+_file_logging_service: Optional[FileLoggingService] = None
 
 
 def configure_logging(settings) -> None:
     """
-    Configure logging based on settings.
+    Configure logging based on settings, including file logging if enabled.
     
     Args:
         settings: Application settings with logging configuration
     """
+    global _file_logging_service
+    
     log_level = getattr(logging, settings.logging.log_level.upper())
     
+    # Configure basic console logging
     logging.basicConfig(
         level=log_level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -36,7 +43,35 @@ def configure_logging(settings) -> None:
     logging.getLogger('telegram').setLevel(logging.INFO)
     logging.getLogger('httpx').setLevel(logging.WARNING)
     
+    # Initialize file logging if enabled
+    try:
+        file_config = settings.get_file_logging_config()
+        if file_config.enabled:
+            _file_logging_service = FileLoggingService(file_config)
+            _file_logging_service.initialize_directories()
+            
+            # Get application logger with file handler
+            app_logger = _file_logging_service.get_application_logger("main")
+            app_logger.setLevel(log_level)
+            
+            logger.info(f"File logging initialized: {file_config.log_dir}")
+        else:
+            logger.info("File logging disabled in configuration")
+    except Exception as e:
+        logger.error(f"Failed to initialize file logging: {e}")
+        logger.warning("Continuing with console logging only")
+    
     logger.info(f"Logging configured with level: {settings.logging.log_level}")
+
+
+def get_file_logging_service() -> Optional[FileLoggingService]:
+    """
+    Get the global file logging service instance.
+    
+    Returns:
+        FileLoggingService instance if initialized, None otherwise
+    """
+    return _file_logging_service
 
 
 def create_application() -> Application:
