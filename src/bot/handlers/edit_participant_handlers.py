@@ -427,29 +427,60 @@ async def handle_text_field_input(
         # Display complete participant information with updated values
         participant = context.user_data.get("current_participant")
         if participant:
-            complete_display = display_updated_participant(participant, context)
-
-            await update.message.reply_text(
-                text=complete_display, reply_markup=create_participant_edit_keyboard()
-            )
+            try:
+                complete_display = display_updated_participant(participant, context)
+                await update.message.reply_text(
+                    text=complete_display, reply_markup=create_participant_edit_keyboard()
+                )
+                logger.info(f"Successfully displayed updated participant for user {user.id}")
+            except Exception as e:
+                logger.error(f"Failed to display updated participant for user {user.id}: {e}")
+                # Fallback to simple success message if display fails
+                field_labels = {
+                    "full_name_ru": "Имя на русском",
+                    "full_name_en": "Имя на английском", 
+                    "church": "Церковь",
+                    "country_and_city": "Местоположение",
+                    "contact_information": "Контакты",
+                    "submitted_by": "Отправитель",
+                    "payment_amount": "Сумма платежа",
+                }
+                field_label = field_labels.get(field_name, field_name)
+                field_icon = get_field_icon(field_name)
+                success_message = f"{field_icon} {field_label} обновлено: {user_input}\n\n⚠️ Полная информация временно недоступна."
+                
+                await update.message.reply_text(
+                    text=success_message, reply_markup=create_participant_edit_keyboard()
+                )
         else:
-            # Fallback to simple message if participant not available
+            # CRITICAL: current_participant is missing from context
+            logger.error(f"REGRESSION: current_participant missing from context for user {user.id}")
+            logger.error(f"Context keys available: {list(context.user_data.keys())}")
+            
+            # Attempt to provide meaningful error to user
             field_labels = {
                 "full_name_ru": "Имя на русском",
                 "full_name_en": "Имя на английском",
-                "church": "Церковь",
+                "church": "Церковь", 
                 "country_and_city": "Местоположение",
                 "contact_information": "Контакты",
                 "submitted_by": "Отправитель",
                 "payment_amount": "Сумма платежа",
             }
-
+            
             field_label = field_labels.get(field_name, field_name)
             field_icon = get_field_icon(field_name)
-            success_message = f"{field_icon} {field_label} обновлено: {user_input}"
-
+            
+            # Provide user feedback with clear indication of the issue
+            error_message = (
+                f"{field_icon} {field_label} обновлено: {user_input}\n\n"
+                f"⚠️ Произошла техническая ошибка при отображении полной информации.\n"
+                f"Ваши изменения сохранены, но для просмотра обновленных данных "
+                f"рекомендуется вернуться в главное меню и найти участника заново."
+            )
+            
             await update.message.reply_text(
-                text=success_message, reply_markup=create_participant_edit_keyboard()
+                text=error_message, reply_markup=create_participant_edit_keyboard()
             )
 
         return EditStates.FIELD_SELECTION
@@ -547,26 +578,56 @@ async def handle_button_field_selection(
         # Display complete participant information with updated values
         participant = context.user_data.get("current_participant")
         if participant:
-            complete_display = display_updated_participant(participant, context)
-
-            await query.message.edit_text(
-                text=complete_display, reply_markup=create_participant_edit_keyboard()
-            )
+            try:
+                complete_display = display_updated_participant(participant, context)
+                await query.message.edit_text(
+                    text=complete_display, reply_markup=create_participant_edit_keyboard()
+                )
+                logger.info(f"Successfully displayed updated participant for user {user.id}")
+            except Exception as e:
+                logger.error(f"Failed to display updated participant for user {user.id}: {e}")
+                # Fallback to simple success message if display fails
+                field_labels = {
+                    "gender": "Пол",
+                    "size": "Размер", 
+                    "role": "Роль",
+                    "department": "Отдел",
+                    "payment_status": "Статус платежа",
+                }
+                field_label = field_labels.get(field_name, field_name)
+                field_icon = get_field_icon(field_name)
+                success_message = f"{field_icon} {field_label} обновлено: {display_value}\n\n⚠️ Полная информация временно недоступна."
+                
+                await query.message.edit_text(
+                    text=success_message, reply_markup=create_participant_edit_keyboard()
+                )
         else:
-            # Fallback to simple message if participant not available
+            # CRITICAL: current_participant is missing from context
+            logger.error(f"REGRESSION: current_participant missing from context for user {user.id}")
+            logger.error(f"Context keys available: {list(context.user_data.keys())}")
+            
+            # Attempt to provide meaningful error to user
             field_labels = {
                 "gender": "Пол",
                 "size": "Размер",
-                "role": "Роль",
+                "role": "Роль", 
                 "department": "Отдел",
                 "payment_status": "Статус платежа",
             }
-
+            
             field_label = field_labels.get(field_name, field_name)
-            success_message = f"✅ {field_label} обновлено: {display_value}"
-
+            field_icon = get_field_icon(field_name)
+            
+            # Provide user feedback with clear indication of the issue
+            error_message = (
+                f"{field_icon} {field_label} обновлено: {display_value}\n\n"
+                f"⚠️ Произошла техническая ошибка при отображении полной информации.\n"
+                f"Ваши изменения сохранены, но для просмотра обновленных данных "
+                f"рекомендуется вернуться в главное меню и найти участника заново."
+            )
+            
             await query.message.edit_text(
-                text=success_message, reply_markup=create_participant_edit_keyboard()
+                text=error_message, reply_markup=create_participant_edit_keyboard()
             )
 
         # Log bot response if logging is enabled
