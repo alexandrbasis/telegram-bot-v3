@@ -17,7 +17,8 @@ from src.models.participant import Participant, Gender, Size, Role, Department, 
 from src.bot.keyboards.edit_keyboards import (
     create_participant_edit_keyboard,
     create_field_edit_keyboard,
-    create_save_cancel_keyboard
+    create_save_cancel_keyboard,
+    get_field_icon
 )
 from src.services.participant_update_service import (
     ParticipantUpdateService,
@@ -139,15 +140,8 @@ async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAU
     message_text += f"👥 Роль: {role_display}\n"
     message_text += f"📋 Отдел: {participant.department or 'Не указано'}\n"
     
-    payment_status_display = {
-        PaymentStatus.PAID: "Оплачено",
-        PaymentStatus.PARTIAL: "Частично",
-        PaymentStatus.UNPAID: "Не оплачено"
-    }.get(participant.payment_status, "Не указано")
-    message_text += f"💰 Статус платежа: {payment_status_display}\n"
-    
+    # Payment amount is still editable, but status/date are automated
     message_text += f"💵 Сумма платежа: {participant.payment_amount or 'Не указано'}\n"
-    message_text += f"📅 Дата платежа: {participant.payment_date or 'Не указано'}\n"
     
     # Show pending changes if any
     pending_changes = context.user_data.get('editing_changes', {})
@@ -350,17 +344,18 @@ async def handle_text_field_input(update: Update, context: ContextTypes.DEFAULT_
         # Confirm the change and return to edit menu
         field_labels = {
             'full_name_ru': 'Имя на русском',
-            'full_name_en': 'Имя на английском',
+            'full_name_en': 'Имя на английском', 
             'church': 'Церковь',
             'country_and_city': 'Местоположение',
             'contact_information': 'Контакты',
             'submitted_by': 'Отправитель',
-            'payment_amount': 'Сумма платежа',
-            'payment_date': 'Дата платежа'
+            'payment_amount': 'Сумма платежа'
+            # Note: payment_date removed as it's now automated
         }
         
         field_label = field_labels.get(field_name, field_name)
-        success_message = f"✅ {field_label} обновлено: {user_input}"
+        field_icon = get_field_icon(field_name)
+        success_message = f"{field_icon} {field_label} обновлено: {user_input}"
         
         await update.message.reply_text(
             text=success_message,
