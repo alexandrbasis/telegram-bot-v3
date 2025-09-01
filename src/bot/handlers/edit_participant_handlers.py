@@ -26,6 +26,7 @@ from src.services.participant_update_service import (
 )
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.config.settings import get_settings
+from src.services.search_service import format_participant_result
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,45 @@ def get_participant_repository():
     settings = get_settings()
     client = AirtableClient(settings.get_airtable_config())
     return AirtableParticipantRepository(client)
+
+
+def display_updated_participant(participant: Participant, context: ContextTypes.DEFAULT_TYPE) -> str:
+    """
+    Display complete participant information with current editing changes applied.
+    
+    Reconstructs participant object with all pending changes from the editing context
+    and returns a formatted display string using format_participant_result().
+    
+    Args:
+        participant: Original participant object
+        context: Bot context containing editing_changes
+        
+    Returns:
+        Formatted string with complete participant information including applied changes
+    """
+    # Get pending changes from context
+    editing_changes = context.user_data.get('editing_changes', {})
+    
+    # Create a copy of the participant with changes applied
+    updated_participant = Participant(
+        record_id=participant.record_id,
+        full_name_ru=editing_changes.get('full_name_ru', participant.full_name_ru),
+        full_name_en=editing_changes.get('full_name_en', participant.full_name_en),
+        church=editing_changes.get('church', participant.church),
+        country_and_city=editing_changes.get('country_and_city', participant.country_and_city),
+        contact_information=editing_changes.get('contact_information', participant.contact_information),
+        submitted_by=editing_changes.get('submitted_by', participant.submitted_by),
+        gender=editing_changes.get('gender', participant.gender),
+        size=editing_changes.get('size', participant.size),
+        role=editing_changes.get('role', participant.role),
+        department=editing_changes.get('department', participant.department),
+        payment_amount=editing_changes.get('payment_amount', participant.payment_amount),
+        payment_status=editing_changes.get('payment_status', participant.payment_status),
+        payment_date=editing_changes.get('payment_date', participant.payment_date)
+    )
+    
+    # Use format_participant_result to create formatted display
+    return format_participant_result(updated_participant, language="ru")
 
 
 async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -341,26 +381,35 @@ async def handle_text_field_input(update: Update, context: ContextTypes.DEFAULT_
         context.user_data['editing_changes'][field_name] = validated_value
         context.user_data['editing_field'] = None
         
-        # Confirm the change and return to edit menu
-        field_labels = {
-            'full_name_ru': 'Имя на русском',
-            'full_name_en': 'Имя на английском', 
-            'church': 'Церковь',
-            'country_and_city': 'Местоположение',
-            'contact_information': 'Контакты',
-            'submitted_by': 'Отправитель',
-            'payment_amount': 'Сумма платежа'
-            # Note: payment_date removed as it's now automated
-        }
-        
-        field_label = field_labels.get(field_name, field_name)
-        field_icon = get_field_icon(field_name)
-        success_message = f"{field_icon} {field_label} обновлено: {user_input}"
-        
-        await update.message.reply_text(
-            text=success_message,
-            reply_markup=create_participant_edit_keyboard()
-        )
+        # Display complete participant information with updated values
+        participant = context.user_data.get('current_participant')
+        if participant:
+            complete_display = display_updated_participant(participant, context)
+            
+            await update.message.reply_text(
+                text=complete_display,
+                reply_markup=create_participant_edit_keyboard()
+            )
+        else:
+            # Fallback to simple message if participant not available
+            field_labels = {
+                'full_name_ru': 'Имя на русском',
+                'full_name_en': 'Имя на английском', 
+                'church': 'Церковь',
+                'country_and_city': 'Местоположение',
+                'contact_information': 'Контакты',
+                'submitted_by': 'Отправитель',
+                'payment_amount': 'Сумма платежа'
+            }
+            
+            field_label = field_labels.get(field_name, field_name)
+            field_icon = get_field_icon(field_name)
+            success_message = f"{field_icon} {field_label} обновлено: {user_input}"
+            
+            await update.message.reply_text(
+                text=success_message,
+                reply_markup=create_participant_edit_keyboard()
+            )
         
         return EditStates.FIELD_SELECTION
         
@@ -443,24 +492,35 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         context.user_data['editing_changes'][field_name] = validated_value
         context.user_data['editing_field'] = None
         
-        # Confirm the change and return to edit menu
-        field_labels = {
-            'gender': 'Пол',
-            'size': 'Размер',
-            'role': 'Роль',
-            'department': 'Отдел',
-            'payment_status': 'Статус платежа'
-        }
-        
-        field_label = field_labels.get(field_name, field_name)
-        # Convert value back to Russian for display
+        # Convert value back to Russian for display (needed for logging)
         display_value = update_service.get_russian_display_value(field_name, validated_value)
-        success_message = f"✅ {field_label} обновлено: {display_value}"
         
-        await query.message.edit_text(
-            text=success_message,
-            reply_markup=create_participant_edit_keyboard()
-        )
+        # Display complete participant information with updated values
+        participant = context.user_data.get('current_participant')
+        if participant:
+            complete_display = display_updated_participant(participant, context)
+            
+            await query.message.edit_text(
+                text=complete_display,
+                reply_markup=create_participant_edit_keyboard()
+            )
+        else:
+            # Fallback to simple message if participant not available
+            field_labels = {
+                'gender': 'Пол',
+                'size': 'Размер',
+                'role': 'Роль',
+                'department': 'Отдел',
+                'payment_status': 'Статус платежа'
+            }
+            
+            field_label = field_labels.get(field_name, field_name)
+            success_message = f"✅ {field_label} обновлено: {display_value}"
+            
+            await query.message.edit_text(
+                text=success_message,
+                reply_markup=create_participant_edit_keyboard()
+            )
         
         # Log bot response if logging is enabled
         if user_logger:
