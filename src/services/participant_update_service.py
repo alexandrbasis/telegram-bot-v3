@@ -76,8 +76,17 @@ class ParticipantUpdateService:
         
         return user_input
     
-    def _validate_payment_amount(self, user_input: str) -> int:
-        """Validate payment amount field."""
+    def _validate_payment_amount(self, user_input: str):
+        """
+        Validate payment amount field with automatic payment status/date handling.
+        
+        When payment amount >= 1, automatically sets payment_status to PAID
+        and payment_date to today's date.
+        
+        Returns:
+            int: Just the amount if no automation needed (amount = 0)
+            tuple: (amount, automated_fields) if automation triggered (amount >= 1)
+        """
         if not user_input:
             return 0  # Default to 0 for empty input
         
@@ -85,6 +94,13 @@ class ParticipantUpdateService:
             amount = int(user_input)
             if amount < 0:
                 raise ValidationError("Сумма платежа не может быть отрицательной")
+            
+            # Trigger payment automation for any positive amount
+            if self.is_paid_amount(amount):
+                automated_fields = self.get_automated_payment_fields(amount)
+                logger.info(f"Payment automation triggered for amount {amount}: status=PAID, date={automated_fields['payment_date']}")
+                return (amount, automated_fields)
+            
             return amount
         except ValueError:
             raise ValidationError("Сумма платежа должна быть числом (только цифры)")
@@ -182,6 +198,33 @@ class ParticipantUpdateService:
             return field_value.value
         
         return str(field_value)
+    
+    def is_paid_amount(self, amount: int) -> bool:
+        """
+        Determine if payment amount qualifies for automatic payment processing.
+        
+        Args:
+            amount: Payment amount to check
+            
+        Returns:
+            bool: True if amount >= 1, False otherwise
+        """
+        return amount >= 1
+    
+    def get_automated_payment_fields(self, amount: int) -> dict:
+        """
+        Generate automated field values when payment amount indicates payment.
+        
+        Args:
+            amount: Payment amount that triggered automation
+            
+        Returns:
+            dict: Automated field values with payment_status and payment_date
+        """
+        return {
+            'payment_status': PaymentStatus.PAID,
+            'payment_date': date.today()
+        }
     
     def _is_text_field(self, field_name: str) -> bool:
         """Check if field is a text input field."""

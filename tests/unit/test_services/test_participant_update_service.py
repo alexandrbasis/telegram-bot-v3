@@ -55,10 +55,15 @@ class TestValidateFieldInput:
             self.service.validate_field_input('full_name_ru', '   ')
     
     def test_validate_payment_amount_valid_integer(self):
-        """Test validation of valid payment amount."""
+        """Test validation of valid payment amount with automation for paid amounts."""
+        # Test paid amount returns tuple with automation
         result = self.service.validate_field_input('payment_amount', '1000')
-        assert result == 1000
+        assert isinstance(result, tuple)
+        amount, automated_fields = result
+        assert amount == 1000
+        assert automated_fields['payment_status'] == PaymentStatus.PAID
         
+        # Test zero amount returns just the integer (no automation)
         result = self.service.validate_field_input('payment_amount', '0')
         assert result == 0
     
@@ -277,3 +282,70 @@ class TestValidationErrorClass:
         except Exception as e:
             assert isinstance(e, ValidationError)
             assert str(e) == "Test error"
+
+
+class TestPaymentAutomation:
+    """Test payment automation logic in field validation."""
+    
+    def setup_method(self):
+        """Set up test instance."""
+        self.service = ParticipantUpdateService()
+    
+    def test_validate_payment_amount_with_automation_returns_tuple_for_paid_amount(self):
+        """Test that payment amount validation returns automation data for paid amounts."""
+        # Test payment amount >= 1 triggers automation
+        result = self.service.validate_field_input('payment_amount', '1')
+        
+        # Should return a tuple with (amount, automated_fields)
+        assert isinstance(result, tuple)
+        amount, automated_fields = result
+        assert amount == 1
+        assert 'payment_status' in automated_fields
+        assert 'payment_date' in automated_fields
+        assert automated_fields['payment_status'] == PaymentStatus.PAID
+        assert automated_fields['payment_date'] == date.today()
+    
+    def test_validate_payment_amount_with_automation_returns_tuple_for_large_amount(self):
+        """Test that large payment amounts also trigger automation."""
+        result = self.service.validate_field_input('payment_amount', '5000')
+        
+        assert isinstance(result, tuple)
+        amount, automated_fields = result
+        assert amount == 5000
+        assert automated_fields['payment_status'] == PaymentStatus.PAID
+        assert automated_fields['payment_date'] == date.today()
+    
+    def test_validate_payment_amount_no_automation_for_zero_amount(self):
+        """Test that zero payment amount does not trigger automation."""
+        result = self.service.validate_field_input('payment_amount', '0')
+        
+        # Should return just the amount, not a tuple
+        assert result == 0
+        assert not isinstance(result, tuple)
+    
+    def test_validate_payment_amount_no_automation_for_empty_amount(self):
+        """Test that empty payment amount does not trigger automation."""
+        result = self.service.validate_field_input('payment_amount', '')
+        
+        # Should return just the amount (0), not a tuple
+        assert result == 0
+        assert not isinstance(result, tuple)
+    
+    def test_get_automated_payment_fields_returns_correct_data(self):
+        """Test helper method that generates automated payment fields."""
+        # This method should exist to generate automation data
+        automated_fields = self.service.get_automated_payment_fields(100)
+        
+        assert 'payment_status' in automated_fields
+        assert 'payment_date' in automated_fields
+        assert automated_fields['payment_status'] == PaymentStatus.PAID
+        assert automated_fields['payment_date'] == date.today()
+    
+    def test_is_paid_amount_detection(self):
+        """Test helper method that detects if an amount qualifies as paid."""
+        # This method should exist to determine if amount triggers automation
+        assert self.service.is_paid_amount(1) == True
+        assert self.service.is_paid_amount(100) == True
+        assert self.service.is_paid_amount(5000) == True
+        assert self.service.is_paid_amount(0) == False
+        assert self.service.is_paid_amount(-1) == False  # Invalid but tested for completeness
