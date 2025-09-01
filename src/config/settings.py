@@ -131,6 +131,12 @@ class LoggingSettings:
     enable_user_interaction_logging: bool = field(default_factory=lambda: os.getenv('ENABLE_USER_INTERACTION_LOGGING', 'true').lower() == 'true')
     user_interaction_log_level: str = field(default_factory=lambda: os.getenv('USER_INTERACTION_LOG_LEVEL', 'INFO'))
     
+    # File logging settings
+    enable_file_logging: bool = field(default_factory=lambda: os.getenv('ENABLE_FILE_LOGGING', 'true').lower() == 'true')
+    file_log_dir: Path = field(default_factory=lambda: Path(os.getenv('FILE_LOG_DIR', 'logs')))
+    file_max_size: int = field(default_factory=lambda: int(os.getenv('FILE_LOG_MAX_SIZE', str(10 * 1024 * 1024))))  # 10MB default
+    file_backup_count: int = field(default_factory=lambda: int(os.getenv('FILE_LOG_BACKUP_COUNT', '5')))
+    
     def validate(self) -> None:
         """
         Validate logging settings.
@@ -151,6 +157,13 @@ class LoggingSettings:
         
         if self.user_interaction_log_level.upper() not in valid_levels:
             raise ValueError(f"USER_INTERACTION_LOG_LEVEL must be one of {valid_levels}")
+        
+        # File logging validation
+        if self.file_max_size <= 0:
+            raise ValueError("file_max_size must be positive")
+        
+        if self.file_backup_count < 0:
+            raise ValueError("file_backup_count cannot be negative")
 
 
 @dataclass
@@ -232,6 +245,23 @@ class Settings:
             AirtableConfig instance ready for use with AirtableClient
         """
         return self.database.to_airtable_config()
+    
+    def get_file_logging_config(self):
+        """
+        Get file logging configuration from logging settings.
+        
+        Returns:
+            FileLoggingConfig instance ready for use with FileLoggingService
+        """
+        from src.services.file_logging_service import FileLoggingConfig
+        
+        return FileLoggingConfig(
+            enabled=self.logging.enable_file_logging,
+            log_dir=self.logging.file_log_dir,
+            max_file_size=self.logging.file_max_size,
+            backup_count=self.logging.file_backup_count,
+            create_subdirs=True
+        )
     
     def to_dict(self) -> Dict[str, Any]:
         """
