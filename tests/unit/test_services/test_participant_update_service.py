@@ -55,15 +55,12 @@ class TestValidateFieldInput:
             self.service.validate_field_input('full_name_ru', '   ')
     
     def test_validate_payment_amount_valid_integer(self):
-        """Test validation of valid payment amount with automation for paid amounts."""
-        # Test paid amount returns tuple with automation
+        """Test validation of valid payment amount returns integer."""
+        # Test paid amount returns just the integer (automation handled separately)
         result = self.service.validate_field_input('payment_amount', '1000')
-        assert isinstance(result, tuple)
-        amount, automated_fields = result
-        assert amount == 1000
-        assert automated_fields['payment_status'] == PaymentStatus.PAID
+        assert result == 1000
         
-        # Test zero amount returns just the integer (no automation)
+        # Test zero amount returns just the integer
         result = self.service.validate_field_input('payment_amount', '0')
         assert result == 0
     
@@ -291,45 +288,37 @@ class TestPaymentAutomation:
         """Set up test instance."""
         self.service = ParticipantUpdateService()
     
-    def test_validate_payment_amount_with_automation_returns_tuple_for_paid_amount(self):
-        """Test that payment amount validation returns automation data for paid amounts."""
-        # Test payment amount >= 1 triggers automation
+    def test_validate_payment_amount_returns_integer_for_paid_amount(self):
+        """Test that payment amount validation returns integer for paid amounts."""
+        # Test payment amount >= 1 returns integer (automation handled separately)
         result = self.service.validate_field_input('payment_amount', '1')
         
-        # Should return a tuple with (amount, automated_fields)
-        assert isinstance(result, tuple)
-        amount, automated_fields = result
-        assert amount == 1
-        assert 'payment_status' in automated_fields
-        assert 'payment_date' in automated_fields
-        assert automated_fields['payment_status'] == PaymentStatus.PAID
-        assert automated_fields['payment_date'] == date.today()
+        # Should return just the amount as integer
+        assert result == 1
+        assert isinstance(result, int)
     
-    def test_validate_payment_amount_with_automation_returns_tuple_for_large_amount(self):
-        """Test that large payment amounts also trigger automation."""
+    def test_validate_payment_amount_returns_integer_for_large_amount(self):
+        """Test that large payment amounts also return integer."""
         result = self.service.validate_field_input('payment_amount', '5000')
         
-        assert isinstance(result, tuple)
-        amount, automated_fields = result
-        assert amount == 5000
-        assert automated_fields['payment_status'] == PaymentStatus.PAID
-        assert automated_fields['payment_date'] == date.today()
+        assert result == 5000
+        assert isinstance(result, int)
     
-    def test_validate_payment_amount_no_automation_for_zero_amount(self):
-        """Test that zero payment amount does not trigger automation."""
+    def test_validate_payment_amount_returns_integer_for_zero_amount(self):
+        """Test that zero payment amount returns integer."""
         result = self.service.validate_field_input('payment_amount', '0')
         
-        # Should return just the amount, not a tuple
+        # Should return just the amount as integer
         assert result == 0
-        assert not isinstance(result, tuple)
+        assert isinstance(result, int)
     
-    def test_validate_payment_amount_no_automation_for_empty_amount(self):
-        """Test that empty payment amount does not trigger automation."""
+    def test_validate_payment_amount_returns_integer_for_empty_amount(self):
+        """Test that empty payment amount returns integer."""
         result = self.service.validate_field_input('payment_amount', '')
         
-        # Should return just the amount (0), not a tuple
+        # Should return just the amount (0) as integer  
         assert result == 0
-        assert not isinstance(result, tuple)
+        assert isinstance(result, int)
     
     def test_get_automated_payment_fields_returns_correct_data(self):
         """Test helper method that generates automated payment fields."""

@@ -76,16 +76,15 @@ class ParticipantUpdateService:
         
         return user_input
     
-    def _validate_payment_amount(self, user_input: str):
+    def _validate_payment_amount(self, user_input: str) -> int:
         """
-        Validate payment amount field with automatic payment status/date handling.
+        Validate payment amount field.
         
-        When payment amount >= 1, automatically sets payment_status to PAID
-        and payment_date to today's date.
+        Returns just the validated amount as an integer. Payment automation
+        is handled separately during the save process via get_automated_payment_fields.
         
         Returns:
-            int: Just the amount if no automation needed (amount = 0)
-            tuple: (amount, automated_fields) if automation triggered (amount >= 1)
+            int: The validated payment amount
         """
         if not user_input:
             return 0  # Default to 0 for empty input
@@ -95,12 +94,7 @@ class ParticipantUpdateService:
             if amount < 0:
                 raise ValidationError("Сумма платежа не может быть отрицательной")
             
-            # Trigger payment automation for any positive amount
-            if self.is_paid_amount(amount):
-                automated_fields = self.get_automated_payment_fields(amount)
-                logger.info(f"Payment automation triggered for amount {amount}: status=PAID, date={automated_fields['payment_date']}")
-                return (amount, automated_fields)
-            
+            logger.info(f"Payment amount validated: {amount}")
             return amount
         except ValueError:
             raise ValidationError("Сумма платежа должна быть числом (только цифры)")
