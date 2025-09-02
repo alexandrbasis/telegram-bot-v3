@@ -26,7 +26,7 @@ from src.services.participant_update_service import (
 )
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.config.settings import get_settings
-from src.services.search_service import format_participant_result
+from src.services.search_service import format_participant_result, format_participant_full
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ def display_updated_participant(participant: Participant, context: ContextTypes.
     Display complete participant information with current editing changes applied.
     
     Reconstructs participant object with all pending changes from the editing context
-    and returns a formatted display string using format_participant_result().
+    and returns a formatted display string using format_participant_full().
     
     Args:
         participant: Original participant object
@@ -115,8 +115,8 @@ def display_updated_participant(participant: Participant, context: ContextTypes.
         payment_date=editing_changes.get('payment_date', participant.payment_date)
     )
     
-    # Use format_participant_result to create formatted display
-    return format_participant_result(updated_participant, language="ru")
+    # Use full participant formatting for complete transparency
+    return format_participant_full(updated_participant, language="ru")
 
 
 def reconstruct_participant_from_changes(editing_changes: dict, record_id: str = None) -> str:
@@ -836,7 +836,7 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             
             # Show complete participant display with save success prefix
             try:
-                success_message = f"✅ Изменения сохранены успешно!\n\n{format_participant_result(participant, language='ru')}"
+                success_message = f"✅ Изменения сохранены успешно!\n\n{format_participant_full(participant, language='ru')}"
                 await query.message.edit_text(
                     text=success_message,
                     reply_markup=InlineKeyboardMarkup([[

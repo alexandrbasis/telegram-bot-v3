@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import logging
 
 from rapidfuzz import fuzz, process
-from src.models.participant import Participant
+from src.models.participant import Participant, Gender, Role, PaymentStatus
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +122,89 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
         result_parts.append(f" | {context_parts[0]}")
     
     return "".join(result_parts)
+
+
+def format_participant_full(participant: Participant, language: str = "ru") -> str:
+    """
+    Format full participant details for display during edit/save flows.
+
+    Shows all relevant fields with Russian labels and friendly values
+    (gender/role/payment status translated), keeping output plain text.
+
+    Args:
+        participant: Participant instance to format
+        language: Display language preference (currently only 'ru' supported)
+
+    Returns:
+        Multi-line string with all participant details
+    """
+    # Russian labels and icons
+    labels = {
+        'full_name_ru': '👤 Имя (русское)',
+        'full_name_en': '🌍 Имя (английское)',
+        'church': '⛪ Церковь',
+        'country_and_city': '📍 Местоположение',
+        'contact_information': '📞 Контакты',
+        'submitted_by': '👨‍💼 Отправитель',
+        'gender': '👫 Пол',
+        'size': '👕 Размер',
+        'role': '👥 Роль',
+        'department': '📋 Отдел',
+        'payment_amount': '💵 Сумма платежа',
+        'payment_status': '💳 Статус оплаты',
+        'payment_date': '📅 Дата оплаты',
+    }
+
+    def value_or_na(val: object) -> str:
+        return str(val) if val not in (None, "") else "Не указано"
+
+    def rus_gender(val: object) -> str:
+        if val is None:
+            return "Не указано"
+        v = val.value if hasattr(val, 'value') else val
+        return "Мужской" if v == Gender.MALE.value else ("Женский" if v == Gender.FEMALE.value else value_or_na(v))
+
+    def rus_role(val: object) -> str:
+        if val is None:
+            return "Не указано"
+        v = val.value if hasattr(val, 'value') else val
+        return "Кандидат" if v == Role.CANDIDATE.value else ("Команда" if v == Role.TEAM.value else value_or_na(v))
+
+    def rus_payment_status(val: object) -> str:
+        if val is None:
+            return "Не указано"
+        v = val.value if hasattr(val, 'value') else val
+        if v == PaymentStatus.PAID.value:
+            return "Оплачено"
+        if v == PaymentStatus.PARTIAL.value:
+            return "Частично"
+        if v == PaymentStatus.UNPAID.value:
+            return "Не оплачено"
+        return value_or_na(v)
+
+    lines = []
+    # Names and general info
+    lines.append(f"{labels['full_name_ru']}: {value_or_na(participant.full_name_ru)}")
+    lines.append(f"{labels['full_name_en']}: {value_or_na(participant.full_name_en)}")
+    lines.append(f"{labels['church']}: {value_or_na(participant.church)}")
+    lines.append(f"{labels['country_and_city']}: {value_or_na(participant.country_and_city)}")
+    lines.append(f"{labels['contact_information']}: {value_or_na(participant.contact_information)}")
+    lines.append(f"{labels['submitted_by']}: {value_or_na(participant.submitted_by)}")
+
+    # Enums and selections
+    lines.append(f"{labels['gender']}: {rus_gender(participant.gender)}")
+    lines.append(f"{labels['size']}: {value_or_na(getattr(participant.size, 'value', participant.size))}")
+    lines.append(f"{labels['role']}: {rus_role(participant.role)}")
+    lines.append(f"{labels['department']}: {value_or_na(getattr(participant.department, 'value', participant.department))}")
+
+    # Payment info
+    lines.append(f"{labels['payment_amount']}: {value_or_na(participant.payment_amount)}")
+    lines.append(f"{labels['payment_status']}: {rus_payment_status(participant.payment_status)}")
+    # Format date to ISO if present
+    pay_date = participant.payment_date.isoformat() if getattr(participant, 'payment_date', None) else None
+    lines.append(f"{labels['payment_date']}: {value_or_na(pay_date)}")
+
+    return "\n".join(lines)
 
 
 def normalize_russian(text: str) -> str:
