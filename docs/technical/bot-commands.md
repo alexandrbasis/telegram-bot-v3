@@ -125,7 +125,7 @@ Each participant field can be edited through dedicated "Изменить [Field]
 - **"Сохранить изменения" (Save Changes)**: Displays confirmation screen showing all pending changes
 - **Confirmation Screen**: Shows "Current Value → **New Value**" format for all modified fields
 - **"Подтвердить сохранение" (Confirm Save)**: Commits all changes to Airtable
-- **Save Success**: Displays "Участник успешно обновлен" and returns to search results
+- **Save Success**: Displays complete updated participant information using format_participant_result() with all applied changes, providing full context instead of simple confirmation message
 
 #### Cancel and Navigation
 - **"Отмена" (Cancel)**: Discards all changes and returns to main menu
@@ -137,6 +137,8 @@ Each participant field can be edited through dedicated "Изменить [Field]
 - **"Попробовать снова" (Try Again)**: Retry failed save operation preserving changes
 - **Error Messages**: User-friendly Russian error messages with actionable instructions
 - **Data Preservation**: User changes maintained during retry operations
+- **Display Error Recovery**: Enhanced error handling prevents silent display failures during field editing with comprehensive logging (REGRESSION markers) and meaningful user feedback
+- **Context Loss Handling**: Graceful degradation when participant context is lost, providing clear error messages and recovery guidance
 
 ## Error Handling
 
