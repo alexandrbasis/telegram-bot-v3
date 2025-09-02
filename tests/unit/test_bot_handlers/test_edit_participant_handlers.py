@@ -550,7 +550,9 @@ class TestSaveChanges:
         changes = {
             'full_name_ru': 'Updated Name',
             'role': Role.TEAM,
-            'church': 'New Church'
+            'church': 'New Church',
+            # New logic requires department when role is TEAM
+            'department': Department.WORSHIP
         }
         mock_context.user_data['current_participant'] = participant
         mock_context.user_data['editing_changes'] = changes
@@ -602,23 +604,18 @@ class TestSaveChanges:
         
         result = await handle_button_field_selection(mock_update, mock_context)
         
-        # Should return to field selection state
-        assert result == EditStates.FIELD_SELECTION
+        # New behavior: prompt for department selection when upgrading to TEAM
+        assert result == EditStates.BUTTON_SELECTION
         assert mock_context.user_data['editing_changes']['role'] == Role.TEAM
+        assert mock_context.user_data['editing_field'] == 'department'
         
-        # Should edit message with complete participant display, not simple success message
+        # Should show prompt to select department
         mock_update.callback_query.message.edit_text.assert_called()
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
         
-        # Should contain updated participant information (complete display)
-        assert 'Иван Иванов' in message_text  # Name should be displayed
-        assert 'Ivan Ivanov' in message_text  # English name should be displayed
-        assert 'TEAM' in message_text or 'Команда' in message_text  # Updated role should be displayed
-        assert 'Kitchen' in message_text or 'Кухня' in message_text  # Department should be displayed
-        
-        # Should NOT contain simple success message format
-        assert 'обновлено:' not in message_text  # Old simple format should not appear
+        assert 'необходимо выбрать отдел' in message_text
+        assert isinstance(call_args[1]['reply_markup'], InlineKeyboardMarkup)
 
 
 class TestSaveConfirmation:
