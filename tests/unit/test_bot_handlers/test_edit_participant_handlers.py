@@ -940,3 +940,226 @@ class TestDisplayRegressionIssue:
             # Should NOT contain formatted participant information
             assert "📋" not in message_text  # No participant display formatting
             assert "🏠" not in message_text  # No complete info display
+
+
+class TestComprehensiveDisplayRegressionPrevention:
+    """Comprehensive regression prevention tests for all display scenarios."""
+    
+    @pytest.mark.asyncio
+    async def test_display_function_exception_handling(self, mock_update):
+        """Test that exceptions in display_updated_participant are handled gracefully."""
+        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
+        
+        # Create context WITH participant but cause display function to fail
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Тест',
+            full_name_en='Test'
+        )
+        
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            'current_participant': participant,
+            'editing_changes': {},
+            'editing_field': 'full_name_ru'
+        }
+        
+        mock_update.message.text = "Новое имя"
+        mock_update.effective_user.id = 12345
+        
+        # Mock the services
+        with patch('src.bot.handlers.edit_participant_handlers.ParticipantUpdateService') as mock_service, \
+             patch('src.bot.handlers.edit_participant_handlers.display_updated_participant') as mock_display:
+            
+            mock_service.return_value.validate_field_input.return_value = "Новое имя"
+            
+            # Make display function throw an exception
+            mock_display.side_effect = Exception("Display function failed")
+            
+            # This should handle the exception gracefully
+            result = await handle_text_field_input(mock_update, context)
+            
+            # Should still return to field selection
+            from src.bot.handlers.edit_participant_handlers import EditStates
+            assert result == EditStates.FIELD_SELECTION
+            
+            # Should send fallback message with warning
+            mock_update.message.reply_text.assert_called_once()
+            call_args = mock_update.message.reply_text.call_args
+            message_text = call_args[1]['text']
+            
+            # Should contain success confirmation with warning
+            assert "Имя на русском обновлено:" in message_text
+            assert "Новое имя" in message_text
+            assert "⚠️ Полная информация временно недоступна" in message_text
+    
+    @pytest.mark.asyncio
+    async def test_button_display_function_exception_handling(self, mock_update):
+        """Test button field editing with display function exceptions."""
+        from src.bot.handlers.edit_participant_handlers import handle_button_field_selection
+        
+        # Create context WITH participant but cause display function to fail
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Тест',
+            gender=Gender.FEMALE
+        )
+        
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            'current_participant': participant,
+            'editing_changes': {},
+            'editing_field': 'gender'
+        }
+        
+        mock_update.callback_query.data = "gender:male"
+        mock_update.callback_query.from_user.id = 12345
+        
+        with patch('src.bot.handlers.edit_participant_handlers.ParticipantUpdateService') as mock_service, \
+             patch('src.bot.handlers.edit_participant_handlers.display_updated_participant') as mock_display:
+            
+            mock_service.return_value.convert_button_value.return_value = Gender.MALE
+            mock_service.return_value.get_russian_display_value.return_value = "Мужской"
+            
+            # Make display function throw an exception
+            mock_display.side_effect = Exception("Display formatting failed")
+            
+            result = await handle_button_field_selection(mock_update, context)
+            
+            from src.bot.handlers.edit_participant_handlers import EditStates
+            assert result == EditStates.FIELD_SELECTION
+            
+            # Should send fallback message
+            mock_update.callback_query.message.edit_text.assert_called_once()
+            call_args = mock_update.callback_query.message.edit_text.call_args
+            message_text = call_args[1]['text']
+            
+            assert "Пол обновлено:" in message_text
+            assert "Мужской" in message_text
+            assert "⚠️ Полная информация временно недоступна" in message_text
+    
+    @pytest.mark.asyncio
+    async def test_context_corruption_scenarios(self, mock_update):
+        """Test various context corruption scenarios that could cause regressions."""
+        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
+        
+        # Test 1: Empty user_data
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        
+        mock_update.message.text = "Test"
+        mock_update.effective_user.id = 12345
+        
+        result = await handle_text_field_input(mock_update, context)
+        
+        from src.bot.handlers.edit_participant_handlers import EditStates
+        assert result == EditStates.FIELD_SELECTION
+        
+        # Test 2: Participant is not None but invalid
+        context.user_data = {
+            'current_participant': "invalid_participant_type",  # Wrong type
+            'editing_changes': {},
+            'editing_field': 'full_name_ru'
+        }
+        
+        with patch('src.bot.handlers.edit_participant_handlers.ParticipantUpdateService') as mock_service:
+            mock_service.return_value.validate_field_input.return_value = "Test"
+            
+            # Should handle invalid participant gracefully
+            result = await handle_text_field_input(mock_update, context)
+            assert result == EditStates.FIELD_SELECTION
+    
+    @pytest.mark.asyncio
+    async def test_save_success_shows_current_simple_message(self, mock_update):
+        """Test current save success behavior (simple message without participant info)."""
+        from src.bot.handlers.edit_participant_handlers import save_changes
+        
+        # Create proper context with participant and changes
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            full_name_en='Ivan Ivanov',
+            church='Test Church'
+        )
+        
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            'current_participant': participant,
+            'editing_changes': {
+                'full_name_ru': 'Петр Петров',
+                'church': 'New Church'
+            }
+        }
+        
+        mock_update.callback_query.from_user.id = 12345
+        
+        # Mock successful save
+        with patch('src.bot.handlers.edit_participant_handlers.get_participant_repository') as mock_repo_func:
+            mock_repo = AsyncMock()
+            mock_repo_func.return_value = mock_repo
+            mock_repo.update_by_id.return_value = True
+            
+            result = await save_changes(mock_update, context)
+            
+            # Should show simple success message (current behavior)
+            mock_update.callback_query.message.edit_text.assert_called_once()
+            call_args = mock_update.callback_query.message.edit_text.call_args
+            success_message = call_args[1]['text']
+            
+            # Current implementation shows simple success message
+            assert "Изменения сохранены успешно" in success_message
+            assert "Обновлено полей: 2" in success_message
+            
+            # Does NOT show complete participant info (this is the regression to fix later)
+            assert "📋" not in success_message  # No participant display formatting
+            assert "Петр Петров" not in success_message  # Updated name not shown
+    
+    @pytest.mark.asyncio 
+    async def test_multiple_field_edits_maintain_context(self, mock_update):
+        """Test that participant context is maintained across multiple field edits."""
+        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
+        
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Original Name',
+            church='Original Church'
+        )
+        
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            'current_participant': participant,
+            'editing_changes': {},
+            'editing_field': 'full_name_ru'
+        }
+        
+        mock_update.message.text = "New Name"
+        mock_update.effective_user.id = 12345
+        
+        with patch('src.bot.handlers.edit_participant_handlers.ParticipantUpdateService') as mock_service, \
+             patch('src.bot.handlers.edit_participant_handlers.display_updated_participant') as mock_display:
+            
+            mock_service.return_value.validate_field_input.return_value = "New Name"
+            mock_display.return_value = "📋 **New Name** (updated)\n🏠 Original Church"
+            
+            # First edit
+            result = await handle_text_field_input(mock_update, context)
+            
+            # Participant should still be in context
+            assert context.user_data['current_participant'] == participant
+            assert context.user_data['editing_changes']['full_name_ru'] == "New Name"
+            
+            # Second edit on different field
+            context.user_data['editing_field'] = 'church'
+            mock_update.message.text = "New Church"
+            mock_service.return_value.validate_field_input.return_value = "New Church"
+            mock_display.return_value = "📋 **New Name**\n🏠 New Church (both updated)"
+            
+            result = await handle_text_field_input(mock_update, context)
+            
+            # Context should still be maintained
+            assert context.user_data['current_participant'] == participant
+            assert context.user_data['editing_changes']['full_name_ru'] == "New Name"
+            assert context.user_data['editing_changes']['church'] == "New Church"
+            
+            # Display function should have been called both times
+            assert mock_display.call_count == 2
