@@ -794,12 +794,27 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             for field, value in changes.items():
                 setattr(participant, field, value)
 
+            # Generate complete participant display before clearing editing state
+            try:
+                from src.services.participant_display_service import format_participant_result
+                
+                # Display complete updated participant information
+                success_message = (
+                    f"✅ Изменения сохранены успешно! Обновлено полей: {len(changes)}\n\n"
+                    f"{format_participant_result(participant, language='ru')}"
+                )
+                
+            except Exception as e:
+                logger.error(f"SAVE_SUCCESS_DISPLAY_ERROR: Failed to format participant display: {e}")
+                # Fallback to simple success message if display fails
+                success_message = f"✅ Изменения сохранены успешно! Обновлено полей: {len(changes)}"
+
             # Clear editing state
             context.user_data["editing_changes"] = {}
             context.user_data["editing_field"] = None
 
             await query.message.edit_text(
-                text=f"✅ Изменения сохранены успешно! Обновлено полей: {len(changes)}",
+                text=success_message,
                 reply_markup=InlineKeyboardMarkup(
                     [
                         [
@@ -816,7 +831,7 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 user_logger.log_bot_response(
                     user_id=user.id,
                     response_type="edit_message",
-                    content=f"Changes saved successfully: {len(changes)} fields updated",
+                    content=f"Changes saved successfully: {len(changes)} fields updated with complete participant display",
                     keyboard_info="Main menu button",
                 )
 
