@@ -846,6 +846,7 @@ class TestDisplayUpdatedParticipant:
         assert 'Новая церковь' in result  # Updated church
         assert 'Старая церковь' not in result  # Original church should not appear
         # Role and gender changes should be reflected in formatting
+<<<<<<< HEAD
 
 
 class TestDisplayRegressionIssue:
@@ -1163,3 +1164,5 @@ class TestComprehensiveDisplayRegressionPrevention:
             
             # Display function should have been called both times
             assert mock_display.call_count == 2
+=======
+>>>>>>> origin/main

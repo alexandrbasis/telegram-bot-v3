@@ -24,6 +24,11 @@ from src.services.participant_update_service import (
 )
 from src.services.search_service import format_participant_result
 from src.services.user_interaction_logger import UserInteractionLogger
+<<<<<<< HEAD
+=======
+from src.config.settings import get_settings
+from src.services.search_service import format_participant_result
+>>>>>>> origin/main
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +89,7 @@ def get_participant_repository():
     return AirtableParticipantRepository(client)
 
 
+<<<<<<< HEAD
 def display_updated_participant(
     participant: Participant, context: ContextTypes.DEFAULT_TYPE
 ) -> str:
@@ -97,10 +103,24 @@ def display_updated_participant(
         participant: Original participant object
         context: Bot context containing editing_changes
 
+=======
+def display_updated_participant(participant: Participant, context: ContextTypes.DEFAULT_TYPE) -> str:
+    """
+    Display complete participant information with current editing changes applied.
+    
+    Reconstructs participant object with all pending changes from the editing context
+    and returns a formatted display string using format_participant_result().
+    
+    Args:
+        participant: Original participant object
+        context: Bot context containing editing_changes
+        
+>>>>>>> origin/main
     Returns:
         Formatted string with complete participant information including applied changes
     """
     # Get pending changes from context
+<<<<<<< HEAD
     editing_changes = context.user_data.get("editing_changes", {})
 
     # Create a copy of the participant with changes applied
@@ -129,13 +149,39 @@ def display_updated_participant(
         payment_date=editing_changes.get("payment_date", participant.payment_date),
     )
 
+=======
+    editing_changes = context.user_data.get('editing_changes', {})
+    
+    # Create a copy of the participant with changes applied
+    updated_participant = Participant(
+        record_id=participant.record_id,
+        full_name_ru=editing_changes.get('full_name_ru', participant.full_name_ru),
+        full_name_en=editing_changes.get('full_name_en', participant.full_name_en),
+        church=editing_changes.get('church', participant.church),
+        country_and_city=editing_changes.get('country_and_city', participant.country_and_city),
+        contact_information=editing_changes.get('contact_information', participant.contact_information),
+        submitted_by=editing_changes.get('submitted_by', participant.submitted_by),
+        gender=editing_changes.get('gender', participant.gender),
+        size=editing_changes.get('size', participant.size),
+        role=editing_changes.get('role', participant.role),
+        department=editing_changes.get('department', participant.department),
+        payment_amount=editing_changes.get('payment_amount', participant.payment_amount),
+        payment_status=editing_changes.get('payment_status', participant.payment_status),
+        payment_date=editing_changes.get('payment_date', participant.payment_date)
+    )
+    
+>>>>>>> origin/main
     # Use format_participant_result to create formatted display
     return format_participant_result(updated_participant, language="ru")
 
 
+<<<<<<< HEAD
 async def show_participant_edit_menu(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
+=======
+async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+>>>>>>> origin/main
     """
     Show participant editing interface with all fields.
 
@@ -421,6 +467,7 @@ async def handle_text_field_input(
         validated_value = update_service.validate_field_input(field_name, user_input)
 
         # Store the change
+<<<<<<< HEAD
         context.user_data["editing_changes"][field_name] = validated_value
         context.user_data["editing_field"] = None
 
@@ -466,10 +513,35 @@ async def handle_text_field_input(
                 "contact_information": "Контакты",
                 "submitted_by": "Отправитель",
                 "payment_amount": "Сумма платежа",
+=======
+        context.user_data['editing_changes'][field_name] = validated_value
+        context.user_data['editing_field'] = None
+        
+        # Display complete participant information with updated values
+        participant = context.user_data.get('current_participant')
+        if participant:
+            complete_display = display_updated_participant(participant, context)
+            
+            await update.message.reply_text(
+                text=complete_display,
+                reply_markup=create_participant_edit_keyboard()
+            )
+        else:
+            # Fallback to simple message if participant not available
+            field_labels = {
+                'full_name_ru': 'Имя на русском',
+                'full_name_en': 'Имя на английском', 
+                'church': 'Церковь',
+                'country_and_city': 'Местоположение',
+                'contact_information': 'Контакты',
+                'submitted_by': 'Отправитель',
+                'payment_amount': 'Сумма платежа'
+>>>>>>> origin/main
             }
             
             field_label = field_labels.get(field_name, field_name)
             field_icon = get_field_icon(field_name)
+<<<<<<< HEAD
             
             # Provide user feedback with clear indication of the issue
             error_message = (
@@ -483,6 +555,15 @@ async def handle_text_field_input(
                 text=error_message, reply_markup=create_participant_edit_keyboard()
             )
 
+=======
+            success_message = f"{field_icon} {field_label} обновлено: {user_input}"
+            
+            await update.message.reply_text(
+                text=success_message,
+                reply_markup=create_participant_edit_keyboard()
+            )
+        
+>>>>>>> origin/main
         return EditStates.FIELD_SELECTION
 
     except ValidationError as e:
@@ -562,6 +643,7 @@ async def handle_button_field_selection(
     # Convert string value to appropriate enum/type
     try:
         update_service = ParticipantUpdateService()
+<<<<<<< HEAD
         validated_value = update_service.convert_button_value(
             field_name, selected_value
         )
@@ -630,6 +712,44 @@ async def handle_button_field_selection(
                 text=error_message, reply_markup=create_participant_edit_keyboard()
             )
 
+=======
+        validated_value = update_service.convert_button_value(field_name, selected_value)
+        
+        # Store the change
+        context.user_data['editing_changes'][field_name] = validated_value
+        context.user_data['editing_field'] = None
+        
+        # Convert value back to Russian for display (needed for logging)
+        display_value = update_service.get_russian_display_value(field_name, validated_value)
+        
+        # Display complete participant information with updated values
+        participant = context.user_data.get('current_participant')
+        if participant:
+            complete_display = display_updated_participant(participant, context)
+            
+            await query.message.edit_text(
+                text=complete_display,
+                reply_markup=create_participant_edit_keyboard()
+            )
+        else:
+            # Fallback to simple message if participant not available
+            field_labels = {
+                'gender': 'Пол',
+                'size': 'Размер',
+                'role': 'Роль',
+                'department': 'Отдел',
+                'payment_status': 'Статус платежа'
+            }
+            
+            field_label = field_labels.get(field_name, field_name)
+            success_message = f"✅ {field_label} обновлено: {display_value}"
+            
+            await query.message.edit_text(
+                text=success_message,
+                reply_markup=create_participant_edit_keyboard()
+            )
+        
+>>>>>>> origin/main
         # Log bot response if logging is enabled
         if user_logger:
             user_logger.log_bot_response(
