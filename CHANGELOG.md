@@ -196,6 +196,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- **Participant Edit Display Regression Resolution** - Fixed critical regression where participants saw no information during field editing, breaking the complete participant display feature and degrading user experience (PR #14, AGB-22, completed 2025-09-02)
+  - Root cause fix for `current_participant` becoming None during field editing sessions, causing handlers to fall back to simple messages instead of displaying complete participant information (`src/bot/handlers/edit_participant_handlers.py:428-484,580-631`)
+  - Enhanced error handling with comprehensive try-catch blocks around `display_updated_participant()` calls, detailed logging with REGRESSION markers for production debugging, and meaningful user feedback when context is lost
+  - Save success enhancement implementing complete participant information display using `format_participant_result()` instead of simple confirmation messages, fulfilling business requirement specifications (`src/bot/handlers/edit_participant_handlers.py:797-810`)
+  - Comprehensive error handling with graceful degradation ensuring users receive clear recovery guidance instead of silent failures, maintaining field-specific icons in all scenarios
+  - Regression prevention with 11 new comprehensive tests covering exception handling in display functions, button field display exceptions, context corruption scenarios, save success behavior, and multiple field editing integrity (`tests/unit/test_bot_handlers/test_edit_participant_handlers.py:851-1171`)
+  - Production support with REGRESSION markers in logs enabling proactive monitoring and debugging of similar context loss issues in production environments
+  - Complete backward compatibility maintaining all existing edit workflow state transitions, error handling patterns, and Russian language interface consistency
+  - Enhanced user experience recovery ensuring participants maintain complete visual context throughout editing sessions and see full participant information after successful saves
+  - All 41 tests passing with zero regressions introduced, comprehensive coverage of error scenarios and edge cases for future regression prevention
+  - Users now see complete updated participant information after each field edit and save operation, restoring intended functionality and enhancing experience beyond original specifications
 - **Participant Search Button Functionality Restoration** - Fixed critical search button malfunction preventing users from initiating participant searches (PR #10, SHA: 001b1e5, merged 2025-08-31T17:40:00)
   - Resolved state collision between SearchStates enum (0-2) and EditStates enum (0-2) causing ConversationHandler conflicts where EditStates handlers overwrote SearchStates handlers at identical numeric values (`src/bot/handlers/search_handlers.py:25-27`)
   - Fixed ConversationHandler CallbackQueryHandler tracking issue by adding proper per_message=None configuration for mixed handler types (`src/bot/handlers/search_conversation.py:91`)
