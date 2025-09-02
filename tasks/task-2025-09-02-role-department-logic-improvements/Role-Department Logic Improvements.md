@@ -138,46 +138,54 @@ Implement role-based department logic to automatically manage department field c
 - [ ] Ensure validation prevents proceeding without department selection for team members
 
 ## Implementation Steps & Change Log
-- [ ] Step 1: Enhance ParticipantUpdateService with role-department logic
-  - [ ] Sub-step 1.1: Add role change detection method
+- [x] ✅ Step 1: Enhance ParticipantUpdateService with role-department logic
+  - [x] Sub-step 1.1: Add role change detection method
     - **Directory**: `src/services/`
     - **Files to create/modify**: `src/services/participant_update_service.py`
     - **Accept**: Method detects role changes and returns appropriate actions
     - **Tests**: `tests/unit/test_services/test_participant_update_service.py`
     - **Done**: Role change detection working with TEAM→CANDIDATE and CANDIDATE→TEAM scenarios
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `src/services/participant_update_service.py` - added `detect_role_transition`, `requires_department`, `get_role_department_actions`, `build_auto_action_message`
+      - `tests/unit/test_services/test_participant_update_service.py` - added `TestRoleDepartmentLogic`
 
-  - [ ] Sub-step 1.2: Add automatic department management methods
+  - [x] Sub-step 1.2: Add automatic department management methods
     - **Directory**: `src/services/`  
     - **Files to create/modify**: `src/services/participant_update_service.py`
     - **Accept**: Methods handle auto-cleanup and prompt requirements based on role change
     - **Tests**: `tests/unit/test_services/test_participant_update_service.py`
     - **Done**: Auto-cleanup and prompt logic implemented and tested
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `src/services/participant_update_service.py` - implemented actions and messages
+      - `tests/unit/test_services/test_participant_update_service.py` - tests for actions/messages
 
-- [ ] Step 2: Integrate logic into edit participant handlers
-  - [ ] Sub-step 2.1: Modify role button selection handler with role-department logic
+- [x] ✅ Step 2: Integrate logic into edit participant handlers
+  - [x] Sub-step 2.1: Modify role button selection handler with role-department logic
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/edit_participant_handlers.py`
     - **Accept**: Role changes trigger appropriate department actions during editing
-    - **Tests**: `tests/unit/test_bot/test_handlers/test_edit_participant_handlers.py`
+    - **Tests**: `tests/unit/test_bot_handlers/test_edit_participant_handlers.py`
     - **Done**: Role selection integrated with department logic
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `src/bot/handlers/edit_participant_handlers.py` - role selection now clears department on downgrade and prompts selection on upgrade with user messages
+      - `tests/unit/test_bot_handlers/test_edit_participant_handlers.py` - tests for role-change flows added
 
-  - [ ] Sub-step 2.2: Add department selection workflow integration
+  - [x] Sub-step 2.2: Add department selection workflow integration
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/edit_participant_handlers.py`
     - **Accept**: Department selection appears after role upgrade, blocks save until selected
-    - **Tests**: `tests/unit/test_bot/test_handlers/test_edit_participant_handlers.py`
+    - **Tests**: `tests/unit/test_bot_handlers/test_edit_participant_handlers.py`
     - **Done**: Department selection workflow working seamlessly
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `src/bot/handlers/edit_participant_handlers.py` - immediate prompt after CANDIDATE→TEAM, save guard for TEAM without department
+      - `tests/unit/test_bot_handlers/test_edit_participant_handlers.py` - test for save enforcement
 
 - [ ] Step 3: Update keyboard and UI components
   - [ ] Sub-step 3.1: Enhance edit keyboards for conditional department prompts
     - **Directory**: `src/bot/keyboards/`
     - **Files to create/modify**: `src/bot/keyboards/edit_keyboards.py`
     - **Accept**: Keyboards adapt to role changes, show department selection when needed
-    - **Tests**: `tests/unit/test_bot/test_keyboards/test_edit_keyboards.py`
+    - **Tests**: `tests/unit/test_bot_keyboards/test_edit_keyboards.py`
     - **Done**: Dynamic keyboard behavior implemented
     - **Changelog**: [Record changes made with file paths and line ranges]
 
@@ -185,13 +193,13 @@ Implement role-based department logic to automatically manage department field c
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/edit_participant_handlers.py`
     - **Accept**: Clear messages inform user of auto-cleanup and prompt requirements
-    - **Tests**: `tests/unit/test_bot/test_handlers/test_edit_participant_handlers.py`
+    - **Tests**: `tests/unit/test_bot_handlers/test_edit_participant_handlers.py`
     - **Done**: User feedback messages working correctly
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 ## Testing Strategy
 - [ ] Unit tests: Service logic tests in `tests/unit/test_services/test_participant_update_service.py`
-- [ ] Integration tests: Handler workflow tests in `tests/unit/test_bot/test_handlers/test_edit_participant_handlers.py`
+- [ ] Integration tests: Handler workflow tests in `tests/unit/test_bot_handlers/test_edit_participant_handlers.py`
 - [ ] End-to-end tests: Complete editing workflow in `tests/integration/test_participant_editing_workflow.py`
 
 ## Success Criteria
