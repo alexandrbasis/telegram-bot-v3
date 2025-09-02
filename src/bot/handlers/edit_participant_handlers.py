@@ -119,6 +119,58 @@ def display_updated_participant(participant: Participant, context: ContextTypes.
     return format_participant_result(updated_participant, language="ru")
 
 
+def reconstruct_participant_from_changes(editing_changes: dict, record_id: str = None) -> str:
+    """
+    Reconstruct participant display from editing_changes when context is lost.
+    
+    Creates a formatted participant display using available editing changes data
+    when the full participant context is not available.
+    
+    Args:
+        editing_changes: Dictionary of field changes from editing session
+        record_id: Optional record ID for context
+        
+    Returns:
+        Formatted string with available participant information and recovery guidance
+    """
+    if not editing_changes:
+        return (
+            "⚠️ Информация об участнике временно недоступна.\n"
+            "Ваши изменения сохранены, но полные данные не отображены.\n\n"
+            "🔄 Вернитесь в главное меню и найдите участника снова для просмотра обновленной информации."
+        )
+    
+    # Create display from available changes
+    display_parts = ["📋 Обновленная информация:"]
+    
+    # Field labels for Russian display
+    field_labels = {
+        'full_name_ru': '👤 Имя на русском',
+        'full_name_en': '👤 Имя на английском',
+        'church': '⛪ Церковь',
+        'country_and_city': '📍 Местоположение',
+        'contact_information': '📞 Контакты',
+        'submitted_by': '👥 Отправитель',
+        'payment_amount': '💰 Сумма платежа',
+        'gender': '👤 Пол',
+        'size': '📏 Размер',
+        'role': '📋 Роль',
+        'department': '🏢 Отдел'
+    }
+    
+    for field, value in editing_changes.items():
+        if field in field_labels:
+            display_parts.append(f"{field_labels[field]}: **{value}**")
+    
+    display_parts.extend([
+        "",
+        "ℹ️ Показаны только измененные поля.",
+        "🔄 Для просмотра полной информации найдите участника через поиск."
+    ])
+    
+    return "\n".join(display_parts)
+
+
 async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Show participant editing interface with all fields.
@@ -384,32 +436,85 @@ async def handle_text_field_input(update: Update, context: ContextTypes.DEFAULT_
         # Display complete participant information with updated values
         participant = context.user_data.get('current_participant')
         if participant:
-            complete_display = display_updated_participant(participant, context)
-            
-            await update.message.reply_text(
-                text=complete_display,
-                reply_markup=create_participant_edit_keyboard()
-            )
+            try:
+                complete_display = display_updated_participant(participant, context)
+                
+                await update.message.reply_text(
+                    text=complete_display,
+                    reply_markup=create_participant_edit_keyboard()
+                )
+            except (AttributeError, KeyError, TypeError) as e:
+                logger.error(f"REGRESSION|DISPLAY_FUNCTION_ERROR|user_id={user.id}|field={field_name}|error={str(e)}")
+                
+                # Fallback to simple success message with warning
+                field_labels = {
+                    'full_name_ru': 'Имя на русском',
+                    'full_name_en': 'Имя на английском', 
+                    'church': 'Церковь',
+                    'country_and_city': 'Местоположение',
+                    'contact_information': 'Контакты',
+                    'submitted_by': 'Отправитель',
+                    'payment_amount': 'Сумма платежа'
+                }
+                
+                field_label = field_labels.get(field_name, field_name)
+                field_icon = get_field_icon(field_name)
+                success_message = f"{field_icon} {field_label} обновлено: {user_input}\n\n⚠️ Полная информация временно недоступна"
+                
+                await update.message.reply_text(
+                    text=success_message,
+                    reply_markup=create_participant_edit_keyboard()
+                )
         else:
-            # Fallback to simple message if participant not available
-            field_labels = {
-                'full_name_ru': 'Имя на русском',
-                'full_name_en': 'Имя на английском', 
-                'church': 'Церковь',
-                'country_and_city': 'Местоположение',
-                'contact_information': 'Контакты',
-                'submitted_by': 'Отправитель',
-                'payment_amount': 'Сумма платежа'
-            }
+            # Enhanced fallback with participant reconstruction when context is lost
+            logger.error(f"REGRESSION|CONTEXT_LOSS|user_id={user.id}|field={field_name}|session_data={len(context.user_data.get('editing_changes', {}))} changes")
             
-            field_label = field_labels.get(field_name, field_name)
-            field_icon = get_field_icon(field_name)
-            success_message = f"{field_icon} {field_label} обновлено: {user_input}"
-            
-            await update.message.reply_text(
-                text=success_message,
-                reply_markup=create_participant_edit_keyboard()
-            )
+            try:
+                # Try to reconstruct participant display from editing changes
+                editing_changes = context.user_data.get('editing_changes', {})
+                reconstructed_display = reconstruct_participant_from_changes(editing_changes)
+                
+                # Confirm the field update was successful
+                field_labels = {
+                    'full_name_ru': 'Имя на русском',
+                    'full_name_en': 'Имя на английском', 
+                    'church': 'Церковь',
+                    'country_and_city': 'Местоположение',
+                    'contact_information': 'Контакты',
+                    'submitted_by': 'Отправитель',
+                    'payment_amount': 'Сумма платежа'
+                }
+                
+                field_label = field_labels.get(field_name, field_name)
+                field_icon = get_field_icon(field_name)
+                success_message = f"✅ {field_icon} {field_label} обновлено: {user_input}\n\n{reconstructed_display}"
+                
+                await update.message.reply_text(
+                    text=success_message,
+                    reply_markup=create_participant_edit_keyboard()
+                )
+            except Exception as e:
+                logger.error(f"REGRESSION|DISPLAY_RECONSTRUCTION_ERROR|user_id={user.id}|error={str(e)}")
+                
+                # Ultimate fallback to simple message with warning
+                field_labels = {
+                    'full_name_ru': 'Имя на русском',
+                    'full_name_en': 'Имя на английском', 
+                    'church': 'Церковь',
+                    'country_and_city': 'Местоположение',
+                    'contact_information': 'Контакты',
+                    'submitted_by': 'Отправитель',
+                    'payment_amount': 'Сумма платежа'
+                }
+                
+                field_label = field_labels.get(field_name, field_name)
+                field_icon = get_field_icon(field_name)
+                success_message = f"{field_icon} {field_label} обновлено: {user_input}\n\n⚠️ Полная информация временно недоступна"
+                
+                await update.message.reply_text(
+                    text=success_message,
+                    reply_markup=create_participant_edit_keyboard()
+                )
         
         return EditStates.FIELD_SELECTION
         
@@ -498,29 +603,76 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         # Display complete participant information with updated values
         participant = context.user_data.get('current_participant')
         if participant:
-            complete_display = display_updated_participant(participant, context)
-            
-            await query.message.edit_text(
-                text=complete_display,
-                reply_markup=create_participant_edit_keyboard()
-            )
+            try:
+                complete_display = display_updated_participant(participant, context)
+                
+                await query.message.edit_text(
+                    text=complete_display,
+                    reply_markup=create_participant_edit_keyboard()
+                )
+            except (AttributeError, KeyError, TypeError) as e:
+                logger.error(f"REGRESSION|DISPLAY_FUNCTION_ERROR|user_id={user.id}|field={field_name}|error={str(e)}")
+                
+                # Fallback to simple success message with warning
+                field_labels = {
+                    'gender': 'Пол',
+                    'size': 'Размер',
+                    'role': 'Роль',
+                    'department': 'Отдел',
+                    'payment_status': 'Статус платежа'
+                }
+                
+                field_label = field_labels.get(field_name, field_name)
+                success_message = f"✅ {field_label} обновлено: {display_value}\n\n⚠️ Полная информация временно недоступна"
+                
+                await query.message.edit_text(
+                    text=success_message,
+                    reply_markup=create_participant_edit_keyboard()
+                )
         else:
-            # Fallback to simple message if participant not available
-            field_labels = {
-                'gender': 'Пол',
-                'size': 'Размер',
-                'role': 'Роль',
-                'department': 'Отдел',
-                'payment_status': 'Статус платежа'
-            }
+            # Enhanced fallback with participant reconstruction when context is lost
+            logger.error(f"REGRESSION|CONTEXT_LOSS|user_id={user.id}|field={field_name}|session_data={len(context.user_data.get('editing_changes', {}))} changes")
             
-            field_label = field_labels.get(field_name, field_name)
-            success_message = f"✅ {field_label} обновлено: {display_value}"
-            
-            await query.message.edit_text(
-                text=success_message,
-                reply_markup=create_participant_edit_keyboard()
-            )
+            try:
+                # Try to reconstruct participant display from editing changes
+                editing_changes = context.user_data.get('editing_changes', {})
+                reconstructed_display = reconstruct_participant_from_changes(editing_changes)
+                
+                # Confirm the field update was successful
+                field_labels = {
+                    'gender': 'Пол',
+                    'size': 'Размер',
+                    'role': 'Роль',
+                    'department': 'Отдел',
+                    'payment_status': 'Статус платежа'
+                }
+                
+                field_label = field_labels.get(field_name, field_name)
+                success_message = f"✅ {field_label} обновлено: {display_value}\n\n{reconstructed_display}"
+                
+                await query.message.edit_text(
+                    text=success_message,
+                    reply_markup=create_participant_edit_keyboard()
+                )
+            except Exception as e:
+                logger.error(f"REGRESSION|DISPLAY_RECONSTRUCTION_ERROR|user_id={user.id}|error={str(e)}")
+                
+                # Ultimate fallback to simple message with warning
+                field_labels = {
+                    'gender': 'Пол',
+                    'size': 'Размер',
+                    'role': 'Роль',
+                    'department': 'Отдел',
+                    'payment_status': 'Статус платежа'
+                }
+                
+                field_label = field_labels.get(field_name, field_name)
+                success_message = f"✅ {field_label} обновлено: {display_value}\n\n⚠️ Полная информация временно недоступна"
+                
+                await query.message.edit_text(
+                    text=success_message,
+                    reply_markup=create_participant_edit_keyboard()
+                )
         
         # Log bot response if logging is enabled
         if user_logger:

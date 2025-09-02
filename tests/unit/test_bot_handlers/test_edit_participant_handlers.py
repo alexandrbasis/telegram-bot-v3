@@ -452,6 +452,53 @@ class TestSaveChanges:
         assert 'ошибка' in message_text
     
     @pytest.mark.asyncio
+    @patch('src.bot.handlers.edit_participant_handlers.get_participant_repository')
+    async def test_save_success_complete_participant_display(self, mock_get_repo, mock_update, mock_context):
+        """Test that save success displays complete updated participant info instead of simple message."""
+        # Create participant with updated data
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Original Name',
+            full_name_en='Original English',
+            role=Role.CANDIDATE,
+            church='Original Church'
+        )
+        changes = {
+            'full_name_ru': 'Updated Name',
+            'role': Role.TEAM,
+            'church': 'New Church'
+        }
+        mock_context.user_data['current_participant'] = participant
+        mock_context.user_data['editing_changes'] = changes
+        
+        # Mock successful repository save
+        mock_repo = Mock()
+        mock_repo.update_by_id = AsyncMock(return_value=True)
+        mock_get_repo.return_value = mock_repo
+        
+        result = await save_changes(mock_update, mock_context)
+        
+        # Should call repository update
+        mock_repo.update_by_id.assert_called_once_with('rec123', changes)
+        
+        # Should show complete participant display instead of simple success message
+        mock_update.callback_query.message.edit_text.assert_called()
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        
+        # Should contain complete participant information with updates applied
+        assert 'Updated Name' in message_text  # Updated Russian name
+        assert 'TEAM' in message_text or 'Команда' in message_text  # Updated role
+        assert 'New Church' in message_text  # Updated church
+        
+        # Should NOT contain simple count-based success message
+        assert 'Обновлено полей:' not in message_text
+        assert 'Changes saved successfully' not in message_text
+        
+        # Should contain success prefix indicating save was successful
+        assert '✅' in message_text
+    
+    @pytest.mark.asyncio
     async def test_button_field_success_shows_complete_participant(self, mock_update, mock_context):
         """Test that button selection success displays complete participant info instead of single field message."""
         # Setup participant and editing state
@@ -846,7 +893,6 @@ class TestDisplayUpdatedParticipant:
         assert 'Новая церковь' in result  # Updated church
         assert 'Старая церковь' not in result  # Original church should not appear
         # Role and gender changes should be reflected in formatting
-<<<<<<< HEAD
 
 
 class TestDisplayRegressionIssue:
@@ -1164,5 +1210,3 @@ class TestComprehensiveDisplayRegressionPrevention:
             
             # Display function should have been called both times
             assert mock_display.call_count == 2
-=======
->>>>>>> origin/main
