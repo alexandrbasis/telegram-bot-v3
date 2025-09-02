@@ -7,7 +7,7 @@ numeric, date, and enum fields with Russian error messages.
 
 import logging
 from datetime import date
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 from src.models.participant import Gender, Size, Role, Department, PaymentStatus
 
@@ -250,3 +250,54 @@ class ParticipantUpdateService:
             'payment_date': 'Дата платежа'
         }
         return field_labels.get(field_name, field_name)
+
+    # === Role ↔ Department business logic helpers ===
+    def detect_role_transition(self, old_role: Optional[Role], new_role: Role) -> str:
+        """
+        Determine the role transition type.
+
+        Returns one of: 'NO_CHANGE', 'CANDIDATE_TO_TEAM', 'TEAM_TO_CANDIDATE'.
+        If old_role is None, treat as 'NO_CHANGE' unless new_role is TEAM which
+        will still require department downstream via requires_department().
+        """
+        try:
+            if old_role == new_role:
+                return 'NO_CHANGE'
+            if old_role == Role.CANDIDATE and new_role == Role.TEAM:
+                return 'CANDIDATE_TO_TEAM'
+            if old_role == Role.TEAM and new_role == Role.CANDIDATE:
+                return 'TEAM_TO_CANDIDATE'
+        except Exception:
+            # Graceful fallback for unexpected values
+            return 'NO_CHANGE'
+        return 'NO_CHANGE'
+
+    def requires_department(self, role: Optional[Role]) -> bool:
+        """Return True if the given role requires a department selection."""
+        return role == Role.TEAM
+
+    def get_role_department_actions(self, old_role: Optional[Role], new_role: Role) -> dict:
+        """
+        Compute automatic actions to apply when role changes.
+
+        Returns a dict with flags:
+        - clear_department: bool — clear department if changing to candidate
+        - prompt_department: bool — prompt user to pick department when changing to team
+        """
+        transition = self.detect_role_transition(old_role, new_role)
+        return {
+            'clear_department': transition == 'TEAM_TO_CANDIDATE',
+            'prompt_department': transition == 'CANDIDATE_TO_TEAM'
+        }
+
+    def build_auto_action_message(self, action: str) -> str:
+        """
+        Build a localized user-facing message for automatic actions.
+
+        action: 'clear_department' | 'prompt_department'
+        """
+        if action == 'clear_department':
+            return "ℹ️ Отдел очищен из-за изменения роли на «Кандидат»."
+        if action == 'prompt_department':
+            return "ℹ️ Для роли «Команда» необходимо выбрать отдел. Пожалуйста, выберите отдел."
+        return ""

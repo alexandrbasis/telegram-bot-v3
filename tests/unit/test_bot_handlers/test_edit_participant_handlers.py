@@ -357,6 +357,90 @@ class TestHandleButtonFieldSelection:
         assert result == EditStates.BUTTON_SELECTION  # Stay in selection state
         assert 'gender' not in mock_context.user_data['editing_changes']
 
+    @pytest.mark.asyncio
+    async def test_role_change_team_to_candidate_clears_department(self, mock_update, mock_context):
+        """Changing role from TEAM to CANDIDATE clears department and informs user."""
+        # Participant initially TEAM with a department
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='Иван Иванов',
+            role=Role.TEAM,
+            department=Department.MEDIA
+        )
+        mock_context.user_data['current_participant'] = participant
+        mock_context.user_data['editing_field'] = 'role'
+        mock_update.callback_query.data = 'select_value:CANDIDATE'
+        
+        result = await handle_button_field_selection(mock_update, mock_context)
+        
+        assert result == EditStates.FIELD_SELECTION
+        assert mock_context.user_data['editing_changes']['role'] == Role.CANDIDATE
+        # Department should be explicitly cleared in pending changes
+        assert 'department' in mock_context.user_data['editing_changes']
+        assert mock_context.user_data['editing_changes']['department'] is None
+        
+        # Message should inform about auto-clear
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        assert 'Отдел очищен' in message_text
+
+    @pytest.mark.asyncio
+    async def test_role_change_candidate_to_team_prompts_department(self, mock_update, mock_context):
+        """Changing role from CANDIDATE to TEAM prompts department selection and blocks flow."""
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='User',
+            role=Role.CANDIDATE,
+            department=None
+        )
+        mock_context.user_data['current_participant'] = participant
+        mock_context.user_data['editing_field'] = 'role'
+        mock_update.callback_query.data = 'select_value:TEAM'
+        
+        result = await handle_button_field_selection(mock_update, mock_context)
+        
+        assert result == EditStates.BUTTON_SELECTION
+        # Should set editing field to department for immediate prompt
+        assert mock_context.user_data['editing_field'] == 'department'
+        
+        # Should show department keyboard and prompt message
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        assert 'необходимо выбрать отдел' in message_text
+        assert isinstance(call_args[1]['reply_markup'], InlineKeyboardMarkup)
+
+
+class TestSaveEnforcement:
+    """Tests for save enforcement rules regarding department requirement."""
+    
+    @pytest.mark.asyncio
+    async def test_save_blocks_team_without_department(self, mock_update):
+        from src.bot.handlers.edit_participant_handlers import save_changes
+        # Participant with no department; user changed role to TEAM but not department
+        participant = Participant(
+            record_id='rec123',
+            full_name_ru='User',
+            role=Role.CANDIDATE,
+            department=None
+        )
+        
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            'current_participant': participant,
+            'editing_changes': {
+                'role': Role.TEAM
+            }
+        }
+        
+        # Try to save
+        result = await save_changes(mock_update, context)
+        
+        # Should block and prompt for department selection
+        assert result == EditStates.BUTTON_SELECTION
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]['text']
+        assert 'необходимо выбрать отдел' in message_text
+
 
 class TestCancelEditing:
     """Test cancel_editing function."""

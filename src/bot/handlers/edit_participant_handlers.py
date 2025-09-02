@@ -593,6 +593,26 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         update_service = ParticipantUpdateService()
         validated_value = update_service.convert_button_value(field_name, selected_value)
         
+        # Special handling for role → department business logic
+        auto_message: Optional[str] = None
+        prompt_department = False
+        if field_name == 'role':
+            participant = context.user_data.get('current_participant')
+            editing_changes = context.user_data.get('editing_changes', {})
+            # Determine current effective role (consider previous unsaved changes)
+            current_role = editing_changes.get('role', getattr(participant, 'role', None))
+            actions = update_service.get_role_department_actions(current_role, validated_value)
+            
+            if actions.get('clear_department'):
+                # Clear any selected department when moving to CANDIDATE
+                editing_changes['department'] = None
+                context.user_data['editing_changes'] = editing_changes
+                auto_message = update_service.build_auto_action_message('clear_department')
+            
+            if actions.get('prompt_department'):
+                prompt_department = True
+                auto_message = update_service.build_auto_action_message('prompt_department')
+        
         # Store the change
         context.user_data['editing_changes'][field_name] = validated_value
         context.user_data['editing_field'] = None
@@ -600,11 +620,30 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         # Convert value back to Russian for display (needed for logging)
         display_value = update_service.get_russian_display_value(field_name, validated_value)
         
+        # If we need to prompt for department, show department keyboard immediately
+        if prompt_department:
+            context.user_data['editing_field'] = 'department'
+            # Prefix prompt with auto_message if available
+            if auto_message:
+                await query.message.edit_text(
+                    text=auto_message,
+                    reply_markup=create_field_edit_keyboard('department')
+                )
+            else:
+                # Use standard flow
+                return await show_field_button_selection(update, context, 'department')
+            
+            # Stay in BUTTON_SELECTION state to await department
+            return EditStates.BUTTON_SELECTION
+        
         # Display complete participant information with updated values
         participant = context.user_data.get('current_participant')
         if participant:
             try:
                 complete_display = display_updated_participant(participant, context)
+                # Prepend auto action info if any
+                if auto_message:
+                    complete_display = f"{auto_message}\n\n{complete_display}"
                 
                 await query.message.edit_text(
                     text=complete_display,
@@ -812,6 +851,21 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return SearchStates.SHOWING_RESULTS
     
     try:
+        # Enforce department requirement for TEAM role before saving
+        update_service = ParticipantUpdateService()
+        effective_role = changes.get('role', getattr(participant, 'role', None))
+        effective_department = changes.get('department', getattr(participant, 'department', None))
+        if update_service.requires_department(effective_role) and not effective_department:
+            # Prompt user to select department and block save
+            context.user_data['editing_field'] = 'department'
+            message = update_service.build_auto_action_message('prompt_department')
+            await query.message.edit_text(
+                text=message,
+                reply_markup=create_field_edit_keyboard('department')
+            )
+            from src.bot.handlers.search_handlers import SearchStates
+            return EditStates.BUTTON_SELECTION
+
         # Apply payment automation if payment_amount is being updated
         if 'payment_amount' in changes:
             service = ParticipantUpdateService()

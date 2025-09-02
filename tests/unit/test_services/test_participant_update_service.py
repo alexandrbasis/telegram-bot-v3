@@ -338,3 +338,37 @@ class TestPaymentAutomation:
         assert self.service.is_paid_amount(5000) == True
         assert self.service.is_paid_amount(0) == False
         assert self.service.is_paid_amount(-1) == False  # Invalid but tested for completeness
+
+
+class TestRoleDepartmentLogic:
+    """Tests for role ↔ department business logic helpers."""
+    
+    def setup_method(self):
+        self.service = ParticipantUpdateService()
+    
+    def test_detect_role_transition(self):
+        assert self.service.detect_role_transition(Role.TEAM, Role.TEAM) == 'NO_CHANGE'
+        assert self.service.detect_role_transition(Role.CANDIDATE, Role.TEAM) == 'CANDIDATE_TO_TEAM'
+        assert self.service.detect_role_transition(Role.TEAM, Role.CANDIDATE) == 'TEAM_TO_CANDIDATE'
+        # None old role treated as no change
+        assert self.service.detect_role_transition(None, Role.TEAM) == 'NO_CHANGE'
+    
+    def test_requires_department(self):
+        assert self.service.requires_department(Role.TEAM) is True
+        assert self.service.requires_department(Role.CANDIDATE) is False
+        assert self.service.requires_department(None) is False
+    
+    def test_get_role_department_actions(self):
+        actions = self.service.get_role_department_actions(Role.TEAM, Role.CANDIDATE)
+        assert actions['clear_department'] is True
+        assert actions['prompt_department'] is False
+        
+        actions = self.service.get_role_department_actions(Role.CANDIDATE, Role.TEAM)
+        assert actions['clear_department'] is False
+        assert actions['prompt_department'] is True
+    
+    def test_build_auto_action_message(self):
+        clear_msg = self.service.build_auto_action_message('clear_department')
+        prompt_msg = self.service.build_auto_action_message('prompt_department')
+        assert 'Отдел' in clear_msg
+        assert 'Команда' in prompt_msg
