@@ -24,7 +24,7 @@ Use only when:
    - Get explicit user confirmation
    - Verify branch up to date, CI passing, no conflicts
 
-### **STEP 2: Pre-Merge Documentation Updates**
+### **STEP 2: Pre-Merge Updates**
 
 #### **Update Documentation (docs-updater agent)**
 1. **Call docs-updater agent** with task document path:
@@ -36,6 +36,15 @@ Use only when:
 
 2. **Capture docs updates**: Save the summary of documentation changes from docs-updater
 
+#### **Update Changelog (changelog-generator agent)**
+1. **Call changelog-generator agent** with task information:
+   ```
+   Task: "Generate changelog entry for completed task"
+   Prompt: "Generate a changelog entry based on the task document at [TASK_DOCUMENT_PATH] and documentation updates: [DOCS_UPDATES_SUMMARY]. Include the main feature implementation and any documentation changes."
+   Subagent: changelog-generator
+   ```
+
+2. **Capture changelog**: Save the changelog entry for later use
 
 ### **STEP 3: Merge Execution**
 
@@ -78,22 +87,14 @@ Use only when:
    **Impact**: [business value delivered]
    ```
 
-### **STEP 5: Generate Comprehensive Changelog**
+### **STEP 5: Update Changelog with Merge Details**
 
-#### **Create Final Changelog (changelog-generator agent)**
-1. **Call changelog-generator agent** with complete information:
-   ```
-   Task: "Generate comprehensive changelog with merge details"
-   Prompt: "Generate a comprehensive changelog entry based on:
-   1. Task document at [TASK_DOCUMENT_PATH] - review the implementation details
-   2. Documentation updates: [DOCS_UPDATES_SUMMARY]
-   3. PR merge details: SHA [COMMIT_SHA], merged at [TIMESTAMP], PR URL [PR_URL]
-   
-   Include the main feature implementation, all documentation changes, and PR merge information in the changelog entry."
-   Subagent: changelog-generator
-   ```
+#### **Update Existing Changelog Entry**
+1. **Update the previously generated changelog** with merge information:
+   - Add PR merge details: SHA [COMMIT_SHA], merged at [TIMESTAMP], PR URL [PR_URL]
+   - Finalize the changelog entry with complete implementation and merge information
 
-2. **Capture final changelog**: Save the comprehensive changelog entry with all merge details
+2. **Ensure changelog completeness**: Verify the entry includes both the feature details and merge metadata
 
 ### **STEP 6: Linear Updates**
 
