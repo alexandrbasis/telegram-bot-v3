@@ -2,6 +2,30 @@
 
 ## Participant Editing Issues
 
+### Display Regression Issues (2025-09-02)
+
+#### Participant Information Not Visible During Editing
+**Problem**: Users see no participant information after field updates, breaking the complete participant display feature
+**Root Cause**: `context.user_data.get("current_participant")` returns None during field editing sessions, causing handlers to fall back to simple success messages instead of calling `display_updated_participant()`
+**Symptoms**:
+- Field edits succeed but no participant context displayed
+- Users see basic "field updated" messages without participant information
+- Complete information loss during editing workflow
+
+**Resolution**:
+1. **Enhanced Error Handling**: Implemented comprehensive try-catch blocks around display function calls
+2. **REGRESSION Logging**: Added detailed logging with REGRESSION markers for production debugging
+3. **Graceful Degradation**: Meaningful user feedback when context is lost with recovery guidance
+4. **Context Recovery**: Clear instructions for users when display functionality fails
+5. **Monitoring**: Enhanced logging enables proactive detection of similar issues
+
+**Prevention**: Comprehensive regression tests (TestDisplayRegressionIssue and TestComprehensiveDisplayRegressionPrevention) ensure future detection of context corruption scenarios
+
+#### Save Success Missing Participant Context
+**Problem**: Save success shows basic confirmation message instead of complete updated participant information
+**Root Cause**: Save success flow was not enhanced to display complete participant context as specified in business requirements
+**Resolution**: Implemented format_participant_result() call in save_changes function with comprehensive error handling and fallback to simple message if display fails
+
 ### Save Operation Failures
 
 #### Airtable API Errors
@@ -172,6 +196,9 @@ Set environment variable: `LOG_LEVEL=DEBUG`
 - **Error Handling**: Search for "Error occurred" in error handling functions
 - **State Transitions**: Conversation handler state change logs
 - **Retry Operations**: Retry attempt logs with error details
+- **Display Regression Issues**: Search for "REGRESSION" markers in logs for display-related errors
+- **Context Corruption**: Look for "current_participant is None" or "context missing" messages
+- **Display Function Failures**: Search for "display_updated_participant" error logs
 - **ConversationHandler Issues**: Search for "ConversationHandler" and "CallbackQueryHandler" logs
 - **State Conflicts**: Look for handler registration and state transition errors
 
@@ -181,6 +208,9 @@ INFO - Saving changes for participant [ID]
 ERROR - Airtable update failed: [error details]
 DEBUG - Retry attempt [N] for participant save
 INFO - Changes saved successfully, returning to search results
+ERROR - REGRESSION: Failed to display updated participant: [error details]
+WARN - REGRESSION: current_participant is None, falling back to simple message
+INFO - REGRESSION: Context corruption detected, providing user recovery guidance
 WARN - per_message=False with mixed handler types (informational)
 ERROR - Handler registration conflict for state [N]
 ```

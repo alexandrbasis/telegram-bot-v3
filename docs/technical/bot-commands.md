@@ -45,6 +45,16 @@ After searching, click "Подробнее" (Details) on any participant to acce
 - Payment Date: [Date]
 - Submitted By: [Name]
 
+### Enhanced Field Editing Display
+
+**Complete Participant Context After Edits**: After successfully updating any field, the bot displays the complete participant profile with all current information, including the newly updated field. This provides users with full context and confirmation of changes without requiring navigation back to search results.
+
+**Display Features**:
+- Uses the same rich formatting as initial search results for consistency
+- Shows all participant fields in their current state
+- Includes the updated field value within the complete profile
+- Maintains the same edit buttons for continued editing
+
 ### Field Editing Commands
 
 Each participant field can be edited through dedicated "Изменить [Field]" buttons:
@@ -53,60 +63,60 @@ Each participant field can be edited through dedicated "Изменить [Field]
 
 1. **"Изменить пол" (Edit Gender)**
    - Options: "Мужской" (M), "Женский" (F)
-   - Click button → Select option → Immediate update
+   - Click button → Select option → Complete participant display with updated information
 
 2. **"Изменить размер" (Edit Size)**  
    - Options: XS, S, M, L, XL, XXL, 3XL
-   - Click button → Select size → Immediate update
+   - Click button → Select size → Complete participant display with updated information
 
 3. **"Изменить роль" (Edit Role)**
    - Options: "Кандидат" (Candidate), "Команда" (Team)
-   - Click button → Select role → Immediate update
+   - Click button → Select role → Complete participant display with updated information
 
 4. **"Изменить департамент" (Edit Department)**
    - Options: ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate
-   - Click button → Select department → Immediate update
+   - Click button → Select department → Complete participant display with updated information
 
 5. **"Изменить статус платежа" (Edit Payment Status)**
    - Options: "Оплачено" (Paid), "Частично" (Partial), "Не оплачено" (Unpaid)
-   - Click button → Select status → Immediate update
+   - Click button → Select status → Complete participant display with updated information
 
 #### Text Input Fields (Prompt Workflow)
 
 1. **"Изменить имя (русское)" (Edit Russian Name)** ⭐ *Required*
    - Click button → Bot prompts: "Отправьте новое имя на русском"
-   - Type new name → Validation (required, min length 1) → Update
+   - Type new name → Validation (required, min length 1) → Complete participant display with updated information
 
 2. **"Изменить имя (английское)" (Edit English Name)**
    - Click button → Bot prompts: "Отправьте новое имя на английском" 
-   - Type new name → Update
+   - Type new name → Complete participant display with updated information
 
 3. **"Изменить церковь" (Edit Church)**
    - Click button → Bot prompts: "Отправьте название церкви"
-   - Type church name → Update
+   - Type church name → Complete participant display with updated information
 
 4. **"Изменить местоположение" (Edit Location)**
    - Click button → Bot prompts: "Отправьте страну и город"
-   - Type location → Update
+   - Type location → Complete participant display with updated information
 
 5. **"Изменить контакты" (Edit Contact)**
    - Click button → Bot prompts: "Отправьте контактную информацию"
-   - Type contact info → Update
+   - Type contact info → Complete participant display with updated information
 
 6. **"Изменить отправителя" (Edit Submitted By)**
    - Click button → Bot prompts: "Отправьте имя отправителя"
-   - Type submitter name → Update
+   - Type submitter name → Complete participant display with updated information
 
 #### Special Validation Fields
 
 1. **"Изменить сумму" (Edit Payment Amount)**
    - Click button → Bot prompts: "Отправьте сумму платежа (только цифры)"
-   - Type amount → Validation (integer ≥ 0) → Update
+   - Type amount → Validation (integer ≥ 0) → Complete participant display with updated information
    - Error message if invalid: "Ошибка: Сумма должна быть положительным числом"
 
 2. **"Изменить дату платежа" (Edit Payment Date)**
    - Click button → Bot prompts: "Отправьте дату в формате ГГГГ-ММ-ДД"
-   - Type date → Validation (YYYY-MM-DD format) → Update
+   - Type date → Validation (YYYY-MM-DD format) → Complete participant display with updated information
    - Error message if invalid: "Ошибка: Дата должна быть в формате ГГГГ-ММ-ДД"
 
 ### Save/Cancel Actions
@@ -115,7 +125,7 @@ Each participant field can be edited through dedicated "Изменить [Field]
 - **"Сохранить изменения" (Save Changes)**: Displays confirmation screen showing all pending changes
 - **Confirmation Screen**: Shows "Current Value → **New Value**" format for all modified fields
 - **"Подтвердить сохранение" (Confirm Save)**: Commits all changes to Airtable
-- **Save Success**: Displays "Участник успешно обновлен" and returns to search results
+- **Save Success**: Displays complete updated participant information using format_participant_result() with all applied changes, providing full context instead of simple confirmation message
 
 #### Cancel and Navigation
 - **"Отмена" (Cancel)**: Discards all changes and returns to main menu
@@ -127,6 +137,8 @@ Each participant field can be edited through dedicated "Изменить [Field]
 - **"Попробовать снова" (Try Again)**: Retry failed save operation preserving changes
 - **Error Messages**: User-friendly Russian error messages with actionable instructions
 - **Data Preservation**: User changes maintained during retry operations
+- **Display Error Recovery**: Enhanced error handling prevents silent display failures during field editing with comprehensive logging (REGRESSION markers) and meaningful user feedback
+- **Context Loss Handling**: Graceful degradation when participant context is lost, providing clear error messages and recovery guidance
 
 ## Error Handling
 
@@ -149,7 +161,7 @@ Each participant field can be edited through dedicated "Изменить [Field]
 5. User clicks "Изменить роль" (Edit Role)
 6. Bot shows role options: "Кандидат", "Команда"
 7. User selects "Команда"
-8. Bot updates field and returns to participant profile
+8. Bot displays complete participant profile with updated role information
 9. User clicks "Сохранить изменения" to review changes
 10. **Confirmation Screen**: Shows "Роль: Кандидат → **Команда**"
 11. User clicks "Подтвердить сохранение" to commit changes
