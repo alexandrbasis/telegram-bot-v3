@@ -137,6 +137,19 @@ class Participant(BaseModel):
         None,
         description="Date of payment"
     )
+
+    # Accommodation fields
+    # Floor can be stored as int or string (e.g., "1", "Ground", "2A")
+    floor: Optional[int | str] = Field(
+        None,
+        description="Accommodation floor (integer or string)"
+    )
+
+    # Room number is typically alphanumeric
+    room_number: Optional[str] = Field(
+        None,
+        description="Accommodation room number (alphanumeric)"
+    )
     
     # Airtable record ID (for updates)
     record_id: Optional[str] = Field(
@@ -151,6 +164,14 @@ class Participant(BaseModel):
         if not v or not v.strip():
             raise ValueError('Full name in Russian is required and cannot be empty')
         return v.strip()
+    
+    @field_validator('room_number')
+    @classmethod
+    def validate_room_number(cls, v):
+        """Convert empty strings to None for room number."""
+        if v == "":
+            return None
+        return v
     
     def to_airtable_fields(self) -> dict:
         """
@@ -195,6 +216,13 @@ class Participant(BaseModel):
         # Date field (convert to ISO format for Airtable)
         if self.payment_date:
             fields["PaymentDate"] = self.payment_date.isoformat()
+
+        # Accommodation fields
+        if self.floor is not None:
+            # Store as-is; Airtable will accept numbers or text depending on schema
+            fields["Floor"] = self.floor
+        if self.room_number:
+            fields["RoomNumber"] = self.room_number
         
         return fields
     
@@ -235,7 +263,9 @@ class Participant(BaseModel):
             department=Department(fields['Department']) if fields.get('Department') else None,
             payment_status=PaymentStatus(fields['PaymentStatus']) if fields.get('PaymentStatus') else None,
             payment_amount=fields.get('PaymentAmount'),
-            payment_date=payment_date
+            payment_date=payment_date,
+            floor=fields.get('Floor'),
+            room_number=fields.get('RoomNumber')
         )
     
     model_config = ConfigDict(

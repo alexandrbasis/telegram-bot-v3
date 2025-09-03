@@ -35,7 +35,9 @@ def get_field_icon(field_name: str) -> str:
         'size': '👕',               # t-shirt
         'role': '👥',               # group
         'department': '📋',         # clipboard
-        'payment_amount': '💵'      # money
+        'payment_amount': '💵',     # money
+        'floor': '🏢',              # building/floor
+        'room_number': '🚪'         # door/room
     }
     
     return field_icons.get(field_name, '✏️')  # Default to pencil for unknown fields
@@ -80,10 +82,14 @@ def create_participant_edit_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(f"{get_field_icon('role')} Роль", callback_data="edit_field:role"),
         InlineKeyboardButton(f"{get_field_icon('department')} Департамент", callback_data="edit_field:department")
     ])
-    
-    # Payment amount field only (status/date are automated)
+
+    # Payment amount field only (status/date are automated) + Accommodation fields
     keyboard.append([
-        InlineKeyboardButton(f"{get_field_icon('payment_amount')} Сумма платежа", callback_data="edit_field:payment_amount")
+        InlineKeyboardButton(f"{get_field_icon('payment_amount')} Сумма платежа", callback_data="edit_field:payment_amount"),
+        InlineKeyboardButton(f"{get_field_icon('floor')} Этаж", callback_data="edit_field:floor")
+    ])
+    keyboard.append([
+        InlineKeyboardButton(f"{get_field_icon('room_number')} Номер комнаты", callback_data="edit_field:room_number")
     ])
     
     # Control buttons

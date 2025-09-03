@@ -241,7 +241,9 @@ class AirtableParticipantRepository(ParticipantRepository):
             'department': 'Department',
             'payment_status': 'PaymentStatus',
             'payment_amount': 'PaymentAmount',
-            'payment_date': 'PaymentDate'
+            'payment_date': 'PaymentDate',
+            'floor': 'Floor',
+            'room_number': 'RoomNumber'
         }
         
         airtable_fields = {}

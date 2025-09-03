@@ -112,7 +112,9 @@ def display_updated_participant(participant: Participant, context: ContextTypes.
         department=editing_changes.get('department', participant.department),
         payment_amount=editing_changes.get('payment_amount', participant.payment_amount),
         payment_status=editing_changes.get('payment_status', participant.payment_status),
-        payment_date=editing_changes.get('payment_date', participant.payment_date)
+        payment_date=editing_changes.get('payment_date', participant.payment_date),
+        floor=editing_changes.get('floor', getattr(participant, 'floor', None)),
+        room_number=editing_changes.get('room_number', getattr(participant, 'room_number', None))
     )
     
     # Use full participant formatting for complete transparency
@@ -155,7 +157,9 @@ def reconstruct_participant_from_changes(editing_changes: dict, record_id: str =
         'gender': '👤 Пол',
         'size': '📏 Размер',
         'role': '📋 Роль',
-        'department': '🏢 Департамент'
+        'department': '🏢 Департамент',
+        'floor': '🏢 Этаж',
+        'room_number': '🚪 Номер комнаты'
     }
     
     for field, value in editing_changes.items():
@@ -235,6 +239,12 @@ async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAU
     # Payment amount is still editable, but status/date are automated
     message_text += f"💵 Сумма платежа: {participant.payment_amount or 'Не указано'}\n"
     
+    # Accommodation fields
+    floor_display = getattr(participant, 'floor', None)
+    room_display = getattr(participant, 'room_number', None)
+    message_text += f"🏢 Этаж: {floor_display if floor_display not in (None, '') else 'Не указано'}\n"
+    message_text += f"🚪 Номер комнаты: {room_display if room_display not in (None, '') else 'Не указано'}\n"
+    
     # Show pending changes if any
     pending_changes = context.user_data.get('editing_changes', {})
     if pending_changes:
@@ -294,7 +304,7 @@ async def handle_field_edit_selection(update: Update, context: ContextTypes.DEFA
     # handled when payment_amount is entered (payment automation)
     BUTTON_FIELDS = ['gender', 'size', 'role', 'department']
     TEXT_FIELDS = ['full_name_ru', 'full_name_en', 'church', 'country_and_city', 
-                   'contact_information', 'submitted_by', 'payment_amount']
+                   'contact_information', 'submitted_by', 'payment_amount', 'floor', 'room_number']
     
     if field_name in BUTTON_FIELDS:
         # Show button selection interface
@@ -382,7 +392,9 @@ async def show_field_text_prompt(update: Update, context: ContextTypes.DEFAULT_T
         'contact_information': "Отправьте контактную информацию:",
         'submitted_by': "Отправьте имя того, кто подал:",
         'payment_amount': "Отправьте сумму платежа (только цифры):",
-        'payment_date': "Отправьте дату в формате ГГГГ-ММ-ДД:"
+        'payment_date': "Отправьте дату в формате ГГГГ-ММ-ДД:",
+        'floor': "Отправьте этаж (число или текст, например: 1, Ground):",
+        'room_number': "Отправьте номер комнаты (буквы и цифры):"
     }
     
     prompt = field_prompts.get(field_name, f"Отправьте новое значение для {field_name}:")
@@ -454,7 +466,9 @@ async def handle_text_field_input(update: Update, context: ContextTypes.DEFAULT_
                     'country_and_city': 'Местоположение',
                     'contact_information': 'Контакты',
                     'submitted_by': 'Кто подал',
-                    'payment_amount': 'Сумма платежа'
+                    'payment_amount': 'Сумма платежа',
+                    'floor': 'Этаж',
+                    'room_number': 'Номер комнаты'
                 }
                 
                 field_label = field_labels.get(field_name, field_name)
@@ -645,7 +659,9 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
                 'size': 'Размер',
                 'role': 'Роль',
                 'department': 'Департамент',
-                'payment_status': 'Статус платежа'
+                'payment_status': 'Статус платежа',
+                'floor': 'Этаж',
+                'room_number': 'Номер комнаты'
             }
             field_label = field_labels.get(field_name, field_name)
             success_message = f"✅ {field_label} обновлено: {display_value}"
@@ -985,7 +1001,9 @@ async def show_save_confirmation(update: Update, context: ContextTypes.DEFAULT_T
         'payment_amount': 'Сумма оплаты',
         'payment_date': 'Дата оплаты',
         'payment_status': 'Статус оплаты',
-        'submitted_by': 'Кто подал'
+        'submitted_by': 'Кто подал',
+        'floor': 'Этаж',
+        'room_number': 'Номер комнаты'
     }
     
     for field, new_value in changes.items():

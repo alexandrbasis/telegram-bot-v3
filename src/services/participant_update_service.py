@@ -35,7 +35,7 @@ class ParticipantUpdateService:
     
     BUTTON_FIELDS = ['gender', 'size', 'role', 'department', 'payment_status']
     
-    SPECIAL_FIELDS = ['payment_amount', 'payment_date']
+    SPECIAL_FIELDS = ['payment_amount', 'payment_date', 'floor', 'room_number']
     
     # Required fields that cannot be empty
     REQUIRED_FIELDS = ['full_name_ru']
@@ -65,6 +65,12 @@ class ParticipantUpdateService:
         
         elif field_name == 'payment_date':
             return self._validate_payment_date(user_input)
+        
+        elif field_name == 'floor':
+            return self._validate_floor(user_input)
+        
+        elif field_name == 'room_number':
+            return self._validate_room_number(user_input)
         
         else:
             raise ValidationError(f"Неизвестное поле для валидации: {field_name}")
@@ -116,6 +122,38 @@ class ParticipantUpdateService:
                 raise ValidationError("Некорректная дата. Проверьте день и месяц.")
         except Exception:
             raise ValidationError("Неверный формат даты. Используйте ГГГГ-ММ-ДД")
+
+    def _validate_floor(self, user_input: str) -> any:
+        """Validate floor field input (accepts integer or text)."""
+        # Allow clearing the field
+        if user_input == "":
+            return ""
+        # Try integer first
+        try:
+            # Allow simple integers like "1", "02"
+            if user_input.isdigit():
+                return int(user_input)
+        except Exception:
+            pass
+        # Otherwise, accept non-empty string (e.g., "Ground", "2A")
+        value = user_input.strip()
+        if not value:
+            return ""
+        if len(value) > 20:
+            raise ValidationError("Этаж слишком длинное значение (макс. 20 символов)")
+        return value
+
+    def _validate_room_number(self, user_input: str) -> str:
+        """Validate room number input (alphanumeric plus simple separators)."""
+        value = user_input.strip()
+        if value == "":
+            return ""
+        if len(value) > 20:
+            raise ValidationError("Номер комнаты слишком длинный (макс. 20 символов)")
+        import re
+        if not re.fullmatch(r"[A-Za-zА-Яа-я0-9\-_/ ]+", value):
+            raise ValidationError("Номер комнаты должен быть буквенно-цифровым (допустимы -, _, / и пробел)")
+        return value
     
     def convert_button_value(self, field_name: str, selected_value: str) -> Union[Gender, Size, Role, Department, PaymentStatus]:
         """
@@ -247,7 +285,9 @@ class ParticipantUpdateService:
             'department': 'Департамент',
             'payment_status': 'Статус платежа',
             'payment_amount': 'Сумма платежа',
-            'payment_date': 'Дата платежа'
+            'payment_date': 'Дата платежа',
+            'floor': 'Этаж',
+            'room_number': 'Номер комнаты'
         }
         return field_labels.get(field_name, field_name)
 

@@ -120,6 +120,11 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
     
     if context_parts:
         result_parts.append(f" | {context_parts[0]}")
+
+    # Append accommodation info: Floor and Room Number
+    floor_display = participant.floor if getattr(participant, 'floor', None) not in (None, "") else "N/A"
+    room_display = participant.room_number if getattr(participant, 'room_number', None) not in (None, "") else "N/A"
+    result_parts.append(f" | Floor: {floor_display}, Room: {room_display}")
     
     return "".join(result_parts)
 
@@ -153,6 +158,8 @@ def format_participant_full(participant: Participant, language: str = "ru") -> s
         'payment_amount': '💵 Сумма платежа',
         'payment_status': '💳 Статус оплаты',
         'payment_date': '📅 Дата оплаты',
+        'floor': '🏢 Этаж',
+        'room_number': '🚪 Номер комнаты',
     }
 
     def value_or_na(val: object) -> str:
@@ -203,6 +210,10 @@ def format_participant_full(participant: Participant, language: str = "ru") -> s
     # Format date to ISO if present
     pay_date = participant.payment_date.isoformat() if getattr(participant, 'payment_date', None) else None
     lines.append(f"{labels['payment_date']}: {value_or_na(pay_date)}")
+
+    # Accommodation info
+    lines.append(f"{labels['floor']}: {value_or_na(getattr(participant, 'floor', None))}")
+    lines.append(f"{labels['room_number']}: {value_or_na(getattr(participant, 'room_number', None))}")
 
     return "\n".join(lines)
 
