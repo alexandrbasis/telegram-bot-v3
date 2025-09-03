@@ -829,15 +829,31 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             context.user_data['editing_changes'] = {}
             context.user_data['editing_field'] = None
             
-            # Preserve existing simple success message behavior (no full participant display)
-            await query.message.edit_text(
-                text=f"✅ Изменения сохранены успешно! Обновлено полей: {len(changes)}",
-                reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
-                ]])
-            )
+            # Try to display the full updated participant profile. If it fails, fallback to short message.
+            try:
+                success_message = (
+                    f"✅ Изменения сохранены успешно!\n\n"
+                    f"{format_participant_full(participant, language='ru')}"
+                )
+                await query.message.edit_text(
+                    text=success_message,
+                    reply_markup=InlineKeyboardMarkup([[ 
+                        InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+                    ]])
+                )
+            except Exception as display_error:
+                # Log regression marker to help diagnose display formatting errors
+                logger.error(
+                    f"REGRESSION|SAVE_DISPLAY_ERROR - Failed to render full participant after save for user {user.id}: {display_error}"
+                )
+                await query.message.edit_text(
+                    text=f"✅ Изменения сохранены успешно! Обновлено полей: {len(changes)}",
+                    reply_markup=InlineKeyboardMarkup([[ 
+                        InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+                    ]])
+                )
             
-            # Log successful save response if logging is enabled
+            # Log successful save response if logging is enabled (short summary for logs is OK)
             if user_logger:
                 user_logger.log_bot_response(
                     user_id=user.id,

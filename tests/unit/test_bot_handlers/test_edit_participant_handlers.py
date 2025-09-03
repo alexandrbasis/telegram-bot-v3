@@ -1198,8 +1198,8 @@ class TestComprehensiveDisplayRegressionPrevention:
             assert result == EditStates.FIELD_SELECTION
     
     @pytest.mark.asyncio
-    async def test_save_success_shows_current_simple_message(self, mock_update):
-        """Test current save success behavior (simple message without participant info)."""
+    async def test_save_success_shows_full_profile_message(self, mock_update):
+        """On save success, show full updated participant profile (not simple count message)."""
         from src.bot.handlers.edit_participant_handlers import save_changes
         
         # Create proper context with participant and changes
@@ -1229,18 +1229,18 @@ class TestComprehensiveDisplayRegressionPrevention:
             
             result = await save_changes(mock_update, context)
             
-            # Should show simple success message (current behavior)
+            # Should show full participant profile including updated fields
             mock_update.callback_query.message.edit_text.assert_called_once()
             call_args = mock_update.callback_query.message.edit_text.call_args
             success_message = call_args[1]['text']
-            
-            # Current implementation shows simple success message
-            assert "Изменения сохранены успешно" in success_message
-            assert "Обновлено полей: 2" in success_message
-            
-            # Does NOT show complete participant info (this is the regression to fix later)
-            assert "📋" not in success_message  # No participant display formatting
-            assert "Петр Петров" not in success_message  # Updated name not shown
+
+            # Contains success prefix and updated participant details
+            assert "✅" in success_message
+            assert "Петр Петров" in success_message  # Updated name shown
+            assert "New Church" in success_message  # Updated church shown
+
+            # Should NOT contain simple count-based message
+            assert "Обновлено полей:" not in success_message
     
     @pytest.mark.asyncio 
     async def test_multiple_field_edits_maintain_context(self, mock_update):
