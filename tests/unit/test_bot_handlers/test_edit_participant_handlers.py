@@ -504,11 +504,12 @@ class TestSaveChanges:
         # Should call repository update
         mock_repo.update_by_id.assert_called_once()
         
-        # Should show success message
+        # Should show full participant display with success indicator
         mock_update.callback_query.message.edit_text.assert_called()
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
-        assert 'Изменения сохранены' in message_text
+        assert '✅' in message_text  # Success indicator
+        assert 'Новое Имя' in message_text  # Updated value should be displayed
         
         # Should clear editing state
         assert mock_context.user_data['editing_changes'] == {}
@@ -729,7 +730,8 @@ class TestErrorHandlingWithRetry:
         mock_update.callback_query.message.edit_text.assert_called()
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
-        assert 'сохранен' in message_text.lower()
+        assert '✅' in message_text  # Success indicator
+        assert 'New Name' in message_text  # Updated value should be displayed
 
 
 class TestPaymentFieldExclusion:
@@ -1198,8 +1200,8 @@ class TestComprehensiveDisplayRegressionPrevention:
             assert result == EditStates.FIELD_SELECTION
     
     @pytest.mark.asyncio
-    async def test_save_success_shows_current_simple_message(self, mock_update):
-        """Test current save success behavior (simple message without participant info)."""
+    async def test_save_success_shows_complete_participant_display_updated(self, mock_update):
+        """Test that save success now shows complete participant info after implementation change."""
         from src.bot.handlers.edit_participant_handlers import save_changes
         
         # Create proper context with participant and changes
@@ -1229,18 +1231,20 @@ class TestComprehensiveDisplayRegressionPrevention:
             
             result = await save_changes(mock_update, context)
             
-            # Should show simple success message (current behavior)
+            # Should show success prefix plus complete participant info
             mock_update.callback_query.message.edit_text.assert_called_once()
             call_args = mock_update.callback_query.message.edit_text.call_args
             success_message = call_args[1]['text']
             
-            # Current implementation shows simple success message
-            assert "Изменения сохранены успешно" in success_message
-            assert "Обновлено полей: 2" in success_message
+            # Should contain success indicator (checkmark)
+            assert "✅" in success_message
             
-            # Does NOT show complete participant info (this is the regression to fix later)
-            assert "📋" not in success_message  # No participant display formatting
-            assert "Петр Петров" not in success_message  # Updated name not shown
+            # Should now show complete participant info with updated values
+            assert "Петр Петров" in success_message  # Updated name should be shown
+            assert "New Church" in success_message  # Updated church should be shown
+            
+            # Should NOT contain the old count-based success message
+            assert "Обновлено полей:" not in success_message
     
     @pytest.mark.asyncio 
     async def test_multiple_field_edits_maintain_context(self, mock_update):

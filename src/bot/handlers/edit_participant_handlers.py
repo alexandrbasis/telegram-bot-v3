@@ -829,13 +829,26 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             context.user_data['editing_changes'] = {}
             context.user_data['editing_field'] = None
             
-            # Preserve existing simple success message behavior (no full participant display)
-            await query.message.edit_text(
-                text=f"✅ Изменения сохранены успешно! Обновлено полей: {len(changes)}",
-                reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
-                ]])
-            )
+            # Show full participant details after save for immediate verification
+            try:
+                complete_display = display_updated_participant(participant, context)
+                success_prefix = "✅ "
+                
+                await query.message.edit_text(
+                    text=success_prefix + complete_display,
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+                    ]])
+                )
+            except Exception as e:
+                logger.error(f"Error displaying updated participant for user {user.id}: {e}")
+                # Fallback to simple message if display fails
+                await query.message.edit_text(
+                    text=f"✅ Изменения сохранены успешно! Обновлено полей: {len(changes)}",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+                    ]])
+                )
             
             # Log successful save response if logging is enabled
             if user_logger:

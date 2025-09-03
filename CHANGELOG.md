@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Automatic Role-Department Logic for Participant Editing** - Intelligent department management system that automatically maintains data consistency when participant roles are changed during editing workflow (PR #16, AGB-24, completed 2025-09-02)
+  - Automatic department field clearing when role changes from "team member" to "candidate" during editing process with clear user feedback messages (`src/services/participant_update_service.py:152-203`, `src/bot/handlers/edit_participant_handlers.py:189-249`)
+  - Immediate department selection prompt when role changes from "candidate" to "team member" ensuring team members always have department assignments (`src/bot/handlers/edit_participant_handlers.py:189-249`)
+  - Role transition detection service with `detect_role_transition()`, `requires_department()`, `get_role_department_actions()`, and `build_auto_action_message()` methods providing comprehensive business logic for role-department relationships (`src/services/participant_update_service.py:152-203`)
+  - Save operation validation preventing team members from being saved without department assignments, maintaining data integrity across all editing workflows (`src/bot/handlers/edit_participant_handlers.py:701-796`)
+  - Seamless integration with existing editing workflow preserving all save/cancel functionality, state management, and user experience patterns
+  - Complete Russian language interface with contextual feedback messages for automatic department clearing and selection requirements
+  - Enhanced user experience with guided department selection workflow eliminating invalid role-department combinations and reducing data entry errors
+  - Comprehensive test coverage with role-department logic tests in service layer and handler integration tests ensuring robust functionality (`tests/unit/test_services/test_participant_update_service.py`, `tests/unit/test_bot_handlers/test_edit_participant_handlers.py`)
+  - Users now experience intelligent department management with automatic cleanup on role downgrades and guided selection on role upgrades, preventing data inconsistencies
+- **Enhanced Documentation Suite** - Updated technical documentation with role-department logic specifications and editing workflow enhancements
+  - Enhanced Participant Update Service documentation with role-department logic methods and automatic department management details
+  - Updated Search → Edit → Save workflow documentation with role-department state transition steps and validation requirements
+  - Added role-department state management specifications with error recovery flow and validation check procedures
+  - Enhanced bot commands documentation with role editing logic examples and department selection workflow scenarios
 - **Enhanced Participant Display Transparency During Editing and After Save** - Comprehensive transparency improvements throughout the participant editing workflow eliminating minimal success messages and enhancing user context visibility (AGB-23, completed 2025-09-02T13:15:00Z)
   - Complete participant display after save operations replacing simple success messages with formatted participant information using `format_participant_result()` integration (`src/bot/handlers/edit_participant_handlers.py:685-702`)
   - Enhanced context recovery mechanisms using participant reconstruction from `editing_changes` when `current_participant` context is lost during editing sessions (`src/bot/handlers/edit_participant_handlers.py:468-494`)
