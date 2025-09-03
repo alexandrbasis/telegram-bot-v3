@@ -51,11 +51,16 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 
 ### Service Layer Architecture
 
-**Participant Update Service** (New - 2025-08-29):
+**Participant Update Service** (Enhanced - 2025-09-02):
 - Centralized validation logic for all field types
 - Russian error message generation
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
+- **Role-Department Logic**: Auto-cleanup and prompt handling for role transitions
+  - `detect_role_transition()`: Identifies role change scenarios
+  - `requires_department()`: Department requirement validation
+  - `get_role_department_actions()`: Returns required actions for role changes
+  - `build_auto_action_message()`: User feedback for automatic actions
 
 **Validation Strategies**:
 - **Required Fields**: Russian name (min length 1)
@@ -85,10 +90,14 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 3. Button click transitions to participant editing interface
 4. Editing interface shows complete profile with 13 edit buttons
 5. Field editing uses appropriate input method (buttons vs text)
-6. **Save confirmation screen** displays all pending changes in "Current → **New**" format
-7. User confirms save operation or cancels to discard changes
-8. Changes committed via repository `update_by_id()` method with retry mechanism
-9. User returns to search results with context preserved
+6. **Role-Department Logic** (New - 2025-09-02): 
+   - Role change from Team→Candidate automatically clears department
+   - Role change from Candidate→Team immediately prompts department selection
+   - Save validation prevents team members without departments
+7. **Save confirmation screen** displays all pending changes in "Current → **New**" format
+8. User confirms save operation or cancels to discard changes
+9. Changes committed via repository `update_by_id()` method with retry mechanism
+10. User returns to search results with context preserved
 
 ### State Management
 - **Context Preservation**: User data maintained across state transitions
@@ -100,6 +109,7 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Back Navigation**: Seamless return to previous conversation states
 - **State Collision Management**: Non-overlapping state enum values prevent handler conflicts (SearchStates: 10-12, EditStates: 0-2)
 - **ConversationHandler Configuration**: Proper per_message parameter configuration ensures mixed handler types (MessageHandler + CallbackQueryHandler) work correctly
+- **Role-Department State Handling** (New - 2025-09-02): Automatic state transitions for role-based department logic with immediate prompts and validation guards
 
 ### Data Flow
 ```

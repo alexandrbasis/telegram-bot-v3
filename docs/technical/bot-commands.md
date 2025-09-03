@@ -161,12 +161,29 @@ Each participant field can be edited through dedicated "Изменить [Field]
 5. User clicks "Изменить роль" (Edit Role)
 6. Bot shows role options: "Кандидат", "Команда"
 7. User selects "Команда"
-8. Bot displays complete participant profile with updated role information
-9. User clicks "Сохранить изменения" to review changes
-10. **Confirmation Screen**: Shows "Роль: Кандидат → **Команда**"
-11. User clicks "Подтвердить сохранение" to commit changes
-12. Bot saves to Airtable and confirms: "Участник успешно обновлен"
-13. User returns to search results with context preserved
+8. **Department Logic**: Bot immediately prompts for department selection with message "Для участников команды необходимо выбрать отдел"
+9. User selects department (e.g., "Worship")
+10. Bot displays complete participant profile with updated role and department information
+11. User clicks "Сохранить изменения" to review changes
+12. **Confirmation Screen**: Shows "Роль: Кандидат → **Команда**" and "Отдел: (не указано) → **Worship**"
+13. User clicks "Подтвердить сохранение" to commit changes
+14. Bot saves to Airtable and confirms with complete updated participant information
+15. User returns to search results with context preserved
+
+## Role-Department Logic Example
+
+**Scenario 1: Team Member Becomes Candidate**
+1. User edits participant with role "Команда" and department "Media"
+2. User changes role to "Кандидат"
+3. Bot automatically clears department and shows: "Роль изменена на Кандидат. Отдел очищен (кандидаты не имеют отделов)."
+4. Complete participant display shows updated information
+
+**Scenario 2: Candidate Becomes Team Member**
+1. User edits participant with role "Кандидат" and no department
+2. User changes role to "Команда"
+3. Bot immediately shows department selection: "Роль изменена на Команда. Для участников команды необходимо выбрать отдел."
+4. User must select department before continuing
+5. Save operation blocked until department is selected
 
 ### Error Recovery Flow
 
