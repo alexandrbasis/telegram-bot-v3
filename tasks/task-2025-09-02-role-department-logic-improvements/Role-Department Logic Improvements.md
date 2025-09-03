@@ -226,6 +226,67 @@ Implement role-based department logic to automatically manage department field c
   2) CANDIDATE→TEAM: department keyboard appears; save blocked until chosen
   3) TEAM+department: save succeeds
 
+## PR Traceability & Code Review Preparation
+- **PR Created**: 2025-09-02
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/16
+- **Branch**: feature/task-2025-09-02-role-department-logic-improvements
+- **Status**: In Review
+- **Linear Issue**: AGB-24 - Updated to "In Review"
+
+### Implementation Summary for Code Review
+- **Total Steps Completed**: 3 of 3 major steps with 7 sub-steps
+- **Test Coverage**: Task-related unit tests passing (service + handlers)
+- **Key Files Modified**: 
+  - `src/services/participant_update_service.py` - Role transition detection and department action rules
+  - `src/bot/handlers/edit_participant_handlers.py` - Integration with editing workflow and user feedback
+  - `tests/unit/test_services/test_participant_update_service.py` - Service logic tests
+  - `tests/unit/test_bot_handlers/test_edit_participant_handlers.py` - Handler flow tests
+- **Breaking Changes**: None - maintains backward compatibility
+- **Dependencies Added**: None
+
+### Step-by-Step Completion Status
+- [x] ✅ Step 1: Enhance ParticipantUpdateService with role-department logic - Completed 2025-09-02
+  - [x] Sub-step 1.1: Add role change detection method - Completed 2025-09-02
+  - [x] Sub-step 1.2: Add automatic department management methods - Completed 2025-09-02
+- [x] ✅ Step 2: Integrate logic into edit participant handlers - Completed 2025-09-02
+  - [x] Sub-step 2.1: Modify role button selection handler with role-department logic - Completed 2025-09-02
+  - [x] Sub-step 2.2: Add department selection workflow integration - Completed 2025-09-02
+- [x] ✅ Step 3: Update keyboard and UI components - Completed 2025-09-02
+  - [x] Sub-step 3.1: Enhance edit keyboards for conditional department prompts - Completed 2025-09-02
+  - [x] Sub-step 3.2: Add user feedback messages for automatic actions - Completed 2025-09-02
+
+### Code Review Checklist
+- [ ] **Functionality**: All acceptance criteria met
+- [ ] **Testing**: Test coverage adequate for task-related components
+- [ ] **Code Quality**: Follows project conventions
+- [ ] **Documentation**: Code comments and implementation notes clear
+- [ ] **Security**: No sensitive data exposed
+- [ ] **Performance**: No obvious performance issues
+- [ ] **Integration**: Works with existing codebase and editing workflow
+
+### Implementation Notes for Reviewer
+- **Role Transition Logic**: Implemented in service layer with clear separation of concerns
+- **Automatic Actions**: TEAM→CANDIDATE auto-clears department with user feedback; CANDIDATE→TEAM immediately prompts for department selection
+- **Save Guards**: Team members cannot be saved without department assignment
+- **User Experience**: Seamless integration with existing editing workflow, clear feedback messages for all automatic actions
+- **Testing Strategy**: Focused unit tests for task-related functionality; some unrelated tests have failures that should be addressed separately
+- **Verification**: Manual testing confirms all role-department scenarios work as specified
+
+### Verification Commands
+```bash
+# Run task-related service tests
+PYTHONPATH=. pytest -q tests/unit/test_services/test_participant_update_service.py
+
+# Run task-related handler tests  
+PYTHONPATH=. pytest -q tests/unit/test_bot_handlers/test_edit_participant_handlers.py -k "role_change or department or save_blocks_team_without_department"
+```
+
+### Manual Testing Scenarios
+1. **TEAM→CANDIDATE**: Department automatically clears with confirmation message
+2. **CANDIDATE→TEAM**: Department selection keyboard appears immediately
+3. **TEAM without department**: Save operation blocked until department selected
+4. **Existing workflow**: All existing editing functionality remains intact
+
 ## Ready For Review
 - Branch: feature/task-2025-09-02-role-department-logic-improvements
 - Scope: Role/Department logic per task spec
