@@ -240,11 +240,11 @@ class ParticipantUpdateService:
             'church': 'Церковь',
             'country_and_city': 'Местоположение',
             'contact_information': 'Контакты',
-            'submitted_by': 'Отправитель',
+            'submitted_by': 'Кто подал',
             'gender': 'Пол',
             'size': 'Размер',
             'role': 'Роль',
-            'department': 'Отдел',
+            'department': 'Департамент',
             'payment_status': 'Статус платежа',
             'payment_amount': 'Сумма платежа',
             'payment_date': 'Дата платежа'
@@ -297,7 +297,7 @@ class ParticipantUpdateService:
         action: 'clear_department' | 'prompt_department'
         """
         if action == 'clear_department':
-            return "ℹ️ Отдел очищен из-за изменения роли на «Кандидат»."
+            return "ℹ️ Департамент очищен из-за изменения роли на «Кандидат»."
         if action == 'prompt_department':
-            return "ℹ️ Для роли «Команда» необходимо выбрать отдел. Пожалуйста, выберите отдел."
+            return "ℹ️ Для роли «Команда» необходимо выбрать Департамент. Пожалуйста, выберите Департамент."
         return ""

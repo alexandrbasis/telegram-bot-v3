@@ -370,5 +370,5 @@ class TestRoleDepartmentLogic:
     def test_build_auto_action_message(self):
         clear_msg = self.service.build_auto_action_message('clear_department')
         prompt_msg = self.service.build_auto_action_message('prompt_department')
-        assert 'Отдел' in clear_msg
+        assert 'Департамент' in clear_msg
         assert 'Команда' in prompt_msg

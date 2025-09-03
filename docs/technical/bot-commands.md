@@ -73,7 +73,7 @@ Each participant field can be edited through dedicated "Изменить [Field]
    - Options: "Кандидат" (Candidate), "Команда" (Team)
    - Click button → Select role → Complete participant display with updated information
 
-4. **"Изменить департамент" (Edit Department)**
+4. **"Изменить Департамент" (Edit Department)**
    - Options: ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate
    - Click button → Select department → Complete participant display with updated information
 
@@ -103,8 +103,8 @@ Each participant field can be edited through dedicated "Изменить [Field]
    - Click button → Bot prompts: "Отправьте контактную информацию"
    - Type contact info → Complete participant display with updated information
 
-6. **"Изменить отправителя" (Edit Submitted By)**
-   - Click button → Bot prompts: "Отправьте имя отправителя"
+6. **"Изменить кто подал" (Edit Submitted By)**
+   - Click button → Bot prompts: "Отправьте имя того, кто подал"
    - Type submitter name → Complete participant display with updated information
 
 #### Special Validation Fields

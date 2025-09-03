@@ -150,12 +150,12 @@ def reconstruct_participant_from_changes(editing_changes: dict, record_id: str =
         'church': '⛪ Церковь',
         'country_and_city': '📍 Местоположение',
         'contact_information': '📞 Контакты',
-        'submitted_by': '👥 Отправитель',
+        'submitted_by': '👥 Кто подал',
         'payment_amount': '💰 Сумма платежа',
         'gender': '👤 Пол',
         'size': '📏 Размер',
         'role': '📋 Роль',
-        'department': '🏢 Отдел'
+        'department': '🏢 Департамент'
     }
     
     for field, value in editing_changes.items():
@@ -221,7 +221,7 @@ async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAU
     message_text += f"⛪ Церковь: {participant.church or 'Не указано'}\n"
     message_text += f"📍 Местоположение: {participant.country_and_city or 'Не указано'}\n"
     message_text += f"📞 Контакты: {participant.contact_information or 'Не указано'}\n"
-    message_text += f"👨‍💼 Отправитель: {participant.submitted_by or 'Не указано'}\n"
+    message_text += f"👨‍💼 Кто подал: {participant.submitted_by or 'Не указано'}\n"
     
     # Convert enum values to Russian for display
     gender_display = "Мужской" if participant.gender == Gender.MALE else "Женский" if participant.gender == Gender.FEMALE else "Не указано"
@@ -230,7 +230,7 @@ async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAU
     
     role_display = "Кандидат" if participant.role == Role.CANDIDATE else "Команда" if participant.role == Role.TEAM else "Не указано"
     message_text += f"👥 Роль: {role_display}\n"
-    message_text += f"📋 Отдел: {participant.department or 'Не указано'}\n"
+    message_text += f"📋 Департамент: {participant.department or 'Не указано'}\n"
     
     # Payment amount is still editable, but status/date are automated
     message_text += f"💵 Сумма платежа: {participant.payment_amount or 'Не указано'}\n"
@@ -354,7 +354,7 @@ async def show_field_button_selection(update: Update, context: ContextTypes.DEFA
         'gender': "Выберите пол:",
         'size': "Выберите размер:",
         'role': "Выберите роль:",
-        'department': "Выберите отдел:",
+        'department': "Выберите Департамент:",
         'payment_status': "Выберите статус платежа:"
     }
     
@@ -380,7 +380,7 @@ async def show_field_text_prompt(update: Update, context: ContextTypes.DEFAULT_T
         'church': "Отправьте название церкви:",
         'country_and_city': "Отправьте страну и город:",
         'contact_information': "Отправьте контактную информацию:",
-        'submitted_by': "Отправьте имя отправителя:",
+        'submitted_by': "Отправьте имя того, кто подал:",
         'payment_amount': "Отправьте сумму платежа (только цифры):",
         'payment_date': "Отправьте дату в формате ГГГГ-ММ-ДД:"
     }
@@ -453,7 +453,7 @@ async def handle_text_field_input(update: Update, context: ContextTypes.DEFAULT_
                     'church': 'Церковь',
                     'country_and_city': 'Местоположение',
                     'contact_information': 'Контакты',
-                    'submitted_by': 'Отправитель',
+                    'submitted_by': 'Кто подал',
                     'payment_amount': 'Сумма платежа'
                 }
                 
@@ -474,7 +474,7 @@ async def handle_text_field_input(update: Update, context: ContextTypes.DEFAULT_
                 'church': 'Церковь',
                 'country_and_city': 'Местоположение',
                 'contact_information': 'Контакты',
-                'submitted_by': 'Отправитель',
+                'submitted_by': 'Кто подал',
                 'payment_amount': 'Сумма платежа'
             }
             field_label = field_labels.get(field_name, field_name)
@@ -626,7 +626,7 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
                     'gender': 'Пол',
                     'size': 'Размер',
                     'role': 'Роль',
-                    'department': 'Отдел',
+                    'department': 'Департамент',
                     'payment_status': 'Статус платежа'
                 }
                 
@@ -644,7 +644,7 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
                 'gender': 'Пол',
                 'size': 'Размер',
                 'role': 'Роль',
-                'department': 'Отдел',
+                'department': 'Департамент',
                 'payment_status': 'Статус платежа'
             }
             field_label = field_labels.get(field_name, field_name)
@@ -978,14 +978,14 @@ async def show_save_confirmation(update: Update, context: ContextTypes.DEFAULT_T
         'role': 'Роль',
         'gender': 'Пол',
         'size': 'Размер',
-        'department': 'Отдел',
+        'department': 'Департамент',
         'church': 'Церковь',
         'country_and_city': 'Страна/город',
         'contact_information': 'Контакты',
         'payment_amount': 'Сумма оплаты',
         'payment_date': 'Дата оплаты',
         'payment_status': 'Статус оплаты',
-        'submitted_by': 'Подано'
+        'submitted_by': 'Кто подал'
     }
     
     for field, new_value in changes.items():

@@ -67,7 +67,7 @@ def create_participant_edit_keyboard() -> InlineKeyboardMarkup:
     
     keyboard.append([
         InlineKeyboardButton(f"{get_field_icon('contact_information')} Контакты", callback_data="edit_field:contact_information"),
-        InlineKeyboardButton(f"{get_field_icon('submitted_by')} Отправитель", callback_data="edit_field:submitted_by")
+        InlineKeyboardButton(f"{get_field_icon('submitted_by')} Кто подал", callback_data="edit_field:submitted_by")
     ])
     
     # Selection fields with field-specific icons
@@ -78,7 +78,7 @@ def create_participant_edit_keyboard() -> InlineKeyboardMarkup:
     
     keyboard.append([
         InlineKeyboardButton(f"{get_field_icon('role')} Роль", callback_data="edit_field:role"),
-        InlineKeyboardButton(f"{get_field_icon('department')} Отдел", callback_data="edit_field:department")
+        InlineKeyboardButton(f"{get_field_icon('department')} Департамент", callback_data="edit_field:department")
     ])
     
     # Payment amount field only (status/date are automated)

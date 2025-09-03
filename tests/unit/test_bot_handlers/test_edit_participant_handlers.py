@@ -382,7 +382,7 @@ class TestHandleButtonFieldSelection:
         # Message should inform about auto-clear
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
-        assert 'Отдел очищен' in message_text
+        assert 'Департамент очищен' in message_text
 
     @pytest.mark.asyncio
     async def test_role_change_candidate_to_team_prompts_department(self, mock_update, mock_context):
@@ -406,7 +406,7 @@ class TestHandleButtonFieldSelection:
         # Should show department keyboard and prompt message
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
-        assert 'необходимо выбрать отдел' in message_text
+        assert 'необходимо выбрать Департамент' in message_text
         assert isinstance(call_args[1]['reply_markup'], InlineKeyboardMarkup)
 
 
@@ -439,7 +439,7 @@ class TestSaveEnforcement:
         assert result == EditStates.BUTTON_SELECTION
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
-        assert 'необходимо выбрать отдел' in message_text
+        assert 'необходимо выбрать Департамент' in message_text
 
 
 class TestCancelEditing:
@@ -614,7 +614,7 @@ class TestSaveChanges:
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]['text']
         
-        assert 'необходимо выбрать отдел' in message_text
+        assert 'необходимо выбрать Департамент' in message_text
         assert isinstance(call_args[1]['reply_markup'], InlineKeyboardMarkup)
 
 

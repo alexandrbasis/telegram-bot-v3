@@ -192,10 +192,10 @@ Enhance search results with interactive participant editing capabilities, buildi
    - **Behavior**: Click → Bot prompts "Отправьте контактную информацию" → Wait for text → Update
    - **Validation**: Optional
 
-6. **Submitted By (Подано кем)**
+6. **Submitted By (Кто подал)**
    - **Field**: `submitted_by`
-   - **UI**: "Изменить отправителя" button
-   - **Behavior**: Click → Bot prompts "Отправьте имя отправителя" → Wait for text → Update
+   - **UI**: "Изменить кто подал" button
+   - **Behavior**: Click → Bot prompts "Отправьте имя того, кто подал" → Wait for text → Update
    - **Validation**: Optional
 
 ### Special Fields (Numbers/Dates)

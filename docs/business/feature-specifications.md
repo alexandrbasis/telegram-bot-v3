@@ -44,7 +44,7 @@ Fields:
 - **Church (Церковь)**: Optional
 - **Location (Местоположение)**: Optional
 - **Contact (Контакты)**: Optional 
-- **Submitted By (Отправитель)**: Optional
+- **Submitted By (Кто подал)**: Optional
 
 **Special Validation Fields (2 fields)**
 - Custom validation logic
