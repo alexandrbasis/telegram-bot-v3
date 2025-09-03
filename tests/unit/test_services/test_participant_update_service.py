@@ -94,6 +94,63 @@ class TestValidateFieldInput:
         with pytest.raises(ValidationError, match="екорректная дата"):
             self.service.validate_field_input('payment_date', '2024-02-30')
     
+    def test_validate_floor_field_valid_integer(self):
+        """Test floor field accepts valid integer values."""
+        result = self.service.validate_field_input('floor', '3')
+        assert result == 3  # Floor validation returns integer for numeric input
+        
+        result = self.service.validate_field_input('floor', '10')
+        assert result == 10
+        
+        result = self.service.validate_field_input('floor', '0')
+        assert result == 0
+    
+    def test_validate_floor_field_valid_string(self):
+        """Test floor field accepts valid string values (e.g., 'Ground', 'Basement')."""
+        result = self.service.validate_field_input('floor', 'Ground')
+        assert result == 'Ground'
+        
+        result = self.service.validate_field_input('floor', 'Basement')
+        assert result == 'Basement'
+        
+        result = self.service.validate_field_input('floor', 'Mezzanine')
+        assert result == 'Mezzanine'
+    
+    def test_validate_floor_field_empty_optional(self):
+        """Test floor field handles empty/null values correctly."""
+        result = self.service.validate_field_input('floor', '')
+        assert result == ''
+        
+        result = self.service.validate_field_input('floor', '   ')
+        assert result == ''
+    
+    def test_validate_room_number_field_valid_numeric(self):
+        """Test room number field accepts valid numeric values."""
+        result = self.service.validate_field_input('room_number', '101')
+        assert result == '101'
+        
+        result = self.service.validate_field_input('room_number', '2045')
+        assert result == '2045'
+    
+    def test_validate_room_number_field_valid_alphanumeric(self):
+        """Test room number field accepts valid alphanumeric values."""
+        result = self.service.validate_field_input('room_number', 'A12B')
+        assert result == 'A12B'
+        
+        result = self.service.validate_field_input('room_number', 'Suite 100')
+        assert result == 'Suite 100'
+        
+        result = self.service.validate_field_input('room_number', '301A')
+        assert result == '301A'
+    
+    def test_validate_room_number_field_empty_optional(self):
+        """Test room number field handles empty/null values correctly."""
+        result = self.service.validate_field_input('room_number', '')
+        assert result == ''
+        
+        result = self.service.validate_field_input('room_number', '   ')
+        assert result == ''
+    
     def test_validate_unknown_field_raises_error(self):
         """Test validation of unknown field raises error."""
         with pytest.raises(ValidationError, match="Неизвестное поле"):
@@ -214,6 +271,28 @@ class TestGetRussianDisplayValue:
         result = self.service.get_russian_display_value('department', Department.KITCHEN)
         assert result == "Kitchen"
     
+    def test_get_floor_display_values(self):
+        """Test Russian display values for floor field."""
+        result = self.service.get_russian_display_value('floor', 3)
+        assert result == "3"
+        
+        result = self.service.get_russian_display_value('floor', "Ground")
+        assert result == "Ground"
+        
+        result = self.service.get_russian_display_value('floor', "Basement")
+        assert result == "Basement"
+    
+    def test_get_room_number_display_values(self):
+        """Test Russian display values for room number field."""
+        result = self.service.get_russian_display_value('room_number', "101")
+        assert result == "101"
+        
+        result = self.service.get_russian_display_value('room_number', "A12B")
+        assert result == "A12B"
+        
+        result = self.service.get_russian_display_value('room_number', "Suite 100")
+        assert result == "Suite 100"
+    
     def test_get_display_value_unknown_field_returns_string(self):
         """Test display value for unknown field returns string representation."""
         result = self.service.get_russian_display_value('unknown', 'test_value')
@@ -237,6 +316,8 @@ class TestFieldTypeValidation:
         
         assert not self.service._is_text_field('gender')
         assert not self.service._is_text_field('payment_amount')
+        assert not self.service._is_text_field('floor')  # Floor is a special field
+        assert not self.service._is_text_field('room_number')  # Room number is a special field
     
     def test_is_button_field(self):
         """Test button field identification."""
@@ -250,7 +331,7 @@ class TestFieldTypeValidation:
     
     def test_is_special_field(self):
         """Test special field identification."""
-        special_fields = ['payment_amount', 'payment_date']
+        special_fields = ['payment_amount', 'payment_date', 'floor', 'room_number']
         
         for field in special_fields:
             assert self.service._is_special_field(field)

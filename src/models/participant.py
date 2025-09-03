@@ -165,6 +165,14 @@ class Participant(BaseModel):
             raise ValueError('Full name in Russian is required and cannot be empty')
         return v.strip()
     
+    @field_validator('room_number')
+    @classmethod
+    def validate_room_number(cls, v):
+        """Convert empty strings to None for room number."""
+        if v == "":
+            return None
+        return v
+    
     def to_airtable_fields(self) -> dict:
         """
         Convert participant data to Airtable API format.

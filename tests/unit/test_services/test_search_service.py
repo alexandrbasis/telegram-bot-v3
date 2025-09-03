@@ -227,6 +227,101 @@ class TestRichResultFormatting:
         
         assert "Сергей Волков" in result
         assert "St. Nicholas Cathedral" in result or "Moscow, Russia" in result
+    
+    def test_format_participant_with_accommodation_fields(self):
+        """Test Floor and Room Number fields display as 'Floor: X, Room: Y' when available."""
+        participant = Participant(
+            full_name_ru="Анна Морозова",
+            full_name_en="Anna Morozova",
+            floor=3,
+            room_number="301A"
+        )
+        
+        result = format_participant_result(participant, "ru")
+        
+        assert "Анна Морозова" in result
+        assert "Anna Morozova" in result
+        assert "Floor: 3, Room: 301A" in result
+        
+    def test_format_participant_accommodation_fields_with_na_fallbacks(self):
+        """Test Floor and Room Number fields display as 'N/A' when not set in participant."""
+        participant = Participant(
+            full_name_ru="Михаил Кузнецов",
+            full_name_en="Mikhail Kuznetsov",
+            floor=None,
+            room_number=None
+        )
+        
+        result = format_participant_result(participant, "ru")
+        
+        assert "Михаил Кузнецов" in result
+        assert "Floor: N/A, Room: N/A" in result
+        
+    def test_format_participant_partial_accommodation_fields(self):
+        """Test Floor and Room Number display with only one field set."""
+        # Only floor set
+        participant = Participant(
+            full_name_ru="Ольга Белова",
+            floor="Ground",
+            room_number=None
+        )
+        
+        result = format_participant_result(participant, "ru")
+        assert "Floor: Ground, Room: N/A" in result
+        
+        # Only room number set
+        participant = Participant(
+            full_name_ru="Дмитрий Орлов",
+            floor=None,
+            room_number="Suite 100"
+        )
+        
+        result = format_participant_result(participant, "ru")
+        assert "Floor: N/A, Room: Suite 100" in result
+    
+    def test_format_participant_accommodation_with_empty_strings(self):
+        """Test Floor and Room Number display handles empty strings as N/A."""
+        participant = Participant(
+            full_name_ru="Татьяна Жукова",
+            floor="",  # Empty string should be N/A
+            room_number=""  # Empty string should be N/A
+        )
+        
+        result = format_participant_result(participant, "ru")
+        assert "Floor: N/A, Room: N/A" in result
+    
+    def test_format_participant_accommodation_string_floor_alphanumeric_room(self):
+        """Test Floor (string) and Room Number (alphanumeric) display correctly."""
+        participant = Participant(
+            full_name_ru="Максим Лебедев",
+            floor="Basement",
+            room_number="B12A"
+        )
+        
+        result = format_participant_result(participant, "ru")
+        assert "Floor: Basement, Room: B12A" in result
+    
+    def test_format_participant_complete_with_accommodation(self):
+        """Test complete participant formatting including accommodation information."""
+        participant = Participant(
+            full_name_ru="Елена Николаева",
+            full_name_en="Elena Nikolaeva",
+            role=Role.TEAM,
+            department=Department.ADMINISTRATION,
+            church="Holy Trinity Church",
+            floor=2,
+            room_number="204"
+        )
+        
+        result = format_participant_result(participant, "ru")
+        
+        # Verify all components are present
+        assert "Елена Николаева" in result
+        assert "Elena Nikolaeva" in result
+        assert "TEAM" in result
+        assert "Administration" in result
+        assert "Holy Trinity Church" in result
+        assert "Floor: 2, Room: 204" in result
 
 
 class TestRussianNormalization:

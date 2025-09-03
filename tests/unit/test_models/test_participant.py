@@ -171,6 +171,38 @@ class TestParticipantValidation:
         participant = Participant(full_name_ru="Test", payment_date=valid_date)
         
         assert participant.payment_date == valid_date
+    
+    def test_floor_field_validation(self):
+        """Test floor field accepts valid integer/string values and handles empty/null cases."""
+        # Valid integer floor
+        participant = Participant(full_name_ru="Test", floor=3)
+        assert participant.floor == 3
+        
+        # Valid string floor (e.g., "Ground", "Basement")
+        participant = Participant(full_name_ru="Test", floor="Ground")
+        assert participant.floor == "Ground"
+        
+        # Valid None/null floor
+        participant = Participant(full_name_ru="Test", floor=None)
+        assert participant.floor is None
+    
+    def test_room_number_field_validation(self):
+        """Test room number field accepts alphanumeric values and handles empty/null cases."""
+        # Valid numeric room number
+        participant = Participant(full_name_ru="Test", room_number="101")
+        assert participant.room_number == "101"
+        
+        # Valid alphanumeric room number
+        participant = Participant(full_name_ru="Test", room_number="A12B")
+        assert participant.room_number == "A12B"
+        
+        # Valid None/null room number
+        participant = Participant(full_name_ru="Test", room_number=None)
+        assert participant.room_number is None
+        
+        # Empty string should be None
+        participant = Participant(full_name_ru="Test", room_number="")
+        assert participant.room_number is None
 
 
 class TestAirtableFieldMapping:
@@ -200,7 +232,9 @@ class TestAirtableFieldMapping:
             department=Department.ADMINISTRATION,
             payment_status=PaymentStatus.PAID,
             payment_amount=5000,
-            payment_date=payment_date
+            payment_date=payment_date,
+            floor=3,
+            room_number="101A"
         )
         
         fields = participant.to_airtable_fields()
@@ -218,7 +252,9 @@ class TestAirtableFieldMapping:
             "Department": "Administration",
             "PaymentStatus": "Paid",
             "PaymentAmount": 5000,
-            "PaymentDate": "2025-08-27"
+            "PaymentDate": "2025-08-27",
+            "Floor": 3,
+            "RoomNumber": "101A"
         }
         
         assert fields == expected
@@ -238,6 +274,50 @@ class TestAirtableFieldMapping:
         assert "FullNameEN" not in fields
         assert "PaymentAmount" not in fields  
         assert "Gender" not in fields
+        assert "Floor" not in fields
+        assert "RoomNumber" not in fields
+    
+    def test_accommodation_fields_serialization(self):
+        """Test Floor and Room Number fields serialize correctly to Airtable format."""
+        # Integer floor with room number
+        participant = Participant(
+            full_name_ru="Test User",
+            floor=2,
+            room_number="201"
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["Floor"] == 2
+        assert fields["RoomNumber"] == "201"
+        
+        # String floor with alphanumeric room number
+        participant = Participant(
+            full_name_ru="Test User",
+            floor="Ground",
+            room_number="A12B"
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["Floor"] == "Ground"
+        assert fields["RoomNumber"] == "A12B"
+        
+        # Only floor set
+        participant = Participant(
+            full_name_ru="Test User",
+            floor=3,
+            room_number=None
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["Floor"] == 3
+        assert "RoomNumber" not in fields
+        
+        # Only room number set  
+        participant = Participant(
+            full_name_ru="Test User",
+            floor=None,
+            room_number="Suite 100"
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["RoomNumber"] == "Suite 100"
+        assert "Floor" not in fields
 
 
 class TestAirtableRecordCreation:
@@ -276,7 +356,9 @@ class TestAirtableRecordCreation:
                 "Department": "Administration",
                 "PaymentStatus": "Paid",
                 "PaymentAmount": 5000,
-                "PaymentDate": "2025-08-27"
+                "PaymentDate": "2025-08-27",
+                "Floor": 3,
+                "RoomNumber": "301A"
             }
         }
         
@@ -296,6 +378,8 @@ class TestAirtableRecordCreation:
         assert participant.payment_status == PaymentStatus.PAID
         assert participant.payment_amount == 5000
         assert participant.payment_date == date(2025, 8, 27)
+        assert participant.floor == 3
+        assert participant.room_number == "301A"
     
     def test_from_airtable_record_missing_fields(self):
         """Test handling of Airtable records with missing required fields."""
@@ -330,6 +414,69 @@ class TestAirtableRecordCreation:
         assert participant.role == Role.CANDIDATE
         assert participant.department == Department.CHAPEL
         assert participant.payment_status == PaymentStatus.PARTIAL
+    
+    def test_accommodation_fields_deserialization(self):
+        """Test Floor and Room Number fields deserialize correctly from Airtable records."""
+        # Integer floor with room number
+        record = {
+            "id": "rec123456789",
+            "fields": {
+                "FullNameRU": "Test User",
+                "Floor": 2,
+                "RoomNumber": "201"
+            }
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.floor == 2
+        assert participant.room_number == "201"
+        
+        # String floor with alphanumeric room number
+        record = {
+            "id": "rec987654321",
+            "fields": {
+                "FullNameRU": "Test User 2",
+                "Floor": "Ground",
+                "RoomNumber": "A12B"
+            }
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.floor == "Ground"
+        assert participant.room_number == "A12B"
+        
+        # Missing accommodation fields (should be None)
+        record = {
+            "id": "rec111111111",
+            "fields": {
+                "FullNameRU": "Test User 3"
+            }
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.floor is None
+        assert participant.room_number is None
+        
+        # Only floor present
+        record = {
+            "id": "rec222222222",
+            "fields": {
+                "FullNameRU": "Test User 4",
+                "Floor": "Basement"
+            }
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.floor == "Basement"
+        assert participant.room_number is None
+        
+        # Only room number present
+        record = {
+            "id": "rec333333333",
+            "fields": {
+                "FullNameRU": "Test User 5",
+                "RoomNumber": "Suite 100"
+            }
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.floor is None
+        assert participant.room_number == "Suite 100"
 
 
 class TestParticipantRoundtrip:
@@ -346,7 +493,9 @@ class TestParticipantRoundtrip:
             department=Department.ADMINISTRATION,
             payment_status=PaymentStatus.PAID,
             payment_amount=5000,
-            payment_date=date(2025, 8, 27)
+            payment_date=date(2025, 8, 27),
+            floor=3,
+            room_number="301A"
         )
         
         # Convert to Airtable format
@@ -371,4 +520,36 @@ class TestParticipantRoundtrip:
         assert restored.payment_status == original.payment_status
         assert restored.payment_amount == original.payment_amount
         assert restored.payment_date == original.payment_date
+        assert restored.floor == original.floor
+        assert restored.room_number == original.room_number
+        assert restored.record_id == "rec123456789"
+    
+    def test_roundtrip_conversion_accommodation_fields_only(self):
+        """Test roundtrip conversion with only accommodation fields set."""
+        original = Participant(
+            full_name_ru="Test User",
+            floor="Ground",
+            room_number="A1"
+        )
+        
+        # Convert to Airtable format
+        airtable_fields = original.to_airtable_fields()
+        
+        # Verify Airtable format includes accommodation fields
+        assert airtable_fields["Floor"] == "Ground"
+        assert airtable_fields["RoomNumber"] == "A1"
+        
+        # Create mock Airtable record
+        airtable_record = {
+            "id": "rec123456789",
+            "fields": airtable_fields
+        }
+        
+        # Convert back to participant
+        restored = Participant.from_airtable_record(airtable_record)
+        
+        # Verify accommodation data integrity
+        assert restored.full_name_ru == original.full_name_ru
+        assert restored.floor == original.floor
+        assert restored.room_number == original.room_number
         assert restored.record_id == "rec123456789"
