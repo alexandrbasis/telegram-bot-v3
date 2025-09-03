@@ -140,6 +140,24 @@
 - **Format**: European format (D/M/YYYY)
 - **Example**: Not provided in sample data
 
+### Accommodation Fields (New)
+
+#### Floor
+- **Field ID**: *To be determined via schema discovery*
+- **Type**: `singleLineText`
+- **Purpose**: Floor level for participant accommodation
+- **Required**: No
+- **Validation**: Accepts both numeric values (1, 2, 3) and descriptive strings ("Ground", "Basement")
+- **Example**: "2", "Ground", "Basement"
+
+#### RoomNumber
+- **Field ID**: *To be determined via schema discovery*
+- **Type**: `singleLineText`
+- **Purpose**: Room number or identifier for participant accommodation
+- **Required**: No
+- **Validation**: Alphanumeric values including room formats like "101", "A12B", "Suite 100"
+- **Example**: "101", "A204", "Conference Room A"
+
 ## Views Available
 
 1. **All Data** (`viwxzBkV6XPSOlaY6`) - Grid view showing all records
@@ -175,7 +193,9 @@
     "ContactInformation": "string (optional)",
     "PaymentStatus": "Paid|Partial|Unpaid",
     "PaymentAmount": "number (integer)",
-    "PaymentDate": "YYYY-MM-DD"
+    "PaymentDate": "YYYY-MM-DD",
+    "Floor": "string (optional) - numeric or descriptive",
+    "RoomNumber": "string (optional) - alphanumeric"
   }
 }
 ```
@@ -187,3 +207,6 @@
 3. **Data Types**: Ensure proper type conversion for number and date fields
 4. **Internationalization**: Support both Russian (primary) and English names
 5. **Payment Tracking**: Implement logic to sync PaymentAmount with PaymentStatus
+6. **Accommodation Fields**: Handle flexible floor formats (numeric and descriptive) and alphanumeric room numbers
+7. **Field Discovery**: Use schema discovery to automatically detect and map Floor and RoomNumber field IDs
+8. **Backward Compatibility**: Ensure existing records without accommodation fields continue to function properly

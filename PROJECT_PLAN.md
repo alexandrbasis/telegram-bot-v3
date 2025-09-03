@@ -12,15 +12,15 @@
 
 ### Core Features
 1. **Participant Management**
-   - Add new participants with basic information (name, room, role, contact details)
-   - Store and retrieve participant data
-   - Edit/update participant information
+   - Add new participants with comprehensive information (name, accommodation details, role, contact details)
+   - Store and retrieve participant data including floor and room number
+   - Edit/update participant information with accommodation tracking
 
 2. **Search & Discovery**
-   - Search participants by name (partial matching)
-   - Filter by room assignment
-   - Filter by role (pilgrim, team member, etc.)
-   - List all participants with pagination
+   - Search participants by name (partial matching with fuzzy search)
+   - Filter by accommodation details (floor level, room number)
+   - Filter by role (candidate, team member, etc.)
+   - List all participants with pagination and accommodation information display
 
 3. **Payment Tracking**
    - Mark participants as paid/unpaid

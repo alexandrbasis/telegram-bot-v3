@@ -21,9 +21,10 @@ Search for participants by name (Russian or English), nickname, or other details
 
 **Search Results Display:**
 - Shows up to 10 participants per page
-- Displays: Name (Russian/English), Role, Department, Match Quality
+- Displays: Name (Russian/English), Role, Department, **Floor, Room Number**, Match Quality *(Floor/Room info added)*
 - "Подробнее" (Details) button for each participant
 - Pagination with "Назад" (Back) and "Далее" (Next) buttons
+- **Accommodation Display**: Shows "Floor: X, Room: Y" when available, "N/A" when not set
 
 ## Participant Editing Interface
 
@@ -44,6 +45,8 @@ After searching, click "Подробнее" (Details) on any participant to acce
 - Payment Amount: [Amount]
 - Payment Date: [Date]
 - Submitted By: [Name]
+- **Floor: [Floor Level]** *(New)*
+- **Room Number: [Room ID]** *(New)*
 
 ### Enhanced Field Editing Display
 
@@ -106,6 +109,16 @@ Each participant field can be edited through dedicated "Изменить [Field]
 6. **"Изменить кто подал" (Edit Submitted By)**
    - Click button → Bot prompts: "Отправьте имя того, кто подал"
    - Type submitter name → Complete participant display with updated information
+
+7. **"Изменить этаж" (Edit Floor)** *(New)*
+   - Click button → Bot prompts: "Отправьте номер этажа или название" ("Send floor number or name")
+   - Type floor (numeric: "1", "2" or descriptive: "Ground", "Basement") → Complete participant display with updated information
+   - Accepts flexible input: integers, strings, descriptive names
+
+8. **"Изменить номер комнаты" (Edit Room Number)** *(New)*
+   - Click button → Bot prompts: "Отправьте номер комнаты" ("Send room number")
+   - Type room number ("101", "A12B", "Suite 100") → Complete participant display with updated information
+   - Accepts alphanumeric formats, suites, and descriptive room identifiers
 
 #### Special Validation Fields
 

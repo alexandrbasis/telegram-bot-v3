@@ -32,7 +32,7 @@ Fields:
 - **Department (Департамент)**: 13 department options
 - **Payment Status (Статус платежа)**: Оплачено/Частично/Не оплачено (3 options)
 
-**Text Input Fields (6 fields)**
+**Text Input Fields (8 fields)**
 - Prompted text input workflow
 - Russian prompts and validation messages
 - Optional/required field validation
@@ -45,6 +45,8 @@ Fields:
 - **Location (Местоположение)**: Optional
 - **Contact (Контакты)**: Optional 
 - **Submitted By (Кто подал)**: Optional
+- **Floor (Этаж)**: Optional, accepts numeric (1,2,3) or descriptive ("Ground", "Basement") *(New)*
+- **Room Number (Номер комнаты)**: Optional, accepts alphanumeric ("101", "A12B", "Suite 100") *(New)*
 
 **Special Validation Fields (2 fields)**
 - Custom validation logic
@@ -136,7 +138,7 @@ Fields:
 
 ### Acceptance Criteria
 
-- [x] ✅ All 13 participant fields accessible through editing interface
+- [x] ✅ All 15 participant fields accessible through editing interface (including Floor and Room Number)
 - [x] ✅ Button-based fields show correct options with Russian labels
 - [x] ✅ Text fields accept and validate input with Russian prompts
 - [x] ✅ State management maintains editing context properly
@@ -150,6 +152,9 @@ Fields:
 - [x] ✅ **Error resilience** prevents silent display failures with detailed logging and user guidance
 - [x] ✅ **Display consistency** matches initial search result formatting for seamless user experience
 - [x] ✅ Complete test coverage (41 tests total including 11 regression tests, 100% pass rate)
+- [x] ✅ **Accommodation field support**: Floor and Room Number fields integrated into all editing workflows
+- [x] ✅ **Flexible floor validation**: Supports both numeric floors and descriptive names
+- [x] ✅ **Alphanumeric room support**: Room numbers accept various formats including suites and alphanumeric codes
 - [x] ✅ Russian localization across all UI elements including error messages
 - [x] ✅ Integration with existing search functionality and conversation flows
 
@@ -166,6 +171,9 @@ Fields:
 - Integration with participant import/export
 - Reporting dashboard for field changes
 - Notification system for significant updates
+- **Accommodation management**: Room assignment and floor planning features
+- **Occupancy tracking**: Room capacity and availability management
+- **Check-in integration**: Link accommodation data with arrival/departure tracking
 
 ## Save/Cancel Workflow with Airtable Integration
 
