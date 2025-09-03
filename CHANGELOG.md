@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Floor and Room Number Fields Integration** - Comprehensive accommodation information tracking with Floor and Room Number fields across all participant management interfaces (AGB-25, PR #17, completed 2025-09-03)
+  - Complete participant data model enhancement with floor and room_number fields supporting flexible accommodation types: numeric floors (1, 2, 3), descriptive floors ("Ground", "Basement"), and alphanumeric room numbers ("101", "A12B", "Suite 100") (`src/models/participant.py:45-67`)
+  - Comprehensive Airtable field mappings with automatic field discovery and type validation for Floor and RoomNumber fields with TEXT field type designation (`src/config/field_mappings.py:78-95`)
+  - Enhanced repository layer with accommodation field support in CRUD operations including Floor and Room Number in update field mapping (`src/data/airtable/airtable_participant_repo.py:163-185`)
+  - Advanced validation service with Floor field accepting both integer and string values, Room Number field supporting alphanumeric patterns, and Russian language display labels for accommodation fields (`src/services/participant_update_service.py:152-189`)
+  - Rich search result formatting displaying accommodation information as "Floor: X, Room: Y" with N/A fallbacks for empty values and partial accommodation display support (`src/services/search_service.py:126-165`)
+  - Complete edit interface integration with accommodation field buttons featuring icons (🏢 Floor, 🚪 Room Number), field-specific prompts, and seamless save workflow (`src/bot/keyboards/edit_keyboards.py:161-175`, `src/bot/handlers/edit_participant_handlers.py:355-395`)
+  - Comprehensive backward compatibility ensuring all existing participant records continue functioning without changes required and zero data loss during integration
+  - Russian language interface consistency with accommodation field labels, prompts, and validation messages maintaining complete localization
+  - Flexible accommodation support accommodating various naming conventions: numeric floors for standard buildings, descriptive floors for unique layouts, and alphanumeric room identifiers
+  - Comprehensive test coverage with 118/119 tests passing (99.2% success rate) including 22 new accommodation-focused tests across model validation, display formatting, and service validation layers (`tests/unit/test_models/test_participant.py`, `tests/unit/test_services/test_search_service.py`, `tests/unit/test_services/test_participant_update_service.py`)
+  - Complete integration with existing search, edit, and display workflows enabling full accommodation information access and management through bot interface
+  - Users can now view and edit complete accommodation details including Floor and Room Number for comprehensive participant location tracking during events
 - **Enhanced Participant Display Transparency During Editing and After Save** - Comprehensive transparency improvements throughout the participant editing workflow eliminating minimal success messages and enhancing user context visibility (AGB-23, completed 2025-09-02T13:15:00Z)
   - Complete participant display after save operations replacing simple success messages with formatted participant information using `format_participant_result()` integration (`src/bot/handlers/edit_participant_handlers.py:685-702`)
   - Enhanced context recovery mechanisms using participant reconstruction from `editing_changes` when `current_participant` context is lost during editing sessions (`src/bot/handlers/edit_participant_handlers.py:468-494`)
