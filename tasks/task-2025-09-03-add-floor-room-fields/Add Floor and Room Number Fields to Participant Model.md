@@ -49,6 +49,46 @@ Extend the participant data model to include Floor and Room Number fields that w
 - **PR URL**: [To be created]
 - **Status**: Draft
 
+## Implementation Progress
+
+- [x] Model: Add `floor` and `room_number` to `src/models/participant.py`
+- [x] Mappings: Add Airtable mappings in `src/config/field_mappings.py` (names; IDs TBD via schema sync)
+- [x] Repository: Support partial updates for new fields in `src/data/airtable/airtable_participant_repo.py`
+- [x] Update Service: Validate `floor` (int or text) and `room_number` (alphanumeric) in `src/services/participant_update_service.py`
+- [x] Search Display: Include "Floor: X, Room: Y" in `src/services/search_service.py` with N/A fallbacks
+- [x] Edit UI: Add fields to edit menu and prompts in `src/bot/keyboards/edit_keyboards.py` and `src/bot/handlers/edit_participant_handlers.py`
+- [ ] PR creation and formal code review
+- [ ] Full test coverage (handoff to QA/another developer)
+
+## Notes on Airtable Schema
+
+- Field IDs for `Floor` and `RoomNumber` are not yet added to `AIRTABLE_FIELD_IDS`.
+- Client safely falls back to field names if IDs are unknown; update IDs after running schema discovery.
+- Method: Use `src/data/airtable/airtable_client.py` `get_schema()` method to discover fields
+
+## Changelog (Implementation)
+
+- src/models/participant.py: Added `floor`, `room_number`; mapped in `to_airtable_fields()` and `from_airtable_record()`
+- src/config/field_mappings.py: Added python↔airtable names; field types/constraints for `Floor`, `RoomNumber`
+- src/data/airtable/airtable_participant_repo.py: Allowed `floor`, `room_number` in update field mapping
+- src/services/participant_update_service.py: Validation for `floor` and `room_number`; labels for Russian display
+- src/services/search_service.py: Output includes Floor/Room in result and full display
+- src/bot/keyboards/edit_keyboards.py: Added edit buttons for Floor and Room Number with icons
+- src/bot/handlers/edit_participant_handlers.py: Show/edit new fields; added prompts; include in reconstruction
+
+## Testing Handoff
+
+- Per request, test implementation is deferred to another developer.
+- Scope to cover (reference approved Test Plan above):
+  - Model serialization/deserialization for `floor`/`room_number`
+  - Validation service edge cases for both fields
+  - Search and full display formatting (N/A fallbacks)
+  - Edit flow prompts, save path, and repository update mapping
+  - Airtable schema discovery and Field ID updates
+
+Owner for tests: [Assign QA/Dev]
+ETA: [Set by assignee]
+
 # Test Plan: Add Floor and Room Number Fields to Participant Model
 **Status**: ✅ APPROVED | **Created**: 2025-09-03
 
