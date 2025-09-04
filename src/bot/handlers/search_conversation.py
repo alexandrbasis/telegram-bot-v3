@@ -6,6 +6,7 @@ for the Russian name search feature.
 """
 
 import logging
+import re
 from telegram.ext import (
     ConversationHandler,
     CommandHandler,
@@ -21,7 +22,21 @@ from src.bot.handlers.search_handlers import (
     main_menu_button,
     cancel_search,
     handle_participant_selection,
+    handle_search_name_mode,
+    handle_search_room_mode,
+    handle_search_floor_mode,
+    back_to_search_modes,
     SearchStates
+)
+from src.bot.handlers.room_search_handlers import (
+    handle_room_search_command,
+    process_room_search,
+    RoomSearchStates
+)
+from src.bot.handlers.floor_search_handlers import (
+    handle_floor_search_command,
+    process_floor_search,
+    FloorSearchStates
 )
 from src.bot.handlers.edit_participant_handlers import (
     show_participant_edit_menu,
@@ -31,6 +46,14 @@ from src.bot.handlers.edit_participant_handlers import (
     cancel_editing,
     save_changes,
     EditStates
+)
+from src.bot.keyboards.search_keyboards import (
+    NAV_SEARCH_NAME,
+    NAV_SEARCH_ROOM,
+    NAV_SEARCH_FLOOR,
+    NAV_MAIN_MENU,
+    NAV_CANCEL,
+    NAV_BACK_TO_SEARCH_MODES
 )
 
 logger = logging.getLogger(__name__)
@@ -59,7 +82,9 @@ def get_search_conversation_handler() -> ConversationHandler:
     
     conversation_handler = ConversationHandler(
         entry_points=[
-            CommandHandler("start", start_command)
+            CommandHandler("start", start_command),
+            CommandHandler("search_room", handle_room_search_command),
+            CommandHandler("search_floor", handle_floor_search_command)
         ],
         states={
             # === SEARCH STATES ===
@@ -69,21 +94,57 @@ def get_search_conversation_handler() -> ConversationHandler:
                 # Backward compat (if any inline button remains)
                 CallbackQueryHandler(search_button, pattern="^search$"),
             ],
+            SearchStates.SEARCH_MODE_SELECTION: [
+                # Search mode selection handlers
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_SEARCH_NAME)}$"), handle_search_name_mode),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_SEARCH_ROOM)}$"), handle_search_room_mode),  
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_SEARCH_FLOOR)}$"), handle_search_floor_mode),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button),
+            ],
             SearchStates.WAITING_FOR_NAME: [
                 # Name input
-                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(r"^🏠 Главное меню$|^❌ Отмена$"), process_name_search),
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), process_name_search),
                 # Navigation via reply keyboard
-                MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
-                MessageHandler(filters.Regex(r"^❌ Отмена$"), cancel_search),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), back_to_search_modes),
             ],
             SearchStates.SHOWING_RESULTS: [
                 # Navigation via reply keyboard
-                MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
-                MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), back_to_search_modes),
                 # Participant selection via inline buttons remains
                 CallbackQueryHandler(handle_participant_selection, pattern="^select_participant:"),
                 # Backward compat for inline main menu button if present
                 CallbackQueryHandler(main_menu_button, pattern="^main_menu$"),
+            ],
+            
+            # === ROOM SEARCH STATES ===
+            RoomSearchStates.WAITING_FOR_ROOM: [
+                # Room number input
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), process_room_search),
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), back_to_search_modes),
+            ],
+            RoomSearchStates.SHOWING_ROOM_RESULTS: [
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), back_to_search_modes),
+            ],
+            
+            # === FLOOR SEARCH STATES ===
+            FloorSearchStates.WAITING_FOR_FLOOR: [
+                # Floor number input
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), process_floor_search),
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), back_to_search_modes),
+            ],
+            FloorSearchStates.SHOWING_FLOOR_RESULTS: [
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button),
+                MessageHandler(filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"), back_to_search_modes),
             ],
             
             # === EDITING STATES ===

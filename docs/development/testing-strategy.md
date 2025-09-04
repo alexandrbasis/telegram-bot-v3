@@ -300,6 +300,200 @@ def test_field_validation():
 - **Memory Usage**: Conversation context < 1MB per user
 - **Rate Limiting**: Airtable API calls within limits
 
+## Room and Floor Search Testing
+
+### Test Coverage Summary (2025-09-04)  
+**Total Tests**: 55 tests (Backend: 34, Frontend: 21)
+**Backend Tests**: Repository: 12, Service: 6, Validation: 14, Security: 2
+**Frontend Tests**: Room Handler: 9, Floor Handler: 9, Integration: 3
+**Pass Rate**: 100%  
+**Coverage Areas**: Complete end-to-end testing from backend services to frontend conversation flows
+
+#### Repository Testing (`test_airtable_participant_repo.py`)
+**Tests**: 12 tests covering room and floor search methods (lines 764-894)
+**Coverage**:
+- `find_by_room_number()` method with proper field mapping
+- `find_by_floor()` method with Union[int, str] support
+- Empty result handling and error cases
+- Airtable field ID validation (Floor: fldlzG1sVg01hsy2g, RoomNumber: fldJTPjo8AHQaADVu)
+- Participant object conversion and data integrity
+
+**Key Test Scenarios**:
+```python
+# Room search testing
+test_find_by_room_number_success()
+test_find_by_room_number_empty_results()
+test_find_by_room_number_error_handling()
+
+# Floor search testing  
+test_find_by_floor_success_with_int()
+test_find_by_floor_success_with_str()
+test_find_by_floor_empty_results()
+test_find_by_floor_error_handling()
+
+# Field mapping validation
+test_room_floor_field_mapping_accuracy()
+```
+
+#### Service Layer Testing (`test_search_service.py`)
+**Tests**: 6 tests covering service layer room/floor methods (lines 583-684)
+**Coverage**:
+- `search_by_room()` method with input validation
+- `search_by_floor()` method with type conversion
+- `search_by_room_formatted()` method with result formatting
+- Async operation handling and error propagation
+- Integration with validation utilities
+
+**Key Test Scenarios**:
+```python
+# Service method testing
+test_search_by_room_with_validation()
+test_search_by_floor_with_type_conversion()
+test_search_by_room_formatted_output()
+
+# Error handling testing
+test_search_service_room_validation_errors()
+test_search_service_floor_validation_errors()
+test_search_service_repository_error_propagation()
+```
+
+#### Validation Testing (`test_validation.py`)
+**Tests**: 14 comprehensive validation tests (NEW FILE)
+**Coverage**:
+- Room number validation with edge cases
+- Floor validation with Union[int, str] support
+- ValidationResult dataclass functionality
+- Empty input handling and error messages
+- Whitespace trimming and sanitization
+
+**Key Test Scenarios**:
+```python
+# Room validation testing
+test_validate_room_number_valid_cases()
+test_validate_room_number_invalid_cases()
+test_validate_room_number_edge_cases()
+test_validate_room_number_whitespace_handling()
+
+# Floor validation testing
+test_validate_floor_valid_int()
+test_validate_floor_valid_str()
+test_validate_floor_invalid_cases()
+test_validate_floor_type_conversion()
+
+# ValidationResult testing
+test_validation_result_success_case()
+test_validation_result_error_case()
+```
+
+#### Security Testing (`test_airtable_client.py`)
+**Tests**: 2 formula injection prevention tests (lines 731-750)
+**Coverage**:
+- Single quote escaping in search formulas
+- Special character handling (O'Connor, Room 'A')
+- Formula construction security validation
+- Injection attack prevention
+
+**Key Test Scenarios**:
+```python
+# Security testing
+test_search_by_field_escapes_single_quotes()
+test_search_by_field_handles_complex_quotes()
+```
+
+### Integration with Existing Test Suite
+
+#### Test Infrastructure Enhancements
+- **File**: `tests/conftest.py` (NEW FILE)
+- **Purpose**: Pytest configuration for src module imports
+- **Benefit**: Eliminates PYTHONPATH setup requirements for test execution
+- **Coverage**: Ensures all 34 new tests run without environment configuration
+
+#### Async Testing Patterns
+- **Framework**: pytest-asyncio with @pytest.mark.asyncio decorators
+- **Coverage**: All service layer methods use async/await patterns
+- **Integration**: Follows existing async test patterns in the codebase
+- **Validation**: Ensures proper async repository method calls
+
+### Test Quality Assurance
+
+#### Code Review Fixes Applied
+- **Async/Sync Mismatch**: All service methods converted to async with proper await calls
+- **Type Annotations**: Abstract repository methods added for proper type checking
+- **Error Handling**: Comprehensive exception handling with graceful degradation
+- **Security Enhancement**: Formula injection prevention with quote escaping
+
+#### Test Execution Verification
+```bash
+# Room/floor search tests
+./venv/bin/pytest tests/unit/test_data/test_airtable/test_airtable_participant_repo.py::TestRoomFloorSearch -v
+./venv/bin/pytest tests/unit/test_services/test_search_service.py::TestRoomFloorSearch -v
+./venv/bin/pytest tests/unit/test_utils/test_validation.py -v
+
+# Security tests
+./venv/bin/pytest tests/unit/test_data/test_airtable/test_airtable_client.py::TestFormulaEscaping -v
+```
+
+## Frontend Handler Testing (2025-09-04)
+
+### Room Search Handler Testing (`test_room_search_handlers.py`)
+**Tests**: 9 comprehensive tests covering room search conversation flow
+**Coverage**:
+- Room search command handling with `/search_room` entry point
+- Room number input validation and error handling  
+- Search result formatting and display
+- Russian error messages for invalid input
+- Empty room handling with user-friendly messages
+- Navigation between search modes via reply keyboards
+- ConversationHandler state management and transitions
+
+**Key Test Scenarios**:
+```python
+# Command and input testing
+test_room_search_command_handler()
+test_room_search_with_valid_input()
+test_room_search_with_invalid_input()
+test_room_search_empty_results()
+
+# Navigation and state management
+test_room_search_keyboard_navigation()
+test_room_search_conversation_states()
+test_room_search_context_preservation()
+```
+
+### Floor Search Handler Testing (`test_floor_search_handlers.py`) 
+**Tests**: 9 comprehensive tests covering floor search conversation flow
+**Coverage**:
+- Floor search command handling with `/search_floor` entry point
+- Floor number input validation with Union[int, str] support
+- Room-by-room result formatting and grouping
+- Participant count display and room organization  
+- Russian localization throughout conversation flow
+- Error handling for invalid floor inputs
+- Empty floor handling with appropriate messaging
+- Integration with search mode selection interface
+
+**Key Test Scenarios**:
+```python
+# Command and input testing  
+test_floor_search_command_handler()
+test_floor_search_with_valid_input()
+test_floor_search_with_invalid_input()
+test_floor_search_empty_results()
+
+# Result formatting and display
+test_floor_search_room_grouping()
+test_floor_search_participant_counting()
+test_floor_search_russian_formatting()
+```
+
+### Search Integration Testing (`test_search_handlers.py`)  
+**Tests**: 3 additional tests covering search mode selection integration
+**Coverage**:
+- Search mode selection keyboard functionality
+- Navigation between name/room/floor search modes
+- ConversationHandler integration with existing search flows
+- State management across different search types
+
 ## Testing Roadmap
 
 ### Current Status
@@ -316,6 +510,13 @@ def test_field_validation():
 - [x] ✅ Regression testing for search button functionality (2 tests)
 - [x] ✅ State collision prevention testing and validation
 - [x] ✅ ConversationHandler configuration testing (per_message parameter)
+- [x] ✅ **Room and floor search backend testing (34 comprehensive tests)**
+- [x] ✅ **Room and floor search frontend testing (21 comprehensive tests)**
+- [x] ✅ **Input validation utilities testing with edge case coverage**
+- [x] ✅ **Security enhancement testing (formula injection prevention)**
+- [x] ✅ **Test infrastructure improvements (conftest.py for module imports)**
+- [x] ✅ **Complete conversation flow testing for room/floor search modes**
+- [x] ✅ **Russian localization testing throughout search interfaces**
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 

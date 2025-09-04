@@ -6,11 +6,13 @@ name normalization and configurable similarity thresholds.
 """
 
 from typing import List, Tuple, Optional, Union
+from datetime import date
 from dataclasses import dataclass
 import logging
 
 from rapidfuzz import fuzz, process
 from src.models.participant import Participant, Gender, Role, PaymentStatus
+from src.data.repositories.participant_repository import ParticipantRepository
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +210,8 @@ def format_participant_full(participant: Participant, language: str = "ru") -> s
     lines.append(f"{labels['payment_amount']}: {value_or_na(participant.payment_amount)}")
     lines.append(f"{labels['payment_status']}: {rus_payment_status(participant.payment_status)}")
     # Format date to ISO if present
-    pay_date = participant.payment_date.isoformat() if getattr(participant, 'payment_date', None) else None
+    pay_date_val: Optional[date] = getattr(participant, 'payment_date', None)
+    pay_date = pay_date_val.isoformat() if pay_date_val is not None else None
     lines.append(f"{labels['payment_date']}: {value_or_na(pay_date)}")
 
     # Accommodation info
@@ -254,7 +257,7 @@ class SearchResult:
     participant: Participant
     similarity_score: float
     
-    def __lt__(self, other):
+    def __lt__(self, other: "SearchResult") -> bool:
         """Enable sorting by similarity score (descending)."""
         return self.similarity_score > other.similarity_score
 
@@ -263,12 +266,12 @@ class SearchService:
     """
     Service for fuzzy participant name searching and room/floor searches.
     
-    Uses rapidfuzz token_sort_ratio algorithm for word-order independent matching
+    Uses rapidfuzz token_set_ratio algorithm for word-order independent matching
     with Russian character normalization. Also provides repository-based searches
     for room and floor functionality.
     """
     
-    def __init__(self, similarity_threshold: float = 0.8, max_results: int = 5, repository=None):
+    def __init__(self, similarity_threshold: float = 0.8, max_results: int = 5, repository: Optional[ParticipantRepository] = None):
         """
         Initialize search service with configuration.
         
@@ -311,13 +314,13 @@ class SearchService:
             # Check Russian name
             if participant.full_name_ru:
                 ru_normalized = normalize_russian(participant.full_name_ru)
-                ru_score = fuzz.token_sort_ratio(query_normalized, ru_normalized) / 100.0
+                ru_score = fuzz.token_set_ratio(query_normalized, ru_normalized) / 100.0
                 max_score = max(max_score, ru_score)
             
             # Check English name
             if participant.full_name_en:
                 en_normalized = normalize_russian(participant.full_name_en)
-                en_score = fuzz.token_sort_ratio(query_normalized, en_normalized) / 100.0
+                en_score = fuzz.token_set_ratio(query_normalized, en_normalized) / 100.0
                 max_score = max(max_score, en_score)
             
             # Add to results if meets threshold
@@ -365,8 +368,8 @@ class SearchService:
             
             # Get fields to search based on detected language
             if detected_lang == "ru":
-                primary_field = participant.full_name_ru
-                secondary_field = participant.full_name_en
+                primary_field: Optional[str] = participant.full_name_ru
+                secondary_field: Optional[str] = participant.full_name_en
             else:
                 primary_field = participant.full_name_en
                 secondary_field = participant.full_name_ru
@@ -375,28 +378,28 @@ class SearchService:
             if primary_field:
                 # Full name search
                 primary_normalized = normalize_russian(primary_field)
-                full_score = fuzz.token_sort_ratio(query_normalized, primary_normalized) / 100.0
+                full_score = fuzz.token_set_ratio(query_normalized, primary_normalized) / 100.0
                 max_score = max(max_score, full_score)
                 
                 # Individual name parts search
                 name_parts = parse_name_parts(primary_field)
                 for part in name_parts:
                     part_normalized = normalize_russian(part)
-                    part_score = fuzz.token_sort_ratio(query_normalized, part_normalized) / 100.0
+                    part_score = fuzz.token_set_ratio(query_normalized, part_normalized) / 100.0
                     max_score = max(max_score, part_score)
             
             # Search in secondary field (lower priority)
             if secondary_field and max_score < 0.9:  # Only if no excellent match in primary
                 # Full name search
                 secondary_normalized = normalize_russian(secondary_field)
-                secondary_full_score = fuzz.token_sort_ratio(query_normalized, secondary_normalized) / 100.0
+                secondary_full_score = fuzz.token_set_ratio(query_normalized, secondary_normalized) / 100.0
                 max_score = max(max_score, secondary_full_score * 0.9)  # Slight penalty for secondary field
                 
                 # Individual name parts search
                 secondary_parts = parse_name_parts(secondary_field)
                 for part in secondary_parts:
                     part_normalized = normalize_russian(part)
-                    part_score = fuzz.token_sort_ratio(query_normalized, part_normalized) / 100.0
+                    part_score = fuzz.token_set_ratio(query_normalized, part_normalized) / 100.0
                     max_score = max(max_score, part_score * 0.9)  # Slight penalty for secondary field
             
             # Add to results if meets threshold
@@ -430,9 +433,9 @@ class SearchService:
         query_norm = normalize_russian(query)
         target_norm = normalize_russian(target)
         
-        return fuzz.token_sort_ratio(query_norm, target_norm) / 100.0
+        return fuzz.token_set_ratio(query_norm, target_norm) / 100.0
     
-    def search_by_room(self, room_number: str) -> List[Participant]:
+    async def search_by_room(self, room_number: str) -> List[Participant]:
         """
         Search participants by room number using the repository.
         
@@ -453,9 +456,9 @@ class SearchService:
             raise RuntimeError("Repository must be configured for room searches")
         
         logger.debug(f"Searching participants by room: {room_number}")
-        return self.repository.find_by_room_number(room_number.strip())
+        return await self.repository.find_by_room_number(room_number.strip())
     
-    def search_by_floor(self, floor: Union[int, str]) -> List[Participant]:
+    async def search_by_floor(self, floor: Union[int, str]) -> List[Participant]:
         """
         Search participants by floor using the repository.
         
@@ -476,9 +479,9 @@ class SearchService:
             raise RuntimeError("Repository must be configured for floor searches")
         
         logger.debug(f"Searching participants by floor: {floor}")
-        return self.repository.find_by_floor(floor)
+        return await self.repository.find_by_floor(floor)
     
-    def search_by_room_formatted(self, room_number: str, language: str = "ru") -> List[str]:
+    async def search_by_room_formatted(self, room_number: str, language: str = "ru") -> List[str]:
         """
         Search participants by room number and return formatted results.
         
@@ -493,7 +496,7 @@ class SearchService:
             ValueError: If room_number is None or empty
             RuntimeError: If repository is not configured
         """
-        participants = self.search_by_room(room_number)
+        participants = await self.search_by_room(room_number)
         
         formatted_results = []
         for participant in participants:

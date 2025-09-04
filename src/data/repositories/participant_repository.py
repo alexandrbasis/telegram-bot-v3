@@ -7,7 +7,7 @@ without changing business logic.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Union
 from src.models.participant import Participant
 
 
@@ -270,7 +270,7 @@ class ParticipantRepository(ABC):
         """
         pass
     
-    @abstractmethod
+    # Optional enhanced search; default raises NotImplementedError in base
     async def search_by_name_enhanced(
         self, 
         query: str, 
@@ -296,9 +296,9 @@ class ParticipantRepository(ABC):
         Raises:
             RepositoryError: If search fails
         """
-        pass
+        raise NotImplementedError
     
-    @abstractmethod
+    # Optional partial update; default raises NotImplementedError in base
     async def update_by_id(self, record_id: str, field_updates: Dict[str, Any]) -> bool:
         """
         Update specific fields of a participant by record ID.
@@ -317,7 +317,39 @@ class ParticipantRepository(ABC):
             NotFoundError: If record_id doesn't exist
             ValidationError: If field_updates contains invalid data
         """
-        pass
+        raise NotImplementedError
+    
+    # Optional accommodation query; default raises NotImplementedError in base
+    async def find_by_room_number(self, room_number: str) -> List[Participant]:
+        """
+        Find all participants assigned to a specific room number.
+        
+        Args:
+            room_number: Room number to search for (as string to handle alphanumeric)
+            
+        Returns:
+            List of participants in the specified room
+            
+        Raises:
+            RepositoryError: If search fails
+        """
+        raise NotImplementedError
+    
+    # Optional accommodation query; default raises NotImplementedError in base
+    async def find_by_floor(self, floor: Union[int, str]) -> List[Participant]:
+        """
+        Find all participants assigned to a specific floor.
+        
+        Args:
+            floor: Floor number or identifier (int or str to handle "Ground" etc.)
+            
+        Returns:
+            List of participants on the specified floor
+            
+        Raises:
+            RepositoryError: If search fails
+        """
+        raise NotImplementedError
 
 
 class RepositoryError(Exception):

@@ -22,6 +22,18 @@ from src.services.search_service import SearchService, SearchResult, format_matc
 from src.data.repositories.participant_repository import RepositoryError
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.config.settings import get_settings
+from src.bot.keyboards.search_keyboards import (
+    get_main_menu_keyboard,
+    get_search_mode_selection_keyboard,
+    get_waiting_for_name_keyboard,
+    get_results_navigation_keyboard,
+    NAV_SEARCH_NAME,
+    NAV_SEARCH_ROOM,
+    NAV_SEARCH_FLOOR,
+    NAV_MAIN_MENU,
+    NAV_CANCEL,
+    NAV_BACK_TO_SEARCH_MODES
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,24 +41,13 @@ logger = logging.getLogger(__name__)
 class SearchStates(IntEnum):
     """Conversation states for search flow."""
     MAIN_MENU = 10
+    SEARCH_MODE_SELECTION = 13
     WAITING_FOR_NAME = 11
     SHOWING_RESULTS = 12
 
 
-def get_participant_repository():
-    """
-    Get participant repository instance.
-    
-    This is a placeholder that should be replaced with proper dependency injection.
-    """
-    # TODO: Replace with proper DI container
-    from src.data.airtable.airtable_client import AirtableClient
-    from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
-    from src.config.settings import get_settings
-    
-    settings = get_settings()
-    client = AirtableClient(settings.get_airtable_config())
-    return AirtableParticipantRepository(client)
+# Participant repository is now imported from service_factory module
+from src.services.service_factory import get_participant_repository
 
 
 def get_user_interaction_logger():
@@ -74,33 +75,8 @@ def get_user_interaction_logger():
         return None
 
 
+# Backward compatibility constants
 NAV_SEARCH = "🔍 Поиск участников"
-NAV_MAIN_MENU = "🏠 Главное меню"
-NAV_CANCEL = "❌ Отмена"
-
-
-def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
-    """Get main menu reply keyboard with search button."""
-    keyboard = [[NAV_SEARCH]]
-    return ReplyKeyboardMarkup(
-        keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
-    )
-
-
-def get_waiting_for_name_keyboard() -> ReplyKeyboardMarkup:
-    """Reply keyboard shown while waiting for name input."""
-    keyboard = [[NAV_MAIN_MENU, NAV_CANCEL]]
-    return ReplyKeyboardMarkup(
-        keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
-    )
-
-
-def get_results_navigation_keyboard() -> ReplyKeyboardMarkup:
-    """Reply keyboard shown while viewing results (navigation only)."""
-    keyboard = [[NAV_SEARCH, NAV_MAIN_MENU]]
-    return ReplyKeyboardMarkup(
-        keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
-    )
 
 
 def create_participant_selection_keyboard(search_results: List[SearchResult]) -> InlineKeyboardMarkup:
@@ -167,7 +143,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # Send Russian welcome message with search button
     welcome_message = (
         "Добро пожаловать в бот Tres Dias! 🙏\n\n"
-        "Ищите участников по имени."
+        "Выберите тип поиска участников."
     )
     
     await update.message.reply_text(
@@ -182,14 +158,14 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     """
     Handle search button callback.
     
-    Prompts user to enter participant name for search.
+    Shows search mode selection with name/room/floor options.
     
     Args:
         update: Telegram update object
         context: Bot context
         
     Returns:
-        Next conversation state (WAITING_FOR_NAME)
+        Next conversation state (SEARCH_MODE_SELECTION)
     """
     query = getattr(update, "callback_query", None)
     message = getattr(update, "message", None)
@@ -213,20 +189,20 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     
     logger.info(f"User {user.id} clicked search button")
     
-    # Send search prompt
-    search_prompt = "Введите имя участника:"
+    # Send search mode selection prompt
+    search_prompt = "Выберите тип поиска:"
     
     if query:
-        # Edit prior message and present reply keyboard for name input in a new message
+        # Edit prior message and present reply keyboard for mode selection in a new message
         await query.message.edit_text(text=search_prompt)
         await query.message.reply_text(
-            text="Используйте клавиатуру ниже для навигации.",
-            reply_markup=get_waiting_for_name_keyboard(),
+            text="Используйте клавиатуру ниже для выбора типа поиска.",
+            reply_markup=get_search_mode_selection_keyboard(),
         )
     elif message:
         await message.reply_text(
             text=search_prompt,
-            reply_markup=get_waiting_for_name_keyboard(),
+            reply_markup=get_search_mode_selection_keyboard(),
         )
     
     # Log bot response if logging is enabled
@@ -237,7 +213,7 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             content=search_prompt
         )
     
-    return SearchStates.WAITING_FOR_NAME
+    return SearchStates.SEARCH_MODE_SELECTION
 
 
 async def process_name_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -567,3 +543,103 @@ async def handle_participant_selection(update: Update, context: ContextTypes.DEF
     # Import and show edit menu (dynamic import to avoid circular dependency)
     from src.bot.handlers.edit_participant_handlers import show_participant_edit_menu
     return await show_participant_edit_menu(update, context)
+
+
+async def handle_search_name_mode(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handle name search mode selection.
+    
+    Transitions user to name search input state.
+    
+    Args:
+        update: Telegram update object
+        context: Bot context
+        
+    Returns:
+        Next conversation state (WAITING_FOR_NAME)
+    """
+    user = update.effective_user
+    logger.info(f"User {user.id} selected name search mode")
+    
+    # Send name search prompt
+    search_prompt = "Введите имя участника:"
+    
+    await update.message.reply_text(
+        text=search_prompt,
+        reply_markup=get_waiting_for_name_keyboard(),
+    )
+    
+    return SearchStates.WAITING_FOR_NAME
+
+
+async def handle_search_room_mode(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handle room search mode selection.
+    
+    Delegates to room search handler.
+    
+    Args:
+        update: Telegram update object
+        context: Bot context
+        
+    Returns:
+        Next conversation state (room search state)
+    """
+    user = update.effective_user
+    logger.info(f"User {user.id} selected room search mode")
+    
+    # Import room search handler dynamically to avoid circular dependency
+    from src.bot.handlers.room_search_handlers import handle_room_search_command
+    
+    # Simulate a room search command call
+    return await handle_room_search_command(update, context)
+
+
+async def handle_search_floor_mode(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handle floor search mode selection.
+    
+    Delegates to floor search handler.
+    
+    Args:
+        update: Telegram update object
+        context: Bot context
+        
+    Returns:
+        Next conversation state (floor search state)
+    """
+    user = update.effective_user
+    logger.info(f"User {user.id} selected floor search mode")
+    
+    # Import floor search handler dynamically to avoid circular dependency
+    from src.bot.handlers.floor_search_handlers import handle_floor_search_command
+    
+    # Simulate a floor search command call
+    return await handle_floor_search_command(update, context)
+
+
+async def back_to_search_modes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handle back to search modes button.
+    
+    Returns user to search mode selection state.
+    
+    Args:
+        update: Telegram update object
+        context: Bot context
+        
+    Returns:
+        Next conversation state (SEARCH_MODE_SELECTION)
+    """
+    user = update.effective_user
+    logger.info(f"User {user.id} returned to search mode selection")
+    
+    # Send search mode selection prompt
+    search_prompt = "Выберите тип поиска:"
+    
+    await update.message.reply_text(
+        text=search_prompt,
+        reply_markup=get_search_mode_selection_keyboard(),
+    )
+    
+    return SearchStates.SEARCH_MODE_SELECTION

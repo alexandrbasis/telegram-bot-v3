@@ -86,20 +86,8 @@ class EditStates(IntEnum):
     CONFIRMATION = 3
 
 
-def get_participant_repository():
-    """
-    Get participant repository instance.
-    
-    This is a placeholder that should be replaced with proper dependency injection.
-    """
-    # TODO: Replace with proper DI container
-    from src.data.airtable.airtable_client import AirtableClient
-    from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
-    from src.config.settings import get_settings
-    
-    settings = get_settings()
-    client = AirtableClient(settings.get_airtable_config())
-    return AirtableParticipantRepository(client)
+# Participant repository is now imported from service_factory module
+from src.services.service_factory import get_participant_repository
 
 
 def display_updated_participant(participant: Participant, context: ContextTypes.DEFAULT_TYPE) -> str:

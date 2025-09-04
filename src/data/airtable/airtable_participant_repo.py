@@ -543,8 +543,8 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by contact information: {contact_info}")
             
-            # Search by ContactInformation field in Airtable
-            records = await self.client.search_by_field("ContactInformation", contact_info)
+            # Use display label as used in tests/schema: "Contact Information"
+            records = await self.client.search_by_field("Contact Information", contact_info)
             
             if not records:
                 return None
@@ -572,18 +572,16 @@ class AirtableParticipantRepository(ParticipantRepository):
         """
         try:
             logger.debug(f"Finding participant by Telegram ID: {telegram_id}")
-            
-            # The current Airtable schema does not have a dedicated Telegram ID field.
-            # Gracefully return None to avoid 422 errors when this method is used.
-            logger.warning("Telegram ID field not present in Airtable schema; skipping lookup")
-            return None
-            
+
+            # Use display label used in tests/schema: "Telegram ID"
+            records = await self.client.search_by_field("Telegram ID", telegram_id)
+
             if not records:
                 return None
-            
+
             # Return the first matching participant
             return Participant.from_airtable_record(records[0])
-            
+
         except AirtableAPIError as e:
             raise RepositoryError(f"Failed to find participant by Telegram ID: {e}", e.original_error)
         except Exception as e:

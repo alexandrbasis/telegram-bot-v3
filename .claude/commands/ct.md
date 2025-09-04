@@ -1,7 +1,7 @@
 # Create Task Command
 
 ## PRIMARY OBJECTIVE
-Create comprehensive task documents with mandatory business approval gate, technical decomposition, and Linear integration. NO time estimations for any work items. IMPORTANT: Think very hard
+Create comprehensive task documents with mandatory business approval gate, technical decomposition, and Linear integration. NO time estimations for any work items. IMPORTANT: Think hard
 
 ## CRITICAL CONTROL GATES
 
@@ -11,6 +11,9 @@ Create comprehensive task documents with mandatory business approval gate, techn
 ```markdown
 # Business Requirements: [Task Name]
 **Status**: Awaiting Business Approval | **Created**: [Date]
+
+## Business Context
+[One-line user value statement after approval]
 
 ## Primary Objective
 [Single clear statement of business need]
@@ -77,6 +80,40 @@ Target: 90%+ coverage across all implementation areas
 ### GATE 3: Technical Decomposition Approval
 After business and test plan approval, create technical task document and get approval before Plan Review.
 
+## TECHNICAL TASK TEMPLATE
+
+```markdown
+# Task: [Name]
+**Created**: [Date] | **Status**: Business Review
+
+## Business Requirements (Gate 1 - Approval Required)
+
+## Technical Requirements
+- [ ] [Specific, measurable requirements]
+
+## Implementation Steps & Change Log
+- [ ] Step 1: [Action]
+  - [ ] Sub-step 1.1: [Atomic action in specific directory]
+    - **Directory**: `src/[specific-path]/`
+    - **Files to create/modify**: `[exact-file-paths]`
+    - **Accept**: [Measurable criteria]
+    - **Tests**: [Test files to write first in tests/[path]/]
+    - **Done**: [Completion proof]
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 2: [Action]
+  - [ ] Sub-step 2.1: [Atomic action in specific directory]
+    - **Directory**: `src/[specific-path]/`
+    - **Files to create/modify**: `[exact-file-paths]`
+    - **Accept**: [Measurable criteria]
+    - **Tests**: [Test files to write first in tests/[path]/]
+    - **Done**: [Completion proof]
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+### Constraints
+- [Dependencies, timelines, resources]
+
+
 ### GATE 4: Technical Plan Review (MANDATORY)
 **Must complete AFTER technical decomposition and BEFORE task splitting evaluation:**
 
@@ -98,7 +135,9 @@ After business and test plan approval, create technical task document and get ap
    - Complete updated task content
    - Reference to original plan review feedback
    - Specific changes made to address each point
-4. **Repeat Until Approved**: Continue this cycle until Plan Reviewer confirms approval
+4. **Repeat Until Approved**: Continue this cycle until Plan Reviewer confirms approval.
+**After approval, update Status to: Ready for Implementation**
+
 
 **BLOCKING:** Cannot proceed to task splitting evaluation without Plan Reviewer final approval
 **DECISION OUTCOMES:**
@@ -126,6 +165,124 @@ After business and test plan approval, create technical task document and get ap
 
 **INTEGRATION:** Use `Task` tool with `task-splitter` agent type after plan review is complete
 
+### Issue Creation (After Task Splitting Evaluation)
+```javascript
+mcp__linear__create_issue({
+  title: "[Task Name from document]",
+  team: "ABasis",
+  description: "[Business context + technical requirements]",
+  priority: 0-4  // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
+})
+```
+
+**Note**: If task was split into sub-tasks, create separate Linear issues for each sub-task following the same format.
+
+## FINAL TASK DOCUMENT STRUCTURE
+
+IMPORTANT: After all gates are completed, the final task document should follow this exact structure:
+
+```markdown
+# Task: [Name]
+**Created**: [Date] | **Status**: Ready for Implementation
+
+## Tracking & Progress
+### Linear Issue
+- **ID**: [Issue-ID]
+- **URL**: [Issue URL]  
+
+### PR Details
+- **Branch**: [branch-name]
+- **PR URL**: [Will be added during implementation]
+- **Status**: [Draft/Review/Merged]
+
+## Business Requirements
+**Status**: ✅ Approved | **Approved by**: [User] | **Date**: [Date]
+
+### Business Context
+[One-line user value statement]
+
+### Primary Objective
+[Single clear statement of business need]
+
+### Use Cases
+1. [Specific scenario with acceptance criteria]
+2. [Specific scenario with acceptance criteria]
+
+### Success Metrics
+- [ ] [Measurable business outcome]
+- [ ] [User satisfaction indicator]
+
+### Constraints
+- [Dependencies, timelines, resources]
+
+## Test Plan
+**Status**: ✅ Approved | **Approved by**: [User] | **Date**: [Date]
+
+### Test Coverage Strategy
+Target: 90%+ coverage across all implementation areas
+
+### Test Categories
+#### Business Logic Tests
+- [ ] [Core functionality test covering requirement 1]
+- [ ] [Validation test for acceptance criteria A]
+
+#### State Transition Tests
+- [ ] [Dialog flow test from state X to Y]
+- [ ] [Command processing state changes]
+
+#### Error Handling Tests
+- [ ] [API failure scenario test]
+- [ ] [Invalid input handling test]
+
+#### Integration Tests
+- [ ] [External API interaction test]
+- [ ] [Database operation test]
+
+#### User Interaction Tests
+- [ ] [Command processing test]
+- [ ] [Response formatting test]
+
+### Test-to-Requirement Mapping
+- Business Requirement 1 → Tests: [list test names]
+- Business Requirement 2 → Tests: [list test names]
+
+## TECHNICAL TASK
+**Status**: ✅ Plan Reviewed | **Reviewed by**: Plan Reviewer Agent | **Date**: [Date]
+
+### Technical Requirements
+- [ ] [Specific, measurable technical requirements]
+- [ ] [Architecture/design requirements]
+
+### Implementation Steps & Change Log
+- [ ] Step 1: [High-level action]
+  - [ ] Sub-step 1.1: [Atomic action in specific directory]
+    - **Directory**: `src/[specific-path]/`
+    - **Files to create/modify**: `[exact-file-paths]`
+    - **Accept**: [Measurable criteria]
+    - **Tests**: [Test files to write first in tests/[path]/]
+    - **Done**: [Completion proof]
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 2: [High-level action]
+  - [ ] Sub-step 2.1: [Atomic action in specific directory]
+    - **Directory**: `src/[specific-path]/`
+    - **Files to create/modify**: `[exact-file-paths]`
+    - **Accept**: [Measurable criteria]
+    - **Tests**: [Test files to write first in tests/[path]/]
+    - **Done**: [Completion proof]
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+### Task Splitting Evaluation
+**Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: [Date]
+**Decision**: [No Split Needed / Split into X sub-tasks]
+**Reasoning**: [Clear explanation of decision]
+
+## Notes for Other Devs (Optional)
+- [Implementation gotchas or important considerations]
+- [Dependencies or prerequisites to be aware of]
+- [Links to relevant documentation or discussions]
+```
+
 ## DOCUMENT SPECIFICATIONS
 
 ### Directory Structure
@@ -141,103 +298,18 @@ tasks/
 2. Review codebase patterns: `find src/ -name "*.ts" -type f`
 3. Document gaps found in task document under "Knowledge Gaps" section
 
-## TECHNICAL TASK TEMPLATE
-
-```markdown
-# Task: [Name]
-**Created**: [Date] | **Status**: Business Review
-
-## Business Requirements (Gate 1 - Approval Required)
-### Primary Objective
-[Single clear statement of business need]
-
-### Use Cases
-1. [Specific scenario with acceptance criteria]
-2. [Specific scenario with acceptance criteria]
-
-### Success Metrics
-- [ ] [Measurable business outcome]
-- [ ] [User satisfaction indicator]
-
-### Constraints
-- [Dependencies, timelines, resources]
-
-**APPROVAL GATE:** Present business section to user with: "Approve business requirements? [Yes/No]"
-**After approval, update Status to: Ready for Implementation**
-
 ## Tracking & Progress
 ### Linear Issue
 - **ID**: [Created after technical approval]
 - **URL**: [Link]
-- **Status Flow**: Business Review → Ready for Implementation → In Progress → In Review → Testing → Done
+- **Status Flow**: Business Review → Ready for Implementation → In Progress → Ready for Review → In Review → Testing → Done
   - **Business Review**: Business requirements under review
   - **Ready for Implementation**: Business approved, technical plan reviewed by Plan Reviewer agent, Linear issue created, ready for development
-  - **In Progress**: Developer actively working on implementation
-  - **In Review**: PR created and under code review
-  - **Testing**: User acceptance testing in progress
-  - **Done**: PR merged to main and Linear issue closed
 
 ### PR Details
 - **Branch**: [Name]
 - **PR URL**: [Link]
 - **Status**: [Draft/Review/Merged]
-
-## Business Context
-[One-line user value statement after approval]
-
-## Technical Requirements
-- [ ] [Specific, measurable requirements]
-
-## Implementation Steps & Change Log
-- [ ] Step 1: [Action]
-  - [ ] Sub-step 1.1: [Atomic action in specific directory]
-    - **Directory**: `src/[specific-path]/`
-    - **Files to create/modify**: `[exact-file-paths]`
-    - **Accept**: [Measurable criteria]
-    - **Tests**: [Test files to write first in tests/[path]/]
-    - **Done**: [Completion proof]
-    - **Changelog**: [Record changes made with file paths and line ranges]
-
-- [ ] Step 2: [Action]
-  - [ ] Sub-step 2.1: [Atomic action in specific directory]
-    - **Directory**: `src/[specific-path]/`
-    - **Files to create/modify**: `[exact-file-paths]`
-    - **Accept**: [Measurable criteria]
-    - **Tests**: [Test files to write first in tests/[path]/]
-    - **Done**: [Completion proof]
-    - **Changelog**: [Record changes made with file paths and line ranges]
-
-## Testing Strategy
-- [ ] Unit tests: [Components in tests/[specific-path]/]
-- [ ] Integration tests: [Workflows in tests/integration/]
-
-## Success Criteria
-- [ ] All acceptance criteria met
-- [ ] Tests pass (100% required)
-- [ ] No regressions
-- [ ] Code review approved
-```
-
-## LINEAR INTEGRATION PROTOCOL
-
-### Issue Creation (After Task Splitting Evaluation)
-```javascript
-mcp__linear__create_issue({
-  title: "[Task Name from document]",
-  team: "ABasis",
-  description: "[Business context + technical requirements]",
-  priority: 0-4  // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
-})
-```
-
-**Note**: If task was split into sub-tasks, create separate Linear issues for each sub-task following the same format.
-
-### Status Progression
-1. **Ready for Implementation**: Business approved, technical plan iteratively reviewed and approved by Plan Reviewer agent, task automatically evaluated for splitting by Task Splitter agent, Linear issue(s) created, awaiting development
-2. **In Progress**: Developer assigns self, begins work
-3. **In Review**: PR created, code review requested
-4. **Testing**: UAT/QA validation in progress
-5. **Done**: PR merged, issue auto-closed
 
 ## VALIDATION REQUIREMENTS
 

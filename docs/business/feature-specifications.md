@@ -167,6 +167,208 @@ Fields:
 - Reporting dashboard for field changes
 - Notification system for significant updates
 
+## Room and Floor Search Functionality
+
+### Overview
+Complete location-based participant search functionality enabling users to find participants by room number or floor assignment. Includes both backend data layer and full frontend user interface implementation.
+
+**Status**: ✅ Complete Implementation (2025-09-04)
+**Implementation**: Backend services + Frontend handlers with Russian UI and conversation flow integration
+**Test Coverage**: 55 tests total (34 backend + 21 frontend tests, 100% pass rate)
+
+### Core Features
+
+#### 1. Room-Based Search
+- **Purpose**: Find all participants assigned to a specific room
+- **Input**: Room number (alphanumeric: "101", "A1", "Conference")
+- **Validation**: Non-empty string validation with whitespace trimming
+- **Output**: List of participants filtered by room assignment
+
+**Technical Implementation**:
+```python
+# Repository method
+async def find_by_room_number(self, room: str) -> List[Participant]:
+    # Filters by Airtable RoomNumber field (fldJTPjo8AHQaADVu)
+    
+# Service method  
+async def search_by_room(self, room: str) -> List[Participant]:
+    # Includes input validation and error handling
+```
+
+#### 2. Floor-Based Search
+- **Purpose**: Find all participants on a specific floor, optionally grouped by room
+- **Input**: Floor number or name (Union[int, str]: 1, "2", "Ground")
+- **Validation**: Accepts both numeric and string floor identifiers
+- **Output**: List of participants filtered by floor assignment
+
+**Technical Implementation**:
+```python
+# Repository method
+async def find_by_floor(self, floor: Union[int, str]) -> List[Participant]:
+    # Filters by Airtable Floor field (fldlzG1sVg01hsy2g)
+    
+# Service method
+async def search_by_floor(self, floor: Union[int, str]) -> List[Participant]:
+    # Includes type conversion and validation
+
+# Formatted service method  
+async def search_by_room_formatted(self, room: str) -> str:
+    # Returns formatted string results for UI consumption
+```
+
+#### 3. Input Validation
+- **Room Validation**: Non-empty string requirement with whitespace handling
+- **Floor Validation**: Union[int, str] support with type conversion
+- **Security**: Formula injection prevention with proper quote escaping
+- **Error Handling**: Comprehensive validation result objects with error messages
+
+**Validation Utilities**:
+```python
+# src/utils/validation.py - NEW FILE
+class ValidationResult:
+    is_valid: bool
+    cleaned_value: Optional[Any] = None
+    error_message: Optional[str] = None
+
+def validate_room_number(room: str) -> ValidationResult
+def validate_floor(floor: Union[int, str]) -> ValidationResult
+```
+
+### Field Mapping Integration
+
+#### Airtable Schema Alignment
+- **RoomNumber Field**: `fldJTPjo8AHQaADVu` (Single line text)
+- **Floor Field**: `fldlzG1sVg01hsy2g` (Number or single line text)
+- **Model Fields**: `room_number: Optional[str]`, `floor: Optional[Union[int, str]]`
+- **API Names**: "RoomNumber", "Floor" (for Airtable API calls)
+
+### Security Enhancements
+
+#### Formula Injection Prevention
+- **Problem**: User input like "O'Connor" could break Airtable formulas
+- **Solution**: Proper single quote escaping by doubling (`'` → `''`)
+- **Implementation**: Enhanced `search_by_field` method in AirtableClient
+- **Testing**: Comprehensive formula escaping validation tests
+
+### Error Handling Strategy
+
+#### Validation Errors
+- Empty room/floor input validation
+- Type conversion errors for floor numbers
+- Invalid character handling
+
+#### Data Access Errors
+- Airtable API connectivity issues
+- Rate limiting protection (5 requests/second)
+- Network timeout recovery
+- Empty result set handling
+
+#### Security Errors
+- Formula injection attempt detection
+- Malformed input sanitization
+- SQL-injection-style attack prevention
+
+### Technical Architecture
+
+#### Repository Layer Extensions
+- **File**: `src/data/airtable/airtable_participant_repo.py`
+- **Methods**: `find_by_room_number()`, `find_by_floor()` (lines 983-1055)
+- **Features**: Async/await support, comprehensive error handling, participant conversion
+
+#### Service Layer Extensions
+- **File**: `src/services/search_service.py`
+- **Methods**: `search_by_room()`, `search_by_floor()`, `search_by_room_formatted()` (lines 435-503)
+- **Features**: Input validation, error handling, result formatting
+
+#### Validation Utilities
+- **File**: `src/utils/validation.py` (NEW FILE)
+- **Components**: ValidationResult dataclass, room/floor validation functions
+- **Features**: Comprehensive edge case handling, type safety
+
+### Test Coverage
+
+#### Repository Tests
+- **File**: `tests/unit/test_data/test_airtable/test_airtable_participant_repo.py`
+- **Tests**: 12 tests covering room/floor search methods (lines 764-894)
+- **Coverage**: Success cases, empty results, error handling, field mapping
+
+#### Service Tests
+- **File**: `tests/unit/test_services/test_search_service.py`
+- **Tests**: 6 tests covering service layer methods (lines 583-684)
+- **Coverage**: Validation, async operations, error propagation
+
+#### Validation Tests
+- **File**: `tests/unit/test_utils/test_validation.py` (NEW FILE)
+- **Tests**: 14 comprehensive validation tests
+- **Coverage**: Edge cases, type conversion, error messages, boundary conditions
+
+#### Security Tests
+- **File**: `tests/unit/test_data/test_airtable/test_airtable_client.py`
+- **Tests**: 2 formula escaping tests (lines 731-750)
+- **Coverage**: Quote injection prevention, special character handling
+
+### Integration Points
+
+#### Frontend Implementation (Completed 2025-09-04)
+- **Command Handlers**: `/search_room` and `/search_floor` commands fully implemented
+- **Conversation Flow**: Complete ConversationHandler integration with state management
+- **Russian Interface**: Full Russian language support with localized messages and keyboards
+- **Search Mode Selection**: Reply keyboard navigation between name/room/floor search modes
+- **Result Formatting**: Room-by-room breakdown for floor searches, formatted participant lists for room searches
+- **Input Validation**: User-friendly Russian error messages for invalid room/floor inputs
+- **Mobile Optimization**: Reply keyboards designed for mobile device constraints
+
+#### Existing System Integration
+- **Search Service**: Extends existing SearchService without breaking changes
+- **Repository Pattern**: Follows established repository interface pattern
+- **Model Compatibility**: Works with existing Participant model structure
+- **Test Integration**: Uses existing test infrastructure and patterns
+
+### Acceptance Criteria
+
+- [✓] ✅ Repository methods filter participants by room/floor using correct Airtable fields
+- [✓] ✅ Service layer provides validation and formatting for room/floor searches
+- [✓] ✅ Input validation handles numeric and alphanumeric room numbers
+- [✓] ✅ Floor search supports both integer and string inputs
+- [✓] ✅ Security enhancements prevent formula injection attacks
+- [✓] ✅ Comprehensive error handling for all edge cases
+- [✓] ✅ Test coverage exceeds 95% with 34 passing tests
+- [✓] ✅ No regressions in existing search functionality
+- [✓] ✅ Proper field mapping alignment with Airtable schema
+- [✓] ✅ Code quality meets project standards (linting, type checking)
+
+### Technical Implementation Details
+
+#### Frontend Components (2025-09-04)
+- **Files Created**: 
+  - `src/bot/handlers/room_search_handlers.py` (204 lines) - Room search conversation flow
+  - `src/bot/handlers/floor_search_handlers.py` (247 lines) - Floor search with room grouping
+  - `src/bot/keyboards/search_keyboards.py` (73 lines) - Search mode selection keyboards
+  - `src/services/service_factory.py` (35 lines) - Centralized dependency injection
+- **Files Enhanced**:
+  - `src/bot/handlers/search_conversation.py` (+42 lines) - ConversationHandler integration
+  - `src/bot/handlers/search_handlers.py` (+108 lines) - Search mode selection handlers
+
+#### Conversation States
+- **RoomSearchStates**: AWAITING_ROOM_INPUT (room number entry)
+- **FloorSearchStates**: AWAITING_FLOOR_INPUT (floor number entry)  
+- **SearchStates**: MODE_SELECTION (search type selection)
+- **State Management**: Non-overlapping enum values prevent handler conflicts
+
+#### User Experience Features
+- **Room Search Results**: Formatted participant list with roles and departments
+- **Floor Search Results**: Room-by-room breakdown with participant counts and names
+- **Navigation Flow**: Seamless switching between search modes via reply keyboards
+- **Error Handling**: Comprehensive input validation with retry mechanisms
+- **Empty Results**: User-friendly messages for empty rooms/floors
+
+### Future Enhancements
+- **Paginated Results**: For large result sets (>10 participants)
+- **Export Functionality**: CSV export of room/floor participant lists
+- **Room Occupancy Analytics**: Capacity utilization reporting
+- **Bulk Operations**: Floor-based bulk participant actions
+- **Room Assignment Validation**: Prevent overbooking and conflicts
+
 ## Save/Cancel Workflow with Airtable Integration
 
 ### Overview
