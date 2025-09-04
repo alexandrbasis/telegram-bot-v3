@@ -31,7 +31,8 @@ def get_search_service():
     """
     Get search service instance.
 
-    This is a placeholder that should be replaced with proper dependency injection.
+    This is a placeholder that should be replaced with proper
+    dependency injection.
     """
     # TODO: Replace with proper DI container
     from src.data.airtable.airtable_client import AirtableClient
@@ -50,7 +51,10 @@ def get_room_search_keyboard() -> ReplyKeyboardMarkup:
     """Reply keyboard for room search navigation."""
     keyboard = [["🏠 Главное меню", "🔍 Поиск участников"]]
     return ReplyKeyboardMarkup(
-        keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
+        keyboard,
+        resize_keyboard=True,
+        one_time_keyboard=False,
+        selective=False
     )
 
 
@@ -83,11 +87,13 @@ async def handle_room_search_command(
 
         await update.message.reply_text(
             text=f"🔍 Ищу участников в комнате {room_number}...",
-            reply_markup=get_room_search_keyboard(),
+            reply_markup=get_room_search_keyboard()
         )
 
         # Process the search immediately
-        return await process_room_search_with_number(update, context, room_number)
+        return await process_room_search_with_number(
+            update, context, room_number
+        )
     else:
         # Ask for room number
         await update.message.reply_text(
@@ -136,8 +142,9 @@ async def process_room_search_with_number(
     # Validate room number (should contain digits)
     if not re.search(r"\d", room_number):
         await update.message.reply_text(
-            text="❌ Пожалуйста, введите корректный номер комнаты (должен содержать цифры).",
-            reply_markup=get_room_search_keyboard(),
+            text="❌ Пожалуйста, введите корректный номер комнаты "
+                 "(должен содержать цифры).",
+            reply_markup=get_room_search_keyboard()
         )
         return RoomSearchStates.WAITING_FOR_ROOM
 
@@ -159,23 +166,30 @@ async def process_room_search_with_number(
 
         if formatted_results:
             # Create results message
-            results_message = f"🏠 Найдено участников в комнате {room_number}: {len(formatted_results)}\n\n"
+            results_message = (
+                f"🏠 Найдено участников в комнате {room_number}: "
+                f"{len(formatted_results)}\n\n"
+            )
             results_message += "\n".join(formatted_results)
 
             logger.info(
-                f"Found {len(formatted_results)} participants in room {room_number} for user {user.id}"
+                f"Found {len(formatted_results)} participants in room "
+                f"{room_number} for user {user.id}"
             )
 
         else:
-            results_message = f"❌ В комнате {room_number} участники не найдены."
+            results_message = (
+                f"❌ В комнате {room_number} участники не найдены."
+            )
             logger.info(
-                f"No participants found in room {room_number} for user {user.id}"
+                f"No participants found in room {room_number} "
+                f"for user {user.id}"
             )
 
         # Send results
         await update.message.reply_text(
             text=results_message,
-            reply_markup=get_room_search_keyboard(),
+            reply_markup=get_room_search_keyboard()
         )
 
     except Exception as e:

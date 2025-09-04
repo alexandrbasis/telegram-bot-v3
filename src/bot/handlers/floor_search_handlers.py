@@ -52,7 +52,10 @@ def get_floor_search_keyboard() -> ReplyKeyboardMarkup:
     """Reply keyboard for floor search navigation."""
     keyboard = [["🏠 Главное меню", "🔍 Поиск участников"]]
     return ReplyKeyboardMarkup(
-        keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
+        keyboard,
+        resize_keyboard=True,
+        one_time_keyboard=False,
+        selective=False
     )
 
 
@@ -86,7 +89,9 @@ def format_floor_results(participants: List[Participant], floor: int) -> str:
     sorted_rooms = sorted(rooms.keys(), key=room_sort_key)
 
     # Build formatted message
-    result_lines = [f"🏢 Найдено участников на этаже {floor}: {len(participants)}\n"]
+    result_lines = [
+        f"🏢 Найдено участников на этаже {floor}: {len(participants)}\n"
+    ]
 
     for room in sorted_rooms:
         room_participants = rooms[room]
@@ -141,7 +146,9 @@ async def handle_floor_search_command(
         )
 
         # Process the search immediately
-        return await process_floor_search_with_input(update, context, floor_input)
+        return await process_floor_search_with_input(
+            update, context, floor_input
+        )
     else:
         # Ask for floor number
         await update.message.reply_text(
@@ -192,8 +199,9 @@ async def process_floor_search_with_input(
         floor_number = int(floor_input)
     except ValueError:
         await update.message.reply_text(
-            text="❌ Пожалуйста, введите корректный номер этажа (должен быть числом).",
-            reply_markup=get_floor_search_keyboard(),
+            text="❌ Пожалуйста, введите корректный номер этажа "
+                 "(должен быть числом).",
+            reply_markup=get_floor_search_keyboard()
         )
         return FloorSearchStates.WAITING_FOR_FLOOR
 
@@ -213,16 +221,18 @@ async def process_floor_search_with_input(
 
         await update.message.reply_text(
             text=results_message,
-            reply_markup=get_floor_search_keyboard(),
+            reply_markup=get_floor_search_keyboard()
         )
 
         if participants:
             logger.info(
-                f"Found {len(participants)} participants on floor {floor_number} for user {user.id}"
+                f"Found {len(participants)} participants on floor "
+                f"{floor_number} for user {user.id}"
             )
         else:
             logger.info(
-                f"No participants found on floor {floor_number} for user {user.id}"
+                f"No participants found on floor {floor_number} "
+                f"for user {user.id}"
             )
 
     except Exception as e:
