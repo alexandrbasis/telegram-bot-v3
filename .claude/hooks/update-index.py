@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Project Index Updater для telegram-bot-v3
+Project Index Updater for telegram-bot-v3
 
-Автоматически обновляет project_index.json при изменениях в структуре проекта.
-Анализирует Python файлы и извлекает ключевую информацию для AI-агентов.
+Keep a simple, reliable map of the project with short descriptions of
+where to find key components. This implementation favors clarity over
+deep static analysis.
 """
 
 import os
@@ -12,7 +13,7 @@ import ast
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 import fnmatch
 import logging
 
@@ -24,49 +25,77 @@ logging.basicConfig(
 logger = logging.getLogger('indexer')
 
 class ProjectIndexer:
-    """Индексер проекта для создания структурированного представления."""
+    """Builds a lightweight, meaningful project index."""
     
     def __init__(self, project_path: str):
         self.project_path = Path(project_path)
         self.gitignore_patterns = self._load_gitignore()
         self.src_path = self.project_path / 'src'
-        
-    def _load_gitignore(self) -> List[str]:
-        """Загружает паттерны из .gitignore для исключения файлов."""
-        gitignore_path = self.project_path / '.gitignore'
-        default_patterns = [
-            '__pycache__', '*.pyc', '*.pyo', '*.pyd', 
-            '.git', 'venv', '.env', '.venv',
-            '*.egg-info', 'dist', 'build',
-            '.DS_Store', '.pytest_cache'
+        # Only show these top-level directories and files in the tree
+        self.whitelisted_top_dirs = ['src', 'tests', 'docs', '.claude']
+        self.whitelisted_top_files = [
+            'README.md', 'CLAUDE.md', 'pyproject.toml', 'project_index.json',
+            'start_bot.sh', '.env.example'
         ]
         
+    def _load_gitignore(self) -> List[str]:
+        """Load .gitignore patterns and normalize for matching.
+
+        We normalize trailing slashes and add directory-name variants so that
+        patterns like "logs/" also match the directory name "logs".
+        """
+        gitignore_path = self.project_path / '.gitignore'
+        default_patterns = [
+            '__pycache__', '*.pyc', '*.pyo', '*.pyd',
+            '.git', '.hg', '.svn',
+            'venv', 'env', '.env', '.venv',
+            '*.egg-info', 'dist', 'build',
+            '.DS_Store', '.pytest_cache', '.mypy_cache', '.coverage', 'htmlcov',
+        ]
+
         if gitignore_path.exists():
             try:
                 with open(gitignore_path, 'r', encoding='utf-8') as f:
-                    patterns = [line.strip() for line in f 
-                              if line.strip() and not line.startswith('#')]
-                    default_patterns.extend(patterns)
+                    for raw in f:
+                        line = raw.strip()
+                        if not line or line.startswith('#'):
+                            continue
+                        norm = line.rstrip('/')
+                        default_patterns.append(norm)
+                        # Ensure directory patterns also match nested paths
+                        if line.endswith('/') or '/' not in norm:
+                            default_patterns.append(f"**/{norm}")
+                            default_patterns.append(f"**/{norm}/**")
             except Exception as e:
                 logger.warning(f"Ошибка чтения .gitignore: {e}")
-        
+
         return default_patterns
     
     def _should_ignore(self, file_path: Path) -> bool:
-        """Проверяет, должен ли файл быть игнорирован."""
+        """Return True if a path should be ignored.
+
+        - Honor normalized .gitignore patterns
+        - Ignore hidden directories by default, except allow ".claude"
+        - Ignore common build/cache folders
+        """
         try:
             relative_path = file_path.relative_to(self.project_path)
-            
+
+            # Ignore hidden directories except .claude
+            for part in relative_path.parts:
+                if part.startswith('.') and part not in {'.', '..', '.claude'}:
+                    return True
+
             for pattern in self.gitignore_patterns:
                 if fnmatch.fnmatch(str(relative_path), pattern):
                     return True
                 if fnmatch.fnmatch(relative_path.name, pattern):
                     return True
-                    
+
         except ValueError:
-            # Файл не в проекте
+            # Outside project
             return True
-            
+
         return False
     
     def _analyze_python_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
@@ -186,178 +215,204 @@ class ProjectIndexer:
         return features
     
     def _generate_project_tree(self) -> str:
-        """Генерирует древовидное представление проекта."""
-        def build_tree_part(path: Path, level: int = 0, is_last: bool = True) -> List[str]:
-            items = []
-            
-            if level == 0:
-                items.append(f"{self.project_path.name}/")
-                level = 1
-            
+        """Generate a compact, curated tree for key areas only."""
+        root = self.project_path
+
+        def list_dir(path: Path) -> Tuple[List[Path], List[Path]]:
             try:
-                # Получаем только важные директории и файлы
-                entries = []
-                if path.is_dir():
-                    for item in sorted(path.iterdir()):
-                        if not self._should_ignore(item):
-                            entries.append(item)
-                
-                # Разделяем на директории и файлы
-                dirs = [p for p in entries if p.is_dir()]
-                files = [p for p in entries if p.is_file() and self._is_important_file(p)]
-                
-                all_items = dirs + files
-                
-                for i, item in enumerate(all_items):
-                    is_last_item = (i == len(all_items) - 1)
-                    prefix = "└── " if is_last_item else "├── "
-                    indent = "    " * (level - 1)
-                    
-                    if item.is_dir():
-                        items.append(f"{indent}{prefix}{item.name}/")
-                        if level < 3:  # Ограничиваем глубину
-                            sub_items = build_tree_part(item, level + 1, is_last_item)
-                            items.extend(sub_items)
-                    else:
-                        description = self._get_file_description(item)
-                        display_name = f"{item.name} ({description})" if description else item.name
-                        items.append(f"{indent}{prefix}{display_name}")
-                        
-            except PermissionError:
-                pass
-                
-            return items
-        
-        tree_lines = build_tree_part(self.project_path)
-        return '\n'.join(tree_lines)
+                items = [p for p in sorted(path.iterdir()) if not self._should_ignore(p)]
+            except Exception:
+                items = []
+            dirs = [p for p in items if p.is_dir()]
+            files = [p for p in items if p.is_file()]
+            return dirs, files
+
+        lines: List[str] = [f"{root.name}/"]
+
+        # Top-level: selected files and whitelisted dirs only
+        top_dirs, top_files = list_dir(root)
+        top_dirs = [d for d in top_dirs if d.name in self.whitelisted_top_dirs]
+        top_files = [f for f in top_files if f.name in self.whitelisted_top_files]
+
+        def add(prefix: str, name: str):
+            lines.append(f"{prefix}{name}")
+
+        # Helper to draw a directory with one level of children
+        def draw_dir(dir_path: Path, is_last: bool):
+            prefix = "└── " if is_last else "├── "
+            add(prefix, f"{dir_path.name}/")
+            child_dirs, child_files = list_dir(dir_path)
+            # Only show a shallow view (1 level)
+            child_dirs = [d for d in child_dirs if not d.name.startswith('__')]
+            child_files = [f for f in child_files if self._is_important_file(f)]
+
+            for i, d in enumerate(child_dirs):
+                sub_last = (i == len(child_dirs) - 1) and not child_files
+                add(f"    {'└── ' if sub_last else '├── '}", f"{d.name}/")
+            for j, f in enumerate(child_files):
+                is_last_file = (j == len(child_files) - 1)
+                name = f.name
+                desc = self._get_file_description(f)
+                display = f"{name} ({desc})" if desc else name
+                add("    └── " if is_last_file else "    ├── ", display)
+
+        # Render top-level dirs
+        for i, d in enumerate(top_dirs):
+            draw_dir(d, is_last=(i == len(top_dirs) - 1 and not top_files))
+
+        # Render top-level files after dirs
+        for j, f in enumerate(top_files):
+            is_last = (j == len(top_files) - 1)
+            name = f.name
+            desc = self._get_file_description(f)
+            display = f"{name} ({desc})" if desc else name
+            add("└── " if is_last else "├── ", display)
+
+        return "\n".join(lines)
     
     def _is_important_file(self, file_path: Path) -> bool:
-        """Определяет, является ли файл важным для отображения в дереве."""
+        """Return True if the file is worth showing in the tree."""
         important_files = {
-            'main.py', 'settings.py', 'conftest.py', 
+            'main.py', 'settings.py', 'conftest.py',
             'README.md', 'CLAUDE.md', 'requirements.txt',
-            'pyproject.toml', 'start_bot.sh', 'project_index.json'
+            'pyproject.toml', 'start_bot.sh', 'project_index.json',
+            '.env.example'
         }
-        
-        important_patterns = ['*.py', '*.md', '*.txt', '*.toml', '*.sh', '*.json']
-        
+
         if file_path.name in important_files:
             return True
-            
-        for pattern in important_patterns:
-            if fnmatch.fnmatch(file_path.name, pattern):
-                return True
-                
+
+        if file_path.suffix in {'.py', '.md', '.toml', '.sh'}:
+            if file_path.name.startswith('__'):
+                return False
+            return True
+
         return False
     
     def _get_file_description(self, file_path: Path) -> str:
-        """Получает краткое описание файла."""
+        """Return a short description for known key files."""
         descriptions = {
             'main.py': 'application entry point',
             'settings.py': 'centralized app configuration',
             'conftest.py': 'pytest configuration',
             'participant.py': 'participant data model with enums',
-            'search_service.py': 'fuzzy search with Russian/English support',
-            'search_conversation.py': 'main search conversation flow',
-            'airtable_client.py': 'low-level Airtable API client',
+            'search_service.py': 'fuzzy search utilities',
+            'search_conversation.py': 'search conversation flow',
+            'airtable_client.py': 'Airtable API client',
             'airtable_participant_repo.py': 'participant repository',
-            'field_mappings.py': 'Airtable field ID mappings',
-            'CLAUDE.md': 'project guidance for Claude Code',
-            'start_bot.sh': 'bot startup script'
+            'field_mappings.py': 'Airtable field mappings',
+            'CLAUDE.md': 'Claude Code project guidance',
+            'start_bot.sh': 'bot startup script',
+            'README.md': 'project overview',
+            '.env.example': 'sample environment variables',
         }
-        
         return descriptions.get(file_path.name, '')
     
+    def _dir_description(self, rel_path: str) -> str:
+        mapping = {
+            'src': 'application source code',
+            'src/bot': 'Telegram bot handlers and keyboards',
+            'src/bot/handlers': 'bot command and conversation handlers',
+            'src/bot/keyboards': 'bot inline/reply keyboards',
+            'src/services': 'business services and domain logic',
+            'src/data': 'data access layer and integrations',
+            'src/data/airtable': 'Airtable client and repository',
+            'src/data/repositories': 'domain repositories',
+            'src/models': 'data models and enums',
+            'src/config': 'configuration and settings',
+            'src/utils': 'utility helpers',
+            'tests': 'test suite (unit and integration)',
+            'docs': 'documentation and guides',
+            '.claude': 'Claude Code configuration and hooks',
+            '.claude/commands': 'custom Claude commands',
+            '.claude/hooks': 'automation hooks (index, notifications)',
+        }
+        return mapping.get(rel_path, '')
+
+    def _collect_locations(self) -> Dict[str, str]:
+        locations: Dict[str, str] = {}
+        candidates = [
+            'src/main.py', 'src/bot', 'src/bot/handlers', 'src/bot/keyboards',
+            'src/services', 'src/data', 'src/data/airtable', 'src/models',
+            'src/config', 'src/utils', 'tests', 'docs', '.claude',
+            '.claude/hooks', '.claude/commands', 'README.md', 'CLAUDE.md',
+            'pyproject.toml', 'start_bot.sh', '.env.example'
+        ]
+        for rel in candidates:
+            p = self.project_path / rel
+            if p.exists():
+                desc = self._dir_description(rel) if p.is_dir() else self._get_file_description(p)
+                locations[rel] = desc
+        return locations
+
+    def _read_readme_description(self) -> str:
+        readme = self.project_path / 'README.md'
+        if not readme.exists():
+            return ''
+        try:
+            with open(readme, 'r', encoding='utf-8') as f:
+                for line in f:
+                    clean = line.strip()
+                    if clean and not clean.startswith('#'):
+                        return clean
+        except Exception:
+            pass
+        return ''
+
     def update_index(self) -> Dict[str, Any]:
-        """Обновляет индекс проекта."""
-        logger.info("🔍 Начинаю обновление индекса проекта...")
-        
-        # Загружаем существующий индекс
+        """Build a simplified, meaningful index of the project."""
+        logger.info("🔍 Updating simplified project index...")
+
         index_file = self.project_path / 'project_index.json'
-        existing_index = {}
-        
+        existing_index: Dict[str, Any] = {}
         if index_file.exists():
             try:
                 with open(index_file, 'r', encoding='utf-8') as f:
                     existing_index = json.load(f)
-                logger.info("📄 Загружен существующий индекс")
             except Exception as e:
                 logger.warning(f"Ошибка загрузки существующего индекса: {e}")
-        
-        # Получаем список всех существующих файлов для обнаружения удаленных
-        current_files = set()
-        if self.src_path.exists():
-            for py_file in self.src_path.rglob('*.py'):
-                if not self._should_ignore(py_file) and py_file.name != '__init__.py':
-                    relative_path = str(py_file.relative_to(self.project_path))
-                    current_files.add(relative_path)
-        
-        # Найти удаленные файлы
-        old_files = set()
-        if 'key_modules' in existing_index:
-            old_files = set(existing_index['key_modules'].keys())
-        
-        deleted_files = old_files - current_files
-        new_files = current_files - old_files
-        
-        if deleted_files:
-            logger.info(f"🗑️  Удалены файлы: {', '.join(deleted_files)}")
-        if new_files:
-            logger.info(f"➕ Добавлены файлы: {', '.join(new_files)}")
-        
-        # Создаем новую версию индекса
-        updated_index = {
+
+        overview_description = self._read_readme_description() or (
+            "Telegram bot for participant management with Airtable integration"
+        )
+
+        updated_index: Dict[str, Any] = {
+            "index_version": 2,
             "project_overview": {
-                "name": "telegram-bot-v3",
-                "description": "Telegram bot for participant management with Airtable integration and Russian/English fuzzy search",
-                "architecture": "3-layer architecture (bot/services/data) with repository pattern",
+                "name": self.project_path.name,
+                "description": overview_description,
                 "main_language": "python",
-                "last_updated": datetime.now().isoformat()
-            }
+                "last_updated": datetime.now().isoformat(),
+            },
+            "project_structure": {
+                "tree": self._generate_project_tree(),
+                "locations": self._collect_locations(),
+            },
         }
-        
-        # Сохраняем структуру проекта
-        updated_index["project_structure"] = {
-            "tree": self._generate_project_tree(),
-            "directory_details": existing_index.get("project_structure", {}).get("directory_details", {}),
-            "key_files": existing_index.get("project_structure", {}).get("key_files", {})
-        }
-        
-        # Анализируем ключевые модули
-        key_modules = {}
-        python_files_analyzed = 0
-        
+
+        # Preserve optional user-authored sections if present
+        for section in [
+            "architecture_patterns",
+            "key_features",
+            "current_development_context",
+            "testing_approach",
+            "environment_requirements",
+        ]:
+            if section in existing_index and section not in updated_index:
+                updated_index[section] = existing_index[section]
+
+        # Lightweight stats
+        py_count = 0
         if self.src_path.exists():
             for py_file in self.src_path.rglob('*.py'):
-                if not self._should_ignore(py_file) and py_file.name != '__init__.py':
-                    relative_path = str(py_file.relative_to(self.project_path))
-                    analysis = self._analyze_python_file(py_file)
-                    
-                    if analysis:
-                        key_modules[relative_path] = analysis
-                        python_files_analyzed += 1
-        
-        updated_index["key_modules"] = key_modules
-        
-        # Сохраняем остальные разделы из существующего индекса
-        sections_to_preserve = [
-            "architecture_patterns", "key_features", 
-            "current_development_context", "testing_approach",
-            "environment_requirements"
-        ]
-        
-        for section in sections_to_preserve:
-            if section in existing_index:
-                updated_index[section] = existing_index[section]
-        
-        # Обновляем статистику
+                if not self._should_ignore(py_file):
+                    py_count += 1
         updated_index["project_statistics"] = {
-            "total_python_files": python_files_analyzed,
-            "main_directories": ["src/bot", "src/services", "src/data", "src/models", "src/config", "tests"],
-            "key_dependencies": ["telegram", "airtable", "pydantic", "rapidfuzz", "pytest"]
+            "total_python_files": py_count,
+            "main_directories": [d for d in self.whitelisted_top_dirs if (self.project_path / d).exists()],
         }
-        
-        logger.info(f"✅ Проанализировано {python_files_analyzed} Python файлов")
+
+        logger.info(f"✅ Index prepared. Python files counted: {py_count}")
         return updated_index
 
 def main():

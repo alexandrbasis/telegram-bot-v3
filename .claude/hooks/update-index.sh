@@ -31,6 +31,7 @@ HOOK_DIR="$PROJECT_DIR/.claude/hooks"
 INDEX_FILE="$PROJECT_DIR/project_index.json"
 INDEXER_SCRIPT="$HOOK_DIR/update-index.py"
 LOG_FILE="$PROJECT_DIR/.claude/hooks/hook-debug.log"
+LOCK_DIR="$PROJECT_DIR/.claude/hooks/.update-index.lock"
 
 
 # Запись диагностической информации
@@ -42,16 +43,41 @@ debug_log "Script path: $INDEXER_SCRIPT"
 
 debug_log "Запуск обновления индекса проекта..."
 
+# Concurrency guard
+if mkdir "$LOCK_DIR" 2>/dev/null; then
+    debug_log "🔒 Установлена блокировка обновления индекса"
+    trap 'rm -rf "$LOCK_DIR"' EXIT
+else
+    debug_log "⏭️  Пропуск: обновление уже выполняется (lock)"
+    exit 0
+fi
+
 # Проверка существования индексера
 if [ ! -f "$INDEXER_SCRIPT" ]; then
     debug_log "❌ Скрипт индексера не найден: $INDEXER_SCRIPT"
     exit 1
 fi
 
-# Создание резервной копии текущего индекса
+# Skip if nothing relevant changed since last index write
 if [ -f "$INDEX_FILE" ]; then
-    cp "$INDEX_FILE" "$INDEX_FILE.backup"
-    debug_log "📋 Создана резервная копия индекса"
+    # Limit to key areas to avoid noise
+    CHANGED_FILE=$(find "$PROJECT_DIR" \( \
+        -path "$PROJECT_DIR/src/*" -o \
+        -path "$PROJECT_DIR/tests/*" -o \
+        -path "$PROJECT_DIR/docs/*" -o \
+        -path "$PROJECT_DIR/.claude/*" \
+      \) -type f \
+      ! -name "project_index.json" \
+      ! -name "hook-debug.log" \
+      -newer "$INDEX_FILE" -print -quit 2>/dev/null)
+    if [ -z "$CHANGED_FILE" ]; then
+        debug_log "ℹ️  Нет изменений после последнего индекса. Пропуск."
+        exit 0
+    else
+        debug_log "🆕 Обнаружены изменения: $CHANGED_FILE"
+    fi
+    # Create a backup after we know we will proceed
+    cp "$INDEX_FILE" "$INDEX_FILE.backup" && debug_log "📋 Создана резервная копия индекса"
 fi
 
 # Запуск Python индексера
