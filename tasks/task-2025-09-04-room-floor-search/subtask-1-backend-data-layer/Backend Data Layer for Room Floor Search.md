@@ -155,8 +155,10 @@ Implement the data access layer and business logic for room and floor-based part
 - **PR Created**: 2025-09-04
 - **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/19
 - **Branch**: basisalexandr/agb-27-subtask-1-backend-data-layer-for-room-floor-search
-- **Status**: In Review
-- **Linear Issue**: AGB-27 - Updated to "In Review"
+- **Status**: ✅ MERGED
+- **SHA**: 8ff49d0241f175aac261d7c8cdf6e755f8e137e0
+- **Merged**: 2025-09-04T14:48:22Z
+- **Linear Issue**: AGB-27
 
 ### Implementation Summary for Code Review
 - **Total Steps Completed**: 4 of 4 major steps
