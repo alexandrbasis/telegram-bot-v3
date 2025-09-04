@@ -31,6 +31,14 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **State Collision Prevention**: SearchStates uses values 10-12 to avoid conflicts with EditStates 0-2
 - **Mixed Handler Support**: ConversationHandler configured with per_message=None for proper CallbackQueryHandler tracking
 
+**Room and Floor Search Handlers** (New - 2025-09-04):
+- Dedicated conversation handlers for location-based searches
+- **RoomSearchStates**: AWAITING_ROOM_INPUT for room number collection
+- **FloorSearchStates**: AWAITING_FLOOR_INPUT for floor number collection  
+- **Search Mode Selection**: MODE_SELECTION state for choosing between name/room/floor search
+- Integration with main search conversation via unified entry points
+- Russian language support throughout all conversation states
+
 **Participant Editing Handler** (New - 2025-08-29):
 - 4-state ConversationHandler for comprehensive field editing
 - States: FIELD_SELECTION → TEXT_INPUT/BUTTON_SELECTION → CONFIRMATION
@@ -52,6 +60,7 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Field mapping between internal models and Airtable schema
 - Rate limiting and error recovery for update operations
 - **Security enhancements** with formula injection prevention
+- **Service factory pattern** for centralized dependency injection (2025-09-04)
 
 ### Service Layer Architecture
 
@@ -81,12 +90,20 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Russian label mapping
 - Consistent layout patterns (2-3 columns, cancel buttons)
 - Dynamic option loading from enum definitions
+- **Search mode keyboards** (2025-09-04): Centralized search type selection with name/room/floor options
 
 **Localization Strategy**:
 - Russian field names and labels
 - Localized validation error messages
 - Russian navigation buttons and prompts
 - Enum value translation (M/F → Мужской/Женский)
+- **Complete Russian interface** for room/floor search functionality with mobile-optimized reply keyboards
+
+**Navigation Architecture** (Enhanced 2025-09-04):
+- **Multi-mode Search Interface**: Unified entry point with mode selection
+- **Reply Keyboard Navigation**: Mobile-optimized keyboards for search mode selection
+- **State-based Routing**: Proper conversation state management between different search types
+- **Context Preservation**: Seamless transitions between search modes while maintaining user context
 
 ## Component Integration
 
@@ -119,6 +136,13 @@ User Input → Handler → Service (validation) → Repository → Airtable API
 UI Response ← Keyboard ← Error/Success ← Update Result ← API Response
 ```
 
+**Room/Floor Search Flow** (2025-09-04):
+```
+Search Mode Selection → Room/Floor Input → Validation → Repository Query → Formatted Results
+        ↓                                                                          ↓
+Reply Keyboard ← Russian Messages ← Error Handling ← Service Layer ← Result Formatting
+```
+
 ## Scalability Considerations
 
 ### Performance
@@ -133,11 +157,13 @@ UI Response ← Keyboard ← Error/Success ← Update Result ← API Response
 - Keyboard factory pattern simplifies UI management
 
 ### Testability
-- 75+ unit tests including editing and room/floor search functionality (100% pass rate)
+- 96+ unit tests including editing and room/floor search functionality (100% pass rate)
 - Mock repositories for isolated testing
 - Service layer testing with comprehensive validation scenarios
 - Handler testing with conversation state simulation
-- **Room/Floor search testing**: 34 comprehensive tests covering repository, service, validation, and security layers
+- **Room/Floor search testing**: 55 comprehensive tests covering:
+  - Backend: 34 tests (repository, service, validation, security layers)
+  - Frontend: 21 tests (handler logic, conversation flows, keyboard integration, Russian localization)
 
 ## Error Handling Strategy
 

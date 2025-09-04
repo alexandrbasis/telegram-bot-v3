@@ -302,10 +302,12 @@ def test_field_validation():
 
 ## Room and Floor Search Testing
 
-### Test Coverage Summary (2025-09-04)
-**Total Tests**: 34 tests (Repository: 12, Service: 6, Validation: 14, Security: 2)
-**Pass Rate**: 100%
-**Coverage Areas**: Room/floor search methods, input validation, security enhancements, error handling
+### Test Coverage Summary (2025-09-04)  
+**Total Tests**: 55 tests (Backend: 34, Frontend: 21)
+**Backend Tests**: Repository: 12, Service: 6, Validation: 14, Security: 2
+**Frontend Tests**: Room Handler: 9, Floor Handler: 9, Integration: 3
+**Pass Rate**: 100%  
+**Coverage Areas**: Complete end-to-end testing from backend services to frontend conversation flows
 
 #### Repository Testing (`test_airtable_participant_repo.py`)
 **Tests**: 12 tests covering room and floor search methods (lines 764-894)
@@ -431,6 +433,67 @@ test_search_by_field_handles_complex_quotes()
 ./venv/bin/pytest tests/unit/test_data/test_airtable/test_airtable_client.py::TestFormulaEscaping -v
 ```
 
+## Frontend Handler Testing (2025-09-04)
+
+### Room Search Handler Testing (`test_room_search_handlers.py`)
+**Tests**: 9 comprehensive tests covering room search conversation flow
+**Coverage**:
+- Room search command handling with `/search_room` entry point
+- Room number input validation and error handling  
+- Search result formatting and display
+- Russian error messages for invalid input
+- Empty room handling with user-friendly messages
+- Navigation between search modes via reply keyboards
+- ConversationHandler state management and transitions
+
+**Key Test Scenarios**:
+```python
+# Command and input testing
+test_room_search_command_handler()
+test_room_search_with_valid_input()
+test_room_search_with_invalid_input()
+test_room_search_empty_results()
+
+# Navigation and state management
+test_room_search_keyboard_navigation()
+test_room_search_conversation_states()
+test_room_search_context_preservation()
+```
+
+### Floor Search Handler Testing (`test_floor_search_handlers.py`) 
+**Tests**: 9 comprehensive tests covering floor search conversation flow
+**Coverage**:
+- Floor search command handling with `/search_floor` entry point
+- Floor number input validation with Union[int, str] support
+- Room-by-room result formatting and grouping
+- Participant count display and room organization  
+- Russian localization throughout conversation flow
+- Error handling for invalid floor inputs
+- Empty floor handling with appropriate messaging
+- Integration with search mode selection interface
+
+**Key Test Scenarios**:
+```python
+# Command and input testing  
+test_floor_search_command_handler()
+test_floor_search_with_valid_input()
+test_floor_search_with_invalid_input()
+test_floor_search_empty_results()
+
+# Result formatting and display
+test_floor_search_room_grouping()
+test_floor_search_participant_counting()
+test_floor_search_russian_formatting()
+```
+
+### Search Integration Testing (`test_search_handlers.py`)  
+**Tests**: 3 additional tests covering search mode selection integration
+**Coverage**:
+- Search mode selection keyboard functionality
+- Navigation between name/room/floor search modes
+- ConversationHandler integration with existing search flows
+- State management across different search types
+
 ## Testing Roadmap
 
 ### Current Status
@@ -447,10 +510,13 @@ test_search_by_field_handles_complex_quotes()
 - [x] ✅ Regression testing for search button functionality (2 tests)
 - [x] ✅ State collision prevention testing and validation
 - [x] ✅ ConversationHandler configuration testing (per_message parameter)
-- [x] ✅ **Room and floor search functionality testing (34 comprehensive tests)**
+- [x] ✅ **Room and floor search backend testing (34 comprehensive tests)**
+- [x] ✅ **Room and floor search frontend testing (21 comprehensive tests)**
 - [x] ✅ **Input validation utilities testing with edge case coverage**
 - [x] ✅ **Security enhancement testing (formula injection prevention)**
 - [x] ✅ **Test infrastructure improvements (conftest.py for module imports)**
+- [x] ✅ **Complete conversation flow testing for room/floor search modes**
+- [x] ✅ **Russian localization testing throughout search interfaces**
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 

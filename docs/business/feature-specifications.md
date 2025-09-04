@@ -170,11 +170,11 @@ Fields:
 ## Room and Floor Search Functionality
 
 ### Overview
-Location-based participant search functionality enabling users to find participants by room number or floor assignment. Provides the backend data layer foundation for future UI implementation.
+Complete location-based participant search functionality enabling users to find participants by room number or floor assignment. Includes both backend data layer and full frontend user interface implementation.
 
-**Status**: ✓ Backend Implementation Complete (2025-09-04)
-**Implementation**: Repository and service layer methods with comprehensive validation
-**Test Coverage**: 34 tests (100% pass rate)
+**Status**: ✅ Complete Implementation (2025-09-04)
+**Implementation**: Backend services + Frontend handlers with Russian UI and conversation flow integration
+**Test Coverage**: 55 tests total (34 backend + 21 frontend tests, 100% pass rate)
 
 ### Core Features
 
@@ -309,11 +309,14 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult
 
 ### Integration Points
 
-#### Future UI Integration
-- **Ready**: Backend methods ready for bot handler integration
-- **Search Commands**: Can extend existing `/search` command with room/floor syntax
-- **Result Display**: Formatted service methods provide UI-ready output
-- **Error Handling**: Comprehensive error objects support user-friendly messages
+#### Frontend Implementation (Completed 2025-09-04)
+- **Command Handlers**: `/search_room` and `/search_floor` commands fully implemented
+- **Conversation Flow**: Complete ConversationHandler integration with state management
+- **Russian Interface**: Full Russian language support with localized messages and keyboards
+- **Search Mode Selection**: Reply keyboard navigation between name/room/floor search modes
+- **Result Formatting**: Room-by-room breakdown for floor searches, formatted participant lists for room searches
+- **Input Validation**: User-friendly Russian error messages for invalid room/floor inputs
+- **Mobile Optimization**: Reply keyboards designed for mobile device constraints
 
 #### Existing System Integration
 - **Search Service**: Extends existing SearchService without breaking changes
@@ -334,19 +337,37 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult
 - [✓] ✅ Proper field mapping alignment with Airtable schema
 - [✓] ✅ Code quality meets project standards (linting, type checking)
 
-### Future Development
+### Technical Implementation Details
 
-#### UI Implementation (Next Phase)
-- Bot handlers for room/floor search commands
-- Interactive keyboard interfaces for floor/room selection
-- Paginated results display for large result sets
-- Integration with existing search conversation flow
+#### Frontend Components (2025-09-04)
+- **Files Created**: 
+  - `src/bot/handlers/room_search_handlers.py` (204 lines) - Room search conversation flow
+  - `src/bot/handlers/floor_search_handlers.py` (247 lines) - Floor search with room grouping
+  - `src/bot/keyboards/search_keyboards.py` (73 lines) - Search mode selection keyboards
+  - `src/services/service_factory.py` (35 lines) - Centralized dependency injection
+- **Files Enhanced**:
+  - `src/bot/handlers/search_conversation.py` (+42 lines) - ConversationHandler integration
+  - `src/bot/handlers/search_handlers.py` (+108 lines) - Search mode selection handlers
 
-#### Enhanced Features
-- Room occupancy reporting
-- Floor-based bulk operations
-- Room assignment validation
-- Capacity management integration
+#### Conversation States
+- **RoomSearchStates**: AWAITING_ROOM_INPUT (room number entry)
+- **FloorSearchStates**: AWAITING_FLOOR_INPUT (floor number entry)  
+- **SearchStates**: MODE_SELECTION (search type selection)
+- **State Management**: Non-overlapping enum values prevent handler conflicts
+
+#### User Experience Features
+- **Room Search Results**: Formatted participant list with roles and departments
+- **Floor Search Results**: Room-by-room breakdown with participant counts and names
+- **Navigation Flow**: Seamless switching between search modes via reply keyboards
+- **Error Handling**: Comprehensive input validation with retry mechanisms
+- **Empty Results**: User-friendly messages for empty rooms/floors
+
+### Future Enhancements
+- **Paginated Results**: For large result sets (>10 participants)
+- **Export Functionality**: CSV export of room/floor participant lists
+- **Room Occupancy Analytics**: Capacity utilization reporting
+- **Bulk Operations**: Floor-based bulk participant actions
+- **Room Assignment Validation**: Prevent overbooking and conflicts
 
 ## Save/Cancel Workflow with Airtable Integration
 
