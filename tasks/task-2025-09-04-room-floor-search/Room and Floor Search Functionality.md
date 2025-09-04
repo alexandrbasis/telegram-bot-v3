@@ -92,6 +92,7 @@ Target: 90%+ coverage across all implementation areas
 Enable users to quickly find participants by accommodation location (room/floor), providing essential functionality for event coordination and space management.
 
 ## Technical Requirements
+<<<<<<< HEAD
 - [ ] Airtable schema alignment (Floor/RoomNumber)
   - [ ] Use Airtable field names: `Floor`, `RoomNumber`
   - [ ] Use Field IDs for API writes: `Floor=fldlzG1sVg01hsy2g`, `RoomNumber=fldJTPjo8AHQaADVu`
@@ -99,12 +100,17 @@ Enable users to quickly find participants by accommodation location (room/floor)
   - [ ] Remove any legacy references to `" Floor"` and `"Room Number"`
 - [ ] Add room search methods to existing repository layer (filter by `room_number`)
 - [ ] Add floor search methods to existing repository layer (filter by `floor`, group by `room_number`)
+=======
+- [ ] Add room search methods to existing repository layer (filter by room_number field)
+- [ ] Add floor search methods to existing repository layer (filter by floor field, group by room_number)
+>>>>>>> d6087ab (Airtable schema sync: update Floor/RoomNumber mappings)
 - [ ] Create new conversation handlers for room and floor search commands
 - [ ] Implement keyboard navigation between name/room/floor search modes
 - [ ] Add search result formatting for room and floor views
 - [ ] Ensure Russian/English language support in new search results
 - [ ] Handle edge cases (empty rooms, invalid inputs, API errors)
 
+<<<<<<< HEAD
 ### Input/Validation Behavior (Alignment)
 - UI prompts for editing floor/room instruct numeric-only input to match Airtable number types
 - Back-end accepts:
@@ -112,7 +118,7 @@ Enable users to quickly find participants by accommodation location (room/floor)
   - RoomNumber: numeric and alphanumeric strings preserved
 - Saving to Airtable uses Field IDs; Airtable may reject non-numeric values for number fields
   - On save rejection, surface a friendly error and prompt user to correct input
-
+#
 ## Implementation Steps & Change Log
 - [ ] Step 1: Repository Layer Enhancement → **SPLIT INTO SUBTASK**
   - **Subtask**: `subtask-1-backend-data-layer/Backend Data Layer for Room Floor Search.md`
@@ -170,7 +176,6 @@ Enable users to quickly find participants by accommodation location (room/floor)
   - `floor` → `Floor`
   - `room_number` → `RoomNumber`
 - Display formatting: include accommodation as `Floor: X, Room: Y`
-
 ## Tracking & Progress
 ### Linear Issue
 - **ID**: [To be created after technical approval]
