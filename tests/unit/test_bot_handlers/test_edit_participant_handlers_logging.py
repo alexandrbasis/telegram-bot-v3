@@ -218,7 +218,7 @@ class TestEditHandlerLoggingIntegration:
 
     @pytest.mark.asyncio
     @patch('src.bot.handlers.edit_participant_handlers.get_user_interaction_logger')
-    @patch('src.bot.handlers.search_handlers.get_search_button_keyboard')
+    @patch('src.bot.handlers.search_handlers.get_results_navigation_keyboard')
     async def test_cancel_editing_logging(
         self, mock_keyboard, mock_get_logger, mock_update, mock_context, mock_user_logger
     ):
@@ -380,7 +380,7 @@ class TestEditHandlerLoggingIntegration:
         mock_update.callback_query.data = "cancel_edit"
         
         # Execute
-        with patch('src.bot.handlers.search_handlers.get_search_button_keyboard'):
+        with patch('src.bot.handlers.search_handlers.get_results_navigation_keyboard'):
             result = await cancel_editing(mock_update, mock_context)
         
         # Verify no logging calls were made since logger is None
@@ -398,7 +398,7 @@ class TestEditHandlerLoggingIntegration:
         mock_update.callback_query.data = "cancel_edit"
         
         # Execute
-        with patch('src.bot.handlers.search_handlers.get_search_button_keyboard'):
+        with patch('src.bot.handlers.search_handlers.get_results_navigation_keyboard'):
             result = await cancel_editing(mock_update, mock_context)
         
         # Verify button click logging with None username

@@ -10,7 +10,7 @@ from enum import IntEnum
 from typing import Optional
 from datetime import date
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
 
 from src.models.participant import Participant, Gender, Size, Role, Department, PaymentStatus
@@ -54,6 +54,28 @@ def get_user_interaction_logger():
     except Exception as e:
         logger.error(f"Failed to initialize user interaction logger: {e}")
         return None
+
+
+def _log_missing(user_logger: UserInteractionLogger, user_id: int, expected_action: str, error_context: str, error_type: str = "handler_error") -> None:
+    """Compatibility wrapper for different log_missing_response signatures."""
+    try:
+        user_logger.log_missing_response(
+            user_id=user_id,
+            expected_action=expected_action,
+            error_context=error_context,
+        )
+    except TypeError:
+        # Fallback to legacy signature
+        try:
+            user_logger.log_missing_response(
+                user_id=user_id,
+                button_data=expected_action,
+                error_type=error_type,
+                error_message=error_context,
+            )
+        except Exception:
+            # Swallow logging errors silently to avoid breaking flow
+            pass
 
 
 class EditStates(IntEnum):
@@ -216,6 +238,14 @@ async def show_participant_edit_menu(update: Update, context: ContextTypes.DEFAU
     
     logger.info(f"Showing edit menu for participant: {participant.record_id}")
     
+    # Remove reply keyboard while in edit mode to avoid confusion with inline UI
+    try:
+        if query and query.message:
+            await query.message.reply_text(text=" ", reply_markup=ReplyKeyboardRemove())
+    except Exception:
+        # Non-fatal if remove fails
+        pass
+
     # Create edit interface message
     message_text = "✏️ Редактирование участника\n\n"
     
@@ -345,11 +375,11 @@ async def handle_field_edit_selection(update: Update, context: ContextTypes.DEFA
         
         # Log missing response if logging is enabled
         if user_logger:
-            user_logger.log_missing_response(
+            _log_missing(
+                user_logger,
                 user_id=user.id,
-                button_data="field_edit_selection",
-                error_type="handler_error",
-                error_message=f"Unknown field type: {field_name}"
+                expected_action="field_edit_selection",
+                error_context=f"Unknown field type: {field_name}",
             )
         
         return EditStates.FIELD_SELECTION
@@ -557,11 +587,12 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         
         # Log missing response if logging is enabled
         if user_logger:
-            user_logger.log_missing_response(
+            _log_missing(
+                user_logger,
                 user_id=user.id,
-                button_data="button_field_selection",
+                expected_action="button_field_selection",
+                error_context="No editing field set in context",
                 error_type="context_error",
-                error_message="No editing field set in context"
             )
         
         return EditStates.FIELD_SELECTION
@@ -691,11 +722,12 @@ async def handle_button_field_selection(update: Update, context: ContextTypes.DE
         
         # Log missing response if logging is enabled
         if user_logger:
-            user_logger.log_missing_response(
+            _log_missing(
+                user_logger,
                 user_id=user.id,
-                button_data="button_field_selection",
+                expected_action="button_field_selection",
+                error_context=f"Invalid button value {selected_value} for field {field_name}: {e}",
                 error_type="validation_error",
-                error_message=f"Invalid button value {selected_value} for field {field_name}: {e}"
             )
         
         return EditStates.BUTTON_SELECTION
@@ -735,11 +767,17 @@ async def cancel_editing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     context.user_data['editing_field'] = None
     
     # Return to search results
-    from src.bot.handlers.search_handlers import SearchStates, get_search_button_keyboard
-    
-    await query.message.edit_text(
-        text="❌ Редактирование отменено.",
-        reply_markup=get_search_button_keyboard()
+    from src.bot.handlers.search_handlers import (
+        SearchStates,
+        get_results_navigation_keyboard,
+    )
+
+    # Update message text; reply keyboards must be sent in a separate message
+    await query.message.edit_text(text="❌ Редактирование отменено.")
+    # Restore navigation reply keyboard for results view
+    await query.message.reply_text(
+        text="Используйте клавиатуру для навигации.",
+        reply_markup=get_results_navigation_keyboard(),
     )
     
     # Log bot response if logging is enabled
@@ -857,6 +895,15 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                         InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
                     ]])
                 )
+                # Restore navigation reply keyboard for results view
+                try:
+                    from src.bot.handlers.search_handlers import get_results_navigation_keyboard
+                    await query.message.reply_text(
+                        text="Используйте клавиатуру для навигации.",
+                        reply_markup=get_results_navigation_keyboard(),
+                    )
+                except Exception:
+                    pass
             except Exception as display_error:
                 # Log regression marker to help diagnose display formatting errors
                 logger.error(
@@ -868,6 +915,15 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                         InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
                     ]])
                 )
+                # Restore navigation reply keyboard for results view
+                try:
+                    from src.bot.handlers.search_handlers import get_results_navigation_keyboard
+                    await query.message.reply_text(
+                        text="Используйте клавиатуру для навигации.",
+                        reply_markup=get_results_navigation_keyboard(),
+                    )
+                except Exception:
+                    pass
             
             # Log successful save response if logging is enabled (short summary for logs is OK)
             if user_logger:
@@ -895,11 +951,12 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             
             # Log failed save response if logging is enabled
             if user_logger:
-                user_logger.log_missing_response(
+                _log_missing(
+                    user_logger,
                     user_id=user.id,
-                    button_data="save_changes",
+                    expected_action="save_changes",
+                    error_context="Save operation failed",
                     error_type="save_error",
-                    error_message="Save operation failed"
                 )
             
     except Exception as e:
@@ -921,11 +978,12 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         
         # Log exception response if logging is enabled
         if user_logger:
-            user_logger.log_missing_response(
+            _log_missing(
+                user_logger,
                 user_id=user.id,
-                button_data="save_changes",
+                expected_action="save_changes",
+                error_context=f"Exception during save: {e}",
                 error_type="exception",
-                error_message=f"Exception during save: {e}"
             )
     
     from src.bot.handlers.search_handlers import SearchStates
