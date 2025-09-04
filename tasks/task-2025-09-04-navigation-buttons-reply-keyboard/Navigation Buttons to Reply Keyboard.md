@@ -166,9 +166,9 @@ Comprehensive technical analysis completed 2025-09-04. **Key finding: Approach i
   - **Done**: PR merged to main and Linear issue closed
 
 ### PR Details
-- **Branch**: [Name]
-- **PR URL**: [Link]
-- **Status**: [Draft/Review/Merged]
+- **Branch**: `feat/reply-keyboard-navigation`
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/18
+- **Status**: Open (Ready for Review)
 
 ## Business Context
 Move navigation actions into the persistent reply keyboard to improve mobile UX and reduce scrolling/taps compared to inline navigation buttons stacked under messages.
@@ -178,6 +178,88 @@ Move navigation actions into the persistent reply keyboard to improve mobile UX 
 - [ ] Add message-based handlers to process navigation actions (text) instead of callback queries
 - [ ] Keep participant edit flows on inline keyboards; consider temporarily removing reply keyboard if needed to avoid confusion
 - [ ] Update tests to reflect reply keyboard usage and message-based navigation handlers
+
+## Implementation Steps & Change Log
+- [x] Step 1: Introduce ReplyKeyboard for navigation
+  - [x] Sub-step 1.1: Replace inline nav with ReplyKeyboard
+    - **Directory**: `src/bot/handlers/`
+    - **Files to create/modify**: `src/bot/handlers/search_handlers.py`
+    - **Accept**: `/start` shows reply keyboard on mobile; inline nav removed from results
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_handlers.py`
+    - **Done**: Verified with unit tests; manual steps listed below
+    - **Changelog**:
+      - Added nav constants and reply keyboards: `get_main_menu_keyboard`, `get_waiting_for_name_keyboard`, `get_results_navigation_keyboard`
+        - src/bot/handlers/search_handlers.py:1
+      - Removed inline main menu from results keyboard
+        - src/bot/handlers/search_handlers.py:1
+
+- [x] Step 2: Add text-based navigation handlers
+  - [x] Sub-step 2.1: Wire MessageHandlers for nav actions
+    - **Directory**: `src/bot/handlers/`
+    - **Files to create/modify**: `src/bot/handlers/search_conversation.py`, `src/bot/handlers/search_handlers.py`
+    - **Accept**: Tapping “🔍 Поиск участников”, “🏠 Главное меню”, “❌ Отмена” triggers expected state transitions
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_handlers.py`, `tests/unit/test_per_message_functionality.py`
+    - **Done**: Unit tests updated and passing for these paths
+    - **Changelog**:
+      - MAIN_MENU: Regex handler for “🔍 Поиск участников”; kept `CallbackQueryHandler("^search$")`
+        - src/bot/handlers/search_conversation.py:1
+      - WAITING_FOR_NAME: Regex handlers for main menu/cancel; route name input to `process_name_search`
+        - src/bot/handlers/search_conversation.py:1
+      - SHOWING_RESULTS: Regex handlers for main menu/search; keep inline participant selection
+        - src/bot/handlers/search_conversation.py:1
+      - `search_button` supports text and callback; sends waiting keyboard
+        - src/bot/handlers/search_handlers.py:1
+      - `process_name_search` sends results (inline) and updates reply navigation keyboard
+        - src/bot/handlers/search_handlers.py:1
+      - `main_menu_button` supports text and callback; sends reply keyboard
+        - src/bot/handlers/search_handlers.py:1
+      - Added `cancel_search` to return from input state
+        - src/bot/handlers/search_handlers.py:1
+
+- [x] Step 3: Edit flow keyboard lifecycle
+  - [x] Sub-step 3.1: Remove during edit; restore after cancel/save
+    - **Directory**: `src/bot/handlers/`
+    - **Files to create/modify**: `src/bot/handlers/edit_participant_handlers.py`
+    - **Accept**: Reply keyboard removed on entering edit; restored on cancel/save
+    - **Tests**: `tests/unit/test_bot_handlers/test_edit_participant_handlers_logging.py`
+    - **Done**: Verified via unit tests for cancel/save flows
+    - **Changelog**:
+      - Hide keyboard on edit entry with `ReplyKeyboardRemove`
+        - src/bot/handlers/edit_participant_handlers.py:1
+      - Restore navigation keyboard on cancel/save success
+        - src/bot/handlers/edit_participant_handlers.py:1
+      - Add `_log_missing` wrapper for logger signature compatibility
+        - src/bot/handlers/edit_participant_handlers.py:1
+
+- [x] Step 4: Update tests and fixtures
+  - [x] Sub-step 4.1: Adjust assertions and handlers
+    - **Directory**: `tests/unit/`
+    - **Files to create/modify**: `tests/unit/test_bot_handlers/test_search_handlers.py`, `tests/unit/test_bot_handlers/test_edit_participant_handlers_logging.py`
+    - **Accept**: Tests reflect reply keyboards and pass locally
+    - **Tests**: Run updated unit tests; per-message and integration regressions still pass
+    - **Done**: 100% passing in modified suites
+    - **Changelog**:
+      - Expect `ReplyKeyboardMarkup` and two reply_text calls for results
+        - tests/unit/test_bot_handlers/test_search_handlers.py:1
+      - Remove inline main menu expectation in participant keyboard
+        - tests/unit/test_bot_handlers/test_search_handlers.py:1
+      - Patch to use `get_results_navigation_keyboard` in logging tests
+        - tests/unit/test_bot_handlers/test_edit_participant_handlers_logging.py:1
+  - [x] Sub-step 4.2: Update integration test expectations
+    - **Directory**: `tests/integration/test_bot_handlers/`
+    - **Files to create/modify**: `tests/integration/test_bot_handlers/test_search_conversation.py`
+    - **Accept**: Expect two reply_text calls (results + navigation keyboard) in results flow; mocks use `AsyncMock`
+    - **Tests**: `./venv/bin/pytest tests/integration/test_bot_handlers/test_search_conversation.py -q`
+    - **Done**: All tests in this module pass locally
+## What Was Done
+- Navigation moved to persistent ReplyKeyboard for mobile UX:
+  - Main menu keyboard: shows `🔍 Поиск участников`
+  - Waiting-for-name keyboard: shows `🏠 Главное меню` and `❌ Отмена`
+  - Results keyboard: shows `🔍 Поиск участников` and `🏠 Главное меню`
+- Conversation wiring updated for text-based navigation with MessageHandlers; kept `CallbackQueryHandler("^search$")` for backward compatibility.
+- Results continue to use inline participant selection; removed inline “Главное меню” button to avoid duplication (navigation handled via reply keyboard).
+- Edit mode removes ReplyKeyboard via `ReplyKeyboardRemove`, and restores navigation keyboard when leaving edit (cancel/save).
+- Added a small compatibility wrapper for logging (`_log_missing`) to support both legacy and new logger signatures used in tests.
 
 ## Technical Decomposition
 - [x] `src/bot/handlers/search_handlers.py`
@@ -209,6 +291,33 @@ Move navigation actions into the persistent reply keyboard to improve mobile UX 
   - `tests/unit/test_bot_handlers/test_search_handlers.py`: reply keyboard assertions, double reply_text calls, participant keyboard rows, state IDs
   - `tests/unit/test_bot_handlers/test_edit_participant_handlers_logging.py`: patched new reply keyboard factory and kept logging assertions
 
+## Verification (Manual)
+1. Start: send `/start` and verify a reply keyboard with `🔍 Поиск участников` appears above the text field.
+2. Tap `🔍 Поиск участников`: the bot prompts “Введите имя участника:” and the keyboard changes to `🏠 Главное меню` and `❌ Отмена`.
+3. Enter a name: results display with inline participant buttons; bot sends a second message setting the results navigation keyboard (`🔍 Поиск участников`, `🏠 Главное меню`).
+4. Tap `🏠 Главное меню`: bot returns to the welcome message and restores main menu keyboard.
+5. Select a participant: on entering edit mode, the reply keyboard is removed; after cancel/save, navigation keyboard is restored.
+
+## Known Limitations / Notes
+- The pre-start “Start” system button is controlled by Telegram and cannot be moved; once started, the bot displays the reply keyboard.
+- Some repository/model/service unit tests in the full suite are unrelated and currently failing in this environment; they are out of scope for this task and not modified.
+- File lint rules (E501 line length) exist throughout `edit_participant_handlers.py` from earlier code; changes introduced by this task keep scope minimal and do not refactor pre-existing style.
+
+## Rollback Plan
+- Disable the reply keyboard feature by reverting the branch or toggling to the previous inline-only navigation:
+  - Re-add inline main menu button in `create_participant_selection_keyboard` and remove reply keyboard helpers.
+  - Remove message-based navigation handlers from `search_conversation.py`.
+  - Keep `/start` using only inline keyboard.
+  - Alternatively, revert PR via GitHub.
+
+## Handover Checklist
+- [x] Task document updated as single source of truth (this file)
+- [x] Branch pushed: `feat/reply-keyboard-navigation`
+- [x] PR opened: https://github.com/alexandrbasis/telegram-bot-v3/pull/18
+- [x] Unit tests updated for affected areas and passing
+- [ ] Reviewer verifies on device: flows listed in Verification (Manual)
+- [ ] Decide on permanent reply keyboard behavior during edit (currently removed; restored on exit)
+
 ## Plan Review (Gate 4)
 Decision: APPROVED
 - Completeness: Decomposition lists exact files, functions, and handlers
@@ -221,7 +330,6 @@ Decision: NO SPLIT NEEDED
 - Scope is contained within bot handlers and tests
 - No cross-cutting migrations required
 
-## Implementation Steps & Change Log
 - [ ] Step 1: Introduce reply keyboard for navigation
   - [ ] Sub-step 1.1: Replace `get_main_menu_keyboard()`/`get_search_button_keyboard()` with `ReplyKeyboardMarkup`
     - **Directory**: `src/bot/handlers/`
@@ -246,7 +354,6 @@ Decision: NO SPLIT NEEDED
     - **Tests**: Adjust fixtures for message-based handlers
     - **Done**: All unit tests pass locally
     - **Changelog**: [Record assertion/fixture updates]
-
 ## Testing Strategy
 - [ ] Unit tests: navigation handlers, keyboard factories, state transitions in `tests/unit/test_bot_handlers/`
 - [ ] Integration tests: end-to-end conversation covering main menu → search → results → main menu in `tests/integration/`
