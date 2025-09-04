@@ -20,8 +20,8 @@ class TestSearchConversationRoomIntegration:
         """Test that conversation handler includes room search command."""
         handler = get_search_conversation_handler()
         
-        # Check that we have 2 entry points (start and search_room)
-        assert len(handler.entry_points) == 2
+        # Check that we have 3 entry points (start, search_room, search_floor)
+        assert len(handler.entry_points) == 3
         
         # Check that search_room command is registered as entry point
         entry_commands = []

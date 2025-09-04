@@ -8,7 +8,6 @@ using ConversationHandler states and reply keyboards.
 import logging
 import re
 from enum import IntEnum
-from typing import List
 
 from telegram import (
     Update,
@@ -17,13 +16,13 @@ from telegram import (
 from telegram.ext import ContextTypes
 
 from src.services.search_service import SearchService
-from src.models.participant import Participant
 
 logger = logging.getLogger(__name__)
 
 
 class RoomSearchStates(IntEnum):
     """Conversation states for room search flow."""
+
     WAITING_FOR_ROOM = 20
     SHOWING_ROOM_RESULTS = 21
 
@@ -31,14 +30,16 @@ class RoomSearchStates(IntEnum):
 def get_search_service():
     """
     Get search service instance.
-    
+
     This is a placeholder that should be replaced with proper dependency injection.
     """
     # TODO: Replace with proper DI container
     from src.data.airtable.airtable_client import AirtableClient
-    from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+    from src.data.airtable.airtable_participant_repo import (
+        AirtableParticipantRepository,
+    )
     from src.config.settings import get_settings
-    
+
     settings = get_settings()
     client = AirtableClient(settings.get_airtable_config())
     repository = AirtableParticipantRepository(client)
@@ -53,36 +54,38 @@ def get_room_search_keyboard() -> ReplyKeyboardMarkup:
     )
 
 
-async def handle_room_search_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def handle_room_search_command(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
     """
     Handle /search_room command.
-    
+
     Processes room search with optional room number parameter.
-    
+
     Args:
         update: Telegram update object
         context: Bot context
-        
+
     Returns:
         Next conversation state
     """
     user = update.effective_user
     message_text = update.message.text.strip()
-    
+
     logger.info(f"User {user.id} initiated room search: '{message_text}'")
-    
+
     # Parse room number from command if provided
     parts = message_text.split()
     if len(parts) > 1:
         room_number = parts[1]
         # Process room search directly
-        context.user_data['current_room'] = room_number
-        
+        context.user_data["current_room"] = room_number
+
         await update.message.reply_text(
             text=f"🔍 Ищу участников в комнате {room_number}...",
             reply_markup=get_room_search_keyboard(),
         )
-        
+
         # Process the search immediately
         return await process_room_search_with_number(update, context, room_number)
     else:
@@ -91,18 +94,20 @@ async def handle_room_search_command(update: Update, context: ContextTypes.DEFAU
             text="Введите номер комнаты для поиска:",
             reply_markup=get_room_search_keyboard(),
         )
-        
+
         return RoomSearchStates.WAITING_FOR_ROOM
 
 
-async def process_room_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def process_room_search(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
     """
     Process room search from user input.
-    
+
     Args:
         update: Telegram update object
         context: Bot context
-        
+
     Returns:
         Next conversation state
     """
@@ -110,68 +115,76 @@ async def process_room_search(update: Update, context: ContextTypes.DEFAULT_TYPE
     return await process_room_search_with_number(update, context, room_number)
 
 
-async def process_room_search_with_number(update: Update, context: ContextTypes.DEFAULT_TYPE, room_number: str) -> int:
+async def process_room_search_with_number(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, room_number: str
+) -> int:
     """
     Process room search with specific room number.
-    
+
     Args:
-        update: Telegram update object  
+        update: Telegram update object
         context: Bot context
         room_number: Room number to search
-        
+
     Returns:
         Next conversation state
     """
     user = update.effective_user
-    
+
     logger.info(f"User {user.id} searching room: '{room_number}'")
-    
+
     # Validate room number (should contain digits)
-    if not re.search(r'\d', room_number):
+    if not re.search(r"\d", room_number):
         await update.message.reply_text(
             text="❌ Пожалуйста, введите корректный номер комнаты (должен содержать цифры).",
             reply_markup=get_room_search_keyboard(),
         )
         return RoomSearchStates.WAITING_FOR_ROOM
-    
+
     try:
         # Get search service
         search_service = get_search_service()
-        
+
         # Search participants by room (for context storage)
         participants = await search_service.search_by_room(room_number)
-        
+
         # Get formatted results
-        formatted_results = await search_service.search_by_room_formatted(room_number, language="ru")
-        
+        formatted_results = await search_service.search_by_room_formatted(
+            room_number, language="ru"
+        )
+
         # Store results in user data
-        context.user_data['room_search_results'] = participants
-        context.user_data['current_room'] = room_number
-        
+        context.user_data["room_search_results"] = participants
+        context.user_data["current_room"] = room_number
+
         if formatted_results:
             # Create results message
             results_message = f"🏠 Найдено участников в комнате {room_number}: {len(formatted_results)}\n\n"
             results_message += "\n".join(formatted_results)
-            
-            logger.info(f"Found {len(formatted_results)} participants in room {room_number} for user {user.id}")
-            
+
+            logger.info(
+                f"Found {len(formatted_results)} participants in room {room_number} for user {user.id}"
+            )
+
         else:
             results_message = f"❌ В комнате {room_number} участники не найдены."
-            logger.info(f"No participants found in room {room_number} for user {user.id}")
-        
+            logger.info(
+                f"No participants found in room {room_number} for user {user.id}"
+            )
+
         # Send results
         await update.message.reply_text(
             text=results_message,
             reply_markup=get_room_search_keyboard(),
         )
-        
+
     except Exception as e:
         logger.error(f"Error during room search for user {user.id}: {e}")
-        
+
         # Send error message
         await update.message.reply_text(
             text="❌ Произошла ошибка при поиске. Попробуйте позже.",
             reply_markup=get_room_search_keyboard(),
         )
-    
+
     return RoomSearchStates.SHOWING_ROOM_RESULTS
