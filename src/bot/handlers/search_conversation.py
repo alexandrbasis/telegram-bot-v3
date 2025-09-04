@@ -28,6 +28,11 @@ from src.bot.handlers.room_search_handlers import (
     process_room_search,
     RoomSearchStates
 )
+from src.bot.handlers.floor_search_handlers import (
+    handle_floor_search_command,
+    process_floor_search,
+    FloorSearchStates
+)
 from src.bot.handlers.edit_participant_handlers import (
     show_participant_edit_menu,
     handle_field_edit_selection,
@@ -65,7 +70,8 @@ def get_search_conversation_handler() -> ConversationHandler:
     conversation_handler = ConversationHandler(
         entry_points=[
             CommandHandler("start", start_command),
-            CommandHandler("search_room", handle_room_search_command)
+            CommandHandler("search_room", handle_room_search_command),
+            CommandHandler("search_floor", handle_floor_search_command)
         ],
         states={
             # === SEARCH STATES ===
@@ -101,6 +107,20 @@ def get_search_conversation_handler() -> ConversationHandler:
                 MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
             ],
             RoomSearchStates.SHOWING_ROOM_RESULTS: [
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
+                MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
+            ],
+            
+            # === FLOOR SEARCH STATES ===
+            FloorSearchStates.WAITING_FOR_FLOOR: [
+                # Floor number input
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(r"^🏠 Главное меню$|^🔍 Поиск участников$"), process_floor_search),
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
+                MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
+            ],
+            FloorSearchStates.SHOWING_FLOOR_RESULTS: [
                 # Navigation via reply keyboard
                 MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
                 MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
