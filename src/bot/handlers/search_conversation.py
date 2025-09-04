@@ -23,6 +23,11 @@ from src.bot.handlers.search_handlers import (
     handle_participant_selection,
     SearchStates
 )
+from src.bot.handlers.room_search_handlers import (
+    handle_room_search_command,
+    process_room_search,
+    RoomSearchStates
+)
 from src.bot.handlers.edit_participant_handlers import (
     show_participant_edit_menu,
     handle_field_edit_selection,
@@ -59,7 +64,8 @@ def get_search_conversation_handler() -> ConversationHandler:
     
     conversation_handler = ConversationHandler(
         entry_points=[
-            CommandHandler("start", start_command)
+            CommandHandler("start", start_command),
+            CommandHandler("search_room", handle_room_search_command)
         ],
         states={
             # === SEARCH STATES ===
@@ -84,6 +90,20 @@ def get_search_conversation_handler() -> ConversationHandler:
                 CallbackQueryHandler(handle_participant_selection, pattern="^select_participant:"),
                 # Backward compat for inline main menu button if present
                 CallbackQueryHandler(main_menu_button, pattern="^main_menu$"),
+            ],
+            
+            # === ROOM SEARCH STATES ===
+            RoomSearchStates.WAITING_FOR_ROOM: [
+                # Room number input
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(r"^🏠 Главное меню$|^🔍 Поиск участников$"), process_room_search),
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
+                MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
+            ],
+            RoomSearchStates.SHOWING_ROOM_RESULTS: [
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
+                MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
             ],
             
             # === EDITING STATES ===
