@@ -44,24 +44,35 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - `AirtableParticipantRepo` concrete implementation
 - Support for search, retrieval, and **selective field updates**
 
-**New Capabilities (2025-08-29)**:
-- `update_by_id()` method for partial field updates
+**New Capabilities**:
+- `update_by_id()` method for partial field updates (2025-08-29)
+- **Room/Floor search methods** (2025-09-04):
+  - `find_by_room_number(room: str)` - Filter participants by room assignment
+  - `find_by_floor(floor: Union[int, str])` - Filter participants by floor
 - Field mapping between internal models and Airtable schema
 - Rate limiting and error recovery for update operations
+- **Security enhancements** with formula injection prevention
 
 ### Service Layer Architecture
 
-**Participant Update Service** (New - 2025-08-29):
+**Participant Update Service** (2025-08-29):
 - Centralized validation logic for all field types
 - Russian error message generation
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
+
+**Search Service Extensions** (2025-09-04):
+- **Room-based search**: `search_by_room(room: str)` with input validation
+- **Floor-based search**: `search_by_floor(floor: Union[int, str])` with type conversion
+- **Formatted results**: `search_by_room_formatted(room: str)` for UI consumption
+- **Validation utilities**: Comprehensive input validation with `ValidationResult` objects
 
 **Validation Strategies**:
 - **Required Fields**: Russian name (min length 1)
 - **Optional Text Fields**: Church, location, contact information
 - **Enum Fields**: Button-based selection with predefined options
 - **Special Fields**: Payment amount (integer ≥ 0), payment date (YYYY-MM-DD)
+- **Room/Floor Fields**: Alphanumeric room numbers, Union[int, str] floor support
 
 ### User Interface Architecture
 
@@ -122,10 +133,11 @@ UI Response ← Keyboard ← Error/Success ← Update Result ← API Response
 - Keyboard factory pattern simplifies UI management
 
 ### Testability
-- 56 unit tests for editing functionality (100% pass rate)
+- 75+ unit tests including editing and room/floor search functionality (100% pass rate)
 - Mock repositories for isolated testing
 - Service layer testing with comprehensive validation scenarios
 - Handler testing with conversation state simulation
+- **Room/Floor search testing**: 34 comprehensive tests covering repository, service, validation, and security layers
 
 ## Error Handling Strategy
 

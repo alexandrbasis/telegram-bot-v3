@@ -300,6 +300,137 @@ def test_field_validation():
 - **Memory Usage**: Conversation context < 1MB per user
 - **Rate Limiting**: Airtable API calls within limits
 
+## Room and Floor Search Testing
+
+### Test Coverage Summary (2025-09-04)
+**Total Tests**: 34 tests (Repository: 12, Service: 6, Validation: 14, Security: 2)
+**Pass Rate**: 100%
+**Coverage Areas**: Room/floor search methods, input validation, security enhancements, error handling
+
+#### Repository Testing (`test_airtable_participant_repo.py`)
+**Tests**: 12 tests covering room and floor search methods (lines 764-894)
+**Coverage**:
+- `find_by_room_number()` method with proper field mapping
+- `find_by_floor()` method with Union[int, str] support
+- Empty result handling and error cases
+- Airtable field ID validation (Floor: fldlzG1sVg01hsy2g, RoomNumber: fldJTPjo8AHQaADVu)
+- Participant object conversion and data integrity
+
+**Key Test Scenarios**:
+```python
+# Room search testing
+test_find_by_room_number_success()
+test_find_by_room_number_empty_results()
+test_find_by_room_number_error_handling()
+
+# Floor search testing  
+test_find_by_floor_success_with_int()
+test_find_by_floor_success_with_str()
+test_find_by_floor_empty_results()
+test_find_by_floor_error_handling()
+
+# Field mapping validation
+test_room_floor_field_mapping_accuracy()
+```
+
+#### Service Layer Testing (`test_search_service.py`)
+**Tests**: 6 tests covering service layer room/floor methods (lines 583-684)
+**Coverage**:
+- `search_by_room()` method with input validation
+- `search_by_floor()` method with type conversion
+- `search_by_room_formatted()` method with result formatting
+- Async operation handling and error propagation
+- Integration with validation utilities
+
+**Key Test Scenarios**:
+```python
+# Service method testing
+test_search_by_room_with_validation()
+test_search_by_floor_with_type_conversion()
+test_search_by_room_formatted_output()
+
+# Error handling testing
+test_search_service_room_validation_errors()
+test_search_service_floor_validation_errors()
+test_search_service_repository_error_propagation()
+```
+
+#### Validation Testing (`test_validation.py`)
+**Tests**: 14 comprehensive validation tests (NEW FILE)
+**Coverage**:
+- Room number validation with edge cases
+- Floor validation with Union[int, str] support
+- ValidationResult dataclass functionality
+- Empty input handling and error messages
+- Whitespace trimming and sanitization
+
+**Key Test Scenarios**:
+```python
+# Room validation testing
+test_validate_room_number_valid_cases()
+test_validate_room_number_invalid_cases()
+test_validate_room_number_edge_cases()
+test_validate_room_number_whitespace_handling()
+
+# Floor validation testing
+test_validate_floor_valid_int()
+test_validate_floor_valid_str()
+test_validate_floor_invalid_cases()
+test_validate_floor_type_conversion()
+
+# ValidationResult testing
+test_validation_result_success_case()
+test_validation_result_error_case()
+```
+
+#### Security Testing (`test_airtable_client.py`)
+**Tests**: 2 formula injection prevention tests (lines 731-750)
+**Coverage**:
+- Single quote escaping in search formulas
+- Special character handling (O'Connor, Room 'A')
+- Formula construction security validation
+- Injection attack prevention
+
+**Key Test Scenarios**:
+```python
+# Security testing
+test_search_by_field_escapes_single_quotes()
+test_search_by_field_handles_complex_quotes()
+```
+
+### Integration with Existing Test Suite
+
+#### Test Infrastructure Enhancements
+- **File**: `tests/conftest.py` (NEW FILE)
+- **Purpose**: Pytest configuration for src module imports
+- **Benefit**: Eliminates PYTHONPATH setup requirements for test execution
+- **Coverage**: Ensures all 34 new tests run without environment configuration
+
+#### Async Testing Patterns
+- **Framework**: pytest-asyncio with @pytest.mark.asyncio decorators
+- **Coverage**: All service layer methods use async/await patterns
+- **Integration**: Follows existing async test patterns in the codebase
+- **Validation**: Ensures proper async repository method calls
+
+### Test Quality Assurance
+
+#### Code Review Fixes Applied
+- **Async/Sync Mismatch**: All service methods converted to async with proper await calls
+- **Type Annotations**: Abstract repository methods added for proper type checking
+- **Error Handling**: Comprehensive exception handling with graceful degradation
+- **Security Enhancement**: Formula injection prevention with quote escaping
+
+#### Test Execution Verification
+```bash
+# Room/floor search tests
+./venv/bin/pytest tests/unit/test_data/test_airtable/test_airtable_participant_repo.py::TestRoomFloorSearch -v
+./venv/bin/pytest tests/unit/test_services/test_search_service.py::TestRoomFloorSearch -v
+./venv/bin/pytest tests/unit/test_utils/test_validation.py -v
+
+# Security tests
+./venv/bin/pytest tests/unit/test_data/test_airtable/test_airtable_client.py::TestFormulaEscaping -v
+```
+
 ## Testing Roadmap
 
 ### Current Status
@@ -316,6 +447,10 @@ def test_field_validation():
 - [x] ✅ Regression testing for search button functionality (2 tests)
 - [x] ✅ State collision prevention testing and validation
 - [x] ✅ ConversationHandler configuration testing (per_message parameter)
+- [x] ✅ **Room and floor search functionality testing (34 comprehensive tests)**
+- [x] ✅ **Input validation utilities testing with edge case coverage**
+- [x] ✅ **Security enhancement testing (formula injection prevention)**
+- [x] ✅ **Test infrastructure improvements (conftest.py for module imports)**
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 
