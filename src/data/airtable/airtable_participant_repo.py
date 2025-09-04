@@ -242,8 +242,9 @@ class AirtableParticipantRepository(ParticipantRepository):
             'payment_status': 'PaymentStatus',
             'payment_amount': 'PaymentAmount',
             'payment_date': 'PaymentDate',
-            'floor': 'Floor',
-            'room_number': 'RoomNumber'
+            # Exact field names from live Airtable schema
+            'floor': ' Floor',
+            'room_number': 'Room Number'
         }
         
         airtable_fields = {}
@@ -321,8 +322,8 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by full name (RU): {full_name_ru}")
             
-            # Search by Full Name (RU) field in Airtable
-            records = await self.client.search_by_field("Full Name (RU)", full_name_ru)
+            # Search by FullNameRU field in Airtable (exact name)
+            records = await self.client.search_by_field("FullNameRU", full_name_ru)
             
             if not records:
                 return None
@@ -403,9 +404,9 @@ class AirtableParticipantRepository(ParticipantRepository):
             
             for field, value in criteria.items():
                 if field == "full_name_ru":
-                    conditions.append(f"SEARCH('{value}', {{Full Name (RU)}})")
+                    conditions.append(f"SEARCH('{value}', {{FullNameRU}})")
                 elif field == "full_name_en":
-                    conditions.append(f"SEARCH('{value}', {{Full Name (EN)}})")
+                    conditions.append(f"SEARCH('{value}', {{FullNameEN}})")
                 elif field == "church":
                     conditions.append(f"{{Church}} = '{value}'")
                 elif field == "role":
@@ -413,7 +414,7 @@ class AirtableParticipantRepository(ParticipantRepository):
                 elif field == "department":
                     conditions.append(f"{{Department}} = '{value}'")
                 elif field == "payment_status":
-                    conditions.append(f"{{Payment Status}} = '{value}'")
+                    conditions.append(f"{{PaymentStatus}} = '{value}'")
                 elif field == "gender":
                     conditions.append(f"{{Gender}} = '{value}'")
                 else:
@@ -493,8 +494,8 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participants by payment status: {payment_status}")
             
-            # Search by Payment Status field in Airtable
-            records = await self.client.search_by_field("Payment Status", payment_status)
+            # Search by PaymentStatus field in Airtable
+            records = await self.client.search_by_field("PaymentStatus", payment_status)
             
             # Convert to Participant objects
             participants = []
@@ -542,8 +543,8 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by contact information: {contact_info}")
             
-            # Search by Contact Information field in Airtable
-            records = await self.client.search_by_field("Contact Information", contact_info)
+            # Search by ContactInformation field in Airtable
+            records = await self.client.search_by_field("ContactInformation", contact_info)
             
             if not records:
                 return None
@@ -572,8 +573,10 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by Telegram ID: {telegram_id}")
             
-            # Search by Telegram ID field in Airtable
-            records = await self.client.search_by_field("Telegram ID", telegram_id)
+            # The current Airtable schema does not have a dedicated Telegram ID field.
+            # Gracefully return None to avoid 422 errors when this method is used.
+            logger.warning("Telegram ID field not present in Airtable schema; skipping lookup")
+            return None
             
             if not records:
                 return None

@@ -393,8 +393,8 @@ async def show_field_text_prompt(update: Update, context: ContextTypes.DEFAULT_T
         'submitted_by': "Отправьте имя того, кто подал:",
         'payment_amount': "Отправьте сумму платежа (только цифры):",
         'payment_date': "Отправьте дату в формате ГГГГ-ММ-ДД:",
-        'floor': "Отправьте этаж (число или текст, например: 1, Ground):",
-        'room_number': "Отправьте номер комнаты (буквы и цифры):"
+        'floor': "Отправьте этаж (только цифры):",
+        'room_number': "Отправьте номер комнаты (только цифры):"
     }
     
     prompt = field_prompts.get(field_name, f"Отправьте новое значение для {field_name}:")

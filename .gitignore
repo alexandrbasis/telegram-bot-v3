@@ -112,3 +112,6 @@ dmypy.json
 # Telegram bot specific
 bot_token.txt
 config.ini
+
+# Documentation (local reference only)
+Anthropic Docs/

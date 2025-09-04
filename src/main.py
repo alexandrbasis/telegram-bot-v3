@@ -9,7 +9,13 @@ import asyncio
 import logging
 from typing import NoReturn, Optional
 
-from telegram.ext import Application
+from telegram import Update
+from telegram.ext import Application, ContextTypes
+from telegram.error import Conflict, NetworkError, TimedOut, RetryAfter
+from pathlib import Path
+import tempfile
+
+from src.utils.single_instance import InstanceLock
 
 from src.config.settings import get_settings
 from src.bot.handlers.search_conversation import get_search_conversation_handler
@@ -102,10 +108,31 @@ def create_application() -> Application:
     
     logger.info("Building Telegram Application")
     
-    # Create Application
+    async def post_init(app: Application) -> None:
+        """Post-init hook to ensure polling mode is clean and log context."""
+        try:
+            info = await app.bot.get_webhook_info()
+            if info and info.url:
+                logger.warning(
+                    "Webhook is configured (%s). Deleting to enable polling mode...",
+                    info.url,
+                )
+                await app.bot.delete_webhook(drop_pending_updates=True)
+                logger.info("Webhook deleted; proceeding with polling.")
+        except Exception as e:
+            logger.warning(f"Failed to check/delete webhook: {e}")
+
+        try:
+            me = await app.bot.get_me()
+            logger.info("Bot identity: @%s (id=%s)", getattr(me, "username", "?"), getattr(me, "id", "?"))
+        except Exception:
+            # Non-fatal: continue without bot identity
+            pass
+
     app = (
         Application.builder()
         .token(settings.telegram.bot_token)
+        .post_init(post_init)
         .build()
     )
     
@@ -114,6 +141,46 @@ def create_application() -> Application:
     search_handler = get_search_conversation_handler()
     app.add_handler(search_handler)
     
+    # Register global error handler for better diagnostics
+    async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        err = getattr(context, "error", None)
+        # Collect brief update context
+        summary = {}
+        try:
+            if isinstance(update, Update):
+                chat = getattr(update, "effective_chat", None)
+                user = getattr(update, "effective_user", None)
+                summary = {
+                    "chat_id": getattr(chat, "id", None),
+                    "user_id": getattr(user, "id", None),
+                    "text": getattr(getattr(update, "message", None), "text", None),
+                    "callback_data": getattr(getattr(update, "callback_query", None), "data", None),
+                }
+            else:
+                summary = {"update": str(update)}
+        except Exception:
+            summary = {"update": repr(update)}
+
+        # Log the actual exception object, if available
+        if err:
+            # Classify common network errors for clearer logs
+            if isinstance(err, Conflict):
+                logger.error(
+                    "Polling conflict detected (another instance may be running). Context: %s",
+                    summary,
+                    exc_info=err,
+                )
+            elif isinstance(err, (RetryAfter, TimedOut)):
+                logger.warning("Temporary Telegram API backoff/timeout: %s | %s", err, summary)
+            elif isinstance(err, NetworkError):
+                logger.warning("Network error while polling: %s | %s", err, summary)
+            else:
+                logger.error("Unhandled exception while handling update: %s", summary, exc_info=err)
+        else:
+            logger.error("Unhandled exception while handling update: %s", summary)
+
+    app.add_error_handler(error_handler)
+
     logger.info("Bot application created and configured successfully")
     return app
 
@@ -134,9 +201,25 @@ def run_bot() -> None:
         # Create and configure application
         app = create_application()
         
+        # Ensure a current event loop exists for PTB on Python 3.11+
+        try:
+            # Create a loop only if there is none running/available
+            asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
         # Start the bot with polling - this handles everything
         logger.info("Bot starting with polling mode")
-        app.run_polling()
+        # Drop pending updates to avoid reprocessing backlog after restarts
+        try:
+            app.run_polling(drop_pending_updates=True)
+        except Conflict as e:
+            # Provide a clearer error message for the common multi-instance issue
+            logger.error(
+                "Polling conflict: %s. Likely another bot instance or service is polling this token.",
+                str(e),
+            )
+            raise
         
     except KeyboardInterrupt:
         logger.info("Bot stopped by user interrupt")
@@ -168,4 +251,12 @@ def main() -> NoReturn:
 
 
 if __name__ == "__main__":
-    main()
+    # Ensure only a single instance of the bot runs per host
+    # Use a lock file in the OS temp directory for cross-session safety
+    lock_file = Path(tempfile.gettempdir()) / "telegram-bot-v3.lock"
+    try:
+        with InstanceLock(lock_file):
+            main()
+    except RuntimeError as e:
+        # If another instance holds the lock, inform and exit gracefully
+        print(str(e))

@@ -134,9 +134,11 @@ class AirtableFieldMapping:
         # Date fields
         "payment_date": "PaymentDate",
 
-        # Accommodation
-        "floor": "Floor",
-        "room_number": "RoomNumber",
+        # Accommodation (note: exact Airtable field names)
+        # The Airtable schema has a leading space in " Floor"
+        # and a space in "Room Number".
+        "floor": " Floor",
+        "room_number": "Room Number",
         
         # Record ID (special field)
         "record_id": "id"
@@ -160,10 +162,9 @@ class AirtableFieldMapping:
         "PaymentStatus": FieldType.SINGLE_SELECT,
         "PaymentAmount": FieldType.NUMBER,
         "PaymentDate": FieldType.DATE,
-        # Accommodation fields treated as text for validation mapping;
-        # Update here if Airtable schema uses numeric for Floor
-        "Floor": FieldType.TEXT,
-        "RoomNumber": FieldType.TEXT
+        # Accommodation fields (numeric per live Airtable schema)
+        " Floor": FieldType.NUMBER,
+        "Room Number": FieldType.NUMBER
     }
     
     # Required fields (cannot be None/empty)
@@ -207,14 +208,14 @@ class AirtableFieldMapping:
         "PaymentDate": {
             "description": "Date when payment was received"
         },
-        # Basic optional constraints for accommodation fields
-        "Floor": {
-            "max_length": 20,
-            "description": "Accommodation floor (integer or string)"
+        # Basic constraints for accommodation fields (numeric)
+        " Floor": {
+            "min_value": 0,
+            "description": "Accommodation floor (numeric)"
         },
-        "RoomNumber": {
-            "max_length": 20,
-            "description": "Accommodation room identifier (alphanumeric)"
+        "Room Number": {
+            "min_value": 0,
+            "description": "Accommodation room number (numeric)"
         }
     }
     

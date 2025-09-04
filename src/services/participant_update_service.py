@@ -123,37 +123,24 @@ class ParticipantUpdateService:
         except Exception:
             raise ValidationError("Неверный формат даты. Используйте ГГГГ-ММ-ДД")
 
-    def _validate_floor(self, user_input: str) -> any:
-        """Validate floor field input (accepts integer or text)."""
+    def _validate_floor(self, user_input: str) -> int | str:
+        """Validate floor field input (numeric in Airtable)."""
         # Allow clearing the field
         if user_input == "":
             return ""
-        # Try integer first
-        try:
-            # Allow simple integers like "1", "02"
-            if user_input.isdigit():
-                return int(user_input)
-        except Exception:
-            pass
-        # Otherwise, accept non-empty string (e.g., "Ground", "2A")
-        value = user_input.strip()
-        if not value:
-            return ""
-        if len(value) > 20:
-            raise ValidationError("Этаж слишком длинное значение (макс. 20 символов)")
-        return value
+        # Must be digits only (Airtable field is number)
+        if user_input.isdigit():
+            return int(user_input)
+        raise ValidationError("Этаж должен быть числом (только цифры)")
 
-    def _validate_room_number(self, user_input: str) -> str:
-        """Validate room number input (alphanumeric plus simple separators)."""
+    def _validate_room_number(self, user_input: str) -> int | str:
+        """Validate room number (numeric in Airtable)."""
         value = user_input.strip()
         if value == "":
             return ""
-        if len(value) > 20:
-            raise ValidationError("Номер комнаты слишком длинный (макс. 20 символов)")
-        import re
-        if not re.fullmatch(r"[A-Za-zА-Яа-я0-9\-_/ ]+", value):
-            raise ValidationError("Номер комнаты должен быть буквенно-цифровым (допустимы -, _, / и пробел)")
-        return value
+        if value.isdigit():
+            return int(value)
+        raise ValidationError("Номер комнаты должен быть числом (только цифры)")
     
     def convert_button_value(self, field_name: str, selected_value: str) -> Union[Gender, Size, Role, Department, PaymentStatus]:
         """

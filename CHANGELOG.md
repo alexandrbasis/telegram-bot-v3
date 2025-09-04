@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Single-instance process guard for the bot using a cross-platform file lock to prevent concurrent long-polling sessions that trigger Telegram "terminated by other getUpdates request" conflicts (`src/utils/single_instance.py`, `src/main.py:~150`)
+- Safer startup by dropping pending updates on polling start to avoid backlog reprocessing after restarts (`src/main.py:~142`)
+- **Floor and Room Number Fields for Participant Accommodation Tracking** - Comprehensive accommodation information tracking system enabling event organizers to manage complete participant location details (AGB-25, PR #17, SHA: 91001747d70f50b34366c97399d23451e9296b55, merged 2025-09-03T16:52:59Z)
+  - Enhanced Participant model with flexible accommodation fields supporting numeric floors (1, 2, 3) and descriptive formats ("Ground", "Basement") plus alphanumeric room numbers ("101", "A12B", "Suite 100") (`src/models/participant.py:141-152,267-268`)
+  - Complete Airtable integration with field mappings and repository support for accommodation data persistence across CRUD operations (`src/config/field_mappings.py:137-139,165-166,211-218`)
+  - Rich search result display formatting showing accommodation information as "Floor: X, Room: Y" with N/A fallbacks for empty values (`src/services/search_service.py:124-127,215-216`)
+  - Comprehensive validation service with accommodation-specific validation logic supporting mixed data types and Russian error messages (`src/services/participant_update_service.py:38,69-73,126-156`)
+  - Complete edit interface integration with accommodation field buttons, prompts, and Russian language support throughout the editing workflow (`src/bot/keyboards/edit_keyboards.py:39-40,89,92` and `src/bot/handlers/edit_participant_handlers.py` accommodation handling)
+  - Comprehensive test coverage with 22 new accommodation-focused tests across 3 test files achieving 118/119 tests passing (99.2% success rate)
+  - Documentation updates across 6 files including comprehensive field mapping specifications, database structure details, and user interface documentation
+  - Zero breaking changes with complete backward compatibility ensuring existing participant records function without modification
+  - Users can now view and edit complete participant accommodation details through intuitive search results and comprehensive editing interface with flexible data formats
 - **Enhanced Participant Display Transparency During Editing and After Save** - Comprehensive transparency improvements throughout the participant editing workflow eliminating minimal success messages and enhancing user context visibility (AGB-23, completed 2025-09-02T13:15:00Z)
   - Complete participant display after save operations replacing simple success messages with formatted participant information using `format_participant_result()` integration (`src/bot/handlers/edit_participant_handlers.py:685-702`)
   - Enhanced context recovery mechanisms using participant reconstruction from `editing_changes` when `current_participant` context is lost during editing sessions (`src/bot/handlers/edit_participant_handlers.py:468-494`)
