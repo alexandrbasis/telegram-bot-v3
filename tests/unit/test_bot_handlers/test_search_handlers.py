@@ -7,7 +7,15 @@ state management and Russian interface.
 
 import pytest
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from telegram import Update, CallbackQuery, Message, User, Chat, InlineKeyboardMarkup
+from telegram import (
+    Update,
+    CallbackQuery,
+    Message,
+    User,
+    Chat,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+)
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.search_handlers import (
@@ -29,9 +37,9 @@ class TestSearchStates:
     
     def test_search_states_values(self):
         """Test that search states have correct integer values."""
-        assert SearchStates.MAIN_MENU == 0
-        assert SearchStates.WAITING_FOR_NAME == 1
-        assert SearchStates.SHOWING_RESULTS == 2
+        assert SearchStates.MAIN_MENU == 10
+        assert SearchStates.WAITING_FOR_NAME == 11
+        assert SearchStates.SHOWING_RESULTS == 12
 
 
 class TestStartCommandHandler:
@@ -83,10 +91,10 @@ class TestStartCommandHandler:
         assert "Tres Dias" in message_text
         assert "участников" in message_text
         
-        # Should include search button keyboard
+        # Should include reply keyboard for navigation
         assert 'reply_markup' in call_args[1]
         keyboard = call_args[1]['reply_markup']
-        assert isinstance(keyboard, InlineKeyboardMarkup)
+        assert isinstance(keyboard, ReplyKeyboardMarkup)
         
         # Should return MAIN_MENU state
         assert result == SearchStates.MAIN_MENU
@@ -225,18 +233,21 @@ class TestProcessNameSearchHandler:
                 "Александр Иванов", mock_repo.list_all.return_value
             )
             
-            # Should reply with results
-            mock_update_message.message.reply_text.assert_called_once()
-            call_args = mock_update_message.message.reply_text.call_args
-            
-            # Should contain Russian results text
-            message_text = call_args[1]['text']
+            # Should reply twice: results (inline) and navigation keyboard update
+            assert mock_update_message.message.reply_text.await_count == 2
+            first_call = mock_update_message.message.reply_text.await_args_list[0]
+            second_call = mock_update_message.message.reply_text.await_args_list[1]
+
+            # First call: results with inline selection
+            message_text = first_call.kwargs['text']
             assert "Найдено участников" in message_text
             assert "Александр Иванов" in message_text
             assert "Александра Петрова" in message_text
-            
-            # Should include main menu button
-            assert 'reply_markup' in call_args[1]
+            assert isinstance(first_call.kwargs['reply_markup'], InlineKeyboardMarkup)
+
+            # Second call: navigation keyboard update
+            assert 'reply_markup' in second_call.kwargs
+            assert isinstance(second_call.kwargs['reply_markup'], ReplyKeyboardMarkup)
             
             # Should store results in user_data
             assert mock_context.user_data['search_results'] == sample_search_results
@@ -272,9 +283,9 @@ class TestProcessNameSearchHandler:
             message_text = call_args[1]['text']
             assert "Участники не найдены" in message_text
             
-            # Should include main menu button
+            # Should include reply keyboard for navigation
             assert 'reply_markup' in call_args[1]
-            
+
             # Should return SHOWING_RESULTS state
             assert result == SearchStates.SHOWING_RESULTS
     
@@ -348,17 +359,18 @@ class TestMainMenuButtonHandler:
         # Should answer callback query
         mock_callback_query.callback_query.answer.assert_called_once()
         
-        # Should edit message back to main menu
+        # Should edit message back to main menu (text only) and send reply keyboard
         mock_callback_query.callback_query.message.edit_text.assert_called_once()
         call_args = mock_callback_query.callback_query.message.edit_text.call_args
-        
-        # Should contain Russian welcome message
-        message_text = call_args[1]['text']
+        message_text = call_args.kwargs['text']
         assert "Добро пожаловать" in message_text
         assert "участников" in message_text
-        
-        # Should include search button keyboard
-        assert 'reply_markup' in call_args[1]
+
+        # A separate reply_text call should include reply keyboard
+        mock_callback_query.callback_query.message.reply_text.assert_called_once()
+        reply_call = mock_callback_query.callback_query.message.reply_text.call_args
+        assert 'reply_markup' in reply_call.kwargs
+        assert isinstance(reply_call.kwargs['reply_markup'], ReplyKeyboardMarkup)
         
         # Should clear search results
         assert mock_context.user_data['search_results'] == []
@@ -380,7 +392,7 @@ class TestHandlerIntegration:
         
         # Each handler should return the expected next state
         with patch('src.bot.handlers.search_handlers.get_main_menu_keyboard'), \
-             patch('src.bot.handlers.search_handlers.get_search_button_keyboard'):
+             patch('src.bot.handlers.search_handlers.get_waiting_for_name_keyboard'):
             
             # Mock message for start command
             mock_update.message = Mock()
@@ -395,6 +407,9 @@ class TestHandlerIntegration:
             mock_update.callback_query.answer = AsyncMock()
             mock_update.callback_query.message = Mock()
             mock_update.callback_query.message.edit_text = AsyncMock()
+            mock_update.callback_query.callback_query = None
+            # Our handler also sends a follow-up message to set reply keyboard
+            mock_update.callback_query.message.reply_text = AsyncMock()
             mock_update.message = None
             
             search_button_result = await search_button(mock_update, mock_context)
@@ -472,16 +487,19 @@ class TestEnhancedSearchHandlers:
             # Should call enhanced search method
             mock_repo.search_by_name_enhanced.assert_called_once_with("Александр", threshold=0.8, limit=5)
             
-            # Should reply with rich formatted results
-            mock_reply.assert_called_once()
-            call_args = mock_reply.call_args
-            
-            message_text = call_args[1]['text']
+            # Should reply twice: results (inline) and navigation keyboard update
+            assert mock_reply.await_count == 2
+            first_call = mock_reply.await_args_list[0]
+            second_call = mock_reply.await_args_list[1]
+
+            message_text = first_call.kwargs['text']
             assert "Найдено участников: 2" in message_text
             assert "Александр Иванов (Alexander Ivanov) - TEAM, Kitchen" in message_text
             assert "Мария Петрова (Maria Petrova) - CANDIDATE, Worship" in message_text
             assert "Высокое совпадение" in message_text  # Match quality labels instead of percentages
-            assert "Высокое совпадение" in message_text
+            assert isinstance(first_call.kwargs['reply_markup'], InlineKeyboardMarkup)
+            # Navigation keyboard update
+            assert isinstance(second_call.kwargs['reply_markup'], ReplyKeyboardMarkup)
             
             # Should return SHOWING_RESULTS state
             assert result == SearchStates.SHOWING_RESULTS
@@ -626,9 +644,9 @@ class TestParticipantSelectionButtons:
         
         keyboard = create_participant_selection_keyboard(results)
         
-        # Should have 1 button with participant name
+        # Should have 1 button with participant name (no inline main menu)
         assert isinstance(keyboard, InlineKeyboardMarkup)
-        assert len(keyboard.inline_keyboard) == 2  # 1 participant button + 1 main menu button
+        assert len(keyboard.inline_keyboard) == 1
         assert len(keyboard.inline_keyboard[0]) == 1  # 1 button in first row
         
         participant_button = keyboard.inline_keyboard[0][0]
@@ -654,9 +672,9 @@ class TestParticipantSelectionButtons:
         
         keyboard = create_participant_selection_keyboard(results)
         
-        # Should have 3 participant buttons + 1 main menu button = 4 rows
+        # Should have 3 participant button rows (no inline main menu)
         assert isinstance(keyboard, InlineKeyboardMarkup)
-        assert len(keyboard.inline_keyboard) == 4
+        assert len(keyboard.inline_keyboard) == 3
         
         # Check participant buttons
         for i in range(3):
@@ -679,9 +697,9 @@ class TestParticipantSelectionButtons:
             
         keyboard = create_participant_selection_keyboard(results)
         
-        # Should limit to 5 participant buttons + 1 main menu = 6 rows
+        # Should limit to 5 participant button rows (no inline main menu)
         assert isinstance(keyboard, InlineKeyboardMarkup)
-        assert len(keyboard.inline_keyboard) == 6
+        assert len(keyboard.inline_keyboard) == 5
         
         # Check first 5 are participant buttons
         for i in range(5):
@@ -739,11 +757,9 @@ class TestParticipantSelectionButtons:
         
         keyboard = create_participant_selection_keyboard(results)
         
-        # Should only have main menu button
+        # Should have no rows when there are no results (navigation is via reply keyboard)
         assert isinstance(keyboard, InlineKeyboardMarkup)
-        assert len(keyboard.inline_keyboard) == 1
-        assert keyboard.inline_keyboard[0][0].text == "🏠 Главное меню"
-        assert keyboard.inline_keyboard[0][0].callback_data == "main_menu"
+        assert len(keyboard.inline_keyboard) == 0
 
 
 class TestUserInteractionLogging:
@@ -993,6 +1009,8 @@ class TestUserInteractionLogging:
         callback_query.answer = AsyncMock()
         callback_query.message = Mock()
         callback_query.message.edit_text = AsyncMock()
+        # Our handler also sends a follow-up message to set reply keyboard
+        callback_query.message.reply_text = AsyncMock()
         
         update.callback_query = callback_query
         context.user_data = {}
@@ -1002,5 +1020,3 @@ class TestUserInteractionLogging:
         
         # Verify logger was not instantiated when disabled
         mock_logger_class.assert_not_called()
-
-

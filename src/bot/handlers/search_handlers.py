@@ -9,7 +9,13 @@ import logging
 from enum import IntEnum
 from typing import List
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+)
 from telegram.ext import ContextTypes
 
 from src.services.search_service import SearchService, SearchResult, format_match_quality
@@ -68,20 +74,33 @@ def get_user_interaction_logger():
         return None
 
 
-def get_main_menu_keyboard() -> InlineKeyboardMarkup:
-    """Get main menu keyboard with search button."""
-    keyboard = [
-        [InlineKeyboardButton("🔍 Поиск участников", callback_data="search")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+NAV_SEARCH = "🔍 Поиск участников"
+NAV_MAIN_MENU = "🏠 Главное меню"
+NAV_CANCEL = "❌ Отмена"
 
 
-def get_search_button_keyboard() -> InlineKeyboardMarkup:
-    """Get keyboard with main menu button for search results."""
-    keyboard = [
-        [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
+    """Get main menu reply keyboard with search button."""
+    keyboard = [[NAV_SEARCH]]
+    return ReplyKeyboardMarkup(
+        keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
+    )
+
+
+def get_waiting_for_name_keyboard() -> ReplyKeyboardMarkup:
+    """Reply keyboard shown while waiting for name input."""
+    keyboard = [[NAV_MAIN_MENU, NAV_CANCEL]]
+    return ReplyKeyboardMarkup(
+        keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
+    )
+
+
+def get_results_navigation_keyboard() -> ReplyKeyboardMarkup:
+    """Reply keyboard shown while viewing results (navigation only)."""
+    keyboard = [[NAV_SEARCH, NAV_MAIN_MENU]]
+    return ReplyKeyboardMarkup(
+        keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
+    )
 
 
 def create_participant_selection_keyboard(search_results: List[SearchResult]) -> InlineKeyboardMarkup:
@@ -121,8 +140,7 @@ def create_participant_selection_keyboard(search_results: List[SearchResult]) ->
         
         keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
     
-    # Always add main menu button at the end
-    keyboard.append([InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")])
+    # Navigation is now handled by ReplyKeyboardMarkup; no inline main menu button
     
     return InlineKeyboardMarkup(keyboard)
 
@@ -154,7 +172,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     
     await update.message.reply_text(
         text=welcome_message,
-        reply_markup=get_main_menu_keyboard()
+        reply_markup=get_main_menu_keyboard(),
     )
     
     return SearchStates.MAIN_MENU
@@ -173,18 +191,24 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     Returns:
         Next conversation state (WAITING_FOR_NAME)
     """
-    query = update.callback_query
-    await query.answer()
-    
-    user = query.from_user
+    query = getattr(update, "callback_query", None)
+    message = getattr(update, "message", None)
+
+    if query:
+        await query.answer()
+        user = query.from_user
+        button_data = query.data
+    else:
+        user = update.effective_user
+        button_data = NAV_SEARCH
     user_logger = get_user_interaction_logger()
     
     # Log button click if logging is enabled
     if user_logger:
         user_logger.log_button_click(
             user_id=user.id,
-            button_data=query.data,
-            username=getattr(user, 'username', None)
+            button_data=button_data,
+            username=getattr(user, 'username', None),
         )
     
     logger.info(f"User {user.id} clicked search button")
@@ -192,10 +216,18 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # Send search prompt
     search_prompt = "Введите имя участника:"
     
-    await query.message.edit_text(
-        text=search_prompt,
-        reply_markup=None
-    )
+    if query:
+        # Edit prior message and present reply keyboard for name input in a new message
+        await query.message.edit_text(text=search_prompt)
+        await query.message.reply_text(
+            text="Используйте клавиатуру ниже для навигации.",
+            reply_markup=get_waiting_for_name_keyboard(),
+        )
+    elif message:
+        await message.reply_text(
+            text=search_prompt,
+            reply_markup=get_waiting_for_name_keyboard(),
+        )
     
     # Log bot response if logging is enabled
     if user_logger:
@@ -306,13 +338,19 @@ async def process_name_search(update: Update, context: ContextTypes.DEFAULT_TYPE
         search_results = context.user_data.get('search_results', [])
         if search_results:
             keyboard = create_participant_selection_keyboard(search_results)
+            # Send results with inline selection keyboard
+            await update.message.reply_text(text=results_message, reply_markup=keyboard)
+            # Update navigation reply keyboard layout for results view
+            await update.message.reply_text(
+                text="Используйте клавиатуру для навигации.",
+                reply_markup=get_results_navigation_keyboard(),
+            )
         else:
-            keyboard = get_search_button_keyboard()
-            
-        await update.message.reply_text(
-            text=results_message,
-            reply_markup=keyboard
-        )
+            # No results; keep navigation keyboard to allow retry/main menu
+            await update.message.reply_text(
+                text=results_message,
+                reply_markup=get_results_navigation_keyboard(),
+            )
         
     except Exception as e:
         logger.error(f"Error during search for user {user.id}: {e}")
@@ -333,7 +371,7 @@ async def process_name_search(update: Update, context: ContextTypes.DEFAULT_TYPE
         error_message = "Ошибка. Попробуйте позже."
         await update.message.reply_text(
             text=error_message,
-            reply_markup=get_search_button_keyboard()
+            reply_markup=get_results_navigation_keyboard(),
         )
     
     return SearchStates.SHOWING_RESULTS
@@ -369,18 +407,24 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     Returns:
         Next conversation state (MAIN_MENU)
     """
-    query = update.callback_query
-    await query.answer()
-    
-    user = query.from_user
+    query = getattr(update, "callback_query", None)
+    message = getattr(update, "message", None)
+
+    if query:
+        await query.answer()
+        user = query.from_user
+        button_data = query.data
+    else:
+        user = update.effective_user
+        button_data = NAV_MAIN_MENU
     user_logger = get_user_interaction_logger()
     
     # Log button click if logging is enabled
     if user_logger:
         user_logger.log_button_click(
             user_id=user.id,
-            button_data=query.data,
-            username=getattr(user, 'username', None)
+            button_data=button_data,
+            username=getattr(user, 'username', None),
         )
     
     logger.info(f"User {user.id} returned to main menu")
@@ -394,10 +438,18 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         "Ищите участников по имени."
     )
     
-    await query.message.edit_text(
-        text=welcome_message,
-        reply_markup=get_main_menu_keyboard()
-    )
+    if query:
+        await query.message.edit_text(text=welcome_message)
+        # Send a new message to apply the reply keyboard
+        await query.message.reply_text(
+            text="Используйте клавиатуру ниже для навигации.",
+            reply_markup=get_main_menu_keyboard(),
+        )
+    elif message:
+        await message.reply_text(
+            text=welcome_message,
+            reply_markup=get_main_menu_keyboard(),
+        )
     
     # Log bot response if logging is enabled
     if user_logger:
@@ -408,6 +460,27 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             keyboard_info="1 button: search"
         )
     
+    return SearchStates.MAIN_MENU
+
+
+async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Cancel current search input and return to main menu."""
+    user = update.effective_user
+    logger.info(f"User {user.id} cancelled search input")
+
+    # Clear transient search state
+    context.user_data['search_results'] = []
+
+    welcome_message = (
+        "Добро пожаловать в бот Tres Dias! 🙏\n\n"
+        "Ищите участников по имени."
+    )
+
+    await update.message.reply_text(
+        text=welcome_message,
+        reply_markup=get_main_menu_keyboard(),
+    )
+
     return SearchStates.MAIN_MENU
 
 

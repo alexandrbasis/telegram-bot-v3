@@ -11,7 +11,7 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
     MessageHandler,
-    filters
+    filters,
 )
 
 from src.bot.handlers.search_handlers import (
@@ -19,6 +19,7 @@ from src.bot.handlers.search_handlers import (
     search_button,
     process_name_search,
     main_menu_button,
+    cancel_search,
     handle_participant_selection,
     SearchStates
 )
@@ -63,14 +64,26 @@ def get_search_conversation_handler() -> ConversationHandler:
         states={
             # === SEARCH STATES ===
             SearchStates.MAIN_MENU: [
-                CallbackQueryHandler(search_button, pattern="^search$")
+                # New: text-based navigation from reply keyboard
+                MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
+                # Backward compat (if any inline button remains)
+                CallbackQueryHandler(search_button, pattern="^search$"),
             ],
             SearchStates.WAITING_FOR_NAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, process_name_search)
+                # Name input
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(r"^🏠 Главное меню$|^❌ Отмена$"), process_name_search),
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
+                MessageHandler(filters.Regex(r"^❌ Отмена$"), cancel_search),
             ],
             SearchStates.SHOWING_RESULTS: [
+                # Navigation via reply keyboard
+                MessageHandler(filters.Regex(r"^🏠 Главное меню$"), main_menu_button),
+                MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
+                # Participant selection via inline buttons remains
+                CallbackQueryHandler(handle_participant_selection, pattern="^select_participant:"),
+                # Backward compat for inline main menu button if present
                 CallbackQueryHandler(main_menu_button, pattern="^main_menu$"),
-                CallbackQueryHandler(handle_participant_selection, pattern="^select_participant:")
             ],
             
             # === EDITING STATES ===

@@ -119,6 +119,8 @@ class TestSearchConversationFlow:
         user.first_name = "Test"
         
         message.edit_text = AsyncMock()
+        # Handler also sends a follow-up message to set reply keyboard
+        message.reply_text = AsyncMock()
         
         callback_query.from_user = user
         callback_query.message = message
@@ -186,10 +188,18 @@ class TestSearchConversationFlow:
             
             # Process search
             result = await process_name_search(mock_update_message, mock_context)
-            
+
             assert result == SearchStates.SHOWING_RESULTS
             assert len(mock_context.user_data['search_results']) > 0
-            mock_update_message.message.reply_text.assert_called_once()
+            # Expect two messages: results with inline keyboard, then navigation reply keyboard update
+            assert mock_update_message.message.reply_text.await_count == 2
+            first_call = mock_update_message.message.reply_text.await_args_list[0]
+            second_call = mock_update_message.message.reply_text.await_args_list[1]
+            # First call should contain results and InlineKeyboardMarkup
+            from telegram import InlineKeyboardMarkup, ReplyKeyboardMarkup
+            assert isinstance(first_call.kwargs.get('reply_markup'), InlineKeyboardMarkup)
+            # Second call should contain the ReplyKeyboardMarkup navigation keyboard
+            assert isinstance(second_call.kwargs.get('reply_markup'), ReplyKeyboardMarkup)
     
     async def test_conversation_results_to_main_menu_flow(self, mock_update_callback, mock_context):
         """Test flow from search results back to main menu."""
