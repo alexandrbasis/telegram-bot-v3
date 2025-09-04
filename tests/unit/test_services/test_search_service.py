@@ -578,3 +578,107 @@ class TestSearchServiceIntegration:
         # Дополнительная проверка интеграции с rapidfuzz
         assert hasattr(service, 'similarity_threshold')
         assert service.similarity_threshold > 0
+
+
+class TestRoomFloorSearchService:
+    """Test class for room and floor search service methods."""
+    
+    @pytest.fixture
+    def mock_repository(self):
+        """Mock repository for testing service layer."""
+        repo = Mock()
+        repo.find_by_room_number = Mock()
+        repo.find_by_floor = Mock()
+        return repo
+    
+    @pytest.fixture
+    def search_service_with_repo(self, mock_repository):
+        """SearchService instance with mocked repository."""
+        service = SearchService()
+        service.repository = mock_repository  # This will FAIL - no repository attribute exists
+        return service
+    
+    def test_search_by_room_success(self, search_service_with_repo, mock_repository):
+        """Test successful room search with validation and formatting."""
+        room_number = "205"
+        mock_participants = [
+            Participant(full_name_ru="Участник 1", room_number="205", floor=2),
+            Participant(full_name_ru="Участник 2", room_number="205", floor=2)
+        ]
+        mock_repository.find_by_room_number.return_value = mock_participants
+        
+        # This test should FAIL - method doesn't exist yet
+        result = search_service_with_repo.search_by_room(room_number)
+        
+        assert len(result) == 2
+        assert all(isinstance(p, Participant) for p in result)
+        mock_repository.find_by_room_number.assert_called_once_with("205")
+    
+    def test_search_by_room_invalid_input(self, search_service_with_repo):
+        """Test room search with invalid input raises ValueError."""
+        # This test should FAIL - method doesn't exist yet
+        with pytest.raises(ValueError, match="Room number must be provided"):
+            search_service_with_repo.search_by_room("")
+        
+        with pytest.raises(ValueError, match="Room number must be provided"):
+            search_service_with_repo.search_by_room(None)
+    
+    def test_search_by_floor_success(self, search_service_with_repo, mock_repository):
+        """Test successful floor search with validation and grouping."""
+        floor = 2
+        mock_participants = [
+            Participant(full_name_ru="Участник 1", room_number="201", floor=2),
+            Participant(full_name_ru="Участник 2", room_number="205", floor=2)
+        ]
+        mock_repository.find_by_floor.return_value = mock_participants
+        
+        # This test should FAIL - method doesn't exist yet
+        result = search_service_with_repo.search_by_floor(floor)
+        
+        assert len(result) == 2
+        assert all(isinstance(p, Participant) for p in result)
+        mock_repository.find_by_floor.assert_called_once_with(2)
+    
+    def test_search_by_floor_string_input(self, search_service_with_repo, mock_repository):
+        """Test floor search with string input (e.g., 'Ground')."""
+        floor = "Ground"
+        mock_participants = [
+            Participant(full_name_ru="Участник 1", room_number="G01", floor="Ground")
+        ]
+        mock_repository.find_by_floor.return_value = mock_participants
+        
+        # This test should FAIL - method doesn't exist yet
+        result = search_service_with_repo.search_by_floor(floor)
+        
+        assert len(result) == 1
+        mock_repository.find_by_floor.assert_called_once_with("Ground")
+    
+    def test_search_by_floor_invalid_input(self, search_service_with_repo):
+        """Test floor search with invalid input raises ValueError."""
+        # This test should FAIL - method doesn't exist yet
+        with pytest.raises(ValueError, match="Floor must be provided"):
+            search_service_with_repo.search_by_floor("")
+        
+        with pytest.raises(ValueError, match="Floor must be provided"):
+            search_service_with_repo.search_by_floor(None)
+    
+    def test_search_by_room_with_formatting(self, search_service_with_repo, mock_repository):
+        """Test room search results are properly formatted."""
+        room_number = "205"
+        mock_participants = [
+            Participant(
+                full_name_ru="Участник Тест",
+                room_number="205", 
+                floor=2,
+                role=Role.CANDIDATE,
+                department=Department.CHAPEL
+            )
+        ]
+        mock_repository.find_by_room_number.return_value = mock_participants
+        
+        # This test should FAIL - method doesn't exist yet
+        result = search_service_with_repo.search_by_room_formatted(room_number)
+        
+        assert len(result) == 1
+        assert "Участник Тест" in result[0]
+        assert "Floor: 2, Room: 205" in result[0]

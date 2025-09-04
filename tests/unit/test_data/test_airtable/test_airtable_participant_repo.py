@@ -4,6 +4,7 @@ Unit tests for AirtableParticipantRepository.
 Tests cover:
 - All CRUD operations (create, read, update, delete)
 - Search and filtering methods
+- Room and floor search methods (NEW)
 - Bulk operations
 - Error handling and exception mapping
 - Repository abstraction compliance
@@ -758,3 +759,136 @@ class TestAirtableParticipantRepositoryUpdateById:
         
         with pytest.raises(RepositoryError, match="Unexpected error updating participant"):
             await repository.update_by_id("rec123456789012345", field_updates)
+
+
+class TestRoomFloorSearchMethods:
+    """Test class for room and floor search methods."""
+    
+    @pytest.mark.asyncio
+    async def test_find_by_room_number_success(self, repository, mock_airtable_client):
+        """Test successful room search returns participants."""
+        room_number = "205"
+        mock_records = [
+            {
+                "id": "rec1",
+                "fields": {
+                    "FullNameRU": "Участник 1",
+                    "RoomNumber": 205
+                }
+            },
+            {
+                "id": "rec2", 
+                "fields": {
+                    "FullNameRU": "Участник 2",
+                    "RoomNumber": 205
+                }
+            }
+        ]
+        
+        mock_airtable_client.search_by_field.return_value = mock_records
+        
+        # This test should FAIL - method doesn't exist yet
+        result = await repository.find_by_room_number(room_number)
+        
+        assert len(result) == 2
+        assert all(isinstance(p, Participant) for p in result)
+        mock_airtable_client.search_by_field.assert_called_once_with("RoomNumber", room_number)
+    
+    @pytest.mark.asyncio
+    async def test_find_by_room_number_empty_result(self, repository, mock_airtable_client):
+        """Test room search with no participants returns empty list."""
+        room_number = "999"
+        mock_airtable_client.search_by_field.return_value = []
+        
+        # This test should FAIL - method doesn't exist yet
+        result = await repository.find_by_room_number(room_number)
+        
+        assert result == []
+        mock_airtable_client.search_by_field.assert_called_once_with("RoomNumber", room_number)
+    
+    @pytest.mark.asyncio
+    async def test_find_by_room_number_api_error(self, repository, mock_airtable_client):
+        """Test room search handles API errors."""
+        room_number = "205"
+        mock_airtable_client.search_by_field.side_effect = AirtableAPIError("API Error", status_code=500)
+        
+        # This test should FAIL - method doesn't exist yet
+        with pytest.raises(RepositoryError, match="Failed to find participants by room"):
+            await repository.find_by_room_number(room_number)
+    
+    @pytest.mark.asyncio
+    async def test_find_by_floor_success(self, repository, mock_airtable_client):
+        """Test successful floor search returns participants."""
+        floor = 2
+        mock_records = [
+            {
+                "id": "rec1",
+                "fields": {
+                    "FullNameRU": "Участник 1",
+                    "Floor": 2,
+                    "RoomNumber": 201
+                }
+            },
+            {
+                "id": "rec2",
+                "fields": {
+                    "FullNameRU": "Участник 2", 
+                    "Floor": 2,
+                    "RoomNumber": 205
+                }
+            }
+        ]
+        
+        mock_airtable_client.search_by_field.return_value = mock_records
+        
+        # This test should FAIL - method doesn't exist yet
+        result = await repository.find_by_floor(floor)
+        
+        assert len(result) == 2
+        assert all(isinstance(p, Participant) for p in result)
+        mock_airtable_client.search_by_field.assert_called_once_with("Floor", floor)
+    
+    @pytest.mark.asyncio
+    async def test_find_by_floor_string_input(self, repository, mock_airtable_client):
+        """Test floor search with string input works."""
+        floor = "Ground"
+        mock_records = [
+            {
+                "id": "rec1",
+                "fields": {
+                    "FullNameRU": "Участник 1",
+                    "Floor": "Ground", 
+                    "RoomNumber": "G01"
+                }
+            }
+        ]
+        
+        mock_airtable_client.search_by_field.return_value = mock_records
+        
+        # This test should FAIL - method doesn't exist yet
+        result = await repository.find_by_floor(floor)
+        
+        assert len(result) == 1
+        mock_airtable_client.search_by_field.assert_called_once_with("Floor", floor)
+    
+    @pytest.mark.asyncio 
+    async def test_find_by_floor_empty_result(self, repository, mock_airtable_client):
+        """Test floor search with no participants returns empty list."""
+        floor = 99
+        mock_airtable_client.search_by_field.return_value = []
+        
+        # This test should FAIL - method doesn't exist yet
+        result = await repository.find_by_floor(floor)
+        
+        assert result == []
+        mock_airtable_client.search_by_field.assert_called_once_with("Floor", floor)
+    
+    @pytest.mark.asyncio
+    async def test_find_by_floor_api_error(self, repository, mock_airtable_client):
+        """Test floor search handles API errors."""
+        floor = 2
+        mock_airtable_client.search_by_field.side_effect = AirtableAPIError("API Error", status_code=500)
+        
+        # This test should FAIL - method doesn't exist yet
+        with pytest.raises(RepositoryError, match="Failed to find participants by floor"):
+            await repository.find_by_floor(floor)

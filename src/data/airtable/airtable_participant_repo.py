@@ -6,7 +6,7 @@ on participant data, mapping between Participant domain objects and Airtable
 record format.
 """
 
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Union
 import logging
 
 from src.data.repositories.participant_repository import (
@@ -243,8 +243,8 @@ class AirtableParticipantRepository(ParticipantRepository):
             'payment_amount': 'PaymentAmount',
             'payment_date': 'PaymentDate',
             # Exact field names from live Airtable schema
-            'floor': ' Floor',
-            'room_number': 'Room Number'
+            'floor': 'Floor',
+            'room_number': 'RoomNumber'
         }
         
         airtable_fields = {}
@@ -979,3 +979,77 @@ class AirtableParticipantRepository(ParticipantRepository):
             if isinstance(e, RepositoryError):
                 raise
             raise RepositoryError(f"Failed to perform enhanced name search: {e}", e)
+    
+    async def find_by_room_number(self, room_number: str) -> List[Participant]:
+        """
+        Find all participants assigned to a specific room number.
+        
+        Args:
+            room_number: Room number to search for (as string to handle alphanumeric)
+            
+        Returns:
+            List of participants in the specified room
+            
+        Raises:
+            RepositoryError: If search fails
+        """
+        try:
+            logger.debug(f"Finding participants by room number: {room_number}")
+            
+            # Search by RoomNumber field in Airtable
+            records = await self.client.search_by_field("RoomNumber", room_number)
+            
+            # Convert to Participant objects
+            participants = []
+            for record in records:
+                try:
+                    participant = Participant.from_airtable_record(record)
+                    participants.append(participant)
+                except Exception as e:
+                    logger.warning(f"Skipping invalid participant record {record.get('id', 'unknown')}: {e}")
+                    continue
+            
+            logger.debug(f"Found {len(participants)} participants in room: {room_number}")
+            return participants
+            
+        except AirtableAPIError as e:
+            raise RepositoryError(f"Failed to find participants by room: {e}", e.original_error)
+        except Exception as e:
+            raise RepositoryError(f"Unexpected error finding participants by room: {e}", e)
+    
+    async def find_by_floor(self, floor: Union[int, str]) -> List[Participant]:
+        """
+        Find all participants assigned to a specific floor.
+        
+        Args:
+            floor: Floor number or identifier (int or str to handle "Ground" etc.)
+            
+        Returns:
+            List of participants on the specified floor
+            
+        Raises:
+            RepositoryError: If search fails
+        """
+        try:
+            logger.debug(f"Finding participants by floor: {floor}")
+            
+            # Search by Floor field in Airtable
+            records = await self.client.search_by_field("Floor", floor)
+            
+            # Convert to Participant objects
+            participants = []
+            for record in records:
+                try:
+                    participant = Participant.from_airtable_record(record)
+                    participants.append(participant)
+                except Exception as e:
+                    logger.warning(f"Skipping invalid participant record {record.get('id', 'unknown')}: {e}")
+                    continue
+            
+            logger.debug(f"Found {len(participants)} participants on floor: {floor}")
+            return participants
+            
+        except AirtableAPIError as e:
+            raise RepositoryError(f"Failed to find participants by floor: {e}", e.original_error)
+        except Exception as e:
+            raise RepositoryError(f"Unexpected error finding participants by floor: {e}", e)

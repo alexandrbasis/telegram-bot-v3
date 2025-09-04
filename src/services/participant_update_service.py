@@ -123,24 +123,28 @@ class ParticipantUpdateService:
         except Exception:
             raise ValidationError("Неверный формат даты. Используйте ГГГГ-ММ-ДД")
 
-    def _validate_floor(self, user_input: str) -> int | str:
-        """Validate floor field input (numeric in Airtable)."""
-        # Allow clearing the field
-        if user_input == "":
-            return ""
-        # Must be digits only (Airtable field is number)
-        if user_input.isdigit():
-            return int(user_input)
-        raise ValidationError("Этаж должен быть числом (только цифры)")
+    def _validate_floor(self, user_input: str) -> Union[int, str]:
+        """Validate floor field input.
 
-    def _validate_room_number(self, user_input: str) -> int | str:
-        """Validate room number (numeric in Airtable)."""
+        Accepts numeric strings (converted to int) and non-empty strings
+        like 'Ground', 'Basement', returning them as-is. Empty -> ''.
+        """
         value = user_input.strip()
         if value == "":
             return ""
         if value.isdigit():
             return int(value)
-        raise ValidationError("Номер комнаты должен быть числом (только цифры)")
+        return value
+
+    def _validate_room_number(self, user_input: str) -> Union[int, str]:
+        """Validate room number.
+
+        Accepts numeric and alphanumeric values; returns '' for empty input.
+        """
+        value = user_input.strip()
+        if value == "":
+            return ""
+        return value
     
     def convert_button_value(self, field_name: str, selected_value: str) -> Union[Gender, Size, Role, Department, PaymentStatus]:
         """

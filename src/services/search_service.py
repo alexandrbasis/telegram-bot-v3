@@ -5,7 +5,7 @@ Provides fuzzy search functionality using rapidfuzz library with Russian/English
 name normalization and configurable similarity thresholds.
 """
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 from dataclasses import dataclass
 import logging
 
@@ -261,22 +261,25 @@ class SearchResult:
 
 class SearchService:
     """
-    Service for fuzzy participant name searching.
+    Service for fuzzy participant name searching and room/floor searches.
     
     Uses rapidfuzz token_sort_ratio algorithm for word-order independent matching
-    with Russian character normalization.
+    with Russian character normalization. Also provides repository-based searches
+    for room and floor functionality.
     """
     
-    def __init__(self, similarity_threshold: float = 0.8, max_results: int = 5):
+    def __init__(self, similarity_threshold: float = 0.8, max_results: int = 5, repository=None):
         """
         Initialize search service with configuration.
         
         Args:
             similarity_threshold: Minimum similarity score (0.0-1.0)
             max_results: Maximum number of results to return
+            repository: Optional participant repository for room/floor searches
         """
         self.similarity_threshold = similarity_threshold
         self.max_results = max_results
+        self.repository = repository
         logger.info(f"Initialized SearchService (threshold={similarity_threshold}, max_results={max_results})")
     
     def search_participants(self, query: str, participants: List[Participant]) -> List[SearchResult]:
@@ -428,6 +431,76 @@ class SearchService:
         target_norm = normalize_russian(target)
         
         return fuzz.token_sort_ratio(query_norm, target_norm) / 100.0
+    
+    def search_by_room(self, room_number: str) -> List[Participant]:
+        """
+        Search participants by room number using the repository.
+        
+        Args:
+            room_number: Room number to search for
+            
+        Returns:
+            List of participants in the specified room
+            
+        Raises:
+            ValueError: If room_number is None or empty
+            RuntimeError: If repository is not configured
+        """
+        if not room_number or not room_number.strip():
+            raise ValueError("Room number must be provided")
+        
+        if not self.repository:
+            raise RuntimeError("Repository must be configured for room searches")
+        
+        logger.debug(f"Searching participants by room: {room_number}")
+        return self.repository.find_by_room_number(room_number.strip())
+    
+    def search_by_floor(self, floor: Union[int, str]) -> List[Participant]:
+        """
+        Search participants by floor using the repository.
+        
+        Args:
+            floor: Floor number or identifier to search for
+            
+        Returns:
+            List of participants on the specified floor
+            
+        Raises:
+            ValueError: If floor is None or empty
+            RuntimeError: If repository is not configured
+        """
+        if floor is None or (isinstance(floor, str) and not floor.strip()):
+            raise ValueError("Floor must be provided")
+        
+        if not self.repository:
+            raise RuntimeError("Repository must be configured for floor searches")
+        
+        logger.debug(f"Searching participants by floor: {floor}")
+        return self.repository.find_by_floor(floor)
+    
+    def search_by_room_formatted(self, room_number: str, language: str = "ru") -> List[str]:
+        """
+        Search participants by room number and return formatted results.
+        
+        Args:
+            room_number: Room number to search for
+            language: Display language preference ("ru" or "en")
+            
+        Returns:
+            List of formatted participant strings
+            
+        Raises:
+            ValueError: If room_number is None or empty
+            RuntimeError: If repository is not configured
+        """
+        participants = self.search_by_room(room_number)
+        
+        formatted_results = []
+        for participant in participants:
+            formatted_result = format_participant_result(participant, language)
+            formatted_results.append(formatted_result)
+        
+        return formatted_results
 
 
 def format_match_quality(similarity_score: float) -> str:
