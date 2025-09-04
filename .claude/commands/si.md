@@ -1,6 +1,7 @@
 # Start Implementation Command
 
-You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches. IMPORTANT: Think hard
+You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches. You migth be asked to: Strart Implementation from scratch, Continue Implementation or address code review results. Just clarify what was done before any work.
+IMPORTANT: Think hard
 
 ## CONSTRAINTS
 - Follow existing task document in `tasks/` directory
@@ -41,12 +42,9 @@ You are a Professional Full-Stack Developer executing structured implementation.
 
 ### **STEP 3: Implementation**
 
-For each step:
-
 #### **Before Each Step:**
 1. **Announce**: "Starting Step [N]: [Description]"
-2. **Update task**: Mark "In Progress" with timestamp
-3. **Review requirements**: Acceptance criteria, tests, artifacts
+2. **Review requirements**: Acceptance criteria, tests, artifacts
 
 #### **During Implementation (TDD Approach):**
 1. **Follow agreed Test Plan**: Implement tests based on the Test Plan approved during task creation (Gate 2)
@@ -95,8 +93,8 @@ For each step:
    pytest --cov=bot --cov-report=html --cov-report=term-missing
    pytest --cov=bot --cov-fail-under=90
    ```
-2. **Verify success criteria** and manual testing
-3. **Code review and cleanup**
+2. **Verify success criteria**
+
 
 #### **Finalize Task Document**
 1. **Update status** to "Ready for Review" with timestamp
@@ -110,24 +108,13 @@ For each step:
 2. **Add Linear comment** using `mcp__linear__create_comment`:
    - **issueId**: Linear issue ID
    - **body**: Implementation completed summary with key changes and test coverage
-3. **Push feature branch**: `git push origin feature/[branch-name]`
-4. **Call create-pr-agent to create a PR**:
+3. **Prepare the task document for the Code review and clean it up**
+4. **Push feature branch**: `git push origin feature/[branch-name]`
+5. **Call create-pr-agent to create a PR**:
    - Use Task tool with subagent_type: "create-pr-agent"
    - **IMPORTANT**: Provide the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
    - Agent will create PR, update task document with PR links, and sync with Linear
-5. **Present completion**: "Implementation complete. All tests passing with [X]% coverage. PR created and ready for code review."
-
-## LINEAR SYNCHRONIZATION
-
-**Only 2 Linear updates during implementation:**
-
-1. **At Start**: 
-   - Update status to "In Progress" 
-   - Comment with implementation start timestamp
-
-2. **At Completion (Ready for Review)**:
-   - Update status to "Ready for Review"
-   - Comment with implementation summary, key changes, and test coverage
+6. **Present completion**: "Implementation complete. All tests passing with [X]% coverage. PR created and ready for code review."
 
 ## ERROR HANDLING
 
@@ -136,7 +123,7 @@ For each step:
 3. **Ask user** for guidance with solutions
 4. **Set status** to "Blocked" if stuck
 
-## SUCCESS CRITERIA
+## SUCCESS CRITERIA Before Completion
 
 - [ ] Task validated and scope confirmed
 - [ ] All steps completed with TDD Red-Green-Refactor + comprehensive testing approach
@@ -152,20 +139,3 @@ For each step:
 **Testing**: Strict TDD approach - tests first, then implementation, comprehensive block-by-block coverage  
 **Documentation**: Update code docs, configs, and APIs as needed
 **Version Control**: Commit each TDD cycle with descriptive messages (Red, Green, Refactor)
-
-### Testing Commands
-```bash
-# Run tests with coverage
-pytest --cov=bot --cov-report=html --cov-report=term-missing
-
-# Coverage check with 90% minimum
-pytest --cov=bot --cov-fail-under=90
-```
-
-### Before Completion
-- [ ] All changelogs updated with line ranges
-- [ ] Feature branch pushed with clean commit history
-- [ ] Linear status reflects "Ready for Review" state
-- [ ] Test coverage meets minimum requirements (90%+)
-
-This command ensures systematic implementation with comprehensive tracking and clear communication for code review readiness.

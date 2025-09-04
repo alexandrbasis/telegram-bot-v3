@@ -4,7 +4,7 @@
     "name": "telegram-bot-v3",
     "description": "A simple, well-structured Telegram bot for managing Tres Dias event participants.",
     "main_language": "python",
-    "last_updated": "2025-09-04T18:37:44.934317"
+    "last_updated": "2025-09-04T21:17:51.884783"
   },
   "project_structure": {
     "tree": "telegram-bot-v3/\n├── .claude/\n    ├── agents/\n    ├── commands/\n    └── hooks/\n├── docs/\n    ├── architecture/\n    ├── business/\n    ├── data-integration/\n    ├── development/\n    └── technical/\n├── src/\n    ├── bot/\n    ├── config/\n    ├── data/\n    ├── models/\n    ├── services/\n    ├── utils/\n    └── main.py (application entry point)\n├── tests/\n    ├── fixtures/\n    ├── integration/\n    ├── unit/\n    ├── conftest.py (pytest configuration)\n    └── test_project_structure.py\n├── CLAUDE.md (Claude Code project guidance)\n├── README.md (project overview)\n├── project_index.json\n├── pyproject.toml\n└── start_bot.sh (bot startup script)",
@@ -32,7 +32,7 @@
     }
   },
   "project_statistics": {
-    "total_python_files": 32,
+    "total_python_files": 34,
     "main_directories": [
       "src",
       "tests",

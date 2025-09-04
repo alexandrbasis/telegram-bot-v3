@@ -25,6 +25,10 @@ from src.bot.handlers.search_handlers import (
     main_menu_button,
     process_name_search_enhanced,
     create_participant_selection_keyboard,
+    handle_search_name_mode,
+    handle_search_room_mode,
+    handle_search_floor_mode,
+    back_to_search_modes,
     SearchStates
 )
 from src.services.search_service import SearchResult
@@ -38,6 +42,7 @@ class TestSearchStates:
     def test_search_states_values(self):
         """Test that search states have correct integer values."""
         assert SearchStates.MAIN_MENU == 10
+        assert SearchStates.SEARCH_MODE_SELECTION == 13
         assert SearchStates.WAITING_FOR_NAME == 11
         assert SearchStates.SHOWING_RESULTS == 12
 
@@ -154,12 +159,12 @@ class TestSearchButtonHandler:
         mock_callback_query.callback_query.message.edit_text.assert_called_once()
         call_args = mock_callback_query.callback_query.message.edit_text.call_args
         
-        # Should contain Russian search prompt
+        # Should contain Russian search mode selection prompt
         message_text = call_args[1]['text']
-        assert "Введите имя" in message_text
+        assert "Выберите тип поиска" in message_text
         
-        # Should return WAITING_FOR_NAME state
-        assert result == SearchStates.WAITING_FOR_NAME
+        # Should return SEARCH_MODE_SELECTION state
+        assert result == SearchStates.SEARCH_MODE_SELECTION
 
 
 class TestProcessNameSearchHandler:
@@ -413,7 +418,7 @@ class TestHandlerIntegration:
             mock_update.message = None
             
             search_button_result = await search_button(mock_update, mock_context)
-            assert search_button_result == SearchStates.WAITING_FOR_NAME
+            assert search_button_result == SearchStates.SEARCH_MODE_SELECTION
 
 
 class TestEnhancedSearchHandlers:
@@ -824,7 +829,7 @@ class TestUserInteractionLogging:
         
         assert response_call[1]['user_id'] == 12345
         assert response_call[1]['response_type'] == "edit_message"
-        assert "Введите имя участника" in response_call[1]['content']
+        assert "Выберите тип поиска" in response_call[1]['content']
     
     @patch('src.bot.handlers.search_handlers.UserInteractionLogger')
     @pytest.mark.asyncio
@@ -1020,3 +1025,138 @@ class TestUserInteractionLogging:
         
         # Verify logger was not instantiated when disabled
         mock_logger_class.assert_not_called()
+
+
+class TestSearchModeSelection:
+    """Test search mode selection handlers."""
+    
+    @pytest.fixture
+    def mock_update_message(self):
+        """Mock Update object for message."""
+        update = Mock(spec=Update)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        chat = Mock(spec=Chat)
+        
+        user.id = 12345
+        user.first_name = "TestUser"
+        message.from_user = user
+        message.chat = chat
+        message.reply_text = AsyncMock()
+        
+        update.message = message
+        update.effective_user = user
+        return update
+    
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.mark.asyncio
+    async def test_handle_search_name_mode(self, mock_update_message, mock_context):
+        """Test name search mode selection handler."""
+        # Execute handler
+        result = await handle_search_name_mode(mock_update_message, mock_context)
+        
+        # Verify correct state returned
+        assert result == SearchStates.WAITING_FOR_NAME
+        
+        # Verify message sent
+        mock_update_message.message.reply_text.assert_called_once()
+        call_args = mock_update_message.message.reply_text.call_args
+        assert "Введите имя участника:" in call_args[1]["text"]
+        assert isinstance(call_args[1]["reply_markup"], ReplyKeyboardMarkup)
+
+    @pytest.mark.asyncio
+    async def test_handle_search_room_mode(self, mock_update_message, mock_context):
+        """Test room search mode selection handler."""
+        with patch('src.bot.handlers.room_search_handlers.handle_room_search_command') as mock_room_handler:
+            mock_room_handler.return_value = 20  # RoomSearchStates.WAITING_FOR_ROOM
+            
+            # Execute handler
+            result = await handle_search_room_mode(mock_update_message, mock_context)
+            
+            # Verify room search handler was called
+            mock_room_handler.assert_called_once_with(mock_update_message, mock_context)
+            assert result == 20
+
+    @pytest.mark.asyncio 
+    async def test_handle_search_floor_mode(self, mock_update_message, mock_context):
+        """Test floor search mode selection handler."""
+        with patch('src.bot.handlers.floor_search_handlers.handle_floor_search_command') as mock_floor_handler:
+            mock_floor_handler.return_value = 30  # FloorSearchStates.WAITING_FOR_FLOOR
+            
+            # Execute handler
+            result = await handle_search_floor_mode(mock_update_message, mock_context)
+            
+            # Verify floor search handler was called
+            mock_floor_handler.assert_called_once_with(mock_update_message, mock_context)
+            assert result == 30
+
+    @pytest.mark.asyncio
+    async def test_back_to_search_modes(self, mock_update_message, mock_context):
+        """Test back to search modes handler."""
+        # Execute handler
+        result = await back_to_search_modes(mock_update_message, mock_context)
+        
+        # Verify correct state returned
+        assert result == SearchStates.SEARCH_MODE_SELECTION
+        
+        # Verify message sent
+        mock_update_message.message.reply_text.assert_called_once()
+        call_args = mock_update_message.message.reply_text.call_args
+        assert "Выберите тип поиска:" in call_args[1]["text"]
+        assert isinstance(call_args[1]["reply_markup"], ReplyKeyboardMarkup)
+
+
+class TestSearchKeyboards:
+    """Test search keyboard functionality."""
+    
+    def test_search_keyboards_import(self):
+        """Test that search keyboards can be imported."""
+        from src.bot.keyboards.search_keyboards import (
+            get_main_menu_keyboard,
+            get_search_mode_selection_keyboard,
+            get_waiting_for_name_keyboard,
+            get_waiting_for_room_keyboard,
+            get_waiting_for_floor_keyboard,
+            get_results_navigation_keyboard,
+            NAV_SEARCH_NAME,
+            NAV_SEARCH_ROOM,
+            NAV_SEARCH_FLOOR,
+            NAV_MAIN_MENU,
+            NAV_CANCEL,
+            NAV_BACK_TO_SEARCH_MODES
+        )
+        
+        # Test constants exist
+        assert NAV_SEARCH_NAME == "👤 По имени"
+        assert NAV_SEARCH_ROOM == "🚪 По комнате"
+        assert NAV_SEARCH_FLOOR == "🏢 По этажу"
+        assert NAV_MAIN_MENU == "🏠 Главное меню"
+        assert NAV_CANCEL == "❌ Отмена"
+        assert NAV_BACK_TO_SEARCH_MODES == "🔙 Назад к поиску"
+    
+    def test_search_mode_selection_keyboard(self):
+        """Test search mode selection keyboard structure."""
+        from src.bot.keyboards.search_keyboards import get_search_mode_selection_keyboard
+        
+        keyboard = get_search_mode_selection_keyboard()
+        assert isinstance(keyboard, ReplyKeyboardMarkup)
+        
+        # Verify keyboard has expected structure
+        # keyboard.keyboard contains KeyboardButton objects, not strings
+        assert len(keyboard.keyboard) == 2
+        assert len(keyboard.keyboard[0]) == 2  
+        assert len(keyboard.keyboard[1]) == 2
+        assert keyboard.keyboard[0][0].text == "👤 По имени"
+        assert keyboard.keyboard[0][1].text == "🚪 По комнате"
+        assert keyboard.keyboard[1][0].text == "🏢 По этажу"
+        assert keyboard.keyboard[1][1].text == "🏠 Главное меню"
+        
+        # Verify keyboard properties
+        assert keyboard.resize_keyboard is True
+        assert keyboard.one_time_keyboard is False

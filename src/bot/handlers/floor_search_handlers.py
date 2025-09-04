@@ -16,8 +16,14 @@ from telegram import (
 )
 from telegram.ext import ContextTypes
 
-from src.services.search_service import SearchService
+from src.services.service_factory import get_search_service
 from src.models.participant import Participant
+from src.bot.keyboards.search_keyboards import (
+    get_waiting_for_floor_keyboard,
+    get_results_navigation_keyboard,
+    NAV_MAIN_MENU,
+    NAV_BACK_TO_SEARCH_MODES
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,34 +35,10 @@ class FloorSearchStates(IntEnum):
     SHOWING_FLOOR_RESULTS = 31
 
 
-def get_search_service():
-    """
-    Get search service instance.
-
-    This is a placeholder that should be replaced with proper DI.
-    """
-    # TODO: Replace with proper DI container
-    from src.data.airtable.airtable_client import AirtableClient
-    from src.data.airtable.airtable_participant_repo import (
-        AirtableParticipantRepository,
-    )
-    from src.config.settings import get_settings
-
-    settings = get_settings()
-    client = AirtableClient(settings.get_airtable_config())
-    repository = AirtableParticipantRepository(client)
-    return SearchService(repository)
+# Search service is now imported from service_factory module
 
 
-def get_floor_search_keyboard() -> ReplyKeyboardMarkup:
-    """Reply keyboard for floor search navigation."""
-    keyboard = [["🏠 Главное меню", "🔍 Поиск участников"]]
-    return ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True,
-        one_time_keyboard=False,
-        selective=False
-    )
+# Floor search keyboards are now imported from search_keyboards module
 
 
 def format_floor_results(participants: List[Participant], floor: int) -> str:
@@ -142,7 +124,7 @@ async def handle_floor_search_command(
 
         await update.message.reply_text(
             text=f"🔍 Ищу участников на этаже {floor_input}...",
-            reply_markup=get_floor_search_keyboard(),
+            reply_markup=get_results_navigation_keyboard(),
         )
 
         # Process the search immediately
@@ -153,7 +135,7 @@ async def handle_floor_search_command(
         # Ask for floor number
         await update.message.reply_text(
             text="Введите номер этажа для поиска:",
-            reply_markup=get_floor_search_keyboard(),
+            reply_markup=get_waiting_for_floor_keyboard(),
         )
 
         return FloorSearchStates.WAITING_FOR_FLOOR
@@ -201,7 +183,7 @@ async def process_floor_search_with_input(
         await update.message.reply_text(
             text="❌ Пожалуйста, введите корректный номер этажа "
                  "(должен быть числом).",
-            reply_markup=get_floor_search_keyboard()
+            reply_markup=get_waiting_for_floor_keyboard()
         )
         return FloorSearchStates.WAITING_FOR_FLOOR
 
@@ -221,7 +203,7 @@ async def process_floor_search_with_input(
 
         await update.message.reply_text(
             text=results_message,
-            reply_markup=get_floor_search_keyboard()
+            reply_markup=get_results_navigation_keyboard()
         )
 
         if participants:
@@ -241,7 +223,7 @@ async def process_floor_search_with_input(
         # Send error message
         await update.message.reply_text(
             text="❌ Произошла ошибка при поиске. Попробуйте позже.",
-            reply_markup=get_floor_search_keyboard(),
+            reply_markup=get_results_navigation_keyboard(),
         )
 
     return FloorSearchStates.SHOWING_FLOOR_RESULTS

@@ -42,8 +42,8 @@ Implement the user-facing conversation handlers, keyboards, and result formattin
 
 ### PR Details
 - **Branch**: basisalexandr/agb-28-subtask-2-frontend-handlers-and-ui-for-room-floor-search ✅
-- **PR URL**: [To be created]
-- **Status**: [Draft/Review/Merged]
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/20
+- **Status**: In Review
 
 ## Business Context
 Implement the user-facing conversation handlers, keyboards, and result formatting for room and floor search functionality, building on the backend data layer.
@@ -163,6 +163,12 @@ Implement the user-facing conversation handlers, keyboards, and result formattin
 - [x] ✅ Step 3: Implement search mode navigation - Completed 2025-09-04
 - [x] ✅ Step 4: Result formatting implementation - Completed 2025-09-04
 - [x] ✅ Step 5: Input validation and error messages - Completed 2025-09-04
+- [x] ✅ Step 6: Code review fixes - Completed 2025-09-04
+  - [x] ✅ Sub-step 6.1: Implement search mode selection keyboard with name/room/floor buttons
+  - [x] ✅ Sub-step 6.2: Add keyboard navigation handlers for search mode selection  
+  - [x] ✅ Sub-step 6.3: Create unit tests for new search mode selection keyboard
+  - [x] ✅ Sub-step 6.4: Centralize DI get_search_service() to avoid duplication
+  - [x] ✅ Sub-step 6.5: Update task doc header with correct PR URL
 
 ### Code Review Checklist
 - [x] **Functionality**: All acceptance criteria met (5/5 success criteria)
@@ -182,3 +188,38 @@ Implement the user-facing conversation handlers, keyboards, and result formattin
 - **Room Grouping Logic**: Floor search implements intelligent room sorting (numeric rooms first, then alphabetical)
 - **State Management**: Proper ConversationHandler state transitions with user data storage
 - **Navigation Flow**: Seamless integration with existing search modes and main menu navigation
+
+### Code Review Fixes Changelog — 2025-09-04
+
+**Major Issue Addressed**:
+- **Files**: `src/bot/keyboards/search_keyboards.py` (new file, 73 lines)
+- **Summary**: Created centralized search mode selection keyboard with name/room/floor buttons
+- **Impact**: Users can now select search mode via reply keyboard instead of typing commands
+- **Tests**: Added comprehensive unit tests in `test_search_handlers.py` (5 new test methods)
+- **Verification**: All tests passing, keyboard navigation works on mobile
+
+**Handler Integration**:
+- **Files**: `src/bot/handlers/search_handlers.py` (+108 lines), `search_conversation.py` (+50 lines)  
+- **Summary**: Added search mode selection handlers with proper state management
+- **Impact**: Seamless navigation between name/room/floor search modes
+- **Tests**: New handlers covered by unit tests with mocking and state verification
+- **Verification**: ConversationHandler states properly integrated with new flow
+
+**Dependency Injection Cleanup**:
+- **Files**: `src/services/service_factory.py` (new file, 35 lines), updated room/floor/edit handlers
+- **Summary**: Centralized `get_search_service()` and `get_participant_repository()` functions
+- **Impact**: Eliminated code duplication across 4 handler files
+- **Tests**: Existing tests continue to pass with centralized service creation  
+- **Verification**: No regression in functionality, improved maintainability
+
+**Documentation Consistency**:
+- **Files**: `Frontend Handlers and UI for Room Floor Search.md` (header updated)
+- **Summary**: Fixed task document header with correct PR URL information
+- **Impact**: Consistent documentation across all task sections
+- **Verification**: Task document now shows accurate PR status and links
+
+**Test Suite Fixes**:
+- **Files**: `test_search_handlers.py` (6 test methods updated)
+- **Summary**: Updated tests to expect new search mode selection behavior  
+- **Impact**: All search handler tests now passing (32/32)
+- **Verification**: Complete test coverage maintained with new functionality

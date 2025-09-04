@@ -11,7 +11,7 @@ Reviewing code **implemented by human developers** following structured task doc
 
 1. **Ask**: "Which task to review? Provide task path or PR URL."
 
-2. **Validate structure**:
+2. **Validate structureb**:
    - Task document exists with "Implementation Complete" status
    - **STOP if**: "In Progress" or missing PR information
    - PR info (ID, URL, branch) must be present
@@ -64,9 +64,65 @@ Using changelog entries:
 
 **CRITICAL TESTING REQUIREMENT**: Do not just review test code or assume tests pass. You MUST actually run the test suite and verify results. Use appropriate test commands (pytest, npm test, etc.) to execute tests and report actual results, including any failures or issues discovered.
 
-#### **Specialized Compliance Checks**
-For comprehensive code review, invoke these sub-agents when relevant:
+#### **Solution Verification Checklist**
 
+## Root Cause & Research
+
+- [ ] Identified root cause, not symptoms
+- [ ] Researched industry best practices
+- [ ] Analyzed existing codebase patterns
+- [ ] Conducted additional research where needed
+
+## Architecture & Design
+
+- [ ] Evaluated current architecture fit
+- [ ] Recommended changes if beneficial
+- [ ] Identified technical debt impact
+- [ ] Challenged suboptimal patterns
+- [ ] NOT a yes-man - honest assessment
+
+## Solution Quality
+
+- [ ] Claude.md compliant
+- [ ] Simple, streamlined, no redundancy
+- [ ] 100% complete (not 99%)
+- [ ] Best solution with trade-offs explained
+- [ ] Prioritized long-term maintainability
+
+## Security & Safety
+
+- [ ] No security vulnerabilities introduced
+- [ ] Input validation and sanitization added
+- [ ] Authentication/authorization properly handled
+- [ ] Sensitive data protected (encryption, no logging)
+- [ ] OWASP guidelines followed
+
+## Integration & Testing
+
+- [ ] All upstream/downstream impacts handled
+- [ ] All affected files updated
+- [ ] Consistent with valuable patterns
+- [ ] Fully integrated, no silos
+- [ ] Tests with edge cases added
+
+## Technical Completeness
+
+- [ ] Environment variables configured
+- [ ] DB / Storage rules updated
+- [ ] Utils and helpers checked
+- [ ] Performance analyzed
+
+## Your APP specific validation // Update as needed
+
+- [ ] Credit system integrity maintained
+- [ ] Multi-language support preserved
+- [ ] Anti-abuse measures working
+- [ ] Stripe payment flows validated
+- [ ] Error logging operational
+
+## ANALYZE ALL ITEMS IN THIS CHECKLIST ONE BY ONE. ACHIEVE 100% COVERAGE. DO NOT MISS A SINGLE ITEM.
+
+## Process: READ → RESEARCH → ANALYZE ROOT CAUSE → CHALLENGE → THINK → RESPOND
 
 ### **STEP 4: Create Review Document**
 

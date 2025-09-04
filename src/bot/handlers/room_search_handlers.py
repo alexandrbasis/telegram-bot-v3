@@ -15,7 +15,13 @@ from telegram import (
 )
 from telegram.ext import ContextTypes
 
-from src.services.search_service import SearchService
+from src.services.service_factory import get_search_service
+from src.bot.keyboards.search_keyboards import (
+    get_waiting_for_room_keyboard,
+    get_results_navigation_keyboard,
+    NAV_MAIN_MENU,
+    NAV_BACK_TO_SEARCH_MODES
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,35 +33,10 @@ class RoomSearchStates(IntEnum):
     SHOWING_ROOM_RESULTS = 21
 
 
-def get_search_service():
-    """
-    Get search service instance.
-
-    This is a placeholder that should be replaced with proper
-    dependency injection.
-    """
-    # TODO: Replace with proper DI container
-    from src.data.airtable.airtable_client import AirtableClient
-    from src.data.airtable.airtable_participant_repo import (
-        AirtableParticipantRepository,
-    )
-    from src.config.settings import get_settings
-
-    settings = get_settings()
-    client = AirtableClient(settings.get_airtable_config())
-    repository = AirtableParticipantRepository(client)
-    return SearchService(repository)
+# Search service is now imported from service_factory module
 
 
-def get_room_search_keyboard() -> ReplyKeyboardMarkup:
-    """Reply keyboard for room search navigation."""
-    keyboard = [["🏠 Главное меню", "🔍 Поиск участников"]]
-    return ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True,
-        one_time_keyboard=False,
-        selective=False
-    )
+# Room search keyboards are now imported from search_keyboards module
 
 
 async def handle_room_search_command(
@@ -87,7 +68,7 @@ async def handle_room_search_command(
 
         await update.message.reply_text(
             text=f"🔍 Ищу участников в комнате {room_number}...",
-            reply_markup=get_room_search_keyboard()
+            reply_markup=get_results_navigation_keyboard()
         )
 
         # Process the search immediately
@@ -98,7 +79,7 @@ async def handle_room_search_command(
         # Ask for room number
         await update.message.reply_text(
             text="Введите номер комнаты для поиска:",
-            reply_markup=get_room_search_keyboard(),
+            reply_markup=get_waiting_for_room_keyboard(),
         )
 
         return RoomSearchStates.WAITING_FOR_ROOM
@@ -144,7 +125,7 @@ async def process_room_search_with_number(
         await update.message.reply_text(
             text="❌ Пожалуйста, введите корректный номер комнаты "
                  "(должен содержать цифры).",
-            reply_markup=get_room_search_keyboard()
+            reply_markup=get_waiting_for_room_keyboard()
         )
         return RoomSearchStates.WAITING_FOR_ROOM
 
@@ -189,7 +170,7 @@ async def process_room_search_with_number(
         # Send results
         await update.message.reply_text(
             text=results_message,
-            reply_markup=get_room_search_keyboard()
+            reply_markup=get_results_navigation_keyboard()
         )
 
     except Exception as e:
@@ -198,7 +179,7 @@ async def process_room_search_with_number(
         # Send error message
         await update.message.reply_text(
             text="❌ Произошла ошибка при поиске. Попробуйте позже.",
-            reply_markup=get_room_search_keyboard(),
+            reply_markup=get_results_navigation_keyboard(),
         )
 
     return RoomSearchStates.SHOWING_ROOM_RESULTS
