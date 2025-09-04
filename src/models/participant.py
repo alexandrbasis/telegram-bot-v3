@@ -7,7 +7,7 @@ including all field types: text, single select, number, and date fields.
 
 from datetime import date
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
@@ -140,15 +140,15 @@ class Participant(BaseModel):
 
     # Accommodation fields
     # Floor is stored as a number in Airtable (but accept int or str input upstream)
-    floor: Optional[int | str] = Field(
+    floor: Optional[Union[int, str]] = Field(
         None,
         description="Accommodation floor (numeric in Airtable)"
     )
     
-    # Room number is stored as a number in Airtable
-    room_number: Optional[int] = Field(
+    # Room number is stored as a number in Airtable, but allow alphanumeric input upstream
+    room_number: Optional[Union[int, str]] = Field(
         None,
-        description="Accommodation room number (numeric)"
+        description="Accommodation room number (numeric in Airtable; allow alphanumeric upstream)"
     )
     
     # Airtable record ID (for updates)
@@ -168,11 +168,9 @@ class Participant(BaseModel):
     @field_validator('room_number')
     @classmethod
     def validate_room_number(cls, v):
-        """Normalize room number: empty -> None, digits -> int, else pass through if int."""
+        """Normalize room number: empty string -> None; otherwise keep provided type (int or str)."""
         if v == "":
             return None
-        if isinstance(v, str) and v.isdigit():
-            return int(v)
         return v
     
     def to_airtable_fields(self) -> dict:
@@ -222,9 +220,9 @@ class Participant(BaseModel):
         # Accommodation fields (exact Airtable field names)
         if self.floor is not None:
             # Ensure numeric when possible; Airtable field is numeric
-            fields[" Floor"] = int(self.floor) if isinstance(self.floor, str) and self.floor.isdigit() else self.floor
+            fields["Floor"] = int(self.floor) if isinstance(self.floor, str) and self.floor.isdigit() else self.floor
         if self.room_number is not None:
-            fields["Room Number"] = self.room_number
+            fields["RoomNumber"] = self.room_number
         
         return fields
     
@@ -266,8 +264,8 @@ class Participant(BaseModel):
             payment_status=PaymentStatus(fields['PaymentStatus']) if fields.get('PaymentStatus') else None,
             payment_amount=fields.get('PaymentAmount'),
             payment_date=payment_date,
-            floor=fields.get(' Floor'),
-            room_number=fields.get('Room Number')
+            floor=fields.get('Floor'),
+            room_number=fields.get('RoomNumber')
         )
     
     model_config = ConfigDict(

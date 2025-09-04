@@ -243,8 +243,8 @@ class AirtableParticipantRepository(ParticipantRepository):
             'payment_amount': 'PaymentAmount',
             'payment_date': 'PaymentDate',
             # Exact field names from live Airtable schema
-            'floor': ' Floor',
-            'room_number': 'Room Number'
+            'floor': 'Floor',
+            'room_number': 'RoomNumber'
         }
         
         airtable_fields = {}

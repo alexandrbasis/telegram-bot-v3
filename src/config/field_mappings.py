@@ -55,10 +55,9 @@ class AirtableFieldMapping:
         # Date field (1)
         "PaymentDate": "fldylOQLqcBwkmzlh",
 
-        # Accommodation fields (no known IDs yet; names used if IDs missing)
-        # Placeholders for future schema sync
-        # "Floor": "fldXXXXXXXXXXXXXXX",
-        # "RoomNumber": "fldYYYYYYYYYYYYYYY",
+        # Accommodation fields (confirmed from live Airtable schema)
+        "Floor": "fldlzG1sVg01hsy2g",
+        "RoomNumber": "fldJTPjo8AHQaADVu",
     }
     
     # Select option value -> Option ID mapping (exact Option IDs from Airtable base)
@@ -134,11 +133,9 @@ class AirtableFieldMapping:
         # Date fields
         "payment_date": "PaymentDate",
 
-        # Accommodation (note: exact Airtable field names)
-        # The Airtable schema has a leading space in " Floor"
-        # and a space in "Room Number".
-        "floor": " Floor",
-        "room_number": "Room Number",
+        # Accommodation (exact Airtable field names)
+        "floor": "Floor",
+        "room_number": "RoomNumber",
         
         # Record ID (special field)
         "record_id": "id"
@@ -163,8 +160,8 @@ class AirtableFieldMapping:
         "PaymentAmount": FieldType.NUMBER,
         "PaymentDate": FieldType.DATE,
         # Accommodation fields (numeric per live Airtable schema)
-        " Floor": FieldType.NUMBER,
-        "Room Number": FieldType.NUMBER
+        "Floor": FieldType.NUMBER,
+        "RoomNumber": FieldType.NUMBER
     }
     
     # Required fields (cannot be None/empty)
@@ -209,11 +206,11 @@ class AirtableFieldMapping:
             "description": "Date when payment was received"
         },
         # Basic constraints for accommodation fields (numeric)
-        " Floor": {
+        "Floor": {
             "min_value": 0,
             "description": "Accommodation floor (numeric)"
         },
-        "Room Number": {
+        "RoomNumber": {
             "min_value": 0,
             "description": "Accommodation room number (numeric)"
         }
