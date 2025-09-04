@@ -25,7 +25,7 @@ Implement search functionality that allows users to find participants by room nu
 - [ ] Search results maintain consistent formatting with existing name search functionality
 
 ### Constraints
-- Must integrate with existing Airtable data structure (Floor and Room Number fields already exist)
+- Must integrate with existing Airtable data structure (Floor and RoomNumber fields)
 - Must maintain compatibility with current Russian/English language support
 - Should follow established conversation flow patterns from existing search functionality
 - Must handle cases where rooms are empty or floors have no participants
@@ -61,7 +61,7 @@ Target: 90%+ coverage across all implementation areas
 - [ ] Malformed data handling (missing room/floor fields)
 
 ### Integration Tests
-- [ ] Airtable field mapping for Floor and Room Number fields
+- [ ] Airtable field mapping for Floor and RoomNumber fields
 - [ ] Repository layer room/floor filtering functionality
 - [ ] End-to-end room search workflow (command → API → response)
 - [ ] End-to-end floor search workflow (command → API → response)
@@ -92,13 +92,26 @@ Target: 90%+ coverage across all implementation areas
 Enable users to quickly find participants by accommodation location (room/floor), providing essential functionality for event coordination and space management.
 
 ## Technical Requirements
-- [ ] Add room search methods to existing repository layer (filter by room_number field)
-- [ ] Add floor search methods to existing repository layer (filter by floor field, group by room_number)
+- [ ] Airtable schema alignment (Floor/RoomNumber)
+  - [ ] Use Airtable field names: `Floor`, `RoomNumber`
+  - [ ] Use Field IDs for API writes: `Floor=fldlzG1sVg01hsy2g`, `RoomNumber=fldJTPjo8AHQaADVu`
+  - [ ] Python model fields remain `floor`, `room_number`
+  - [ ] Remove any legacy references to `" Floor"` and `"Room Number"`
+- [ ] Add room search methods to existing repository layer (filter by `room_number`)
+- [ ] Add floor search methods to existing repository layer (filter by `floor`, group by `room_number`)
 - [ ] Create new conversation handlers for room and floor search commands
 - [ ] Implement keyboard navigation between name/room/floor search modes
 - [ ] Add search result formatting for room and floor views
 - [ ] Ensure Russian/English language support in new search results
 - [ ] Handle edge cases (empty rooms, invalid inputs, API errors)
+
+### Input/Validation Behavior (Alignment)
+- UI prompts for editing floor/room instruct numeric-only input to match Airtable number types
+- Back-end accepts:
+  - Floor: numeric strings converted to int; non-empty strings preserved (e.g., "Ground")
+  - RoomNumber: numeric and alphanumeric strings preserved
+- Saving to Airtable uses Field IDs; Airtable may reject non-numeric values for number fields
+  - On save rejection, surface a friendly error and prompt user to correct input
 
 ## Implementation Steps & Change Log
 - [ ] Step 1: Repository Layer Enhancement → **SPLIT INTO SUBTASK**
@@ -146,9 +159,17 @@ Enable users to quickly find participants by accommodation location (room/floor)
 - [ ] Russian/English language support works in new search modes
 - [ ] Invalid inputs (non-numeric, out of range) show helpful error messages
 - [ ] Empty rooms/floors display appropriate "no participants found" messages
-- [ ] All tests pass (unit, integration, error handling)
+- [ ] All new/updated tests for Floor/RoomNumber mappings and search pass
 - [ ] API failures are handled gracefully with retry/fallback options
 - [ ] Performance is maintained (search results in under 3 seconds)
+
+## Airtable Schema Alignment (Reference)
+- Field names: `Floor`, `RoomNumber`
+- Field IDs: `Floor=fldlzG1sVg01hsy2g`, `RoomNumber=fldJTPjo8AHQaADVu`
+- Python↔Airtable mapping:
+  - `floor` → `Floor`
+  - `room_number` → `RoomNumber`
+- Display formatting: include accommodation as `Floor: X, Room: Y`
 
 ## Tracking & Progress
 ### Linear Issue
