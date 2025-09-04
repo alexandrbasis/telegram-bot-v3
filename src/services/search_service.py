@@ -266,20 +266,12 @@ class SearchService:
     """
     Service for fuzzy participant name searching and room/floor searches.
     
-<<<<<<< HEAD
-    Uses rapidfuzz token_sort_ratio algorithm for word-order independent matching
-=======
     Uses rapidfuzz token_set_ratio algorithm for word-order independent matching
->>>>>>> basisalexandr/agb-27-subtask-1-backend-data-layer-for-room-floor-search
     with Russian character normalization. Also provides repository-based searches
     for room and floor functionality.
     """
     
-<<<<<<< HEAD
-    def __init__(self, similarity_threshold: float = 0.8, max_results: int = 5, repository=None):
-=======
     def __init__(self, similarity_threshold: float = 0.8, max_results: int = 5, repository: Optional[ParticipantRepository] = None):
->>>>>>> basisalexandr/agb-27-subtask-1-backend-data-layer-for-room-floor-search
         """
         Initialize search service with configuration.
         
@@ -444,10 +436,6 @@ class SearchService:
         return fuzz.token_set_ratio(query_norm, target_norm) / 100.0
     
     async def search_by_room(self, room_number: str) -> List[Participant]:
-        return fuzz.token_set_ratio(query_norm, target_norm) / 100.0
-    
-    async def search_by_room(self, room_number: str) -> List[Participant]:
->>>>>>> basisalexandr/agb-27-subtask-1-backend-data-layer-for-room-floor-search
         """
         Search participants by room number using the repository.
         
@@ -471,10 +459,6 @@ class SearchService:
         return await self.repository.find_by_room_number(room_number.strip())
     
     async def search_by_floor(self, floor: Union[int, str]) -> List[Participant]:
-        return await self.repository.find_by_room_number(room_number.strip())
-    
-    async def search_by_floor(self, floor: Union[int, str]) -> List[Participant]:
->>>>>>> basisalexandr/agb-27-subtask-1-backend-data-layer-for-room-floor-search
         """
         Search participants by floor using the repository.
         
@@ -512,11 +496,7 @@ class SearchService:
             ValueError: If room_number is None or empty
             RuntimeError: If repository is not configured
         """
-<<<<<<< HEAD
-        participants = self.search_by_room(room_number)
-=======
         participants = await self.search_by_room(room_number)
->>>>>>> basisalexandr/agb-27-subtask-1-backend-data-layer-for-room-floor-search
         
         formatted_results = []
         for participant in participants:
