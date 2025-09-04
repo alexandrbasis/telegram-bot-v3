@@ -30,6 +30,42 @@
 [Назад] [Далее]
 ```
 
+#### Room/Floor Search API (New - 2025-09-04)
+**Purpose**: Location-based participant search by room number or floor
+
+**Room Search**: `/search room:[room_number]`
+- **Input**: Room number (alphanumeric: "101", "A1", "Conference")
+- **Validation**: Non-empty string, handles numeric and alphanumeric formats
+- **Response**: List of participants assigned to specific room
+
+**Floor Search**: `/search floor:[floor_number]`
+- **Input**: Floor number (integer or string: "1", "2", "Ground")
+- **Validation**: Union[int, str] with proper conversion
+- **Response**: Participants grouped by room on specified floor
+
+**Example Room Search Response**:
+```
+Участники в комнате: "205"
+
+1. Иван Петров | Кандидат | Комната: 205
+   [Подробнее]
+
+2. Мария Смирнова | Команда | Комната: 205
+   [Подробнее]
+```
+
+**Example Floor Search Response**:
+```
+Участники на этаже: "2"
+
+Комната 201:
+1. Петр Иванов | Кандидат
+
+Комната 205:
+2. Иван Петров | Кандидат
+3. Мария Смирнова | Команда
+```
+
 ## Participant Editing API
 
 ### Participant Selection
@@ -220,6 +256,8 @@ class Participant(BaseModel):
     payment_amount: Optional[int] = None
     payment_date: Optional[str] = None  # YYYY-MM-DD
     submitted_by: Optional[str] = None
+    room_number: Optional[str] = None   # Room assignment (alphanumeric)
+    floor: Optional[Union[int, str]] = None  # Floor number or name
 ```
 
 ### Field Mapping (Airtable)
@@ -229,7 +267,9 @@ FIELD_MAPPINGS = {
     "full_name_ru": "fldXXXXXXXXXXXXXX",
     "full_name_en": "fldYYYYYYYYYYYYYY", 
     "gender": "fldZZZZZZZZZZZZZZ",
-    # ... etc for all 13 fields
+    "room_number": "fldJTPjo8AHQaADVu",  # RoomNumber field
+    "floor": "fldlzG1sVg01hsy2g",        # Floor field
+    # ... etc for all fields
 }
 ```
 

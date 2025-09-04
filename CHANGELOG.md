@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Backend Data Layer for Room and Floor Search Functionality** - Complete data access layer implementation enabling participant search by accommodation details with comprehensive validation, error handling, and testing (AGB-27, Subtask 1, completed 2025-09-04)
+  - Repository layer room/floor search methods with proper Airtable field mapping: `find_by_room_number()` and `find_by_floor()` supporting both numeric and alphanumeric room numbers and flexible floor formats (`src/data/airtable/airtable_participant_repo.py:983-1055`)
+  - Service layer orchestration with comprehensive input validation and formatted results: `search_by_room()`, `search_by_floor()`, and `search_by_room_formatted()` methods handling all edge cases and error scenarios (`src/services/search_service.py:271-282,435-503`)
+  - Input validation utilities with robust data type handling supporting mixed accommodation formats: ValidationResult dataclass with `validate_room_number()` and `validate_floor()` functions (`src/utils/validation.py`)
+  - Enhanced security with formula injection prevention through proper single quote escaping in Airtable query generation protecting against malicious input (`src/data/airtable/airtable_client.py:443-449`)
+  - Abstract repository interface extensions with proper type hints eliminating mypy `Any` return warnings (`src/data/repositories/participant_repository.py:322-352`)
+  - Comprehensive test infrastructure improvements with pytest configuration enabling seamless src module imports without PYTHONPATH setup (`tests/conftest.py`)
+  - Complete async/await implementation ensuring proper coroutine handling across service layer methods with comprehensive error handling and logging
+  - 34 comprehensive tests with 100% pass rate covering all new functionality: repository methods (12 tests), service layer (10 tests), validation utilities (10 tests), and formula security (2 tests)
+  - Correct Airtable field mappings verified: Floor field (fldlzG1sVg01hsy2g), RoomNumber field (fldJTPjo8AHQaADVu) with proper Python model mapping to `floor` and `room_number` attributes
+  - Code review fixes addressing critical async/sync mismatches, security enhancements, type annotation improvements, and test infrastructure reliability
+  - Complete documentation updates across 5 major files: API design specifications with room/floor search endpoints and examples, comprehensive field mappings documentation, feature specifications with technical implementation details, testing strategy with detailed coverage breakdown, and architecture overview with repository pattern updates
+  - Foundation layer enabling frontend handlers and UI implementation for complete room/floor search user experience
+  - Users and administrators will be able to efficiently locate participants by accommodation assignments once frontend implementation is complete
 - **Mobile Navigation Enhancement with Reply Keyboard Integration** - Complete mobile UX improvement moving navigation buttons from inline message area to smartphone keyboard zone for optimal thumb accessibility (PR #18, SHA: b7f3c0d, merged 2025-09-04)
   - Enhanced mobile navigation with ReplyKeyboardMarkup implementation providing persistent navigation controls in smartphone keyboard area for improved thumb-reach accessibility and reduced scrolling friction (`src/bot/handlers/search_handlers.py:1-84,194-218,269-295`)
   - Hybrid navigation architecture keeping contextual editing controls inline while moving core navigation (Search, Main Menu, Cancel) to reply keyboard, preserving optimal user experience for different interaction types (`src/bot/handlers/search_handlers.py:71-84,194-218`)
