@@ -11,6 +11,7 @@ import logging
 
 from rapidfuzz import fuzz, process
 from src.models.participant import Participant, Gender, Role, PaymentStatus
+from src.data.repositories.participant_repository import ParticipantRepository
 
 logger = logging.getLogger(__name__)
 
@@ -268,7 +269,7 @@ class SearchService:
     for room and floor functionality.
     """
     
-    def __init__(self, similarity_threshold: float = 0.8, max_results: int = 5, repository=None):
+    def __init__(self, similarity_threshold: float = 0.8, max_results: int = 5, repository: Optional[ParticipantRepository] = None):
         """
         Initialize search service with configuration.
         
@@ -432,7 +433,7 @@ class SearchService:
         
         return fuzz.token_sort_ratio(query_norm, target_norm) / 100.0
     
-    def search_by_room(self, room_number: str) -> List[Participant]:
+    async def search_by_room(self, room_number: str) -> List[Participant]:
         """
         Search participants by room number using the repository.
         
@@ -453,9 +454,9 @@ class SearchService:
             raise RuntimeError("Repository must be configured for room searches")
         
         logger.debug(f"Searching participants by room: {room_number}")
-        return self.repository.find_by_room_number(room_number.strip())
+        return await self.repository.find_by_room_number(room_number.strip())
     
-    def search_by_floor(self, floor: Union[int, str]) -> List[Participant]:
+    async def search_by_floor(self, floor: Union[int, str]) -> List[Participant]:
         """
         Search participants by floor using the repository.
         
@@ -476,9 +477,9 @@ class SearchService:
             raise RuntimeError("Repository must be configured for floor searches")
         
         logger.debug(f"Searching participants by floor: {floor}")
-        return self.repository.find_by_floor(floor)
+        return await self.repository.find_by_floor(floor)
     
-    def search_by_room_formatted(self, room_number: str, language: str = "ru") -> List[str]:
+    async def search_by_room_formatted(self, room_number: str, language: str = "ru") -> List[str]:
         """
         Search participants by room number and return formatted results.
         
@@ -493,7 +494,7 @@ class SearchService:
             ValueError: If room_number is None or empty
             RuntimeError: If repository is not configured
         """
-        participants = self.search_by_room(room_number)
+        participants = await self.search_by_room(room_number)
         
         formatted_results = []
         for participant in participants:

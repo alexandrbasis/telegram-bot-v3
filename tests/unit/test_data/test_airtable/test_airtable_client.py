@@ -728,6 +728,28 @@ class TestAirtableClientSearchOperations:
         mock_table.all.assert_called_once_with(formula=expected_formula)
     
     @pytest.mark.asyncio
+    async def test_search_by_field_string_with_quotes(self, client_with_mock_table):
+        """Test search by field with string value containing single quotes."""
+        client, mock_table = client_with_mock_table
+        
+        await client.search_by_field("NameField", "O'Connor")
+        
+        # Single quotes should be escaped by doubling them
+        expected_formula = "{NameField} = 'O''Connor'"
+        mock_table.all.assert_called_once_with(formula=expected_formula)
+    
+    @pytest.mark.asyncio
+    async def test_search_by_field_string_with_multiple_quotes(self, client_with_mock_table):
+        """Test search by field with string value containing multiple single quotes."""
+        client, mock_table = client_with_mock_table
+        
+        await client.search_by_field("CommentField", "Can't find John's file")
+        
+        # All single quotes should be escaped by doubling them
+        expected_formula = "{CommentField} = 'Can''t find John''s file'"
+        mock_table.all.assert_called_once_with(formula=expected_formula)
+    
+    @pytest.mark.asyncio
     async def test_search_by_formula(self, client_with_mock_table):
         """Test search by custom formula."""
         client, mock_table = client_with_mock_table

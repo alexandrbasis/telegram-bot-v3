@@ -7,7 +7,7 @@ without changing business logic.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Union
 from src.models.participant import Participant
 
 
@@ -316,6 +316,38 @@ class ParticipantRepository(ABC):
             RepositoryError: If update operation fails
             NotFoundError: If record_id doesn't exist
             ValidationError: If field_updates contains invalid data
+        """
+        pass
+    
+    @abstractmethod
+    async def find_by_room_number(self, room_number: str) -> List[Participant]:
+        """
+        Find all participants assigned to a specific room number.
+        
+        Args:
+            room_number: Room number to search for (as string to handle alphanumeric)
+            
+        Returns:
+            List of participants in the specified room
+            
+        Raises:
+            RepositoryError: If search fails
+        """
+        pass
+    
+    @abstractmethod
+    async def find_by_floor(self, floor: Union[int, str]) -> List[Participant]:
+        """
+        Find all participants assigned to a specific floor.
+        
+        Args:
+            floor: Floor number or identifier (int or str to handle "Ground" etc.)
+            
+        Returns:
+            List of participants on the specified floor
+            
+        Raises:
+            RepositoryError: If search fails
         """
         pass
 

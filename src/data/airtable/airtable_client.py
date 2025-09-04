@@ -441,8 +441,9 @@ class AirtableClient:
         """
         # Build Airtable formula for exact match
         if isinstance(value, str):
-            # String values need to be quoted
-            formula = f"{{{field_name}}} = '{value}'"
+            # String values need to be quoted and single quotes escaped
+            escaped_value = value.replace("'", "''")
+            formula = f"{{{field_name}}} = '{escaped_value}'"
         else:
             # Numbers and other values don't need quotes
             formula = f"{{{field_name}}} = {value}"

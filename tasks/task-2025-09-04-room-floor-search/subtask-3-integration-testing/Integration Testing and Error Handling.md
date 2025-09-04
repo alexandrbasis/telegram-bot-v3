@@ -1,34 +1,35 @@
-# Task: Integration Testing and Error Handling
-**Created**: 2025-09-04 | **Status**: Business Review
+# Task: Integration Testing and Error Handling for Room Floor Search
+**Created**: 2025-09-04 | **Status**: Ready for Implementation
 
 ## Business Requirements (Gate 1 - Approval Required)
 ### Primary Objective
 Implement comprehensive integration testing and robust error handling for the complete room and floor search functionality, ensuring production readiness and graceful failure recovery.
 
 ### Use Cases
-1. **End-to-end workflow validation**: Complete user journeys work seamlessly
-   - **Acceptance criteria**: All search workflows function from command to result display
-   - **Coverage**: Room search, floor search, mode switching, error cases
+1. **End-to-end workflow validation**: Test complete search flows from command to response
+   - **Acceptance criteria**: All user journeys work correctly with real Airtable integration
+   - **Technical flow**: Command → Handler → Service → Repository → Airtable → Response
 
-2. **Error scenario handling**: System gracefully handles all failure modes
-   - **Acceptance criteria**: User-friendly error messages for all invalid inputs
-   - **Coverage**: Invalid room numbers, API failures, empty results, network timeouts
+2. **Error scenario handling**: Gracefully handle all failure modes
+   - **Acceptance criteria**: Users receive helpful messages for all error conditions
+   - **Error types**: Invalid input, API failures, network timeouts, malformed data
 
-3. **Production readiness verification**: System meets all quality standards
-   - **Acceptance criteria**: 90%+ test coverage, all edge cases handled
-   - **Performance**: Search operations complete within SLA (3 seconds)
+3. **Performance validation**: Ensure search operations meet performance targets
+   - **Acceptance criteria**: All searches complete within 3 seconds
+   - **Metrics**: Response time, API call efficiency, result formatting speed
 
 ### Success Metrics
-- [ ] All integration tests pass consistently
-- [ ] Error handling covers 100% of identified failure scenarios
-- [ ] No unhandled exceptions in any user flow
-- [ ] Performance meets or exceeds requirements
+- [ ] All end-to-end workflows function correctly
+- [ ] Error messages are user-friendly and actionable
+- [ ] Performance targets met (< 3 second response)
+- [ ] 90%+ overall test coverage achieved
+- [ ] No regression in existing functionality
 
 ### Constraints
-- Dependencies on subtask-1 and subtask-2 completion
-- Must test with real Airtable API in integration environment
-- Must validate Russian/English language support
-- Must ensure no regression in existing functionality
+- Must validate against actual Airtable schema with correct field mappings
+- Must test with realistic data volumes and edge cases
+- Must ensure backward compatibility with existing search
+- Must handle Airtable API rate limits gracefully
 
 **APPROVAL GATE:** Present business section to user with: "Approve business requirements? [Yes/No]"
 **After approval, update Status to: Ready for Implementation**
@@ -36,85 +37,131 @@ Implement comprehensive integration testing and robust error handling for the co
 ## Tracking & Progress
 ### Linear Issue
 - **ID**: AGB-29
-- **URL**: https://linear.app/alexandrbasis/issue/AGB-29/subtask-3-integration-testing-and-error-handling-for-room-floor-search
+- **URL**: https://linear.app/alexandrbasis/issue/AGB-29
 - **Status Flow**: Business Review → Ready for Implementation → In Progress → In Review → Testing → Done
 
 ### PR Details
-- **Branch**: feat/room-floor-search-integration
-- **PR URL**: [Link]
+- **Branch**: basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
+- **PR URL**: [To be created]
 - **Status**: [Draft/Review/Merged]
 
 ## Business Context
-Ensure production-ready quality for room and floor search features through comprehensive testing and bulletproof error handling.
+Implement comprehensive integration testing and robust error handling for the complete room and floor search functionality, ensuring production readiness and graceful failure recovery.
 
 ## Technical Requirements
 - [ ] Create end-to-end integration tests for all workflows
+- [ ] Validate Airtable field mappings (`Floor`, `RoomNumber`) in integration
 - [ ] Implement comprehensive error handling across all layers
 - [ ] Add input validation with user-friendly messages
+- [ ] Test numeric and alphanumeric input handling
 - [ ] Performance testing and optimization
 - [ ] Regression testing for existing functionality
+- [ ] Verify Field ID usage for write operations
 
 ## Implementation Steps & Change Log
-- [ ] Step 1: Create integration test suite
-  - [ ] Sub-step 1.1: Implement end-to-end workflow tests
+- [ ] Step 1: End-to-end integration tests
+  - [ ] Sub-step 1.1: Room search workflow tests
     - **Directory**: `tests/integration/`
-    - **Files to create/modify**: `test_room_floor_search_integration.py` (new file)
-    - **Accept**: All user workflows tested completely
-    - **Tests**: Integration tests with real Airtable connection
-    - **Done**: All integration tests pass
+    - **Files to create/modify**: `test_room_search_integration.py` (new file)
+    - **Accept**: Complete flow from command to response works
+    - **Tests**: Tests cover happy path and edge cases
+    - **Done**: Room search integration verified
     - **Changelog**: [Record changes made with file paths and line ranges]
 
-- [ ] Step 2: Enhanced error handling in repository layer
-  - [ ] Sub-step 2.1: Add validation and error handling
-    - **Directory**: `src/data/airtable/`
-    - **Files to create/modify**: `airtable_participant_repo.py`
-    - **Accept**: All edge cases handled gracefully
-    - **Tests**: Error scenario tests in unit tests
-    - **Done**: Repository handles all error cases
+  - [ ] Sub-step 1.2: Floor search workflow tests
+    - **Directory**: `tests/integration/`
+    - **Files to create/modify**: `test_floor_search_integration.py` (new file)
+    - **Accept**: Floor search with room grouping works end-to-end
+    - **Tests**: Tests cover multi-room floors and empty floors
+    - **Done**: Floor search integration verified
     - **Changelog**: [Record changes made with file paths and line ranges]
 
-- [ ] Step 3: Enhanced error handling in service layer
-  - [ ] Sub-step 3.1: Add service-level validation
-    - **Directory**: `src/services/`
-    - **Files to create/modify**: `search_service.py`
-    - **Accept**: Service validates inputs and formats errors
-    - **Tests**: Service error handling tests
-    - **Done**: Service layer error handling complete
+  - [ ] Sub-step 1.3: Schema validation tests
+    - **Directory**: `tests/integration/`
+    - **Files to create/modify**: `test_airtable_schema_validation.py` (new file)
+    - **Accept**: Field mappings and IDs correctly used
+    - **Tests**: Verify Floor/RoomNumber field access
+    - **Done**: Schema alignment confirmed
     - **Changelog**: [Record changes made with file paths and line ranges]
 
-- [ ] Step 4: Enhanced error handling in handlers
-  - [ ] Sub-step 4.1: Add user-friendly error messages
+- [ ] Step 2: Error handling implementation
+  - [ ] Sub-step 2.1: Input validation error messages
     - **Directory**: `src/bot/handlers/`
-    - **Files to create/modify**: `room_search_handlers.py`, `floor_search_handlers.py`
-    - **Accept**: All errors show helpful messages to users
-    - **Tests**: Handler error scenario tests
-    - **Done**: User sees clear error messages
+    - **Files to create/modify**: Room and floor handler files
+    - **Accept**: Clear messages for invalid inputs
+    - **Tests**: Test each error scenario
+    - **Done**: Users receive helpful guidance
     - **Changelog**: [Record changes made with file paths and line ranges]
 
-- [ ] Step 5: Performance testing and optimization
-  - [ ] Sub-step 5.1: Measure and optimize performance
-    - **Directory**: Multiple directories
-    - **Files to create/modify**: As needed for optimization
-    - **Accept**: All searches complete within 3 seconds
-    - **Tests**: Performance benchmarks in integration tests
-    - **Done**: Performance meets requirements
+  - [ ] Sub-step 2.2: API failure handling
+    - **Directory**: `src/data/airtable/` and `src/services/`
+    - **Files to create/modify**: Repository and service files
+    - **Accept**: Graceful degradation on API errors
+    - **Tests**: Mock API failures in tests
+    - **Done**: System handles failures gracefully
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+  - [ ] Sub-step 2.3: Network timeout handling
+    - **Directory**: `src/data/airtable/`
+    - **Files to create/modify**: `airtable_client.py`
+    - **Accept**: Timeouts handled with retry options
+    - **Tests**: Test timeout scenarios
+    - **Done**: Network issues handled smoothly
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 3: Performance optimization
+  - [ ] Sub-step 3.1: Response time validation
+    - **Directory**: `tests/integration/`
+    - **Files to create/modify**: Performance test files
+    - **Accept**: All searches complete < 3 seconds
+    - **Tests**: Benchmark with various data sizes
+    - **Done**: Performance targets met
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+  - [ ] Sub-step 3.2: Query optimization
+    - **Directory**: `src/data/airtable/`
+    - **Files to create/modify**: Repository implementation
+    - **Accept**: Efficient filtering and minimal API calls
+    - **Tests**: Profile and optimize queries
+    - **Done**: Queries optimized
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 4: Regression testing
+  - [ ] Sub-step 4.1: Existing search functionality
+    - **Directory**: `tests/integration/`
+    - **Files to create/modify**: Existing test files
+    - **Accept**: Name search still works correctly
+    - **Tests**: Run full test suite
+    - **Done**: No regressions found
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 5: User-facing error messages
+  - [ ] Sub-step 5.1: Standardize error messages
+    - **Directory**: `src/bot/handlers/` and `src/utils/`
+    - **Files to create/modify**: Create `messages.py` or similar
+    - **Accept**: Consistent, helpful error messages
+    - **Tests**: Verify all error paths
+    - **Done**: Error messages standardized
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 ## Testing Strategy
-- [ ] Integration tests: Complete workflows in tests/integration/
-- [ ] Error handling tests: Failure scenarios across all layers
-- [ ] Performance tests: Response time validation
-- [ ] Regression tests: Existing functionality verification
-- [ ] Load tests: Multiple concurrent searches
+- [ ] Integration tests: Complete workflows in `tests/integration/`
+- [ ] Integration tests: Airtable schema validation
+- [ ] Performance tests: Response time benchmarks
+- [ ] Error scenario tests: All failure modes covered
+- [ ] Regression tests: Existing functionality preserved
+- [ ] Load tests: Handle multiple concurrent searches
 
 ## Success Criteria
 - [ ] All end-to-end workflows function correctly
 - [ ] Invalid room numbers show "Please enter a valid room number"
-- [ ] Invalid floor numbers show "Please enter a valid floor number"
-- [ ] Empty results show "No participants found in room X" or "No participants on floor Y"
+- [ ] Invalid floor numbers show "Please enter a valid floor number"  
+- [ ] Empty results show appropriate "No participants found" messages
 - [ ] API failures show "Unable to search. Please try again later"
-- [ ] Network timeouts are handled with retry options
+- [ ] Network timeouts handled with retry options
+- [ ] Airtable field mappings validated in integration
 - [ ] All searches complete within 3 seconds
 - [ ] 90%+ overall test coverage achieved
 - [ ] No regression in existing search functionality
 - [ ] Production deployment checklist complete
+- [ ] Code review approved
