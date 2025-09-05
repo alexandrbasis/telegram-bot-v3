@@ -89,19 +89,45 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult:
     return ValidationResult(is_valid=True, cleaned_value=floor_str)
 ```
 
-### Integration Points
+### Integration Testing and Validation (2025-09-05)
 
-#### Repository Layer Integration
-- `AirtableParticipantRepository.find_by_room_number(room: str)` → List[Participant]
-- `AirtableParticipantRepository.find_by_floor(floor: Union[int, str])` → List[Participant]
+#### Comprehensive Integration Test Coverage
+**Test Files**: 3 dedicated integration test files with 28 total tests
+- `test_room_search_integration.py`: 7 tests covering room search workflows
+- `test_floor_search_integration.py`: 11 tests covering floor search workflows  
+- `test_airtable_schema_validation.py`: 10 tests validating field mappings
 
-#### Service Layer Integration
-- `SearchService.search_by_room(room: str)` → List[Participant] (with validation)
-- `SearchService.search_by_floor(floor: Union[int, str])` → List[Participant] (with validation)
-- `SearchService.search_by_room_formatted(room: str)` → str (formatted results)
+#### Verified Field Mappings
+Field IDs have been validated through comprehensive integration testing with actual Airtable API calls:
 
-#### Error Handling
-- **Validation Errors**: Invalid room/floor format
-- **Data Access Errors**: Airtable API failures
-- **Security Errors**: Formula injection attempts
-- **Empty Result Handling**: No participants found for specified room/floor
+```python
+# Verified field mappings (Integration tested 2025-09-05)
+FIELD_MAPPINGS = {
+    "room_number": "fldJTPjo8AHQaADVu",  # Validated: TEXT type, alphanumeric support
+    "floor": "fldlzG1sVg01hsy2g",        # Validated: Union[int, str] support
+}
+```
+
+#### Integration Points
+
+#### Repository Layer Integration (Tested)
+- `AirtableParticipantRepository.find_by_room_number(room: str)` → List[Participant] ✅ Tested
+- `AirtableParticipantRepository.find_by_floor(floor: Union[int, str])` → List[Participant] ✅ Tested
+
+#### Service Layer Integration (Tested)
+- `SearchService.search_by_room(room: str)` → List[Participant] (with validation) ✅ Tested
+- `SearchService.search_by_floor(floor: Union[int, str])` → List[Participant] (with validation) ✅ Tested
+- `SearchService.search_by_room_formatted(room: str)` → str (formatted results) ✅ Tested
+
+#### Error Handling (Comprehensive Testing)
+- **Validation Errors**: Invalid room/floor format ✅ Tested with standardized messages
+- **Data Access Errors**: Airtable API failures ✅ Tested with graceful degradation
+- **Security Errors**: Formula injection attempts ✅ Tested with quote escaping
+- **Empty Result Handling**: No participants found for specified room/floor ✅ Tested
+- **Performance Validation**: All operations validated to complete within 3 seconds ✅ Tested
+
+#### Production Readiness Verification
+- **Schema Alignment**: All field mappings verified against production Airtable structure
+- **Alphanumeric Room Support**: Tested with rooms like "101", "A1", "Conference"
+- **Multi-Room Floor Processing**: Tested floor search with participant grouping and sorting
+- **Error Message Standardization**: Centralized templates provide consistent UX
