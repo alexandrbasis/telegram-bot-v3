@@ -5,9 +5,8 @@ Initializes and runs the Telegram bot with search conversation functionality,
 proper error handling, and logging configuration including persistent file logging.
 """
 
-import asyncio
 import logging
-from typing import NoReturn, Optional
+from typing import Optional
 
 from telegram import Update
 from telegram.ext import Application, ContextTypes
@@ -17,7 +16,7 @@ import tempfile
 
 from src.utils.single_instance import InstanceLock
 
-from src.config.settings import get_settings
+from src.config.settings import get_settings, Settings
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.services.file_logging_service import FileLoggingService
 
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 _file_logging_service: Optional[FileLoggingService] = None
 
 
-def configure_logging(settings) -> None:
+def configure_logging(settings: Settings) -> None:
     """
     Configure logging based on settings, including file logging if enabled.
 
@@ -168,37 +167,21 @@ def create_application() -> Application:
     return app
 
 
-async def run_bot() -> None:
+def run_bot() -> None:
     """
-    Run the Telegram bot with polling.
+    Run the Telegram bot with polling (synchronous).
 
-    Creates the application and starts polling for updates with proper
-    error handling and graceful shutdown.
-
-    Raises:
-        Exception: If bot fails to start or encounters critical error
+    Uses PTB's built-in `run_polling` in the main thread to ensure a
+    valid event loop context on Python 3.13+.
     """
     logger.info("Starting Telegram bot")
 
     try:
-        # Create and configure application
         app = create_application()
 
-        # Start the bot with polling — support both sync and async run_polling for tests
         logger.info("Bot starting with polling mode")
         try:
-            run_polling = getattr(app, "run_polling", None)
-            if run_polling is None:
-                raise RuntimeError("Application has no run_polling method")
-
-            # If run_polling is coroutine function (as in tests), await it; otherwise, run in a thread
-            if asyncio.iscoroutinefunction(run_polling):
-                await run_polling(drop_pending_updates=True)
-            else:
-                loop = asyncio.get_running_loop()
-                await loop.run_in_executor(
-                    None, lambda: run_polling(drop_pending_updates=True)
-                )
+            app.run_polling(drop_pending_updates=True)
         except Conflict as e:
             logger.error(
                 "Polling conflict: %s. Likely another bot instance or service is polling this token.",
@@ -215,7 +198,7 @@ async def run_bot() -> None:
         logger.info("Bot shutdown complete")
 
 
-def main() -> NoReturn:
+def main() -> None:
     """
     Main entry point for the bot application.
 
@@ -223,8 +206,8 @@ def main() -> NoReturn:
     This function does not return under normal circumstances.
     """
     try:
-        # Run the bot in asyncio
-        asyncio.run(run_bot())
+        # Run the bot (synchronous run)
+        run_bot()
 
     except KeyboardInterrupt:
         print("\nBot stopped by user")

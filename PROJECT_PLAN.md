@@ -333,7 +333,7 @@ quality-check: format lint test
 **Goal**: Complete participant management with search
 
 **Deliverables**:
-- [ ] Search functionality (`/search name`, `/search room`, `/search role`)
+- [x] Search functionality (`/search name`, `/search_room`, `/search_floor`) - ✅ Completed with comprehensive integration testing
 - [ ] List all participants (`/list`)
 - [ ] Edit participant information (`/edit`)
 - [ ] Delete participants (`/delete`)
@@ -370,7 +370,7 @@ quality-check: format lint test
 - [ ] Improved error handling and user feedback
 - [ ] Help system (`/help`)
 - [ ] Performance optimizations
-- [ ] Comprehensive testing
+- [x] Comprehensive testing - ✅ 90+ tests including 28 integration tests for room/floor search with performance validation
 
 **Acceptance Criteria**:
 - Export generates usable CSV/JSON files

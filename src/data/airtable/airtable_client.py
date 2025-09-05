@@ -149,9 +149,7 @@ class AirtableClient:
             await self.rate_limiter.acquire()
 
             # Try to get schema information (lightweight operation)
-            await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self.table.schema()
-            )
+            await asyncio.to_thread(self.table.schema)
 
             logger.info("Airtable connection test successful")
             return True
@@ -182,9 +180,7 @@ class AirtableClient:
             # Translate field names to Field IDs and option values to Option IDs
             translated_fields = self._translate_fields_for_api(fields)
 
-            record = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self.table.create(translated_fields)
-            )
+            record = await asyncio.to_thread(self.table.create, translated_fields)
 
             logger.debug(f"Created record with ID: {record['id']}")
             return record
@@ -212,9 +208,7 @@ class AirtableClient:
         try:
             logger.debug(f"Getting record with ID: {record_id}")
 
-            record = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self.table.get(record_id)
-            )
+            record = await asyncio.to_thread(self.table.get, record_id)
 
             return record
 
@@ -253,9 +247,7 @@ class AirtableClient:
             # Translate field names to Field IDs and option values to Option IDs
             translated_fields = self._translate_fields_for_api(fields)
 
-            record = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self.table.update(record_id, translated_fields)
-            )
+            record = await asyncio.to_thread(self.table.update, record_id, translated_fields)
 
             logger.debug(f"Updated record with ID: {record['id']}")
             return record
@@ -283,9 +275,7 @@ class AirtableClient:
         try:
             logger.debug(f"Deleting record with ID: {record_id}")
 
-            await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self.table.delete(record_id)
-            )
+            await asyncio.to_thread(self.table.delete, record_id)
 
             logger.debug(f"Deleted record with ID: {record_id}")
             return True
@@ -325,7 +315,7 @@ class AirtableClient:
             logger.debug(f"Listing records with formula: {formula}, max: {max_records}")
 
             # Build parameters for Airtable API
-            params = {}
+            params: Dict[str, Any] = {}
             if formula:
                 params["formula"] = formula
             if sort:
@@ -337,9 +327,14 @@ class AirtableClient:
             if view:
                 params["view"] = view
 
+<<<<<<< HEAD
             records = await asyncio.get_event_loop().run_in_executor(
                 None, lambda: list(self.table.all(**params))
             )
+=======
+            # Ensure a list is returned to keep behavior identical
+            records = await asyncio.to_thread(lambda: list(self.table.all(**params)))
+>>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
 
             logger.debug(f"Retrieved {len(records)} records")
             return records
@@ -376,9 +371,13 @@ class AirtableClient:
             try:
                 logger.debug(f"Creating batch of {len(batch)} records")
 
+<<<<<<< HEAD
                 batch_results = await asyncio.get_event_loop().run_in_executor(
                     None, lambda: self.table.batch_create(batch)
                 )
+=======
+                batch_results = await asyncio.to_thread(self.table.batch_create, batch)
+>>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
 
                 results.extend(batch_results)
                 logger.debug(f"Created batch with {len(batch_results)} records")
@@ -417,8 +416,13 @@ class AirtableClient:
             try:
                 logger.debug(f"Updating batch of {len(batch)} records")
 
+<<<<<<< HEAD
                 batch_results = await asyncio.get_event_loop().run_in_executor(
                     None, lambda: self.table.batch_update(batch)
+=======
+                batch_results = await asyncio.to_thread(
+                    self.table.batch_update, batch  # type: ignore[arg-type]
+>>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
                 )
 
                 results.extend(batch_results)
@@ -471,7 +475,11 @@ class AirtableClient:
         """
         return await self.list_records(formula=formula)
 
+<<<<<<< HEAD
     async def get_schema(self) -> Dict[str, Any]:
+=======
+    async def get_schema(self) -> Any:
+>>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
         """
         Get table schema information.
 
@@ -486,9 +494,13 @@ class AirtableClient:
         try:
             logger.debug("Getting table schema")
 
+<<<<<<< HEAD
             schema = await asyncio.get_event_loop().run_in_executor(
                 None, lambda: self.table.schema()
             )
+=======
+            schema = await asyncio.to_thread(self.table.schema)
+>>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
 
             return schema
 

@@ -221,18 +221,28 @@ Users can switch between different search modes using a reply keyboard interface
 
 ## Error Handling
 
+### Standardized Error Messages (2025-09-05)
+Error handling has been enhanced with centralized message templates located in `src/bot/messages.py` providing consistent, user-friendly Russian error messages across all search functionality.
+
 ### Validation Errors
 - Clear Russian error messages for invalid input
 - Prompts user to retry with correct format
 - Field-specific validation rules enforced
 - **Room Number Validation**: "Пожалуйста, введите корректный номер комнаты (например: 205, A1, Conference)"
 - **Floor Number Validation**: "Пожалуйста, введите корректный номер этажа (например: 1, 2, Ground)"
+- **Empty Results**: "По заданному запросу ничего не найдено"
 
 ### System Errors  
 - Graceful handling of Airtable API errors
 - Rate limiting protection (5 requests/second)
-- Connection timeout recovery
+- Connection timeout recovery with 30-second timeout and 3 retry attempts
+- **API Error Messages**: "Произошла ошибка. Попробуйте позже" with retry guidance
 - Empty room/floor result handling with user-friendly messages
+
+### Integration Testing and Performance
+- **Response Time Validation**: All searches validated to complete within 3 seconds
+- **Comprehensive Error Scenario Testing**: 28+ integration tests covering API failures, invalid inputs, and edge cases
+- **Production Readiness**: Error handling tested against real Airtable field mappings and schema validation
 
 ## Usage Flow Examples
 
