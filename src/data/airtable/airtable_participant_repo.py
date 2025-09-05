@@ -23,7 +23,6 @@ from src.services.search_service import (
     detect_language,
     format_participant_result,
 )
-from src.config.field_mappings import AirtableFieldMapping
 
 logger = logging.getLogger(__name__)
 

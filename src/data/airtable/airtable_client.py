@@ -149,7 +149,7 @@ class AirtableClient:
             await self.rate_limiter.acquire()
 
             # Try to get schema information (lightweight operation)
-            await asyncio.get_event_loop().run_in_executor(
+            await asyncio.get_running_loop().run_in_executor(
                 None, lambda: self.table.schema()
             )
 
@@ -182,7 +182,7 @@ class AirtableClient:
             # Translate field names to Field IDs and option values to Option IDs
             translated_fields = self._translate_fields_for_api(fields)
 
-            record = await asyncio.get_event_loop().run_in_executor(
+            record = await asyncio.get_running_loop().run_in_executor(
                 None, lambda: self.table.create(translated_fields)
             )
 
@@ -212,7 +212,7 @@ class AirtableClient:
         try:
             logger.debug(f"Getting record with ID: {record_id}")
 
-            record = await asyncio.get_event_loop().run_in_executor(
+            record = await asyncio.get_running_loop().run_in_executor(
                 None, lambda: self.table.get(record_id)
             )
 
@@ -253,7 +253,7 @@ class AirtableClient:
             # Translate field names to Field IDs and option values to Option IDs
             translated_fields = self._translate_fields_for_api(fields)
 
-            record = await asyncio.get_event_loop().run_in_executor(
+            record = await asyncio.get_running_loop().run_in_executor(
                 None, lambda: self.table.update(record_id, translated_fields)
             )
 
@@ -283,7 +283,7 @@ class AirtableClient:
         try:
             logger.debug(f"Deleting record with ID: {record_id}")
 
-            await asyncio.get_event_loop().run_in_executor(
+            await asyncio.get_running_loop().run_in_executor(
                 None, lambda: self.table.delete(record_id)
             )
 
@@ -325,7 +325,7 @@ class AirtableClient:
             logger.debug(f"Listing records with formula: {formula}, max: {max_records}")
 
             # Build parameters for Airtable API
-            params = {}
+            params: Dict[str, Any] = {}
             if formula:
                 params["formula"] = formula
             if sort:
@@ -337,7 +337,7 @@ class AirtableClient:
             if view:
                 params["view"] = view
 
-            records = await asyncio.get_event_loop().run_in_executor(
+            records = await asyncio.get_running_loop().run_in_executor(
                 None, lambda: list(self.table.all(**params))
             )
 
@@ -376,7 +376,7 @@ class AirtableClient:
             try:
                 logger.debug(f"Creating batch of {len(batch)} records")
 
-                batch_results = await asyncio.get_event_loop().run_in_executor(
+                batch_results = await asyncio.get_running_loop().run_in_executor(
                     None, lambda: self.table.batch_create(batch)
                 )
 
@@ -417,8 +417,9 @@ class AirtableClient:
             try:
                 logger.debug(f"Updating batch of {len(batch)} records")
 
-                batch_results = await asyncio.get_event_loop().run_in_executor(
-                    None, lambda: self.table.batch_update(batch)
+                from typing import Any as _Any
+                batch_results = await asyncio.get_running_loop().run_in_executor(
+                    None, lambda: self.table.batch_update(batch)  # type: ignore[arg-type]
                 )
 
                 results.extend(batch_results)
@@ -471,7 +472,7 @@ class AirtableClient:
         """
         return await self.list_records(formula=formula)
 
-    async def get_schema(self) -> Dict[str, Any]:
+    async def get_schema(self) -> Any:
         """
         Get table schema information.
 
@@ -486,7 +487,7 @@ class AirtableClient:
         try:
             logger.debug("Getting table schema")
 
-            schema = await asyncio.get_event_loop().run_in_executor(
+            schema = await asyncio.get_running_loop().run_in_executor(
                 None, lambda: self.table.schema()
             )
 
