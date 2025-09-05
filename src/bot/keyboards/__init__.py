@@ -17,9 +17,6 @@ from .search_keyboards import (
     NAV_SEARCH_FLOOR,
     NAV_MAIN_MENU,
     NAV_CANCEL,
-    NAV_BACK_TO_SEARCH_MODES
+    NAV_BACK_TO_SEARCH_MODES,
 )
-from .edit_keyboards import (
-    create_participant_edit_keyboard,
-    get_field_icon
-)
+from .edit_keyboards import create_participant_edit_keyboard, get_field_icon

@@ -34,12 +34,15 @@ class InstanceLock:
         flags = os.O_RDWR | os.O_CREAT
         # 0o644 file permissions
         self._fd = os.open(self.path, flags, 0o644)
-        self._fh = os.fdopen(self._fd, mode="r+", buffering=1, encoding="utf-8", errors="ignore")
+        self._fh = os.fdopen(
+            self._fd, mode="r+", buffering=1, encoding="utf-8", errors="ignore"
+        )
 
         try:
             if sys.platform.startswith("win"):
                 # Windows non-blocking lock on 1 byte at start of file
                 import msvcrt
+
                 self._fh.seek(0)
                 try:
                     msvcrt.locking(self._fh.fileno(), msvcrt.LK_NBLCK, 1)
@@ -48,6 +51,7 @@ class InstanceLock:
             else:
                 # POSIX non-blocking exclusive lock
                 import fcntl
+
                 try:
                     fcntl.flock(self._fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except OSError:
@@ -104,4 +108,3 @@ class InstanceLock:
             f"Another instance of the bot is already running{suffix}.\n"
             f"If this seems incorrect, delete '{self.path}' and try again."
         )
-

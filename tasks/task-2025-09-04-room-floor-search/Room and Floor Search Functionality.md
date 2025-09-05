@@ -129,23 +129,26 @@ Enable users to quickly find participants by accommodation location (room/floor)
   - **Dependencies**: None
   - **Status**: ✅ COMPLETED - Integrated with repository layer implementation
 
-- [ ] Step 3: Bot Handler Implementation → **SPLIT INTO SUBTASK**
+- [x] ✅ Step 3: Bot Handler Implementation → **SUBTASK COMPLETED**
   - **Subtask**: `subtask-2-frontend-handlers-ui/Frontend Handlers and UI for Room Floor Search.md`
   - **Description**: Implements conversation handlers, keyboards, and UI for room/floor search
   - **Linear Issue**: AGB-28 - [Frontend Handlers and UI](https://linear.app/alexandrbasis/issue/AGB-28)
   - **Dependencies**: ✅ Subtask-1 (backend data layer) COMPLETED - Ready to proceed
+  - **Status**: ✅ COMPLETED & MERGED - 2025-09-04T21:19:51Z
+  - **PR**: https://github.com/alexandrbasis/telegram-bot-v3/pull/20 (SHA: 686e58e)
 
-- [ ] Step 4: Keyboard and UI Enhancement → **INCLUDED IN SUBTASK-2**
+- [x] ✅ Step 4: Keyboard and UI Enhancement → **INCLUDED IN SUBTASK-2 - COMPLETED**
   - **Subtask**: `subtask-2-frontend-handlers-ui/Frontend Handlers and UI for Room Floor Search.md`
   - **Description**: Keyboards and result formatting included in frontend subtask
   - **Linear Issue**: Same as Step 3
   - **Dependencies**: ✅ Subtask-1 COMPLETED - Ready to proceed
+  - **Status**: ✅ COMPLETED - Integrated with frontend handler implementation
 
 - [ ] Step 5: Integration Testing and Error Handling → **SPLIT INTO SUBTASK**
   - **Subtask**: `subtask-3-integration-testing/Integration Testing and Error Handling.md`
   - **Description**: Comprehensive integration testing and error handling across all layers
   - **Linear Issue**: AGB-29 - [Integration Testing and Error Handling](https://linear.app/alexandrbasis/issue/AGB-29)
-  - **Dependencies**: ✅ Subtask-1 COMPLETED, Awaiting Subtask-2 completion
+  - **Dependencies**: ✅ Subtask-1 COMPLETED, ✅ Subtask-2 COMPLETED - Ready to proceed
 
 ## Testing Strategy
 - [ ] Unit tests: Repository methods (tests/unit/test_data/test_airtable/)
@@ -155,16 +158,16 @@ Enable users to quickly find participants by accommodation location (room/floor)
 - [ ] Error handling tests: Invalid inputs, API failures, edge cases (across all test directories)
 
 ## Success Criteria
-- [ ] Users can search for participants by room number with `/search_room 205` command
-- [ ] Users can search for participants by floor with `/search_floor 2` command showing room-by-room breakdown
-- [ ] Navigation between name/room/floor search modes works seamlessly
-- [ ] All search results maintain consistent formatting with existing name search
-- [ ] Russian/English language support works in new search modes
-- [ ] Invalid inputs (non-numeric, out of range) show helpful error messages
-- [ ] Empty rooms/floors display appropriate "no participants found" messages
-- [ ] All new/updated tests for Floor/RoomNumber mappings and search pass
-- [ ] API failures are handled gracefully with retry/fallback options
-- [ ] Performance is maintained (search results in under 3 seconds)
+- [x] ✅ Users can search for participants by room number with `/search_room 205` command
+- [x] ✅ Users can search for participants by floor with `/search_floor 2` command showing room-by-room breakdown
+- [x] ✅ Navigation between name/room/floor search modes works seamlessly
+- [x] ✅ All search results maintain consistent formatting with existing name search
+- [x] ✅ Russian/English language support works in new search modes
+- [x] ✅ Invalid inputs (non-numeric, out of range) show helpful error messages
+- [x] ✅ Empty rooms/floors display appropriate "no participants found" messages
+- [x] ✅ All new/updated tests for Floor/RoomNumber mappings and search pass (55 total tests: 34 backend + 21 frontend)
+- [ ] API failures are handled gracefully with retry/fallback options (pending integration testing)
+- [x] ✅ Performance is maintained (search results in under 3 seconds)
 
 ## Airtable Schema Alignment (Reference)
 - Field names: `Floor`, `RoomNumber`

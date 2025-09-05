@@ -10,7 +10,7 @@ from telegram import ReplyKeyboardMarkup
 
 # Navigation button constants
 NAV_SEARCH_NAME = "👤 По имени"
-NAV_SEARCH_ROOM = "🚪 По комнате" 
+NAV_SEARCH_ROOM = "🚪 По комнате"
 NAV_SEARCH_FLOOR = "🏢 По этажу"
 NAV_MAIN_MENU = "🏠 Главное меню"
 NAV_CANCEL = "❌ Отмена"
@@ -20,9 +20,9 @@ NAV_BACK_TO_SEARCH_MODES = "🔙 Назад к поиску"
 def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
     """
     Get main menu reply keyboard with search mode selection button.
-    
+
     Provides the primary navigation entry point that leads to search mode selection.
-    
+
     Returns:
         ReplyKeyboardMarkup with search mode selection button
     """
@@ -35,17 +35,14 @@ def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
 def get_search_mode_selection_keyboard() -> ReplyKeyboardMarkup:
     """
     Get search mode selection keyboard with name/room/floor options.
-    
+
     Provides buttons for users to choose between different search modes,
     addressing the major issue identified in code review.
-    
+
     Returns:
         ReplyKeyboardMarkup with search mode buttons and main menu navigation
     """
-    keyboard = [
-        [NAV_SEARCH_NAME, NAV_SEARCH_ROOM],
-        [NAV_SEARCH_FLOOR, NAV_MAIN_MENU]
-    ]
+    keyboard = [[NAV_SEARCH_NAME, NAV_SEARCH_ROOM], [NAV_SEARCH_FLOOR, NAV_MAIN_MENU]]
     return ReplyKeyboardMarkup(
         keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
     )

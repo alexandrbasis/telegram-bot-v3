@@ -15,7 +15,10 @@ from telegram import User, Chat, Message, Update, CallbackQuery
 from telegram.ext import ContextTypes
 
 from src.models.participant import Participant, PaymentStatus
-from src.bot.handlers.edit_participant_handlers import save_changes, handle_text_field_input
+from src.bot.handlers.edit_participant_handlers import (
+    save_changes,
+    handle_text_field_input,
+)
 from src.data.repositories.participant_repository import RepositoryError
 
 
@@ -81,7 +84,7 @@ class TestPaymentAutomationWorkflow:
             full_name_en="Test Testovich",
             payment_amount=0,
             payment_status=PaymentStatus.UNPAID,
-            payment_date=None
+            payment_date=None,
         )
 
     @pytest.mark.asyncio
@@ -90,12 +93,18 @@ class TestPaymentAutomationWorkflow:
     ):
         """Test that payment automation triggers when payment_amount >= 1."""
         # Setup: participant with payment amount change
-        mock_context.user_data['current_participant'] = sample_participant
-        mock_context.user_data['editing_changes'] = {'payment_amount': 1500}
+        mock_context.user_data["current_participant"] = sample_participant
+        mock_context.user_data["editing_changes"] = {"payment_amount": 1500}
 
-        with patch('src.bot.handlers.edit_participant_handlers.get_participant_repository') as mock_get_repo, \
-             patch('src.bot.handlers.edit_participant_handlers.get_user_interaction_logger') as mock_logger:
-            
+        with (
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_participant_repository"
+            ) as mock_get_repo,
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
+            ) as mock_logger,
+        ):
+
             # Setup repository mock
             mock_repo = AsyncMock()
             mock_repo.update_by_id.return_value = True
@@ -107,26 +116,32 @@ class TestPaymentAutomationWorkflow:
 
             # Verify automated fields were added to the update
             expected_update = {
-                'payment_amount': 1500,
-                'payment_status': PaymentStatus.PAID,
-                'payment_date': date.today()
+                "payment_amount": 1500,
+                "payment_status": PaymentStatus.PAID,
+                "payment_date": date.today(),
             }
             mock_repo.update_by_id.assert_called_once_with(
                 sample_participant.record_id, expected_update
             )
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_payment_automation_does_not_trigger_on_zero_amount(
         self, mock_update, mock_context, sample_participant
     ):
         """Test that payment automation does not trigger when payment_amount = 0."""
         # Setup: participant with zero payment amount
-        mock_context.user_data['current_participant'] = sample_participant
-        mock_context.user_data['editing_changes'] = {'payment_amount': 0}
+        mock_context.user_data["current_participant"] = sample_participant
+        mock_context.user_data["editing_changes"] = {"payment_amount": 0}
 
-        with patch('src.bot.handlers.edit_participant_handlers.get_participant_repository') as mock_get_repo, \
-             patch('src.bot.handlers.edit_participant_handlers.get_user_interaction_logger') as mock_logger:
-            
+        with (
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_participant_repository"
+            ) as mock_get_repo,
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
+            ) as mock_logger,
+        ):
+
             # Setup repository mock
             mock_repo = AsyncMock()
             mock_repo.update_by_id.return_value = True
@@ -137,7 +152,7 @@ class TestPaymentAutomationWorkflow:
             await save_changes(mock_update, mock_context)
 
             # Verify only payment_amount is updated, no automation
-            expected_update = {'payment_amount': 0}
+            expected_update = {"payment_amount": 0}
             mock_repo.update_by_id.assert_called_once_with(
                 sample_participant.record_id, expected_update
             )
@@ -148,12 +163,18 @@ class TestPaymentAutomationWorkflow:
     ):
         """Test that payment automation does not trigger when payment_amount is not being changed."""
         # Setup: participant with other field changes
-        mock_context.user_data['current_participant'] = sample_participant
-        mock_context.user_data['editing_changes'] = {'full_name_ru': 'Новое Имя'}
+        mock_context.user_data["current_participant"] = sample_participant
+        mock_context.user_data["editing_changes"] = {"full_name_ru": "Новое Имя"}
 
-        with patch('src.bot.handlers.edit_participant_handlers.get_participant_repository') as mock_get_repo, \
-             patch('src.bot.handlers.edit_participant_handlers.get_user_interaction_logger') as mock_logger:
-            
+        with (
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_participant_repository"
+            ) as mock_get_repo,
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
+            ) as mock_logger,
+        ):
+
             # Setup repository mock
             mock_repo = AsyncMock()
             mock_repo.update_by_id.return_value = True
@@ -164,7 +185,7 @@ class TestPaymentAutomationWorkflow:
             await save_changes(mock_update, mock_context)
 
             # Verify only intended field is updated, no automation
-            expected_update = {'full_name_ru': 'Новое Имя'}
+            expected_update = {"full_name_ru": "Новое Имя"}
             mock_repo.update_by_id.assert_called_once_with(
                 sample_participant.record_id, expected_update
             )
@@ -175,16 +196,22 @@ class TestPaymentAutomationWorkflow:
     ):
         """Test that payment automation works correctly with multiple field changes."""
         # Setup: participant with multiple changes including payment
-        mock_context.user_data['current_participant'] = sample_participant
-        mock_context.user_data['editing_changes'] = {
-            'full_name_ru': 'Обновленное Имя',
-            'payment_amount': 2000,
-            'contact_information': 'новый@email.com'
+        mock_context.user_data["current_participant"] = sample_participant
+        mock_context.user_data["editing_changes"] = {
+            "full_name_ru": "Обновленное Имя",
+            "payment_amount": 2000,
+            "contact_information": "новый@email.com",
         }
 
-        with patch('src.bot.handlers.edit_participant_handlers.get_participant_repository') as mock_get_repo, \
-             patch('src.bot.handlers.edit_participant_handlers.get_user_interaction_logger') as mock_logger:
-            
+        with (
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_participant_repository"
+            ) as mock_get_repo,
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
+            ) as mock_logger,
+        ):
+
             # Setup repository mock
             mock_repo = AsyncMock()
             mock_repo.update_by_id.return_value = True
@@ -196,11 +223,11 @@ class TestPaymentAutomationWorkflow:
 
             # Verify all fields plus automated fields are updated
             expected_update = {
-                'full_name_ru': 'Обновленное Имя',
-                'payment_amount': 2000,
-                'contact_information': 'новый@email.com',
-                'payment_status': PaymentStatus.PAID,
-                'payment_date': date.today()
+                "full_name_ru": "Обновленное Имя",
+                "payment_amount": 2000,
+                "contact_information": "новый@email.com",
+                "payment_status": PaymentStatus.PAID,
+                "payment_date": date.today(),
             }
             mock_repo.update_by_id.assert_called_once_with(
                 sample_participant.record_id, expected_update
@@ -212,12 +239,18 @@ class TestPaymentAutomationWorkflow:
     ):
         """Test that payment automation triggers when payment_amount = 1 (edge case)."""
         # Setup: participant with minimum triggering amount
-        mock_context.user_data['current_participant'] = sample_participant
-        mock_context.user_data['editing_changes'] = {'payment_amount': 1}
+        mock_context.user_data["current_participant"] = sample_participant
+        mock_context.user_data["editing_changes"] = {"payment_amount": 1}
 
-        with patch('src.bot.handlers.edit_participant_handlers.get_participant_repository') as mock_get_repo, \
-             patch('src.bot.handlers.edit_participant_handlers.get_user_interaction_logger') as mock_logger:
-            
+        with (
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_participant_repository"
+            ) as mock_get_repo,
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
+            ) as mock_logger,
+        ):
+
             # Setup repository mock
             mock_repo = AsyncMock()
             mock_repo.update_by_id.return_value = True
@@ -229,9 +262,9 @@ class TestPaymentAutomationWorkflow:
 
             # Verify automation triggers for amount = 1
             expected_update = {
-                'payment_amount': 1,
-                'payment_status': PaymentStatus.PAID,
-                'payment_date': date.today()
+                "payment_amount": 1,
+                "payment_status": PaymentStatus.PAID,
+                "payment_date": date.today(),
             }
             mock_repo.update_by_id.assert_called_once_with(
                 sample_participant.record_id, expected_update
@@ -243,20 +276,26 @@ class TestPaymentAutomationWorkflow:
     ):
         """Test that payment automation is properly logged."""
         # Setup: participant with payment amount change
-        mock_context.user_data['current_participant'] = sample_participant
-        mock_context.user_data['editing_changes'] = {'payment_amount': 1500}
+        mock_context.user_data["current_participant"] = sample_participant
+        mock_context.user_data["editing_changes"] = {"payment_amount": 1500}
 
-        with patch('src.bot.handlers.edit_participant_handlers.get_participant_repository') as mock_get_repo, \
-             patch('src.bot.handlers.edit_participant_handlers.get_user_interaction_logger') as mock_logger:
-            
-            # Setup repository mock  
+        with (
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_participant_repository"
+            ) as mock_get_repo,
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
+            ) as mock_logger,
+        ):
+
+            # Setup repository mock
             mock_repo = AsyncMock()
             mock_repo.update_by_id.return_value = True
             mock_get_repo.return_value = mock_repo
             mock_logger.return_value = None
 
             # Capture logs at INFO level
-            caplog.set_level('INFO')
+            caplog.set_level("INFO")
 
             # Execute save_changes
             await save_changes(mock_update, mock_context)

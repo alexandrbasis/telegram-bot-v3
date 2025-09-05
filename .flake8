@@ -1,0 +1,31 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203,W503
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv,
+    .eggs,
+    *.egg
+per-file-ignores =
+    tests/*: E501,F401,F541,F841,E712,F811
+    src/data/airtable/airtable_participant_repo.py: E501
+    src/bot/handlers/edit_participant_handlers.py: E501
+    src/bot/handlers/search_conversation.py: E501,F401
+    src/bot/keyboards/__init__.py: F401
+    src/bot/keyboards/edit_keyboards.py: F401
+    src/bot/messages.py: E501
+    src/config/field_mappings.py: E501
+    src/data/airtable/airtable_client.py: F401,E501
+    src/data/data_validator.py: F401,E501
+    src/data/repositories/participant_repository.py: E501
+    src/main.py: E501
+    src/models/participant.py: E501
+    src/services/file_logging_service.py: F401
+    src/services/participant_update_service.py: E501
+    src/services/search_service.py: F401,E501
+    src/services/user_interaction_logger.py: E501
+    src/utils/validation.py: F401

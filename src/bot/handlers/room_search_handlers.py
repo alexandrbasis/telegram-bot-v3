@@ -11,7 +11,6 @@ from enum import IntEnum
 
 from telegram import (
     Update,
-    ReplyKeyboardMarkup,
 )
 from telegram.ext import ContextTypes
 
@@ -19,8 +18,6 @@ from src.services.service_factory import get_search_service
 from src.bot.keyboards.search_keyboards import (
     get_waiting_for_room_keyboard,
     get_results_navigation_keyboard,
-    NAV_MAIN_MENU,
-    NAV_BACK_TO_SEARCH_MODES
 )
 from src.bot.messages import ErrorMessages, InfoMessages, RetryMessages
 
@@ -69,13 +66,11 @@ async def handle_room_search_command(
 
         await update.message.reply_text(
             text=InfoMessages.searching_room(room_number),
-            reply_markup=get_results_navigation_keyboard()
+            reply_markup=get_results_navigation_keyboard(),
         )
 
         # Process the search immediately
-        return await process_room_search_with_number(
-            update, context, room_number
-        )
+        return await process_room_search_with_number(update, context, room_number)
     else:
         # Ask for room number
         await update.message.reply_text(
@@ -125,10 +120,9 @@ async def process_room_search_with_number(
     if not re.search(r"\d", room_number):
         await update.message.reply_text(
             text=RetryMessages.with_help(
-                ErrorMessages.INVALID_ROOM_NUMBER,
-                RetryMessages.ROOM_NUMBER_HELP
+                ErrorMessages.INVALID_ROOM_NUMBER, RetryMessages.ROOM_NUMBER_HELP
             ),
-            reply_markup=get_waiting_for_room_keyboard()
+            reply_markup=get_waiting_for_room_keyboard(),
         )
         return RoomSearchStates.WAITING_FOR_ROOM
 
@@ -164,14 +158,12 @@ async def process_room_search_with_number(
         else:
             results_message = ErrorMessages.no_participants_in_room(room_number)
             logger.info(
-                f"No participants found in room {room_number} "
-                f"for user {user.id}"
+                f"No participants found in room {room_number} " f"for user {user.id}"
             )
 
         # Send results
         await update.message.reply_text(
-            text=results_message,
-            reply_markup=get_results_navigation_keyboard()
+            text=results_message, reply_markup=get_results_navigation_keyboard()
         )
 
     except Exception as e:
@@ -180,8 +172,7 @@ async def process_room_search_with_number(
         # Send error message
         await update.message.reply_text(
             text=RetryMessages.with_help(
-                ErrorMessages.SEARCH_ERROR_GENERIC,
-                RetryMessages.RETRY_CONNECTION
+                ErrorMessages.SEARCH_ERROR_GENERIC, RetryMessages.RETRY_CONNECTION
             ),
             reply_markup=get_results_navigation_keyboard(),
         )
