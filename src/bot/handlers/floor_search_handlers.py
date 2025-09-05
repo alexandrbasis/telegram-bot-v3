@@ -24,6 +24,7 @@ from src.bot.keyboards.search_keyboards import (
     NAV_MAIN_MENU,
     NAV_BACK_TO_SEARCH_MODES
 )
+from src.bot.messages import ErrorMessages, InfoMessages, RetryMessages
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +124,7 @@ async def handle_floor_search_command(
         context.user_data["current_floor"] = floor_input
 
         await update.message.reply_text(
-            text=f"🔍 Ищу участников на этаже {floor_input}...",
+            text=InfoMessages.searching_floor(floor_input),
             reply_markup=get_results_navigation_keyboard(),
         )
 
@@ -134,7 +135,7 @@ async def handle_floor_search_command(
     else:
         # Ask for floor number
         await update.message.reply_text(
-            text="Введите номер этажа для поиска:",
+            text=InfoMessages.ENTER_FLOOR_NUMBER,
             reply_markup=get_waiting_for_floor_keyboard(),
         )
 
@@ -181,8 +182,10 @@ async def process_floor_search_with_input(
         floor_number = int(floor_input)
     except ValueError:
         await update.message.reply_text(
-            text="❌ Пожалуйста, введите корректный номер этажа "
-                 "(должен быть числом).",
+            text=RetryMessages.with_help(
+                ErrorMessages.INVALID_FLOOR_NUMBER,
+                RetryMessages.FLOOR_NUMBER_HELP
+            ),
             reply_markup=get_waiting_for_floor_keyboard()
         )
         return FloorSearchStates.WAITING_FOR_FLOOR
@@ -222,7 +225,10 @@ async def process_floor_search_with_input(
 
         # Send error message
         await update.message.reply_text(
-            text="❌ Произошла ошибка при поиске. Попробуйте позже.",
+            text=RetryMessages.with_help(
+                ErrorMessages.SEARCH_ERROR_GENERIC,
+                RetryMessages.RETRY_CONNECTION
+            ),
             reply_markup=get_results_navigation_keyboard(),
         )
 
