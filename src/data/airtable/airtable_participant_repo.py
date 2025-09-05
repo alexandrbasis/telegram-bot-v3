@@ -23,10 +23,7 @@ from src.services.search_service import (
     detect_language,
     format_participant_result,
 )
-<<<<<<< HEAD
- 
-=======
->>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
+
 
 logger = logging.getLogger(__name__)
 

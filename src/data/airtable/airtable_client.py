@@ -326,15 +326,8 @@ class AirtableClient:
                 params["max_records"] = max_records
             if view:
                 params["view"] = view
-
-<<<<<<< HEAD
-            records = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: list(self.table.all(**params))
-            )
-=======
             # Ensure a list is returned to keep behavior identical
             records = await asyncio.to_thread(lambda: list(self.table.all(**params)))
->>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
 
             logger.debug(f"Retrieved {len(records)} records")
             return records
@@ -371,13 +364,7 @@ class AirtableClient:
             try:
                 logger.debug(f"Creating batch of {len(batch)} records")
 
-<<<<<<< HEAD
-                batch_results = await asyncio.get_event_loop().run_in_executor(
-                    None, lambda: self.table.batch_create(batch)
-                )
-=======
                 batch_results = await asyncio.to_thread(self.table.batch_create, batch)
->>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
 
                 results.extend(batch_results)
                 logger.debug(f"Created batch with {len(batch_results)} records")
@@ -416,13 +403,8 @@ class AirtableClient:
             try:
                 logger.debug(f"Updating batch of {len(batch)} records")
 
-<<<<<<< HEAD
-                batch_results = await asyncio.get_event_loop().run_in_executor(
-                    None, lambda: self.table.batch_update(batch)
-=======
                 batch_results = await asyncio.to_thread(
                     self.table.batch_update, batch  # type: ignore[arg-type]
->>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
                 )
 
                 results.extend(batch_results)
@@ -475,11 +457,7 @@ class AirtableClient:
         """
         return await self.list_records(formula=formula)
 
-<<<<<<< HEAD
-    async def get_schema(self) -> Dict[str, Any]:
-=======
     async def get_schema(self) -> Any:
->>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
         """
         Get table schema information.
 
@@ -494,13 +472,7 @@ class AirtableClient:
         try:
             logger.debug("Getting table schema")
 
-<<<<<<< HEAD
-            schema = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self.table.schema()
-            )
-=======
             schema = await asyncio.to_thread(self.table.schema)
->>>>>>> basisalexandr/agb-29-subtask-3-integration-testing-and-error-handling-for-room
 
             return schema
 
