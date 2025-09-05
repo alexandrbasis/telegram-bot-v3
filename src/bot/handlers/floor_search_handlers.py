@@ -12,7 +12,6 @@ from collections import defaultdict
 
 from telegram import (
     Update,
-    ReplyKeyboardMarkup,
 )
 from telegram.ext import ContextTypes
 
@@ -21,9 +20,8 @@ from src.models.participant import Participant
 from src.bot.keyboards.search_keyboards import (
     get_waiting_for_floor_keyboard,
     get_results_navigation_keyboard,
-    NAV_MAIN_MENU,
-    NAV_BACK_TO_SEARCH_MODES
 )
+from src.bot.messages import ErrorMessages, InfoMessages, RetryMessages
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +69,7 @@ def format_floor_results(participants: List[Participant], floor: int) -> str:
     sorted_rooms = sorted(rooms.keys(), key=room_sort_key)
 
     # Build formatted message
-    result_lines = [
-        f"🏢 Найдено участников на этаже {floor}: {len(participants)}\n"
-    ]
+    result_lines = [f"🏢 Найдено участников на этаже {floor}: {len(participants)}\n"]
 
     for room in sorted_rooms:
         room_participants = rooms[room]
@@ -123,18 +119,16 @@ async def handle_floor_search_command(
         context.user_data["current_floor"] = floor_input
 
         await update.message.reply_text(
-            text=f"🔍 Ищу участников на этаже {floor_input}...",
+            text=InfoMessages.searching_floor(floor_input),
             reply_markup=get_results_navigation_keyboard(),
         )
 
         # Process the search immediately
-        return await process_floor_search_with_input(
-            update, context, floor_input
-        )
+        return await process_floor_search_with_input(update, context, floor_input)
     else:
         # Ask for floor number
         await update.message.reply_text(
-            text="Введите номер этажа для поиска:",
+            text=InfoMessages.ENTER_FLOOR_NUMBER,
             reply_markup=get_waiting_for_floor_keyboard(),
         )
 
@@ -181,9 +175,10 @@ async def process_floor_search_with_input(
         floor_number = int(floor_input)
     except ValueError:
         await update.message.reply_text(
-            text="❌ Пожалуйста, введите корректный номер этажа "
-                 "(должен быть числом).",
-            reply_markup=get_waiting_for_floor_keyboard()
+            text=RetryMessages.with_help(
+                ErrorMessages.INVALID_FLOOR_NUMBER, RetryMessages.FLOOR_NUMBER_HELP
+            ),
+            reply_markup=get_waiting_for_floor_keyboard(),
         )
         return FloorSearchStates.WAITING_FOR_FLOOR
 
@@ -202,8 +197,7 @@ async def process_floor_search_with_input(
         results_message = format_floor_results(participants, floor_number)
 
         await update.message.reply_text(
-            text=results_message,
-            reply_markup=get_results_navigation_keyboard()
+            text=results_message, reply_markup=get_results_navigation_keyboard()
         )
 
         if participants:
@@ -213,8 +207,7 @@ async def process_floor_search_with_input(
             )
         else:
             logger.info(
-                f"No participants found on floor {floor_number} "
-                f"for user {user.id}"
+                f"No participants found on floor {floor_number} " f"for user {user.id}"
             )
 
     except Exception as e:
@@ -222,7 +215,9 @@ async def process_floor_search_with_input(
 
         # Send error message
         await update.message.reply_text(
-            text="❌ Произошла ошибка при поиске. Попробуйте позже.",
+            text=RetryMessages.with_help(
+                ErrorMessages.SEARCH_ERROR_GENERIC, RetryMessages.RETRY_CONNECTION
+            ),
             reply_markup=get_results_navigation_keyboard(),
         )
 

@@ -15,9 +15,9 @@ from src.config.settings import get_settings
 def get_participant_repository():
     """
     Get participant repository instance.
-    
+
     Centralized factory method for participant repository creation.
-    
+
     Returns:
         AirtableParticipantRepository: Configured repository instance
     """
@@ -29,11 +29,12 @@ def get_participant_repository():
 def get_search_service():
     """
     Get search service instance.
-    
+
     Centralized factory method for search service creation with repository.
-    
+
     Returns:
         SearchService: Configured search service instance
     """
     repository = get_participant_repository()
-    return SearchService(repository)
+    # Pass repository via keyword to match SearchService signature
+    return SearchService(repository=repository)

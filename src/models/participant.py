@@ -13,14 +13,16 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 class Gender(str, Enum):
     """Gender options matching Airtable single select field."""
+
     MALE = "M"
     FEMALE = "F"
 
 
 class Size(str, Enum):
     """Clothing size options matching Airtable single select field."""
+
     XS = "XS"
-    S = "S" 
+    S = "S"
     M = "M"
     L = "L"
     XL = "XL"
@@ -30,12 +32,14 @@ class Size(str, Enum):
 
 class Role(str, Enum):
     """Participant role options matching Airtable single select field."""
+
     CANDIDATE = "CANDIDATE"
     TEAM = "TEAM"
 
 
 class Department(str, Enum):
     """Department assignment options matching Airtable single select field."""
+
     ROE = "ROE"
     CHAPEL = "Chapel"
     SETUP = "Setup"
@@ -53,6 +57,7 @@ class Department(str, Enum):
 
 class PaymentStatus(str, Enum):
     """Payment status options matching Airtable single select field."""
+
     PAID = "Paid"
     PARTIAL = "Partial"
     UNPAID = "Unpaid"
@@ -61,130 +66,95 @@ class PaymentStatus(str, Enum):
 class Participant(BaseModel):
     """
     Participant model matching Airtable schema with field validation.
-    
+
     All field names match Airtable field names for direct API integration.
     Includes validation for required fields and data types.
     """
-    
+
     # Required primary field
     full_name_ru: str = Field(
-        ..., 
-        min_length=1,
-        description="Full name in Russian (primary field, required)"
+        ..., min_length=1, description="Full name in Russian (primary field, required)"
     )
-    
+
     # Optional text fields
-    full_name_en: Optional[str] = Field(
-        None,
-        description="Full name in English"
-    )
-    
-    church: Optional[str] = Field(
-        None,
-        description="Church affiliation"
-    )
-    
-    country_and_city: Optional[str] = Field(
-        None,
-        description="Location information"
-    )
-    
+    full_name_en: Optional[str] = Field(None, description="Full name in English")
+
+    church: Optional[str] = Field(None, description="Church affiliation")
+
+    country_and_city: Optional[str] = Field(None, description="Location information")
+
     submitted_by: Optional[str] = Field(
-        None,
-        description="Person who submitted the record"
+        None, description="Person who submitted the record"
     )
-    
-    contact_information: Optional[str] = Field(
-        None,
-        description="Contact details"
-    )
-    
+
+    contact_information: Optional[str] = Field(None, description="Contact details")
+
     # Single select fields
-    gender: Optional[Gender] = Field(
-        None,
-        description="Participant gender"
-    )
-    
-    size: Optional[Size] = Field(
-        None,
-        description="Clothing size"
-    )
-    
-    role: Optional[Role] = Field(
-        None,
-        description="Participant role/status"
-    )
-    
-    department: Optional[Department] = Field(
-        None,
-        description="Department assignment"
-    )
-    
+    gender: Optional[Gender] = Field(None, description="Participant gender")
+
+    size: Optional[Size] = Field(None, description="Clothing size")
+
+    role: Optional[Role] = Field(None, description="Participant role/status")
+
+    department: Optional[Department] = Field(None, description="Department assignment")
+
     payment_status: Optional[PaymentStatus] = Field(
-        None,
-        description="Payment tracking status"
+        None, description="Payment tracking status"
     )
-    
+
     # Number field
     payment_amount: Optional[int] = Field(
-        None,
-        ge=0,
-        description="Amount paid (integer only)"
+        None, ge=0, description="Amount paid (integer only)"
     )
-    
-    # Date field  
-    payment_date: Optional[date] = Field(
-        None,
-        description="Date of payment"
-    )
+
+    # Date field
+    payment_date: Optional[date] = Field(None, description="Date of payment")
 
     # Accommodation fields
     # Floor is stored as a number in Airtable (but accept int or str input upstream)
     floor: Optional[Union[int, str]] = Field(
-        None,
-        description="Accommodation floor (numeric in Airtable)"
+        None, description="Accommodation floor (numeric in Airtable)"
     )
-    
+
     # Room number is stored as a number in Airtable, but allow alphanumeric input upstream
     room_number: Optional[Union[int, str]] = Field(
         None,
-        description="Accommodation room number (numeric in Airtable; allow alphanumeric upstream)"
+        description="Accommodation room number (numeric in Airtable; allow alphanumeric upstream)",
     )
-    
+
     # Airtable record ID (for updates)
     record_id: Optional[str] = Field(
-        None,
-        description="Airtable record ID for existing records"
+        None, description="Airtable record ID for existing records"
     )
-    
-    @field_validator('full_name_ru')
+
+    @field_validator("full_name_ru")
     @classmethod
     def validate_full_name_ru(cls, v):
         """Ensure primary field is not empty."""
         if not v or not v.strip():
-            raise ValueError('Full name in Russian is required and cannot be empty')
+            raise ValueError("Full name in Russian is required and cannot be empty")
         return v.strip()
-    
-    @field_validator('room_number')
+
+    @field_validator("room_number")
     @classmethod
     def validate_room_number(cls, v):
         """Normalize room number: empty string -> None; otherwise keep provided type (int or str)."""
         if v == "":
             return None
         return v
-    
+
     def to_airtable_fields(self) -> dict:
         """
         Convert participant data to Airtable API format.
-        
+
         Returns dictionary with Airtable field names as keys.
         None values are excluded to avoid API errors.
         """
         fields = {}
-        
+
         # Required field
         fields["FullNameRU"] = self.full_name_ru
-        
+
         # Optional text fields
         if self.full_name_en:
             fields["FullNameEN"] = self.full_name_en
@@ -196,7 +166,7 @@ class Participant(BaseModel):
             fields["SubmittedBy"] = self.submitted_by
         if self.contact_information:
             fields["ContactInformation"] = self.contact_information
-            
+
         # Single select fields (use enum values)
         if self.gender:
             fields["Gender"] = self.gender
@@ -208,11 +178,11 @@ class Participant(BaseModel):
             fields["Department"] = self.department
         if self.payment_status:
             fields["PaymentStatus"] = self.payment_status
-            
+
         # Number field
         if self.payment_amount is not None:
             fields["PaymentAmount"] = self.payment_amount
-            
+
         # Date field (convert to ISO format for Airtable)
         if self.payment_date:
             fields["PaymentDate"] = self.payment_date.isoformat()
@@ -220,55 +190,62 @@ class Participant(BaseModel):
         # Accommodation fields (exact Airtable field names)
         if self.floor is not None:
             # Ensure numeric when possible; Airtable field is numeric
-            fields["Floor"] = int(self.floor) if isinstance(self.floor, str) and self.floor.isdigit() else self.floor
+            fields["Floor"] = (
+                int(self.floor)
+                if isinstance(self.floor, str) and self.floor.isdigit()
+                else self.floor
+            )
         if self.room_number is not None:
             fields["RoomNumber"] = self.room_number
-        
+
         return fields
-    
+
     @classmethod
-    def from_airtable_record(cls, record: dict) -> 'Participant':
+    def from_airtable_record(cls, record: dict) -> "Participant":
         """
         Create Participant instance from Airtable record.
-        
+
         Args:
             record: Airtable record dictionary with 'id' and 'fields' keys
-            
+
         Returns:
             Participant instance
         """
-        fields = record.get('fields', {})
-        
+        fields = record.get("fields", {})
+
         # Convert date string to date object if present
         payment_date = None
-        if fields.get('PaymentDate'):
-            payment_date = date.fromisoformat(fields['PaymentDate'])
-        
+        if fields.get("PaymentDate"):
+            payment_date = date.fromisoformat(fields["PaymentDate"])
+
         # Ensure we have the required field
-        full_name_ru = fields.get('FullNameRU', '')
+        full_name_ru = fields.get("FullNameRU", "")
         if not full_name_ru:
             raise ValueError("FullNameRU is required but missing from Airtable record")
-            
+
         return cls(
-            record_id=record.get('id'),
+            record_id=record.get("id"),
             full_name_ru=full_name_ru,
-            full_name_en=fields.get('FullNameEN'),
-            church=fields.get('Church'),
-            country_and_city=fields.get('CountryAndCity'),
-            submitted_by=fields.get('SubmittedBy'),
-            contact_information=fields.get('ContactInformation'),
-            gender=Gender(fields['Gender']) if fields.get('Gender') else None,
-            size=Size(fields['Size']) if fields.get('Size') else None,
-            role=Role(fields['Role']) if fields.get('Role') else None,
-            department=Department(fields['Department']) if fields.get('Department') else None,
-            payment_status=PaymentStatus(fields['PaymentStatus']) if fields.get('PaymentStatus') else None,
-            payment_amount=fields.get('PaymentAmount'),
+            full_name_en=fields.get("FullNameEN"),
+            church=fields.get("Church"),
+            country_and_city=fields.get("CountryAndCity"),
+            submitted_by=fields.get("SubmittedBy"),
+            contact_information=fields.get("ContactInformation"),
+            gender=Gender(fields["Gender"]) if fields.get("Gender") else None,
+            size=Size(fields["Size"]) if fields.get("Size") else None,
+            role=Role(fields["Role"]) if fields.get("Role") else None,
+            department=(
+                Department(fields["Department"]) if fields.get("Department") else None
+            ),
+            payment_status=(
+                PaymentStatus(fields["PaymentStatus"])
+                if fields.get("PaymentStatus")
+                else None
+            ),
+            payment_amount=fields.get("PaymentAmount"),
             payment_date=payment_date,
-            floor=fields.get('Floor'),
-            room_number=fields.get('RoomNumber')
+            floor=fields.get("Floor"),
+            room_number=fields.get("RoomNumber"),
         )
-    
-    model_config = ConfigDict(
-        use_enum_values=True,
-        validate_assignment=True
-    )
+
+    model_config = ConfigDict(use_enum_values=True, validate_assignment=True)
