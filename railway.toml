@@ -1,14 +1,12 @@
 [build]
-builder = "nixpacks"
+builder = "dockerfile"
 
 [deploy]
 startCommand = "python -m src.main"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
-# Build configuration
-[build.buildCommand]
-nixpacksConfigPath = "nixpacks.toml"
+# When using Dockerfile builder, nixpacks config is ignored.
 
 # Environment configuration
 [environments.production.variables]
