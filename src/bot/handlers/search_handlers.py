@@ -28,9 +28,11 @@ from src.bot.keyboards.search_keyboards import (
     get_main_menu_keyboard,
     get_search_mode_selection_keyboard,
     get_waiting_for_name_keyboard,
+    get_waiting_for_floor_keyboard,
     get_results_navigation_keyboard,
     NAV_MAIN_MENU,
 )
+from src.bot.messages import InfoMessages
 
 logger = logging.getLogger(__name__)
 
@@ -659,7 +661,8 @@ async def handle_search_floor_mode(
     """
     Handle floor search mode selection.
 
-    Delegates to floor search handler.
+    Prompts user to enter floor number and transitions to
+    FloorSearchStates.WAITING_FOR_FLOOR.
 
     Args:
         update: Telegram update object
@@ -671,11 +674,16 @@ async def handle_search_floor_mode(
     user = update.effective_user
     logger.info(f"User {user.id} selected floor search mode")
 
-    # Import floor search handler dynamically to avoid circular dependency
-    from src.bot.handlers.floor_search_handlers import handle_floor_search_command
+    # Import state enum dynamically to avoid circular dependency
+    from src.bot.handlers.floor_search_handlers import FloorSearchStates
 
-    # Simulate a floor search command call
-    return await handle_floor_search_command(update, context)
+    # Ask for floor number and set waiting state
+    await update.message.reply_text(
+        text=InfoMessages.ENTER_FLOOR_NUMBER,
+        reply_markup=get_waiting_for_floor_keyboard(),
+    )
+
+    return FloorSearchStates.WAITING_FOR_FLOOR
 
 
 async def back_to_search_modes(

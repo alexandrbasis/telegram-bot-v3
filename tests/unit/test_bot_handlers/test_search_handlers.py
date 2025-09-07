@@ -31,6 +31,7 @@ from src.bot.handlers.search_handlers import (
     back_to_search_modes,
     SearchStates,
 )
+from src.bot.handlers.floor_search_handlers import FloorSearchStates
 from src.services.search_service import SearchResult
 from src.models.participant import Participant
 from src.services.user_interaction_logger import UserInteractionLogger
@@ -1206,19 +1207,14 @@ class TestSearchModeSelection:
     @pytest.mark.asyncio
     async def test_handle_search_floor_mode(self, mock_update_message, mock_context):
         """Test floor search mode selection handler."""
-        with patch(
-            "src.bot.handlers.floor_search_handlers.handle_floor_search_command"
-        ) as mock_floor_handler:
-            mock_floor_handler.return_value = 30  # FloorSearchStates.WAITING_FOR_FLOOR
+        # Execute handler
+        result = await handle_search_floor_mode(mock_update_message, mock_context)
 
-            # Execute handler
-            result = await handle_search_floor_mode(mock_update_message, mock_context)
-
-            # Verify floor search handler was called
-            mock_floor_handler.assert_called_once_with(
-                mock_update_message, mock_context
-            )
-            assert result == 30
+        # Should prompt for floor number and return waiting state
+        mock_update_message.message.reply_text.assert_called_once()
+        call_args = mock_update_message.message.reply_text.call_args[1]
+        assert "номер этажа" in call_args["text"].lower()
+        assert result == FloorSearchStates.WAITING_FOR_FLOOR
 
     @pytest.mark.asyncio
     async def test_back_to_search_modes(self, mock_update_message, mock_context):

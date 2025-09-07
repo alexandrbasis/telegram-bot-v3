@@ -1,5 +1,5 @@
 # Task: Floor Search Prompt and Validation
-**Created**: 2025-09-07 | **Status**: Ready for Implementation
+**Created**: 2025-09-07 | **Status**: In Progress (2025-09-07 14:45)
 
 ## Tracking & Progress
 ### Linear Issue
@@ -7,7 +7,7 @@
 - **URL**: https://linear.app/alexandrbasis/issue/AGB-34/floor-search-prompt-and-validation
 
 ### PR Details
-- **Branch**: [to be created]
+- **Branch**: feature/AGB-34-floor-search-prompt-wait-input
 - **PR URL**: [TBD]
 - **Status**: [Draft]
 
@@ -157,4 +157,44 @@ Button Click → `handle_search_floor_mode` → Send Prompt & Set WAITING_FOR_FL
 
 ---
 
-ACTION: Approve business requirements? [Yes/No]
+## Implementation Progress
+
+- [x] ✅ Step 1: Prompt on floor mode selection — Completed 2025-09-07 14:45
+  - Send floor prompt instead of delegating; move to WAITING_FOR_FLOOR
+  - Files:
+    - `src/bot/handlers/search_handlers.py`
+      - Import `get_waiting_for_floor_keyboard`, `InfoMessages`
+      - Replace delegation to `handle_floor_search_command` with:
+        - `reply_text(InfoMessages.ENTER_FLOOR_NUMBER, get_waiting_for_floor_keyboard())`
+        - return `FloorSearchStates.WAITING_FOR_FLOOR`
+    - `tests/unit/test_bot_handlers/test_search_handlers.py`
+      - Update `test_handle_search_floor_mode` to assert prompt text includes "номер этажа" and state == `FloorSearchStates.WAITING_FOR_FLOOR`
+  - Impact: Correct UX — button now waits for user input instead of erroring
+  - Tests:
+    - Unit: search_handlers (32/32 passed for file), floor_search_handlers (8/8)
+    - Integration: floor_search_integration (11/11 passed)
+  - Verification: Manual reasoning — state transitions align with conversation config
+
+## Changelog
+
+### Step 1: Floor mode prompt and state — 2025-09-07 14:45
+- Files:
+  - `src/bot/handlers/search_handlers.py` — lines ~640–710: adjust floor selection handler to prompt and set state
+  - `tests/unit/test_bot_handlers/test_search_handlers.py` — update unit test to new flow
+- Summary: Fixed root cause where floor mode delegated to a command expecting parameters; now explicitly prompts and awaits user input
+- User Effect: No immediate error; clear prompt to enter a floor number; consistent navigation keyboard
+- Tests: Unit and integration tests for floor search all pass locally
+
+## Quality & Validation
+
+- Lint: `flake8 src tests` — clean
+- Types: `mypy src` — project has pre-existing type errors unrelated to this change; no new type errors introduced in modified logic under runtime tests
+- Tests: Floor-related unit and integration suites pass; full suite shows 3 unrelated failures in `tests/integration/test_main.py` (network/mocking)
+
+## Status Update
+
+- 2025-09-07 14:45 — Implementation complete for scope; marking Ready for Review.
+
+**Status**: Ready for Review (2025-09-07 14:45)
+
+Continuation Summary: Implemented correct floor search prompt flow, updated unit tests, verified floor integration tests. No changes to message wording pending decision to adopt “Пришлите номер этажа цифрой”.
