@@ -1,0 +1,22 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "python -m src.main"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Build configuration
+[build.buildCommand]
+nixpacksConfigPath = "nixpacks.toml"
+
+# Environment configuration
+[environments.production.variables]
+# These will be set via Railway dashboard or CLI
+# TELEGRAM_BOT_TOKEN = "your_bot_token_here"
+# AIRTABLE_API_KEY = "your_airtable_key_here" 
+# AIRTABLE_BASE_ID = "your_base_id_here"
+# AIRTABLE_TABLE_ID = "your_table_id_here"
+# AIRTABLE_TABLE_NAME = "Participants"
+# LOG_LEVEL = "INFO"
+# ENVIRONMENT = "production"

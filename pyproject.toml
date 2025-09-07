@@ -7,7 +7,7 @@ name = "tres-dias-telegram-bot"
 version = "0.1.0"
 description = "A Telegram bot for managing Tres Dias event participants"
 readme = "README.md"
-license = {text = "Private"}
+license = "Private"
 authors = [
     {name = "Alexandr Basis", email = "alexandr.basis@example.com"},
 ]
