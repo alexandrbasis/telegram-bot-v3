@@ -1,6 +1,5 @@
 """
 Airtable-specific implementation of ParticipantRepository.
-
 This implementation uses the AirtableClient to perform all CRUD operations
 on participant data, mapping between Participant domain objects and Airtable
 record format.
@@ -257,30 +256,13 @@ class AirtableParticipantRepository(ParticipantRepository):
         Returns:
             Dictionary with Airtable field names as keys
         """
-        # Field name mapping from model to Airtable
-        field_mapping = {
-            "full_name_ru": "FullNameRU",
-            "full_name_en": "FullNameEN",
-            "church": "Church",
-            "country_and_city": "CountryAndCity",
-            "contact_information": "ContactInformation",
-            "submitted_by": "SubmittedBy",
-            "gender": "Gender",
-            "size": "Size",
-            "role": "Role",
-            "department": "Department",
-            "payment_status": "PaymentStatus",
-            "payment_amount": "PaymentAmount",
-            "payment_date": "PaymentDate",
-            # Exact field names from live Airtable schema
-            "floor": "Floor",
-            "room_number": "RoomNumber",
-        }
+        # Use centralized mapping from Python fields to Airtable field names
+        python_to_airtable = AirtableFieldMapping.PYTHON_TO_AIRTABLE
 
         airtable_fields = {}
 
         for field_name, value in field_updates.items():
-            airtable_field_name = field_mapping.get(field_name)
+            airtable_field_name = python_to_airtable.get(field_name)
             if not airtable_field_name:
                 raise ValidationError(f"Unknown field name: {field_name}")
 
@@ -356,8 +338,11 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by full name (RU): {full_name_ru}")
 
-            # Search by FullNameRU field in Airtable (exact name)
-            records = await self.client.search_by_field("FullNameRU", full_name_ru)
+            # Search by FullNameRU field in Airtable (exact name) using centralized field mapping
+            field_name = AirtableFieldMapping.get_airtable_field_name("full_name_ru")
+            if not field_name:
+                raise RepositoryError("Field mapping not found for full_name_ru")
+            records = await self.client.search_by_field(field_name, full_name_ru)
 
             if not records:
                 return None
@@ -443,24 +428,37 @@ class AirtableParticipantRepository(ParticipantRepository):
             if not criteria:
                 return await self.list_all()
 
-            # Build Airtable formula from criteria
+            # Build Airtable formula from criteria using centralized mappings
             conditions = []
 
             for field, value in criteria.items():
-                if field == "full_name_ru":
-                    conditions.append(f"SEARCH('{value}', {{FullNameRU}})")
-                elif field == "full_name_en":
-                    conditions.append(f"SEARCH('{value}', {{FullNameEN}})")
-                elif field == "church":
-                    conditions.append(f"{{Church}} = '{value}'")
-                elif field == "role":
-                    conditions.append(f"{{Role}} = '{value}'")
-                elif field == "department":
-                    conditions.append(f"{{Department}} = '{value}'")
-                elif field == "payment_status":
-                    conditions.append(f"{{PaymentStatus}} = '{value}'")
-                elif field == "gender":
-                    conditions.append(f"{{Gender}} = '{value}'")
+                if field in ("full_name_ru", "full_name_en"):
+                    # Escape single quotes in string patterns
+                    pattern = str(value)
+                    escaped = pattern.replace("'", "''")
+                    formula_field = AirtableFieldMapping.build_formula_field(field)
+                    if not formula_field:
+                        raise RepositoryError(
+                            f"Formula field reference not found for {field}"
+                        )
+                    conditions.append(f"SEARCH('{escaped}', {formula_field})")
+                elif field in (
+                    "church",
+                    "role",
+                    "department",
+                    "payment_status",
+                    "gender",
+                ):
+                    airtable_field = AirtableFieldMapping.get_airtable_field_name(field)
+                    if not airtable_field:
+                        raise RepositoryError(
+                            f"Field mapping not found for search field: {field}"
+                        )
+                    if isinstance(value, str):
+                        escaped_val = value.replace("'", "''")
+                        conditions.append(f"{{{airtable_field}}} = '{escaped_val}'")
+                    else:
+                        conditions.append(f"{{{airtable_field}}} = {value}")
                 else:
                     raise ValueError(f"Unsupported search criteria field: {field}")
 
@@ -544,8 +542,11 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participants by payment status: {payment_status}")
 
-            # Search by PaymentStatus field in Airtable
-            records = await self.client.search_by_field("PaymentStatus", payment_status)
+            # Search by PaymentStatus field in Airtable using centralized field mapping
+            field_name = AirtableFieldMapping.get_airtable_field_name("payment_status")
+            if not field_name:
+                raise RepositoryError("Field mapping not found for payment_status")
+            records = await self.client.search_by_field(field_name, payment_status)
 
             # Convert to Participant objects
             participants = []
@@ -605,6 +606,8 @@ class AirtableParticipantRepository(ParticipantRepository):
 
             # Use centralized field mapping for Contact Information field
             contact_field = AirtableFieldMapping.get_airtable_field_name("contact_information")
+            if not contact_field:
+                raise RepositoryError("Field mapping not found for contact_information")
             records = await self.client.search_by_field(contact_field, contact_info)
 
             if not records:
@@ -640,6 +643,8 @@ class AirtableParticipantRepository(ParticipantRepository):
 
             # Use centralized field mapping for Telegram ID field
             telegram_field = AirtableFieldMapping.get_airtable_field_name("telegram_id")
+            if not telegram_field:
+                raise RepositoryError("Field mapping not found for telegram_id")
             records = await self.client.search_by_field(telegram_field, telegram_id)
 
             if not records:
@@ -674,11 +679,17 @@ class AirtableParticipantRepository(ParticipantRepository):
             logger.debug(f"Searching participants by name pattern: {name_pattern}")
 
             # Build Airtable formula for partial name matching using centralized field references
+            # Escape single quotes in name_pattern to prevent formula injection
+            escaped_pattern = name_pattern.replace("'", "''")
             ru_field = AirtableFieldMapping.build_formula_field("full_name_ru")
             en_field = AirtableFieldMapping.build_formula_field("full_name_en")
+
+            if not ru_field or not en_field:
+                raise RepositoryError("Formula field references not found for name search")
+
             formula = (
-                f"OR(SEARCH('{name_pattern}', {ru_field}), "
-                f"SEARCH('{name_pattern}', {en_field}))"
+                f"OR(SEARCH('{escaped_pattern}', {ru_field}), "
+                f"SEARCH('{escaped_pattern}', {en_field}))"
             )
 
             records = await self.client.search_by_formula(formula)
@@ -725,8 +736,11 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participants by role: {role}")
 
-            # Search by Role field in Airtable
-            records = await self.client.search_by_field("Role", role)
+            # Search by Role field in Airtable using centralized field mapping
+            field_name = AirtableFieldMapping.get_airtable_field_name("role")
+            if not field_name:
+                raise RepositoryError("Field mapping not found for role")
+            records = await self.client.search_by_field(field_name, role)
 
             # Convert to Participant objects
             participants = []
@@ -768,8 +782,11 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participants by department: {department}")
 
-            # Search by Department field in Airtable
-            records = await self.client.search_by_field("Department", department)
+            # Search by Department field in Airtable using centralized field mapping
+            field_name = AirtableFieldMapping.get_airtable_field_name("department")
+            if not field_name:
+                raise RepositoryError("Field mapping not found for department")
+            records = await self.client.search_by_field(field_name, department)
 
             # Convert to Participant objects
             participants = []
@@ -1108,8 +1125,11 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participants by room number: {room_number}")
 
-            # Search by RoomNumber field in Airtable
-            records = await self.client.search_by_field("RoomNumber", room_number)
+            # Search by RoomNumber field in Airtable using centralized field mapping
+            field_name = AirtableFieldMapping.get_airtable_field_name("room_number")
+            if not field_name:
+                raise RepositoryError("Field mapping not found for room_number")
+            records = await self.client.search_by_field(field_name, room_number)
 
             # Convert to Participant objects
             participants = []
@@ -1153,8 +1173,11 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participants by floor: {floor}")
 
-            # Search by Floor field in Airtable
-            records = await self.client.search_by_field("Floor", floor)
+            # Search by Floor field in Airtable using centralized field mapping
+            field_name = AirtableFieldMapping.get_airtable_field_name("floor")
+            if not field_name:
+                raise RepositoryError("Field mapping not found for floor")
+            records = await self.client.search_by_field(field_name, floor)
 
             # Convert to Participant objects
             participants = []

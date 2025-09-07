@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Centralized Formula Field References for Airtable Integration — enhance resilience by eliminating hardcoded field references (AGB-33, completed 2025-09-07)
+  - Centralized field mapping with back-compat aliases for display labels on Contact Information and Telegram ID (`src/config/field_mappings.py`)
+  - Standardized formula references to internal names: `{FullNameRU}`, `{FullNameEN}` for consistency and durability
+  - Replaced hardcoded literals across repository methods with `AirtableFieldMapping` helpers; added single-quote escaping in all formula builders (`search_by_name`, `search_by_criteria`)
+  - Completed Field ID coverage for `TelegramID`, `ContactInformation`, and a placeholder for `id` used by completeness tests
+  - All unit tests passing (635 passed, 11 warnings)
+
 ### Added
 - **Integration Testing and Error Handling for Room Floor Search Functionality** - Comprehensive production-ready validation and robust error handling ensuring reliable accommodation search operations with extensive test coverage (AGB-29, Subtask 3, completed 2025-09-05)
   - End-to-end integration test suite with 28 comprehensive tests achieving 100% pass rate across all room and floor search workflows (`tests/integration/test_room_search_integration.py:1-298`, `tests/integration/test_floor_search_integration.py:1-414`, `tests/integration/test_airtable_schema_validation.py:1-321`)

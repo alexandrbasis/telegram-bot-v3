@@ -1,7 +1,7 @@
 """
 Tests to verify that contact information search already uses proper field mapping.
 
-This test validates that the find_by_contact_information method correctly uses 
+This test validates that the find_by_contact_information method correctly uses
 centralized field mapping constants instead of hardcoded field name strings.
 """
 
@@ -46,23 +46,23 @@ class TestContactInfoMappingVerification:
         """Test that find_by_contact_information uses centralized field mapping."""
         # This test should PASS if contact info already uses proper mapping
         # or FAIL if it still uses hardcoded strings
-        
+
         # Setup: Mock the client to return a participant record
         mock_client.search_by_field.return_value = [mock_participant_record]
-        
+
         # Patch Participant.from_airtable_record to avoid complex object creation
         with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
             mock_participant = MagicMock(spec=Participant)
             mock_from_record.return_value = mock_participant
-            
+
             # Act: Call find_by_contact_information
             contact_info = "test@example.com"
             result = await repository.find_by_contact_information(contact_info)
-            
+
             # Assert: Should use the centralized field mapping
             expected_field_name = AirtableFieldMapping.get_airtable_field_name("contact_information")
             actual_field_name = mock_client.search_by_field.call_args[0][0]
-            
+
             # Check if it uses the correct field mapping
             if actual_field_name == expected_field_name:
                 # PASS: Already using centralized mapping
@@ -77,10 +77,10 @@ class TestContactInfoMappingVerification:
         # Verify the field mapping exists and is correct
         python_field = "contact_information"
         airtable_field = AirtableFieldMapping.get_airtable_field_name(python_field)
-        
+
         assert airtable_field is not None, "Contact information field mapping should exist"
         assert airtable_field == "ContactInformation", f"Expected 'ContactInformation', got: {airtable_field}"
-        
+
         # Test reverse mapping
         reverse_field = AirtableFieldMapping.get_python_field_name(airtable_field)
         assert reverse_field == python_field, "Reverse mapping should be consistent"
@@ -90,18 +90,18 @@ class TestContactInfoMappingVerification:
         """Test that find_by_contact_information functionality is preserved."""
         # Setup: Mock successful search
         mock_client.search_by_field.return_value = [mock_participant_record]
-        
+
         with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
             mock_participant = MagicMock(spec=Participant)
             mock_from_record.return_value = mock_participant
-            
+
             # Act
             result = await repository.find_by_contact_information("test@example.com")
-            
+
             # Assert: Should return the participant (functionality preserved)
             assert result is not None
             assert result == mock_participant
-            
+
             # Should call from_airtable_record with the correct record
             mock_from_record.assert_called_once_with(mock_participant_record)
 
@@ -110,18 +110,18 @@ class TestContactInfoMappingVerification:
         """Test find_by_contact_information when no participant is found."""
         # Setup: Mock empty search result
         mock_client.search_by_field.return_value = []
-        
+
         # Act
         result = await repository.find_by_contact_information("nonexistent@example.com")
-        
+
         # Assert: Should return None
         assert result is None
-        
+
         # Should still use proper field mapping (regardless of result)
         mock_client.search_by_field.assert_called_once()
         actual_field_name = mock_client.search_by_field.call_args[0][0]
         expected_field_name = AirtableFieldMapping.get_airtable_field_name("contact_information")
-        
+
         # This assertion will help us understand current implementation
         if actual_field_name != expected_field_name:
             pytest.fail(f"Contact info search uses hardcoded '{actual_field_name}' instead of mapped '{expected_field_name}'")
@@ -129,19 +129,19 @@ class TestContactInfoMappingVerification:
     def test_current_implementation_status(self):
         """Test to document current implementation status of contact information search."""
         # This test documents whether the contact info method needs updating
-        
+
         # Read the current repository implementation to check what it uses
         import inspect
         from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
-        
+
         # Get the source code of find_by_contact_information method
         method = getattr(AirtableParticipantRepository, 'find_by_contact_information')
         source = inspect.getsource(method)
-        
+
         # Check if it uses the proper field mapping pattern
         uses_mapping = "get_airtable_field_name" in source and "contact_information" in source
         uses_hardcoded_call = '"Contact Information"' in source and 'search_by_field(' in source
-        
+
         if uses_mapping and not uses_hardcoded_call:
             # This is the desired state - uses field mapping, no hardcoded calls
             assert True, "Contact information search correctly uses centralized field mapping"
