@@ -35,13 +35,14 @@ class AirtableFieldMapping:
 
     # Airtable field name -> Field ID mapping (exact Field IDs from Airtable base)
     AIRTABLE_FIELD_IDS: Dict[str, str] = {
-        # Text fields (6)
+        # Text fields (7)
         "FullNameRU": "fldOcpA3JW5MRmR6R",  # Primary field, required
         "FullNameEN": "fldrFVukSmk0i9sqj",
         "Church": "fld4CXL9InW0ogAQh",
         "CountryAndCity": "fldJ7dFRzx7bR9U6g",
         "SubmittedBy": "flduADiTl7jpiy8OH",
         "ContactInformation": "fldSy0Hbwl49VtZvf",
+        "TelegramID": "fldTELEGRAMIDXXXX",  # TODO: Replace with actual field ID from Airtable base
         # Single select fields (5)
         "Gender": "fldOAGXoU0DqqFRmB",
         "Size": "fldZyNgaaa1snp6s7",
@@ -109,6 +110,7 @@ class AirtableFieldMapping:
         "country_and_city": "CountryAndCity",
         "submitted_by": "SubmittedBy",
         "contact_information": "ContactInformation",
+        "telegram_id": "TelegramID",
         # Single select fields
         "gender": "Gender",
         "size": "Size",
@@ -137,6 +139,7 @@ class AirtableFieldMapping:
         "CountryAndCity": FieldType.TEXT,
         "SubmittedBy": FieldType.TEXT,
         "ContactInformation": FieldType.TEXT,
+        "TelegramID": FieldType.TEXT,
         "Gender": FieldType.SINGLE_SELECT,
         "Size": FieldType.SINGLE_SELECT,
         "Role": FieldType.SINGLE_SELECT,
