@@ -8,8 +8,8 @@
 
 ### PR Details
 - **Branch**: feature/AGB-34-floor-search-prompt-wait-input
-- **PR URL**: [TBD]
-- **Status**: [Draft]
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/26
+- **Status**: Ready for Review
 
 ## Business Requirements
 **Status**: ✅ Approved | **Approved by**: User | **Date**: 2025-09-07
@@ -195,6 +195,6 @@ Button Click → `handle_search_floor_mode` → Send Prompt & Set WAITING_FOR_FL
 
 - 2025-09-07 14:45 — Implementation complete for scope; marking Ready for Review.
 
-**Status**: Ready for Review (2025-09-07 14:45)
+**Status**: Ready for Review (2025-09-07 14:50)
 
-Continuation Summary: Implemented correct floor search prompt flow, updated unit tests, verified floor integration tests. No changes to message wording pending decision to adopt “Пришлите номер этажа цифрой”.
+Continuation Summary: Implemented correct floor search prompt flow, updated unit tests, verified floor integration tests. No changes to message wording pending decision to adopt “Пришлите номер этажа цифрой”. PR created and ready for cold review.
