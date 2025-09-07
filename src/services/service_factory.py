@@ -12,7 +12,7 @@ from src.services.search_service import SearchService
 from src.config.settings import get_settings
 
 
-def get_participant_repository():
+def get_participant_repository() -> AirtableParticipantRepository:
     """
     Get participant repository instance.
 
@@ -26,7 +26,7 @@ def get_participant_repository():
     return AirtableParticipantRepository(client)
 
 
-def get_search_service():
+def get_search_service() -> SearchService:
     """
     Get search service instance.
 

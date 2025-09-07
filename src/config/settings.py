@@ -7,11 +7,14 @@ application behavior.
 """
 
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from src.data.airtable.airtable_client import AirtableConfig
+
+if TYPE_CHECKING:  # For type hints without import-time dependency
+    from src.services.file_logging_service import FileLoggingConfig
 
 
 @dataclass
@@ -319,7 +322,7 @@ class Settings:
         """
         return self.database.to_airtable_config()
 
-    def get_file_logging_config(self):
+    def get_file_logging_config(self) -> "FileLoggingConfig":
         """
         Get file logging configuration from logging settings.
 
