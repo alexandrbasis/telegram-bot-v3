@@ -603,10 +603,9 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by contact information: {contact_info}")
 
-            # Use display label as used in tests/schema: "Contact Information"
-            records = await self.client.search_by_field(
-                "Contact Information", contact_info
-            )
+            # Use centralized field mapping for Contact Information field
+            contact_field = AirtableFieldMapping.get_airtable_field_name("contact_information")
+            records = await self.client.search_by_field(contact_field, contact_info)
 
             if not records:
                 return None
