@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed non-production helper that contained a display-label literal in repository code
   - Updated `tests/unit/test_config/test_field_mappings_completeness.py` to avoid requiring string literals in repo source
   - Cleaned trailing whitespace and EOF newlines in newly added/modified tests
+- **Floor Search Prompt and Validation Enhancement** — Fixed floor search button flow to properly prompt for floor input instead of causing immediate errors, enabling intuitive user workflow (AGB-34, completed 2025-09-07, PR #26, SHA: 7c54a57)
+  - Fixed button click handling in `handle_search_floor_mode` eliminating immediate error on "🏢 По этажу" button click (`src/bot/handlers/search_handlers.py:656-684`)
+  - Added proper state management with `FloorSearchStates.WAITING_FOR_FLOOR` providing clear user workflow: button click → prompt → input → results
+  - Enhanced cancel functionality with NAV_CANCEL handler enabling graceful exit from floor waiting state (`src/bot/handlers/search_conversation.py:184-205`)
+  - Updated prompt message to match acceptance criteria: "Пришлите номер этажа цифрой" for clear user guidance (`src/bot/messages.py:95`)
+  - Comprehensive test coverage with 12 integration tests + 8 unit tests + 32 search handler tests ensuring robust functionality
+  - Documentation updates across 4 files: enhanced floor search section in bot-commands.md, updated testing-strategy.md, comprehensive troubleshooting section
+  - User experience improvements: eliminates confusion from immediate errors, provides intuitive floor search workflow, maintains consistency with other search modes
 
 ### Added
 - **Integration Testing and Error Handling for Room Floor Search Functionality** - Comprehensive production-ready validation and robust error handling ensuring reliable accommodation search operations with extensive test coverage (AGB-29, Subtask 3, completed 2025-09-05)
