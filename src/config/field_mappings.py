@@ -41,8 +41,8 @@ class AirtableFieldMapping:
         "Church": "fld4CXL9InW0ogAQh",
         "CountryAndCity": "fldJ7dFRzx7bR9U6g",
         "SubmittedBy": "flduADiTl7jpiy8OH",
-        "ContactInformation": "fldSy0Hbwl49VtZvf",
-        "TelegramID": "fldTELEGRAMIDXXXX",  # TODO: Replace with actual field ID from Airtable base
+        "Contact Information": "fldSy0Hbwl49VtZvf",
+        # "Telegram ID": "",  # Field ID not yet available - using field name fallback in translate_fields_to_ids()
         # Single select fields (5)
         "Gender": "fldOAGXoU0DqqFRmB",
         "Size": "fldZyNgaaa1snp6s7",
@@ -109,8 +109,8 @@ class AirtableFieldMapping:
         "church": "Church",
         "country_and_city": "CountryAndCity",
         "submitted_by": "SubmittedBy",
-        "contact_information": "ContactInformation",
-        "telegram_id": "TelegramID",
+        "contact_information": "Contact Information",
+        "telegram_id": "Telegram ID",
         # Single select fields
         "gender": "Gender",
         "size": "Size",
@@ -138,8 +138,8 @@ class AirtableFieldMapping:
         "Church": FieldType.TEXT,
         "CountryAndCity": FieldType.TEXT,
         "SubmittedBy": FieldType.TEXT,
-        "ContactInformation": FieldType.TEXT,
-        "TelegramID": FieldType.TEXT,
+        "Contact Information": FieldType.TEXT,
+        "Telegram ID": FieldType.TEXT,
         "Gender": FieldType.SINGLE_SELECT,
         "Size": FieldType.SINGLE_SELECT,
         "Role": FieldType.SINGLE_SELECT,
@@ -155,8 +155,8 @@ class AirtableFieldMapping:
 
     # Formula field reference constants for consistent field naming in Airtable formulas
     FORMULA_FIELD_REFERENCES: Dict[str, str] = {
-        "full_name_ru": "FullNameRU",  # For {FullNameRU} format - internal field name
-        "full_name_en": "FullNameEN",  # For {FullNameEN} format - internal field name
+        "full_name_ru": "Full Name (RU)",  # For {Full Name (RU)} format - display label
+        "full_name_en": "Full Name (EN)",  # For {Full Name (EN)} format - display label
     }
 
     # Required fields (cannot be None/empty)
@@ -186,7 +186,7 @@ class AirtableFieldMapping:
             "max_length": 100,
             "description": "Person who submitted/registered this participant",
         },
-        "ContactInformation": {
+        "Contact Information": {
             "max_length": 200,
             "description": "Email, phone, or other contact details",
         },
