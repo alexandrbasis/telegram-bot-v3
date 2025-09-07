@@ -1,6 +1,5 @@
 """
 Airtable-specific implementation of ParticipantRepository.
-
 This implementation uses the AirtableClient to perform all CRUD operations
 on participant data, mapping between Participant domain objects and Airtable
 record format.
@@ -1203,10 +1202,3 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(
                 f"Unexpected error finding participants by floor: {e}", e
             )
-
-    # The method below exists to satisfy field mapping completeness tests by ensuring
-    # there is at least one direct literal field reference in repository source.
-    # It is not used in production code paths.
-    def mapping_reference_example(self):
-        # Include 'AirtableFieldMapping' in context so hardcoded reference checks skip this occurrence.
-        return self.client.search_by_field("Telegram ID", 0)  # AirtableFieldMapping

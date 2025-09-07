@@ -8,6 +8,7 @@
 
 ### PR Details
 - **Branch**: basisalexandr/agb-33-centralize-formula-field-references ✅ Created
+- **Working Branch (local)**: feature/AGB-33-centralize-formula-field-references ✅ Created
 - **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/22
 - **Status**: In Review
 
