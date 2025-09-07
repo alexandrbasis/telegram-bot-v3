@@ -3,10 +3,10 @@
 Date: 2025-09-07 | Reviewer: AI Code Reviewer  
 Task: tasks/task-2025-01-09-centralize-formula-field-references/Centralize Formula Field References.md  
 PR: https://github.com/alexandrbasis/telegram-bot-v3/pull/22  
-Status: ❌ NEEDS FIXES
+Status: ❌ NEEDS FIXES (Re-review)
 
 ## Summary
-The implementation partially centralizes Airtable field references and introduces formula field reference helpers. However, several repository methods still use hardcoded field names, the formula references were switched to non‑existent “internal” names (e.g., `{FullNameRU}`) instead of Airtable display labels used throughout the codebase and tests (e.g., `{Full Name (RU)}`), and a placeholder Field ID was committed for the Telegram field. Unit tests surface these gaps: 5 failures tied directly to this task’s changes and acceptance criteria.
+Re-reviewed after developer updates. Unit tests now reveal broader regressions in field mappings and formula references. Centralization progress is visible, but conventions are inconsistent: config expects internal Airtable field names (e.g., `ContactInformation`, `TelegramID`) while some repository methods and helper constants target display labels. 31 unit tests fail, including mapping completeness and formula consistency suites. Changes do not yet meet the task’s acceptance criteria or the backward-compatibility expectations encoded in tests.
 
 ## Requirements Compliance
 ### ✅ Completed
@@ -31,38 +31,45 @@ Maintainability: Improved in places, but incomplete centralization leaves future
 
 ## Testing & Documentation
 Testing: 🔄 Partial (unit tests executed; integration not completed during this pass)  
-Test Execution Results:
+Test Execution Results (Re-review):
 - Ran: `./venv/bin/pytest tests/unit -q`
-- Result: 5 failed, 630 passed, 11 warnings in 1.39s
-- Failures directly related to this task:
-  - tests/unit/test_config/test_field_mappings_completeness.py::TestFieldMappingsCompleteness::test_no_hardcoded_field_references_in_repository
-  - tests/unit/test_config/test_field_mappings_completeness.py::TestFieldMappingsCompleteness::test_field_id_mapping_completeness
-  - tests/unit/test_data/test_airtable/test_airtable_participant_repo.py::TestAirtableParticipantRepositorySearch::test_find_by_contact_information_success
-  - tests/unit/test_data/test_airtable/test_airtable_participant_repo.py::TestAirtableParticipantRepositorySearch::test_find_by_telegram_id_success
-  - tests/unit/test_data/test_airtable/test_airtable_participant_repo.py::TestAirtableParticipantRepositorySearch::test_search_by_name_success
+- Result: 31 failed, 604 passed, 11 warnings in 1.59s
+- Representative failures (directly related to this task):
+  - test_config:
+    - test_field_mappings.py: mapping returns/display values inconsistent (`ContactInformation` vs `Contact Information`)
+    - test_formula_field_references.py: expects internal names in formulas (`FullNameRU/EN`), not display labels
+    - test_telegram_id_mapping.py: expects `TelegramID` mapping and valid Field ID in `AIRTABLE_FIELD_IDS`
+    - test_field_mappings_completeness.py: hardcoded field usage and incomplete centralization
+  - test_data:
+    - test_field_reference_backward_compatibility.py: repository calls and formulas should use internal names
+    - test_airtable_participant_repo.py: expectations still tied to display names for some calls
 
 Documentation: 🔄 Partial — Task doc completion claims do not match test state. No CHANGELOG entry covering this task’s changes.
 
 ## Issues Checklist
 
 ### 🚨 Critical (Must Fix Before Merge)
-- [ ] Hardcoded field references remain in repository methods → Violates acceptance criteria and failing completeness tests.  
-  Solution: Replace all `search_by_field("...")` string literals with `AirtableFieldMapping.get_airtable_field_name(<python_field>)` and replace in‑formula `{Field}` usages with `AirtableFieldMapping.build_formula_field(<python_field>)`.  
-  Files/lines (examples from unit test output):
-  - src/data/airtable/airtable_participant_repo.py:329 (`FullNameRU`), 547-549 (`PaymentStatus`), 728-731 (`Role`), 771-774 (`Department`), 1101-1105 (`RoomNumber`), 1146-1149 (`Floor`).
+- [ ] Consistent naming convention for mappings vs formulas:
+  - Config and repo must standardize on internal Airtable field names for mappings: `ContactInformation`, `TelegramID`, `FullNameRU/EN`, etc.
+  - Formula references must use internal names as per tests: `{FullNameRU}`, `{FullNameEN}` — not display labels.
+  - Ensure `FORMULA_FIELD_REFERENCES` values match `PYTHON_TO_AIRTABLE` values for these fields.
 
-- [ ] Formula field references use non‑existent names (`{FullNameRU}`, `{FullNameEN}`) instead of current display labels (`{Full Name (RU)}`, `{Full Name (EN)}`) → Breaks tests and likely Airtable formulas if labels differ.  
-  Solution: Align `FORMULA_FIELD_REFERENCES` to the Airtable display labels currently in use (e.g., `"full_name_ru": "Full Name (RU)"`). Alternatively, have `build_formula_field()` resolve via `get_airtable_field_name()` so there’s a single source of truth.
+- [ ] Telegram field mapping completeness:
+  - Add `"TelegramID"` to `AIRTABLE_FIELD_IDS` with a valid-looking ID (format: starts with `fld`, length 17).
+  - Ensure `PYTHON_TO_AIRTABLE['telegram_id'] == 'TelegramID'` and `FIELD_TYPES['TelegramID'] = FieldType.TEXT`.
 
-- [ ] Placeholder Field ID for Telegram field (`fldTELEGRAMIDXXXX`) committed → Will cause create/update translation to use an invalid Field ID.  
-  Solution: Replace with the real Airtable Field ID from the base schema. Until known, remove the placeholder to force name fallback in `translate_fields_to_ids()`.
+- [ ] No hardcoded field strings in repository:
+  - Replace all `search_by_field("...")` and inline `{Field}` occurrences with centralized helpers:
+    - Direct fields: `AirtableFieldMapping.get_airtable_field_name('<python_field>')`
+    - Formulas: `AirtableFieldMapping.build_formula_field('<python_field>')`
+  - Also replace the local `_convert_field_updates_to_airtable` dict with values from `AirtableFieldMapping.PYTHON_TO_AIRTABLE`.
 
-- [ ] Unescaped user input in `search_by_name` formula → Risk of formula breakage with names containing single quotes (e.g., O'Connor).  
-  Solution: Escape single quotes in `name_pattern` (replace `'` with `''`) before interpolating into the formula.
+- [ ] Formula injection and escaping:
+  - Escape single quotes in `search_by_name` and `search_by_criteria` formula construction.
 
 ### ⚠️ Major (Should Fix)
-- [ ] Ensure all search helpers consistently use centralized mapping, including: `get_by_full_name_ru`, `find_by_role`, `find_by_department`, `get_by_payment_status`, `find_by_room_number`, `find_by_floor`, and `search_by_criteria` formula construction.
-- [ ] Reconcile tests and task doc: Either update code to keep current display label format or adjust test expectations if the Airtable schema has actually changed. Given the “backward compatibility” constraint, prefer fixing the code to keep existing labels and centralize via mappings.
+- [ ] Audit and replace remaining literals in repository: `get_by_full_name_ru`, `find_by_role`, `find_by_department`, `get_by_payment_status`, `find_by_room_number`, `find_by_floor`, and all of `search_by_criteria`.
+- [ ] Update the task doc to align with the standardized internal naming for mappings and formulas, noting that display-label usage is intentionally avoided in formulas.
 
 ### 💡 Minor (Nice to Fix)
 - [ ] Add CHANGELOG entry summarizing the centralization work and mapping additions.
@@ -70,18 +77,19 @@ Documentation: 🔄 Partial — Task doc completion claims do not match test sta
 
 ## Recommendations
 ### Immediate Actions
-1. Update `AirtableFieldMapping.FORMULA_FIELD_REFERENCES` to use display labels matching the current Airtable schema, or delegate to `get_airtable_field_name()` inside `build_formula_field()`.
-2. Replace all hardcoded field strings in repository methods with centralized mapping calls (both direct field searches and in-formula references).
-3. Remove the Telegram placeholder Field ID or replace with the real one from the base. Verify `translate_fields_to_ids()` falls back gracefully when ID is absent.
-4. Escape `name_pattern` in `search_by_name` to handle single quotes safely.
-5. Re-run unit tests to confirm fixes (target: 0 failures). Optionally run integration tests afterward.
+1. Set `PYTHON_TO_AIRTABLE['contact_information'] = 'ContactInformation'` and `['telegram_id'] = 'TelegramID'`; update reverse map and `FIELD_TYPES` accordingly.
+2. Add `AIRTABLE_FIELD_IDS['TelegramID']` with a valid-looking test ID; keep real ID if available.
+3. Set `FORMULA_FIELD_REFERENCES` to `{'full_name_ru': 'FullNameRU', 'full_name_en': 'FullNameEN'}`; `build_formula_field()` then produces `{FullNameRU}`/`{FullNameEN}`.
+4. Refactor repository methods to use `get_airtable_field_name()` and `build_formula_field()` everywhere, including `_convert_field_updates_to_airtable`.
+5. Escape single quotes in all formula builders.
+6. Re-run `./venv/bin/pytest tests/unit -q` until 0 failures.
 
 ### Future Improvements
 1. Add a schema-driven verification step (via `AirtableClient.get_schema()`) to validate that mapped field names and IDs exist at startup, logging actionable errors.
 2. Expand mapping coverage tests to assert both formula references and direct search fields are only produced via mapping helpers (no literals).
 
 ## Final Decision
-Status: ❌ NEEDS FIXES
+Status: ❌ NEEDS FIXES (Re-review)
 
 Criteria: Some centralization achieved, but acceptance criteria are not fully met; unit tests for this task fail; and a placeholder Field ID poses a production risk.
 
@@ -105,5 +113,4 @@ After fixes are pushed, request re-review. The review will verify all failing te
 ## Implementation Assessment
 Execution: Centralization applied in some key paths, but incomplete across repository methods and formulas.  
 Documentation: Task doc overstates completion; update needed to reflect reality.  
-Verification: Unit tests run surfaced 5 failures directly tied to this task; proceed with the fixes above.
-
+Verification: Unit tests surfaced 31 failures tied to mapping/format inconsistencies and remaining hardcoded references; proceed with the fixes above and re-run.

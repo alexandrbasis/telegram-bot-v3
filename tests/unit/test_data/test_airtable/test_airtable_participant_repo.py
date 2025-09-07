@@ -433,7 +433,7 @@ class TestAirtableParticipantRepositorySearch:
         result = await repository.find_by_contact_information("ivan@example.com")
 
         mock_airtable_client.search_by_field.assert_called_once_with(
-            "Contact Information", "ivan@example.com"
+            "ContactInformation", "ivan@example.com"
         )
 
         assert isinstance(result, Participant)
@@ -456,7 +456,7 @@ class TestAirtableParticipantRepositorySearch:
         result = await repository.find_by_telegram_id(12345)
 
         mock_airtable_client.search_by_field.assert_called_once_with(
-            "Telegram ID", 12345
+            "TelegramID", 12345
         )
 
         assert isinstance(result, Participant)
@@ -470,8 +470,8 @@ class TestAirtableParticipantRepositorySearch:
         mock_airtable_client.search_by_formula.assert_called_once()
         call_args = mock_airtable_client.search_by_formula.call_args[0][0]
         assert "SEARCH('Иван'" in call_args
-        assert "Full Name (RU)" in call_args
-        assert "Full Name (EN)" in call_args
+        assert "FullNameRU" in call_args
+        assert "FullNameEN" in call_args
 
         assert isinstance(result, list)
         assert len(result) == 1
