@@ -153,6 +153,12 @@ class AirtableFieldMapping:
         "RoomNumber": FieldType.TEXT,
     }
 
+    # Formula field reference constants for consistent field naming in Airtable formulas
+    FORMULA_FIELD_REFERENCES: Dict[str, str] = {
+        "full_name_ru": "FullNameRU",  # For {FullNameRU} format - internal field name
+        "full_name_en": "FullNameEN",  # For {FullNameEN} format - internal field name
+    }
+
     # Required fields (cannot be None/empty)
     REQUIRED_FIELDS: List[str] = ["FullNameRU"]  # Primary field required by Airtable
 
@@ -207,6 +213,39 @@ class AirtableFieldMapping:
         "Department": [dept.value for dept in Department],
         "PaymentStatus": [status.value for status in PaymentStatus],
     }
+
+    @classmethod
+    def get_formula_field_reference(cls, python_field: str) -> Optional[str]:
+        """
+        Get formula field reference from Python field name.
+
+        Used for consistent field naming in Airtable formulas, resolving
+        inconsistencies between different field reference formats.
+
+        Args:
+            python_field: Python model field name
+
+        Returns:
+            Formula field reference or None if not found
+        """
+        return cls.FORMULA_FIELD_REFERENCES.get(python_field)
+
+    @classmethod
+    def build_formula_field(cls, python_field: str) -> Optional[str]:
+        """
+        Build formula field reference with curly braces for use in Airtable formulas.
+
+        Provides consistent formula field format for use in Airtable formula strings,
+        resolving inconsistencies between {FieldName} and {Display Name} formats.
+
+        Args:
+            python_field: Python model field name
+
+        Returns:
+            Formula field reference wrapped in curly braces or None if field not found
+        """
+        field_ref = cls.get_formula_field_reference(python_field)
+        return f"{{{field_ref}}}" if field_ref else None
 
     @classmethod
     def get_airtable_field_name(cls, python_field: str) -> Optional[str]:
