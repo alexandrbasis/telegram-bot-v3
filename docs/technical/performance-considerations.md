@@ -21,6 +21,11 @@ All search operations must complete within 3 seconds to ensure optimal user expe
 
 ### Airtable API Performance Optimization
 
+#### Asynchronous Operation Patterns
+- **Modern Asyncio**: All blocking Airtable operations use `asyncio.to_thread()` for optimal thread offloading
+- **Non-blocking I/O**: Event loop remains responsive during API calls through proper async/await patterns
+- **Thread Pool Management**: Efficient thread utilization without manual executor management
+
 #### Rate Limiting Configuration
 - **Rate Limit**: 5 requests per second (Airtable constraint)
 - **Request Timeout**: 30 seconds (enhanced from 10 seconds for stability)
