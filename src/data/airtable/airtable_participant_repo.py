@@ -23,6 +23,7 @@ from src.services.search_service import (
     detect_language,
     format_participant_result,
 )
+from src.config.field_mappings import AirtableFieldMapping
 
 
 logger = logging.getLogger(__name__)
@@ -602,10 +603,9 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by contact information: {contact_info}")
 
-            # Use display label as used in tests/schema: "Contact Information"
-            records = await self.client.search_by_field(
-                "Contact Information", contact_info
-            )
+            # Use centralized field mapping for Contact Information field
+            contact_field = AirtableFieldMapping.get_airtable_field_name("contact_information")
+            records = await self.client.search_by_field(contact_field, contact_info)
 
             if not records:
                 return None
@@ -638,8 +638,9 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by Telegram ID: {telegram_id}")
 
-            # Use display label used in tests/schema: "Telegram ID"
-            records = await self.client.search_by_field("Telegram ID", telegram_id)
+            # Use centralized field mapping for Telegram ID field
+            telegram_field = AirtableFieldMapping.get_airtable_field_name("telegram_id")
+            records = await self.client.search_by_field(telegram_field, telegram_id)
 
             if not records:
                 return None
@@ -672,10 +673,12 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Searching participants by name pattern: {name_pattern}")
 
-            # Build Airtable formula for partial name matching using display labels
+            # Build Airtable formula for partial name matching using centralized field references
+            ru_field = AirtableFieldMapping.build_formula_field("full_name_ru")
+            en_field = AirtableFieldMapping.build_formula_field("full_name_en")
             formula = (
-                f"OR(SEARCH('{name_pattern}', {{Full Name (RU)}}), "
-                f"SEARCH('{name_pattern}', {{Full Name (EN)}}))"
+                f"OR(SEARCH('{name_pattern}', {ru_field}), "
+                f"SEARCH('{name_pattern}', {en_field}))"
             )
 
             records = await self.client.search_by_formula(formula)
