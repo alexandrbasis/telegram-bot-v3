@@ -7,7 +7,7 @@ including all field types: text, single select, number, and date fields.
 
 from datetime import date
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, Any, Mapping
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
@@ -129,7 +129,7 @@ class Participant(BaseModel):
 
     @field_validator("full_name_ru")
     @classmethod
-    def validate_full_name_ru(cls, v):
+    def validate_full_name_ru(cls, v: str) -> str:
         """Ensure primary field is not empty."""
         if not v or not v.strip():
             raise ValueError("Full name in Russian is required and cannot be empty")
@@ -137,20 +137,20 @@ class Participant(BaseModel):
 
     @field_validator("room_number")
     @classmethod
-    def validate_room_number(cls, v):
+    def validate_room_number(cls, v: Optional[Union[int, str]]) -> Optional[Union[int, str]]:
         """Normalize room number: empty string -> None; otherwise keep provided type (int or str)."""
         if v == "":
             return None
         return v
 
-    def to_airtable_fields(self) -> dict:
+    def to_airtable_fields(self) -> dict[str, object]:
         """
         Convert participant data to Airtable API format.
 
         Returns dictionary with Airtable field names as keys.
         None values are excluded to avoid API errors.
         """
-        fields = {}
+        fields: dict[str, object] = {}
 
         # Required field
         fields["FullNameRU"] = self.full_name_ru
@@ -201,7 +201,7 @@ class Participant(BaseModel):
         return fields
 
     @classmethod
-    def from_airtable_record(cls, record: dict) -> "Participant":
+    def from_airtable_record(cls, record: Mapping[str, Any]) -> "Participant":
         """
         Create Participant instance from Airtable record.
 

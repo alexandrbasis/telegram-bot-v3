@@ -10,6 +10,8 @@ import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional, TextIO
+import types
 
 
 @dataclass
@@ -24,28 +26,33 @@ class InstanceLock:
     path: Path
 
     def __post_init__(self) -> None:
-        self._fd: int | None = None
-        self._fh = None
+        self._fd: Optional[int] = None
+        self._fh: Optional[TextIO] = None
 
-    def __enter__(self):
+    def __enter__(self) -> "InstanceLock":
         # Ensure parent directory exists
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
         flags = os.O_RDWR | os.O_CREAT
         # 0o644 file permissions
         self._fd = os.open(self.path, flags, 0o644)
-        self._fh = os.fdopen(
-            self._fd, mode="r+", buffering=1, encoding="utf-8", errors="ignore"
+        fh = os.fdopen(
+            self._fd,
+            mode="r+",
+            buffering=1,
+            encoding="utf-8",
+            errors="ignore",
         )
+        self._fh = fh
 
         try:
             if sys.platform.startswith("win"):
                 # Windows non-blocking lock on 1 byte at start of file
                 import msvcrt
 
-                self._fh.seek(0)
+                fh.seek(0)
                 try:
-                    msvcrt.locking(self._fh.fileno(), msvcrt.LK_NBLCK, 1)
+                    msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
                 except OSError:
                     raise RuntimeError(self._conflict_message())
             else:
@@ -53,16 +60,16 @@ class InstanceLock:
                 import fcntl
 
                 try:
-                    fcntl.flock(self._fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except OSError:
                     raise RuntimeError(self._conflict_message())
 
             # Write our PID for visibility
             try:
-                self._fh.seek(0)
-                self._fh.truncate()
-                self._fh.write(str(os.getpid()))
-                self._fh.flush()
+                fh.seek(0)
+                fh.truncate()
+                fh.write(str(os.getpid()))
+                fh.flush()
             except Exception:
                 # Non-fatal: lock is already held
                 pass
@@ -71,17 +78,22 @@ class InstanceLock:
         except Exception:
             # Clean up on failure to avoid leaking fd
             try:
-                if self._fh:
+                if self._fh is not None:
                     self._fh.close()
             finally:
                 self._fh = None
                 self._fd = None
             raise
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc: Optional[BaseException],
+        tb: Optional[types.TracebackType],
+    ) -> None:
         # Release lock by closing the file handle
         try:
-            if self._fh:
+            if self._fh is not None:
                 self._fh.close()
         finally:
             self._fh = None
@@ -93,7 +105,7 @@ class InstanceLock:
             pass
 
     def _conflict_message(self) -> str:
-        other_pid = None
+        other_pid: Optional[int] = None
         try:
             # Try to read existing PID for a clearer error
             with open(self.path, "r", encoding="utf-8", errors="ignore") as f:

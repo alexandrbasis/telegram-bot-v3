@@ -468,7 +468,7 @@ class DataValidator:
         total_warnings = sum(len(result.warnings) for result in results.values())
 
         # Field error frequency
-        field_error_counts = {}
+        field_error_counts: Dict[str, int] = {}
         for result in results.values():
             for field, errors in result.field_errors.items():
                 field_error_counts[field] = field_error_counts.get(field, 0) + len(
@@ -476,7 +476,7 @@ class DataValidator:
                 )
 
         # Most common errors
-        error_frequency = {}
+        error_frequency: Dict[str, int] = {}
         for result in results.values():
             for error in result.errors:
                 error_frequency[error] = error_frequency.get(error, 0) + 1

@@ -192,6 +192,8 @@ class ParticipantUpdateService:
 
         except ValueError:
             raise ValueError(f"Invalid {field_name} value: {selected_value}")
+        # Safety: ensure all code paths return
+        raise ValueError(f"Unsupported button field: {field_name}")
 
     def get_russian_display_value(self, field_name: str, field_value: Any) -> str:
         """
@@ -229,7 +231,7 @@ class ParticipantUpdateService:
 
         # For other fields (size, department), return the string value
         if hasattr(field_value, "value"):
-            return field_value.value
+            return str(field_value.value)
 
         return str(field_value)
 
