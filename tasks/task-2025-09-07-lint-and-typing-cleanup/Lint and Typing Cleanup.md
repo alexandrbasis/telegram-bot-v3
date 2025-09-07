@@ -8,7 +8,7 @@
 
 ### PR Details
 - **Branch**: feature/AGB-35-lint-and-typing-cleanup
-- **PR URL**: [Will be added during implementation]
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/24
 - **Status**: Review
 
 ## Business Requirements
