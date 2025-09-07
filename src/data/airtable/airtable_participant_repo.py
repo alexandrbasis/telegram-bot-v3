@@ -674,10 +674,12 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Searching participants by name pattern: {name_pattern}")
 
-            # Build Airtable formula for partial name matching using display labels
+            # Build Airtable formula for partial name matching using centralized field references
+            ru_field = AirtableFieldMapping.build_formula_field("full_name_ru")
+            en_field = AirtableFieldMapping.build_formula_field("full_name_en")
             formula = (
-                f"OR(SEARCH('{name_pattern}', {{Full Name (RU)}}), "
-                f"SEARCH('{name_pattern}', {{Full Name (EN)}}))"
+                f"OR(SEARCH('{name_pattern}', {ru_field}), "
+                f"SEARCH('{name_pattern}', {en_field}))"
             )
 
             records = await self.client.search_by_formula(formula)
