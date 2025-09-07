@@ -23,6 +23,7 @@ from src.services.search_service import (
     detect_language,
     format_participant_result,
 )
+from src.config.field_mappings import AirtableFieldMapping
 
 
 logger = logging.getLogger(__name__)
@@ -638,8 +639,9 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Finding participant by Telegram ID: {telegram_id}")
 
-            # Use display label used in tests/schema: "Telegram ID"
-            records = await self.client.search_by_field("Telegram ID", telegram_id)
+            # Use centralized field mapping for Telegram ID field
+            telegram_field = AirtableFieldMapping.get_airtable_field_name("telegram_id")
+            records = await self.client.search_by_field(telegram_field, telegram_id)
 
             if not records:
                 return None
