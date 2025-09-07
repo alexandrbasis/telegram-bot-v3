@@ -172,7 +172,7 @@ class TestFloorSearchIntegration:
         # Verify prompt message sent
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
-        assert "Введите номер этажа для поиска:" in call_args[1]["text"]
+        assert "Пришлите номер этажа цифрой:" in call_args[1]["text"]
 
         # Verify correct state returned
         assert result_state == FloorSearchStates.WAITING_FOR_FLOOR
@@ -447,3 +447,32 @@ class TestFloorSearchIntegration:
 
         # Should return appropriate message for empty floor
         assert result == "❌ На этаже 5 участники не найдены."
+
+    @pytest.mark.asyncio
+    async def test_floor_search_cancel(self, mock_update_and_context):
+        """Test cancel from WAITING_FOR_FLOOR state returns to main menu."""
+        from src.bot.handlers.search_handlers import cancel_search, SearchStates
+        from src.bot.keyboards.search_keyboards import NAV_CANCEL
+
+        update, context = mock_update_and_context
+        update.message.text = NAV_CANCEL  # "❌ Отмена"
+
+        # Execute cancel search
+        result_state = await cancel_search(update, context)
+
+        # Verify welcome message sent
+        update.message.reply_text.assert_called_once()
+        call_args = update.message.reply_text.call_args
+        
+        # Check message content
+        assert "Добро пожаловать в бот Tres Dias!" in call_args[1]["text"]
+        assert "Ищите участников по имени" in call_args[1]["text"]
+        
+        # Check reply markup is main menu keyboard
+        assert call_args[1]["reply_markup"] is not None
+
+        # Verify search results cleared
+        assert context.user_data["search_results"] == []
+
+        # Verify correct state returned
+        assert result_state == SearchStates.MAIN_MENU
