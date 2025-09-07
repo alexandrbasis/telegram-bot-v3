@@ -1,5 +1,5 @@
 # Task: Floor Search Prompt and Validation
-**Created**: 2025-09-07 | **Status**: Ready for Review (2025-09-07 14:50)
+**Created**: 2025-09-07 | **Status**: Ready for Review (2025-09-07 16:30)
 
 ## Tracking & Progress
 ### Linear Issue
@@ -182,6 +182,18 @@ Button Click → `handle_search_floor_mode` → Send Prompt & Set WAITING_FOR_FL
   - Impact: Review-ready with clear context and validation details
   - Verification: PR available, task doc updated with PR link and status
 
+- [x] ✅ Step 3: Address code review feedback — Completed 2025-09-07 16:30
+  - Fixed critical issue: Added NAV_CANCEL handler for WAITING_FOR_FLOOR state
+  - Added integration test for cancel functionality from floor waiting state
+  - Aligned prompt copy with acceptance criteria: "Пришлите номер этажа цифрой"
+  - Files:
+    - `src/bot/handlers/search_conversation.py` — Added NAV_CANCEL handler in WAITING_FOR_FLOOR
+    - `src/bot/messages.py` — Updated ENTER_FLOOR_NUMBER to match acceptance criteria
+    - `tests/integration/test_floor_search_integration.py` — Added test_floor_search_cancel + updated prompt text assertion
+  - Impact: All code review critical/major issues resolved; cancel flow works correctly
+  - Tests: All floor search tests pass (12 integration + 8 unit + 32 search handlers)
+  - Verification: All acceptance criteria now met; ready for re-review
+
 ## Changelog
 
 ### Step 1: Floor mode prompt and state — 2025-09-07 14:45
@@ -199,6 +211,15 @@ Button Click → `handle_search_floor_mode` → Send Prompt & Set WAITING_FOR_FL
 - Summary: Prepared PR for cold review with comprehensive context
 - User Effect: Easier review; traceability ensured
 - Tests: No code changes, documentation only
+
+### Step 3: Address code review feedback — 2025-09-07 16:30
+- Files:
+  - `src/bot/handlers/search_conversation.py` — lines 184-205: Added NAV_CANCEL handler and updated regex filter to exclude cancel button text from floor input processing
+  - `src/bot/messages.py` — line 95: Changed ENTER_FLOOR_NUMBER from "Введите номер этажа для поиска:" to "Пришлите номер этажа цифрой:"
+  - `tests/integration/test_floor_search_integration.py` — lines 451-478: Added test_floor_search_cancel test case; line 175: Updated prompt assertion
+- Summary: Fixed critical code review issue where cancel button from WAITING_FOR_FLOOR caused error instead of returning to main menu; aligned prompt text with acceptance criteria
+- User Effect: Cancel button now works properly from floor waiting state; updated prompt text matches specification
+- Tests: All floor search tests pass (12 integration, 8 unit, 32 search handlers); new cancel test verifies proper state transition and UI response
 
 ## Quality & Validation
 
@@ -229,15 +250,16 @@ Button Click → `handle_search_floor_mode` → Send Prompt & Set WAITING_FOR_FL
 ## Status Update
 
 - 2025-09-07 14:45 — Implementation complete for scope; marking Ready for Review.
+- 2025-09-07 16:30 — Code review feedback addressed; all critical/major issues resolved.
 
-**Status**: Ready for Review (2025-09-07 14:50)
+**Status**: Ready for Review (2025-09-07 16:30)
 
-Continuation Summary: Implemented correct floor search prompt flow, updated unit tests, verified floor integration tests. Prompt text remains «Введите номер этажа для поиска:» to match current tests; updating to «Пришлите номер этажа цифрой» can be done in a follow-up with test updates. PR created and ready for cold review. See `tasks/task-2025-09-07-floor-search-prompt-wait-input/PR.md` for the review package.
+Continuation Summary: Addressed all code review feedback - fixed critical cancel handling issue in WAITING_FOR_FLOOR state, added comprehensive test coverage for cancel functionality, and aligned prompt copy with acceptance criteria. All tests pass (52 total across integration/unit). All acceptance criteria now fully satisfied. PR updated and ready for re-review.
 
 ## Reviewer Notes
-- Scope is tightly localized to floor mode selection handler and tests.
-- Prompt wording intentionally unchanged to avoid breaking existing assertions.
-- Consider a follow-up for text alignment if business prefers the alternative phrase.
+- Scope remains tightly localized to floor mode selection handler and tests.
+- Code review feedback has been addressed: cancel handling added and prompt wording updated.
+- All acceptance criteria and test coverage requirements are now met.
 
 ## Version Control
 - Branch: `feature/AGB-34-floor-search-prompt-wait-input`
