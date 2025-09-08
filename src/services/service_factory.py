@@ -8,8 +8,7 @@ DI container.
 
 from src.config.settings import get_settings
 from src.data.airtable.airtable_client import AirtableClient
-from src.data.airtable.airtable_participant_repo import \
-    AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.services.search_service import SearchService
 
 

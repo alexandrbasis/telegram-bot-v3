@@ -10,8 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.config.field_mappings import AirtableFieldMapping
-from src.data.airtable.airtable_participant_repo import \
-    AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.models.participant import Participant
 
 

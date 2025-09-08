@@ -8,11 +8,15 @@ states, and fallbacks for the Russian name search feature.
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from telegram.ext import (CallbackQueryHandler, CommandHandler,
-                          ConversationHandler, MessageHandler, filters)
+from telegram.ext import (
+    CallbackQueryHandler,
+    CommandHandler,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
-from src.bot.handlers.search_conversation import \
-    get_search_conversation_handler
+from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.bot.handlers.search_handlers import SearchStates
 
 
@@ -146,8 +150,7 @@ class TestSearchConversationFlow:
         self, mock_update_message, mock_update_callback, mock_context
     ):
         """Test complete flow from /start to search button to name input."""
-        from src.bot.handlers.search_handlers import (search_button,
-                                                      start_command)
+        from src.bot.handlers.search_handlers import search_button, start_command
 
         # Step 1: /start command
         result = await start_command(mock_update_message, mock_context)
@@ -252,8 +255,7 @@ class TestConversationHandlerImport:
 
     def test_import_conversation_handler(self):
         """Test that conversation handler can be imported without errors."""
-        from src.bot.handlers.search_conversation import \
-            get_search_conversation_handler
+        from src.bot.handlers.search_conversation import get_search_conversation_handler
 
         # Should be able to import and call without errors
         handler = get_search_conversation_handler()

@@ -15,7 +15,9 @@ from telegram import CallbackQuery, Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.edit_participant_handlers import (
-    handle_text_field_input, save_changes)
+    handle_text_field_input,
+    save_changes,
+)
 from src.data.repositories.participant_repository import RepositoryError
 from src.models.participant import Participant, PaymentStatus
 

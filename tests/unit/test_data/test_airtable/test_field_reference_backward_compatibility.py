@@ -10,8 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.config.field_mappings import AirtableFieldMapping
-from src.data.airtable.airtable_participant_repo import \
-    AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.models.participant import Participant
 
 
@@ -243,8 +242,7 @@ class TestFieldReferenceBackwardCompatibility:
         mock_client.search_by_field.side_effect = AirtableAPIError("Test error", 500)
 
         # Act & Assert: Should raise RepositoryError (same as before)
-        from src.data.repositories.participant_repository import \
-            RepositoryError
+        from src.data.repositories.participant_repository import RepositoryError
 
         with pytest.raises(RepositoryError) as exc_info:
             await repository.find_by_telegram_id(123456789)

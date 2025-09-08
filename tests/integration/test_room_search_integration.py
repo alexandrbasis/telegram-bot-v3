@@ -14,8 +14,11 @@ from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.room_search_handlers import (
-    RoomSearchStates, handle_room_search_command, process_room_search,
-    process_room_search_with_number)
+    RoomSearchStates,
+    handle_room_search_command,
+    process_room_search,
+    process_room_search_with_number,
+)
 from src.models.participant import Participant
 from src.services.service_factory import get_search_service
 

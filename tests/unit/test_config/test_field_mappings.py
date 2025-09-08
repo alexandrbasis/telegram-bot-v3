@@ -13,11 +13,14 @@ from datetime import date
 
 import pytest
 
-from src.config.field_mappings import (AirtableFieldMapping, FieldType,
-                                       SearchFieldMapping, field_mapping,
-                                       search_mapping)
-from src.models.participant import (Department, Gender, PaymentStatus, Role,
-                                    Size)
+from src.config.field_mappings import (
+    AirtableFieldMapping,
+    FieldType,
+    SearchFieldMapping,
+    field_mapping,
+    search_mapping,
+)
+from src.models.participant import Department, Gender, PaymentStatus, Role, Size
 
 
 class TestAirtableFieldMapping:

@@ -11,9 +11,11 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 
-from src.services.user_interaction_logger import (InteractionType,
-                                                  LoggingError,
-                                                  UserInteractionLogger)
+from src.services.user_interaction_logger import (
+    InteractionType,
+    LoggingError,
+    UserInteractionLogger,
+)
 
 
 class TestUserInteractionLogger:

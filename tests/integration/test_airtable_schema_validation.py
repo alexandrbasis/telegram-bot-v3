@@ -14,8 +14,7 @@ import pytest_asyncio
 from src.config.field_mappings import AirtableFieldMapping, FieldType
 from src.config.settings import DatabaseSettings
 from src.data.airtable.airtable_client import AirtableClient
-from src.data.airtable.airtable_participant_repo import \
-    AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.models.participant import Participant
 from src.services.search_service import SearchService
 

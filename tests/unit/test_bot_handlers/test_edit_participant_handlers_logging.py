@@ -12,9 +12,15 @@ from telegram import CallbackQuery, InlineKeyboardMarkup, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.edit_participant_handlers import (
-    EditStates, cancel_editing, get_user_interaction_logger,
-    handle_button_field_selection, handle_field_edit_selection, retry_save,
-    save_changes, show_save_confirmation)
+    EditStates,
+    cancel_editing,
+    get_user_interaction_logger,
+    handle_button_field_selection,
+    handle_field_edit_selection,
+    retry_save,
+    save_changes,
+    show_save_confirmation,
+)
 from src.models.participant import Gender, Participant, Size
 
 

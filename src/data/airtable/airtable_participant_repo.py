@@ -11,11 +11,18 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from src.config.field_mappings import AirtableFieldMapping
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
 from src.data.repositories.participant_repository import (
-    DuplicateError, NotFoundError, ParticipantRepository, RepositoryError,
-    ValidationError)
+    DuplicateError,
+    NotFoundError,
+    ParticipantRepository,
+    RepositoryError,
+    ValidationError,
+)
 from src.models.participant import Participant
-from src.services.search_service import (SearchService, detect_language,
-                                         format_participant_result)
+from src.services.search_service import (
+    SearchService,
+    detect_language,
+    format_participant_result,
+)
 
 logger = logging.getLogger(__name__)
 

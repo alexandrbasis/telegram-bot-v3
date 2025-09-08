@@ -14,8 +14,7 @@ from telegram import Update
 from telegram.error import Conflict, NetworkError, RetryAfter, TimedOut
 from telegram.ext import Application, ContextTypes
 
-from src.bot.handlers.search_conversation import \
-    get_search_conversation_handler
+from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
 from src.services.file_logging_service import FileLoggingService
 from src.utils.single_instance import InstanceLock

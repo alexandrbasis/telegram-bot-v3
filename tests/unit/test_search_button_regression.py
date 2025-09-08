@@ -10,8 +10,7 @@ from unittest.mock import Mock
 import pytest
 from telegram.ext import ConversationHandler
 
-from src.bot.handlers.search_conversation import \
-    get_search_conversation_handler
+from src.bot.handlers.search_conversation import get_search_conversation_handler
 
 
 class TestSearchButtonRegression:

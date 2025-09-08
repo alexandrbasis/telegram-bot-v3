@@ -17,9 +17,12 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from src.data.airtable.airtable_client import (AirtableAPIError,
-                                               AirtableClient, AirtableConfig,
-                                               RateLimiter)
+from src.data.airtable.airtable_client import (
+    AirtableAPIError,
+    AirtableClient,
+    AirtableConfig,
+    RateLimiter,
+)
 
 
 class TestAirtableFieldIDSupport:
@@ -301,8 +304,7 @@ class TestAirtableAPIError:
 
     def test_api_error_inheritance(self):
         """Test that AirtableAPIError inherits from RepositoryError."""
-        from src.data.repositories.participant_repository import \
-            RepositoryError
+        from src.data.repositories.participant_repository import RepositoryError
 
         error = AirtableAPIError("Test")
 

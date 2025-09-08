@@ -11,8 +11,7 @@ from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.room_search_handlers import RoomSearchStates
-from src.bot.handlers.search_conversation import \
-    get_search_conversation_handler
+from src.bot.handlers.search_conversation import get_search_conversation_handler
 
 
 class TestSearchConversationRoomIntegration:

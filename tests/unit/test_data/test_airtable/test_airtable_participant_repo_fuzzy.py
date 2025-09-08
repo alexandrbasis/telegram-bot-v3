@@ -11,8 +11,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
-from src.data.airtable.airtable_participant_repo import \
-    AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.data.repositories.participant_repository import RepositoryError
 from src.models.participant import Department, Participant, Role
 

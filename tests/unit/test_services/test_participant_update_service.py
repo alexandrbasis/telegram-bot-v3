@@ -9,10 +9,11 @@ from datetime import date
 
 import pytest
 
-from src.models.participant import (Department, Gender, PaymentStatus, Role,
-                                    Size)
-from src.services.participant_update_service import (ParticipantUpdateService,
-                                                     ValidationError)
+from src.models.participant import Department, Gender, PaymentStatus, Role, Size
+from src.services.participant_update_service import (
+    ParticipantUpdateService,
+    ValidationError,
+)
 
 
 class TestParticipantUpdateService:

@@ -14,7 +14,9 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from src.bot.keyboards.search_keyboards import (
-    get_results_navigation_keyboard, get_waiting_for_floor_keyboard)
+    get_results_navigation_keyboard,
+    get_waiting_for_floor_keyboard,
+)
 from src.bot.messages import ErrorMessages, InfoMessages, RetryMessages
 from src.models.participant import Participant
 from src.services.service_factory import get_search_service

@@ -10,8 +10,7 @@ import pytest
 from telegram import CallbackQuery, Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
-from src.data.repositories.participant_repository import (NotFoundError,
-                                                          RepositoryError)
+from src.data.repositories.participant_repository import NotFoundError, RepositoryError
 from src.models.participant import Department, Gender, Participant, Role, Size
 
 
@@ -97,8 +96,9 @@ class TestSearchToEditFlow:
         mock_get_repo.return_value = mock_repo
 
         # Step 1: Show edit menu for participant
-        from src.bot.handlers.edit_participant_handlers import \
-            show_participant_edit_menu
+        from src.bot.handlers.edit_participant_handlers import (
+            show_participant_edit_menu,
+        )
 
         result = await show_participant_edit_menu(mock_update, mock_context)
 
@@ -112,8 +112,9 @@ class TestSearchToEditFlow:
         # Step 2: Simulate field edit (change role to TEAM)
         mock_update.callback_query.data = "edit_field:role"
 
-        from src.bot.handlers.edit_participant_handlers import \
-            handle_field_edit_selection
+        from src.bot.handlers.edit_participant_handlers import (
+            handle_field_edit_selection,
+        )
 
         result = await handle_field_edit_selection(mock_update, mock_context)
 
@@ -123,8 +124,9 @@ class TestSearchToEditFlow:
         # Step 3: Select new role value
         mock_update.callback_query.data = "role:TEAM"
 
-        from src.bot.handlers.edit_participant_handlers import \
-            handle_button_field_selection
+        from src.bot.handlers.edit_participant_handlers import (
+            handle_button_field_selection,
+        )
 
         result = await handle_button_field_selection(mock_update, mock_context)
 
@@ -138,8 +140,7 @@ class TestSearchToEditFlow:
         mock_update.message.reply_text = AsyncMock()
         mock_update.effective_user = mock_update.callback_query.from_user
 
-        from src.bot.handlers.edit_participant_handlers import \
-            handle_text_field_input
+        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
 
         result = await handle_text_field_input(mock_update, mock_context)
 
@@ -149,8 +150,7 @@ class TestSearchToEditFlow:
         # Step 5: Show save confirmation
         mock_update.callback_query.data = "show_save_confirmation"
 
-        from src.bot.handlers.edit_participant_handlers import \
-            show_save_confirmation
+        from src.bot.handlers.edit_participant_handlers import show_save_confirmation
 
         result = await show_save_confirmation(mock_update, mock_context)
 
@@ -292,8 +292,7 @@ class TestSearchToEditFlow:
         mock_update.message.reply_text = AsyncMock()
         mock_update.effective_user = mock_update.callback_query.from_user
 
-        from src.bot.handlers.edit_participant_handlers import \
-            handle_text_field_input
+        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
 
         result = await handle_text_field_input(mock_update, mock_context)
 

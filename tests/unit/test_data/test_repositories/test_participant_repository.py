@@ -12,7 +12,11 @@ from typing import get_type_hints
 import pytest
 
 from src.data.repositories.participant_repository import (
-    NotFoundError, ParticipantRepository, RepositoryError, ValidationError)
+    NotFoundError,
+    ParticipantRepository,
+    RepositoryError,
+    ValidationError,
+)
 from src.models.participant import Participant
 
 
@@ -285,8 +289,7 @@ class TestRepositoryUsageContract:
     def test_repository_interface_imports(self):
         """Test that interface can be imported and used for type hints."""
         # This test verifies the import structure works correctly
-        from src.data.repositories.participant_repository import \
-            ParticipantRepository
+        from src.data.repositories.participant_repository import ParticipantRepository
         from src.models.participant import Participant
 
         # Test that we can use it in type annotations

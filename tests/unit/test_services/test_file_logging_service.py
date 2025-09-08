@@ -14,8 +14,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.services.file_logging_service import (FileLoggingConfig,
-                                               FileLoggingService)
+from src.services.file_logging_service import FileLoggingConfig, FileLoggingService
 
 
 @pytest.fixture

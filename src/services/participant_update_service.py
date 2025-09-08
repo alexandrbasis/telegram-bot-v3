@@ -9,8 +9,7 @@ import logging
 from datetime import date
 from typing import Any, Optional, Union
 
-from src.models.participant import (Department, Gender, PaymentStatus, Role,
-                                    Size)
+from src.models.participant import Department, Gender, PaymentStatus, Role, Size
 
 logger = logging.getLogger(__name__)
 

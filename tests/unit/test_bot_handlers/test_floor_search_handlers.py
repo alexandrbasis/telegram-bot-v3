@@ -8,12 +8,22 @@ state management and Russian interface with room-by-room breakdown.
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from telegram import (CallbackQuery, Chat, InlineKeyboardMarkup, Message,
-                      ReplyKeyboardMarkup, Update, User)
+from telegram import (
+    CallbackQuery,
+    Chat,
+    InlineKeyboardMarkup,
+    Message,
+    ReplyKeyboardMarkup,
+    Update,
+    User,
+)
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.floor_search_handlers import (
-    FloorSearchStates, handle_floor_search_command, process_floor_search)
+    FloorSearchStates,
+    handle_floor_search_command,
+    process_floor_search,
+)
 from src.models.participant import Participant
 
 

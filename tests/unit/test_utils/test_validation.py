@@ -6,8 +6,7 @@ Tests validation helpers for room/floor input handling and error cases.
 
 import pytest
 
-from src.utils.validation import (ValidationResult, validate_floor,
-                                  validate_room_number)
+from src.utils.validation import ValidationResult, validate_floor, validate_room_number
 
 
 class TestRoomNumberValidation:

@@ -10,8 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.config.field_mappings import AirtableFieldMapping
-from src.data.airtable.airtable_participant_repo import \
-    AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.models.participant import Participant
 
 
@@ -157,8 +156,9 @@ class TestContactInfoMappingVerification:
         # Read the current repository implementation to check what it uses
         import inspect
 
-        from src.data.airtable.airtable_participant_repo import \
-            AirtableParticipantRepository
+        from src.data.airtable.airtable_participant_repo import (
+            AirtableParticipantRepository,
+        )
 
         # Get the source code of find_by_contact_information method
         method = getattr(AirtableParticipantRepository, "find_by_contact_information")

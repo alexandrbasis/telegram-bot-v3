@@ -14,8 +14,12 @@ from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.floor_search_handlers import (
-    FloorSearchStates, format_floor_results, handle_floor_search_command,
-    process_floor_search, process_floor_search_with_input)
+    FloorSearchStates,
+    format_floor_results,
+    handle_floor_search_command,
+    process_floor_search,
+    process_floor_search_with_input,
+)
 from src.models.participant import Participant
 from src.services.service_factory import get_search_service
 
@@ -448,8 +452,7 @@ class TestFloorSearchIntegration:
     @pytest.mark.asyncio
     async def test_floor_search_cancel(self, mock_update_and_context):
         """Test cancel from WAITING_FOR_FLOOR state returns to main menu."""
-        from src.bot.handlers.search_handlers import (SearchStates,
-                                                      cancel_search)
+        from src.bot.handlers.search_handlers import SearchStates, cancel_search
         from src.bot.keyboards.search_keyboards import NAV_CANCEL
 
         update, context = mock_update_and_context

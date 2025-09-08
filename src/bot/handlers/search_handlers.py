@@ -13,13 +13,20 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from src.bot.keyboards.search_keyboards import (
-    NAV_MAIN_MENU, get_main_menu_keyboard, get_results_navigation_keyboard,
-    get_search_mode_selection_keyboard, get_waiting_for_floor_keyboard,
-    get_waiting_for_name_keyboard)
+    NAV_MAIN_MENU,
+    get_main_menu_keyboard,
+    get_results_navigation_keyboard,
+    get_search_mode_selection_keyboard,
+    get_waiting_for_floor_keyboard,
+    get_waiting_for_name_keyboard,
+)
 from src.bot.messages import InfoMessages
 from src.config.settings import get_settings
-from src.services.search_service import (SearchResult, SearchService,
-                                         format_match_quality)
+from src.services.search_service import (
+    SearchResult,
+    SearchService,
+    format_match_quality,
+)
 from src.services.service_factory import get_participant_repository
 from src.services.user_interaction_logger import UserInteractionLogger
 
@@ -585,8 +592,7 @@ async def handle_participant_selection(
         )
 
     # Import and show edit menu (dynamic import to avoid circular dependency)
-    from src.bot.handlers.edit_participant_handlers import \
-        show_participant_edit_menu
+    from src.bot.handlers.edit_participant_handlers import show_participant_edit_menu
 
     return await show_participant_edit_menu(update, context)
 
@@ -639,8 +645,7 @@ async def handle_search_room_mode(
     logger.info(f"User {user.id} selected room search mode")
 
     # Import room search handler dynamically to avoid circular dependency
-    from src.bot.handlers.room_search_handlers import \
-        handle_room_search_command
+    from src.bot.handlers.room_search_handlers import handle_room_search_command
 
     # Simulate a room search command call
     return await handle_room_search_command(update, context)

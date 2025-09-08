@@ -7,12 +7,13 @@ Tests keyboard generation for different field types and validation of button lay
 import pytest
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from src.bot.keyboards.edit_keyboards import (create_field_edit_keyboard,
-                                              create_participant_edit_keyboard,
-                                              create_save_cancel_keyboard,
-                                              get_field_icon)
-from src.models.participant import (Department, Gender, PaymentStatus, Role,
-                                    Size)
+from src.bot.keyboards.edit_keyboards import (
+    create_field_edit_keyboard,
+    create_participant_edit_keyboard,
+    create_save_cancel_keyboard,
+    get_field_icon,
+)
+from src.models.participant import Department, Gender, PaymentStatus, Role, Size
 
 
 class TestCreateParticipantEditKeyboard:

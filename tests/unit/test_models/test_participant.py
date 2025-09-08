@@ -14,8 +14,14 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from src.models.participant import (Department, Gender, Participant,
-                                    PaymentStatus, Role, Size)
+from src.models.participant import (
+    Department,
+    Gender,
+    Participant,
+    PaymentStatus,
+    Role,
+    Size,
+)
 
 
 class TestParticipantModel:

@@ -8,8 +8,7 @@ Airtable field names, along with validation rules and constraints.
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from src.models.participant import (Department, Gender, PaymentStatus, Role,
-                                    Size)
+from src.models.participant import Department, Gender, PaymentStatus, Role, Size
 
 
 class FieldType(str, Enum):

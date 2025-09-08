@@ -11,10 +11,14 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.models.participant import Department, Participant, Role
-from src.services.search_service import (SearchResult, SearchService,
-                                         detect_language,
-                                         format_participant_result,
-                                         normalize_russian, parse_name_parts)
+from src.services.search_service import (
+    SearchResult,
+    SearchService,
+    detect_language,
+    format_participant_result,
+    normalize_russian,
+    parse_name_parts,
+)
 
 
 class TestLanguageDetection:

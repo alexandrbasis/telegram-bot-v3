@@ -16,13 +16,16 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.data.data_validator import (DataValidator, ValidationResult,
-                                     get_validator, validate_field_value,
-                                     validate_participant,
-                                     validate_participant_strict)
+from src.data.data_validator import (
+    DataValidator,
+    ValidationResult,
+    get_validator,
+    validate_field_value,
+    validate_participant,
+    validate_participant_strict,
+)
 from src.data.repositories.participant_repository import ValidationError
-from src.models.participant import (Department, Gender, Participant,
-                                    PaymentStatus, Role)
+from src.models.participant import Department, Gender, Participant, PaymentStatus, Role
 
 
 class TestValidationResult:
