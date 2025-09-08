@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'CHANGELOG.md'
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'CHANGELOG.md'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+
+jobs:
+  lint:
+    name: Lint (flake8)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/*.txt
+            requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+      - name: Run flake8
+        run: flake8 src tests
+
+  typing:
+    name: Type Check (mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/*.txt
+            requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+      - name: Run mypy
+        run: mypy src --no-error-summary
+
+  format:
+    name: Format Check (black, isort)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/*.txt
+            requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+      - name: Check black formatting
+        run: black --check src tests
+      - name: Check isort import order
+        run: isort --check-only src tests
+
+  tests:
+    name: Tests + Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/*.txt
+            requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+      - name: Run pytest with coverage
+        run: pytest
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.xml
+            .coverage
+          if-no-files-found: ignore
+
+  security:
+    name: Security (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/*.txt
+            requirements.txt
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+      - name: Run pip-audit (fail on any vulnerability)
+        run: |
+          pip-audit -r requirements/base.txt || exit 1
+          pip-audit -r requirements/dev.txt || exit 1
+          pip-audit -r requirements/test.txt || exit 1
+
+  docker:
+    name: Docker Build + Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t app:ci .
+      - name: Smoke import inside container
+        run: >-
+          docker run --rm --entrypoint python
+          -e TELEGRAM_BOT_TOKEN=dummy
+          -e AIRTABLE_API_KEY=dummy
+          app:ci -c "from src.main import create_application; create_application(); print('ok')"
+

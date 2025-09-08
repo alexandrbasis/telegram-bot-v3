@@ -11,7 +11,7 @@ exclude =
     .eggs,
     *.egg
 per-file-ignores =
-    tests/*: E501,F401,F541,F841,E712,F811
+    tests/*: E501,F401,F541,F841,E712,F811,W293
     src/data/airtable/airtable_participant_repo.py: E501
     src/bot/handlers/edit_participant_handlers.py: E501
     src/bot/handlers/search_conversation.py: E501,F401
