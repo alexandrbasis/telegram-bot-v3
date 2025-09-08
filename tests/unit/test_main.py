@@ -8,11 +8,12 @@ Tests cover:
 - Configuration-driven file logging behavior
 """
 
-import pytest
-import os
 import logging
-from unittest.mock import Mock, patch, MagicMock
+import os
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from src.main import configure_logging, create_application
 

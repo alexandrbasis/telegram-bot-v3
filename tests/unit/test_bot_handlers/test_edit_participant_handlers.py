@@ -5,29 +5,30 @@ Tests conversation flow, state management, and field-specific editing workflows
 for the participant editing interface.
 """
 
+from datetime import date
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from telegram import Update, CallbackQuery, Message, User, InlineKeyboardMarkup
+from telegram import CallbackQuery, InlineKeyboardMarkup, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.edit_participant_handlers import (
     EditStates,
-    show_participant_edit_menu,
+    cancel_editing,
+    handle_button_field_selection,
     handle_field_edit_selection,
     handle_text_field_input,
-    handle_button_field_selection,
-    cancel_editing,
     save_changes,
+    show_participant_edit_menu,
 )
 from src.models.participant import (
-    Participant,
-    Gender,
-    Size,
-    Role,
     Department,
+    Gender,
+    Participant,
     PaymentStatus,
+    Role,
+    Size,
 )
-from datetime import date
 
 
 @pytest.fixture
@@ -825,11 +826,13 @@ class TestPaymentFieldExclusion:
 
     def test_button_fields_constant_excludes_payment_status(self):
         """Test that BUTTON_FIELDS constant in handler does not include payment_status."""
-        # Read the handler file and verify field lists
-        with open(
-            "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py",
-            "r",
-        ) as f:
+        # Read the handler file and verify field lists (resolve path dynamically)
+        import inspect
+
+        from src.bot.handlers import edit_participant_handlers as eph
+
+        handler_path = inspect.getfile(eph)
+        with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find BUTTON_FIELDS definition and verify payment_status is not included
@@ -847,11 +850,13 @@ class TestPaymentFieldExclusion:
 
     def test_text_fields_constant_excludes_payment_date(self):
         """Test that TEXT_FIELDS constant in handler does not include payment_date."""
-        # Read the handler file and verify field lists
-        with open(
-            "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py",
-            "r",
-        ) as f:
+        # Read the handler file and verify field lists (resolve path dynamically)
+        import inspect
+
+        from src.bot.handlers import edit_participant_handlers as eph
+
+        handler_path = inspect.getfile(eph)
+        with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find TEXT_FIELDS definition and verify payment_date is not included
@@ -934,11 +939,13 @@ class TestEditMenuDisplay:
 
     def test_field_labels_excludes_payment_date(self):
         """Test that field_labels dictionary does not include payment_date."""
-        # Read the handler file and check field_labels dictionary
-        with open(
-            "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py",
-            "r",
-        ) as f:
+        # Read the handler file and check field_labels dictionary (resolve path dynamically)
+        import inspect
+
+        from src.bot.handlers import edit_participant_handlers as eph
+
+        handler_path = inspect.getfile(eph)
+        with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find field_labels definition and verify payment_date is not included
@@ -956,11 +963,13 @@ class TestEditMenuDisplay:
 
     def test_field_labels_uses_field_specific_icons(self):
         """Test that field labels incorporate field-specific icons."""
-        # Read the handler file and check if field labels use icons
-        with open(
-            "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py",
-            "r",
-        ) as f:
+        # Read the handler file and check if field labels use icons (resolve path dynamically)
+        import inspect
+
+        from src.bot.handlers import edit_participant_handlers as eph
+
+        handler_path = inspect.getfile(eph)
+        with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find success message formatting and verify it uses field-specific icons

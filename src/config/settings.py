@@ -7,9 +7,9 @@ application behavior.
 """
 
 import os
-from typing import Optional, Dict, Any, TYPE_CHECKING
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from src.data.airtable.airtable_client import AirtableConfig
 

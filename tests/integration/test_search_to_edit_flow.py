@@ -4,14 +4,14 @@ Integration tests for search→edit→save workflow.
 Tests the complete user flow from searching participants to editing and saving changes.
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
-from telegram import User, Chat, Message, Update, CallbackQuery
+import pytest
+from telegram import CallbackQuery, Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
-from src.models.participant import Participant, Role, Gender, Size, Department
-from src.data.repositories.participant_repository import RepositoryError, NotFoundError
+from src.data.repositories.participant_repository import NotFoundError, RepositoryError
+from src.models.participant import Department, Gender, Participant, Role, Size
 
 
 class TestSearchToEditFlow:

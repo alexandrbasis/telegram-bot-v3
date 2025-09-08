@@ -9,17 +9,18 @@ Tests cover:
 - Enum value validation
 """
 
-import pytest
 from datetime import date
+
+import pytest
 from pydantic import ValidationError
 
 from src.models.participant import (
-    Participant,
-    Gender,
-    Size,
-    Role,
     Department,
+    Gender,
+    Participant,
     PaymentStatus,
+    Role,
+    Size,
 )
 
 

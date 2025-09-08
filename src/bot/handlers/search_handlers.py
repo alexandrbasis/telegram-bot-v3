@@ -9,30 +9,26 @@ import logging
 from enum import IntEnum
 from typing import List
 
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-)
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from src.services.search_service import (
-    SearchService,
-    SearchResult,
-    format_match_quality,
-)
-from src.services.user_interaction_logger import UserInteractionLogger
-from src.services.service_factory import get_participant_repository
-from src.config.settings import get_settings
 from src.bot.keyboards.search_keyboards import (
-    get_main_menu_keyboard,
-    get_search_mode_selection_keyboard,
-    get_waiting_for_name_keyboard,
-    get_waiting_for_floor_keyboard,
-    get_results_navigation_keyboard,
     NAV_MAIN_MENU,
+    get_main_menu_keyboard,
+    get_results_navigation_keyboard,
+    get_search_mode_selection_keyboard,
+    get_waiting_for_floor_keyboard,
+    get_waiting_for_name_keyboard,
 )
 from src.bot.messages import InfoMessages
+from src.config.settings import get_settings
+from src.services.search_service import (
+    SearchResult,
+    SearchService,
+    format_match_quality,
+)
+from src.services.service_factory import get_participant_repository
+from src.services.user_interaction_logger import UserInteractionLogger
 
 logger = logging.getLogger(__name__)
 

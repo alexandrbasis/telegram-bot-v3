@@ -5,14 +5,15 @@ Provides fuzzy search functionality using rapidfuzz library with Russian/English
 name normalization and configurable similarity thresholds.
 """
 
-from typing import List, Tuple, Optional, Union
-from datetime import date
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from datetime import date
+from typing import List, Optional, Tuple, Union
 
 from rapidfuzz import fuzz, process
-from src.models.participant import Participant, Gender, Role, PaymentStatus
+
 from src.data.repositories.participant_repository import ParticipantRepository
+from src.models.participant import Gender, Participant, PaymentStatus, Role
 
 logger = logging.getLogger(__name__)
 

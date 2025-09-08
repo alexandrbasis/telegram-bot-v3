@@ -10,21 +10,22 @@ Tests cover:
 - Repository abstraction compliance
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from typing import List, Dict, Any
 from datetime import date
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
+
+from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
-from src.data.airtable.airtable_client import AirtableClient, AirtableAPIError
 from src.data.repositories.participant_repository import (
+    DuplicateError,
+    NotFoundError,
     RepositoryError,
     ValidationError,
-    NotFoundError,
-    DuplicateError,
 )
-from src.models.participant import Participant, Role, Gender, Department
+from src.models.participant import Department, Gender, Participant, Role
 
 
 @pytest.fixture

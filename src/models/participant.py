@@ -7,8 +7,9 @@ including all field types: text, single select, number, and date fields.
 
 from datetime import date
 from enum import Enum
-from typing import Optional, Union, Any, Mapping
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from typing import Any, Mapping, Optional, Union
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Gender(str, Enum):
@@ -137,7 +138,9 @@ class Participant(BaseModel):
 
     @field_validator("room_number")
     @classmethod
-    def validate_room_number(cls, v: Optional[Union[int, str]]) -> Optional[Union[int, str]]:
+    def validate_room_number(
+        cls, v: Optional[Union[int, str]]
+    ) -> Optional[Union[int, str]]:
         """Normalize room number: empty string -> None; otherwise keep provided type (int or str)."""
         if v == "":
             return None

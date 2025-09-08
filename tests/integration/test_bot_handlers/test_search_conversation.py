@@ -5,12 +5,13 @@ Tests the complete ConversationHandler integration with entry points,
 states, and fallbacks for the Russian name search feature.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from telegram.ext import (
-    ConversationHandler,
-    CommandHandler,
     CallbackQueryHandler,
+    CommandHandler,
+    ConversationHandler,
     MessageHandler,
     filters,
 )
@@ -149,7 +150,7 @@ class TestSearchConversationFlow:
         self, mock_update_message, mock_update_callback, mock_context
     ):
         """Test complete flow from /start to search button to name input."""
-        from src.bot.handlers.search_handlers import start_command, search_button
+        from src.bot.handlers.search_handlers import search_button, start_command
 
         # Step 1: /start command
         result = await start_command(mock_update_message, mock_context)

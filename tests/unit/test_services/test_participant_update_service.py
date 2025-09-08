@@ -5,14 +5,15 @@ Tests field validation logic, value conversion, and error handling
 for all participant field types.
 """
 
-import pytest
 from datetime import date
 
+import pytest
+
+from src.models.participant import Department, Gender, PaymentStatus, Role, Size
 from src.services.participant_update_service import (
     ParticipantUpdateService,
     ValidationError,
 )
-from src.models.participant import Gender, Size, Role, Department, PaymentStatus
 
 
 class TestParticipantUpdateService:

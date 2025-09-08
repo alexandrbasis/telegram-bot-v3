@@ -5,12 +5,13 @@ This test suite validates that all repository search methods maintain identical
 functionality after centralization changes, ensuring no regressions.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+from src.config.field_mappings import AirtableFieldMapping
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.models.participant import Participant
-from src.config.field_mappings import AirtableFieldMapping
 
 
 class TestFieldReferenceBackwardCompatibility:
@@ -40,16 +41,20 @@ class TestFieldReferenceBackwardCompatibility:
                 "TelegramID": "555666777",
                 "ContactInformation": "compat@example.com",
                 "Role": "CANDIDATE",
-            }
+            },
         }
 
     @pytest.mark.asyncio
-    async def test_find_by_telegram_id_backward_compatibility(self, repository, mock_client, mock_participant_record):
+    async def test_find_by_telegram_id_backward_compatibility(
+        self, repository, mock_client, mock_participant_record
+    ):
         """Test that find_by_telegram_id maintains identical functionality after centralization."""
         # Setup: Mock successful search
         mock_client.search_by_field.return_value = [mock_participant_record]
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock(spec=Participant)
             mock_participant.full_name_ru = "Тест Совместимость"
             mock_participant.full_name_en = "Test Compatibility"
@@ -61,17 +66,25 @@ class TestFieldReferenceBackwardCompatibility:
 
             # Assert: Functionality preserved
             assert result is not None, "Should return participant when found"
-            assert result.full_name_ru == "Тест Совместимость", "Should preserve participant data"
-            assert result.full_name_en == "Test Compatibility", "Should preserve participant data"
+            assert (
+                result.full_name_ru == "Тест Совместимость"
+            ), "Should preserve participant data"
+            assert (
+                result.full_name_en == "Test Compatibility"
+            ), "Should preserve participant data"
 
             # Verify method called with correct field (now centralized)
-            mock_client.search_by_field.assert_called_once_with("TelegramID", telegram_id)
+            mock_client.search_by_field.assert_called_once_with(
+                "TelegramID", telegram_id
+            )
 
             # Verify Participant creation called correctly
             mock_from_record.assert_called_once_with(mock_participant_record)
 
     @pytest.mark.asyncio
-    async def test_find_by_telegram_id_not_found_compatibility(self, repository, mock_client):
+    async def test_find_by_telegram_id_not_found_compatibility(
+        self, repository, mock_client
+    ):
         """Test that find_by_telegram_id handles not found case identically."""
         # Setup: Mock empty search result
         mock_client.search_by_field.return_value = []
@@ -86,12 +99,16 @@ class TestFieldReferenceBackwardCompatibility:
         mock_client.search_by_field.assert_called_once_with("TelegramID", 999999999)
 
     @pytest.mark.asyncio
-    async def test_find_by_contact_information_backward_compatibility(self, repository, mock_client, mock_participant_record):
+    async def test_find_by_contact_information_backward_compatibility(
+        self, repository, mock_client, mock_participant_record
+    ):
         """Test that find_by_contact_information maintains identical functionality."""
         # Setup: Mock successful search
         mock_client.search_by_field.return_value = [mock_participant_record]
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock(spec=Participant)
             mock_participant.contact_information = "compat@example.com"
             mock_from_record.return_value = mock_participant
@@ -102,16 +119,22 @@ class TestFieldReferenceBackwardCompatibility:
 
             # Assert: Functionality preserved
             assert result is not None, "Should return participant when found"
-            assert result.contact_information == contact_info, "Should preserve contact information"
+            assert (
+                result.contact_information == contact_info
+            ), "Should preserve contact information"
 
             # Verify method called with correct field (now centralized)
-            mock_client.search_by_field.assert_called_once_with("ContactInformation", contact_info)
+            mock_client.search_by_field.assert_called_once_with(
+                "ContactInformation", contact_info
+            )
 
             # Verify Participant creation called correctly
             mock_from_record.assert_called_once_with(mock_participant_record)
 
     @pytest.mark.asyncio
-    async def test_find_by_contact_information_not_found_compatibility(self, repository, mock_client):
+    async def test_find_by_contact_information_not_found_compatibility(
+        self, repository, mock_client
+    ):
         """Test that find_by_contact_information handles not found case identically."""
         # Setup: Mock empty search result
         mock_client.search_by_field.return_value = []
@@ -123,15 +146,21 @@ class TestFieldReferenceBackwardCompatibility:
         assert result is None, "Should return None when participant not found"
 
         # Verify correct field mapping was used
-        mock_client.search_by_field.assert_called_once_with("ContactInformation", "nonexistent@example.com")
+        mock_client.search_by_field.assert_called_once_with(
+            "ContactInformation", "nonexistent@example.com"
+        )
 
     @pytest.mark.asyncio
-    async def test_search_by_name_backward_compatibility(self, repository, mock_client, mock_participant_record):
+    async def test_search_by_name_backward_compatibility(
+        self, repository, mock_client, mock_participant_record
+    ):
         """Test that search_by_name maintains identical functionality with centralized formula references."""
         # Setup: Mock successful search
         mock_client.search_by_formula.return_value = [mock_participant_record]
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock(spec=Participant)
             mock_participant.full_name_ru = "Тест Совместимость"
             mock_from_record.return_value = mock_participant
@@ -143,7 +172,9 @@ class TestFieldReferenceBackwardCompatibility:
             # Assert: Functionality preserved
             assert result is not None, "Should return participants when found"
             assert len(result) > 0, "Should return list of participants"
-            assert result[0].full_name_ru == "Тест Совместимость", "Should preserve participant data"
+            assert (
+                result[0].full_name_ru == "Тест Совместимость"
+            ), "Should preserve participant data"
 
             # Verify formula uses centralized field references
             mock_client.search_by_formula.assert_called_once()
@@ -158,7 +189,9 @@ class TestFieldReferenceBackwardCompatibility:
             assert "{Full Name (EN)}" not in formula_arg
 
     @pytest.mark.asyncio
-    async def test_search_by_name_empty_results_compatibility(self, repository, mock_client):
+    async def test_search_by_name_empty_results_compatibility(
+        self, repository, mock_client
+    ):
         """Test that search_by_name handles empty results identically."""
         # Setup: Mock empty search result
         mock_client.search_by_formula.return_value = []
@@ -171,12 +204,16 @@ class TestFieldReferenceBackwardCompatibility:
         assert len(result) == 0, "Should return empty list when no matches"
 
     @pytest.mark.asyncio
-    async def test_search_by_criteria_formula_compatibility(self, repository, mock_client, mock_participant_record):
+    async def test_search_by_criteria_formula_compatibility(
+        self, repository, mock_client, mock_participant_record
+    ):
         """Test that search_by_criteria maintains formula functionality."""
         # Setup: Mock successful search
         mock_client.search_by_formula.return_value = [mock_participant_record]
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock(spec=Participant)
             mock_from_record.return_value = mock_participant
 
@@ -201,6 +238,7 @@ class TestFieldReferenceBackwardCompatibility:
         """Test that error handling behavior is preserved after centralization."""
         # Setup: Mock client to raise exception
         from src.data.airtable.airtable_client import AirtableAPIError
+
         mock_client.search_by_field.side_effect = AirtableAPIError("Test error", 500)
 
         # Act & Assert: Should raise RepositoryError (same as before)
@@ -215,12 +253,16 @@ class TestFieldReferenceBackwardCompatibility:
         mock_client.search_by_field.assert_called_once_with("TelegramID", 123456789)
 
     @pytest.mark.asyncio
-    async def test_parameter_type_handling_compatibility(self, repository, mock_client, mock_participant_record):
+    async def test_parameter_type_handling_compatibility(
+        self, repository, mock_client, mock_participant_record
+    ):
         """Test that parameter type handling is preserved."""
         # Setup: Mock successful search
         mock_client.search_by_field.return_value = [mock_participant_record]
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock(spec=Participant)
             mock_from_record.return_value = mock_participant
 
@@ -244,28 +286,47 @@ class TestFieldReferenceBackwardCompatibility:
         # These values should remain constant to maintain compatibility
 
         # Verify field name mappings produce expected Airtable field names
-        assert AirtableFieldMapping.get_airtable_field_name("telegram_id") == "TelegramID"
-        assert AirtableFieldMapping.get_airtable_field_name("contact_information") == "ContactInformation"
-        assert AirtableFieldMapping.get_airtable_field_name("full_name_ru") == "FullNameRU"
-        assert AirtableFieldMapping.get_airtable_field_name("full_name_en") == "FullNameEN"
+        assert (
+            AirtableFieldMapping.get_airtable_field_name("telegram_id") == "TelegramID"
+        )
+        assert (
+            AirtableFieldMapping.get_airtable_field_name("contact_information")
+            == "ContactInformation"
+        )
+        assert (
+            AirtableFieldMapping.get_airtable_field_name("full_name_ru") == "FullNameRU"
+        )
+        assert (
+            AirtableFieldMapping.get_airtable_field_name("full_name_en") == "FullNameEN"
+        )
 
         # Verify formula field references produce expected format
-        assert AirtableFieldMapping.build_formula_field("full_name_ru") == "{FullNameRU}"
-        assert AirtableFieldMapping.build_formula_field("full_name_en") == "{FullNameEN}"
+        assert (
+            AirtableFieldMapping.build_formula_field("full_name_ru") == "{FullNameRU}"
+        )
+        assert (
+            AirtableFieldMapping.build_formula_field("full_name_en") == "{FullNameEN}"
+        )
 
         # These values must remain stable for backward compatibility
 
     @pytest.mark.asyncio
-    async def test_logging_behavior_preserved(self, repository, mock_client, mock_participant_record):
+    async def test_logging_behavior_preserved(
+        self, repository, mock_client, mock_participant_record
+    ):
         """Test that logging behavior is preserved after centralization."""
         # Setup: Mock successful search
         mock_client.search_by_field.return_value = [mock_participant_record]
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock(spec=Participant)
             mock_from_record.return_value = mock_participant
 
-            with patch('src.data.airtable.airtable_participant_repo.logger') as mock_logger:
+            with patch(
+                "src.data.airtable.airtable_participant_repo.logger"
+            ) as mock_logger:
                 # Act: Perform search operations
                 await repository.find_by_telegram_id(123456789)
                 await repository.find_by_contact_information("test@example.com")
@@ -275,5 +336,10 @@ class TestFieldReferenceBackwardCompatibility:
 
                 # Check log messages contain expected information
                 debug_calls = [call[0][0] for call in mock_logger.debug.call_args_list]
-                assert any("Finding participant by Telegram ID" in msg for msg in debug_calls)
-                assert any("Finding participant by contact information" in msg for msg in debug_calls)
+                assert any(
+                    "Finding participant by Telegram ID" in msg for msg in debug_calls
+                )
+                assert any(
+                    "Finding participant by contact information" in msg
+                    for msg in debug_calls
+                )

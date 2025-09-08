@@ -10,35 +10,29 @@ from enum import IntEnum
 from typing import Optional
 
 from telegram import (
-    Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     ReplyKeyboardRemove,
+    Update,
 )
 from telegram.ext import ContextTypes
 
-from src.models.participant import (
-    Participant,
-    Gender,
-    Role,
-)
 from src.bot.keyboards.edit_keyboards import (
-    create_participant_edit_keyboard,
     create_field_edit_keyboard,
+    create_participant_edit_keyboard,
     get_field_icon,
 )
+from src.config.settings import get_settings
+from src.models.participant import Gender, Participant, Role
 from src.services.participant_update_service import (
     ParticipantUpdateService,
     ValidationError,
 )
-from src.services.user_interaction_logger import UserInteractionLogger
-from src.config.settings import get_settings
-from src.services.search_service import (
-    format_participant_full,
-)
+from src.services.search_service import format_participant_full
 
 # Import repository factory at module level (no circular deps)
 from src.services.service_factory import get_participant_repository
+from src.services.user_interaction_logger import UserInteractionLogger
 
 logger = logging.getLogger(__name__)
 

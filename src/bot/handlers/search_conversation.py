@@ -7,52 +7,53 @@ for the Russian name search feature.
 
 import logging
 import re
+
 from telegram.ext import (
-    ConversationHandler,
-    CommandHandler,
     CallbackQueryHandler,
+    CommandHandler,
+    ConversationHandler,
     MessageHandler,
     filters,
 )
 
-from src.bot.handlers.search_handlers import (
-    start_command,
-    search_button,
-    process_name_search,
-    main_menu_button,
-    cancel_search,
-    handle_participant_selection,
-    handle_search_name_mode,
-    handle_search_room_mode,
-    handle_search_floor_mode,
-    back_to_search_modes,
-    SearchStates,
-)
-from src.bot.handlers.room_search_handlers import (
-    handle_room_search_command,
-    process_room_search,
-    RoomSearchStates,
-)
-from src.bot.handlers.floor_search_handlers import (
-    handle_floor_search_command,
-    process_floor_search,
-    FloorSearchStates,
-)
 from src.bot.handlers.edit_participant_handlers import (
+    EditStates,
+    cancel_editing,
+    handle_button_field_selection,
     handle_field_edit_selection,
     handle_text_field_input,
-    handle_button_field_selection,
-    cancel_editing,
     save_changes,
-    EditStates,
+)
+from src.bot.handlers.floor_search_handlers import (
+    FloorSearchStates,
+    handle_floor_search_command,
+    process_floor_search,
+)
+from src.bot.handlers.room_search_handlers import (
+    RoomSearchStates,
+    handle_room_search_command,
+    process_room_search,
+)
+from src.bot.handlers.search_handlers import (
+    SearchStates,
+    back_to_search_modes,
+    cancel_search,
+    handle_participant_selection,
+    handle_search_floor_mode,
+    handle_search_name_mode,
+    handle_search_room_mode,
+    main_menu_button,
+    process_name_search,
+    search_button,
+    start_command,
 )
 from src.bot.keyboards.search_keyboards import (
+    NAV_BACK_TO_SEARCH_MODES,
+    NAV_CANCEL,
+    NAV_MAIN_MENU,
+    NAV_SEARCH_FLOOR,
     NAV_SEARCH_NAME,
     NAV_SEARCH_ROOM,
-    NAV_SEARCH_FLOOR,
-    NAV_MAIN_MENU,
-    NAV_CANCEL,
-    NAV_BACK_TO_SEARCH_MODES,
 )
 
 logger = logging.getLogger(__name__)

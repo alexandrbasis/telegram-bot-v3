@@ -7,19 +7,19 @@ Tests the complete payment automation flow:
 3. Changes are saved to repository with automated fields
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import date
+from unittest.mock import AsyncMock, Mock, patch
 
-from telegram import User, Chat, Message, Update, CallbackQuery
+import pytest
+from telegram import CallbackQuery, Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
-from src.models.participant import Participant, PaymentStatus
 from src.bot.handlers.edit_participant_handlers import (
-    save_changes,
     handle_text_field_input,
+    save_changes,
 )
 from src.data.repositories.participant_repository import RepositoryError
+from src.models.participant import Participant, PaymentStatus
 
 
 class TestPaymentAutomationWorkflow:

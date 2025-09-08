@@ -5,17 +5,18 @@ Tests verify that Floor and RoomNumber field mappings and IDs
 are correctly used in repository operations and search functionality.
 """
 
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 import pytest_asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from typing import List, Dict, Any
 
 from src.config.field_mappings import AirtableFieldMapping, FieldType
+from src.config.settings import DatabaseSettings
 from src.data.airtable.airtable_client import AirtableClient
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
-from src.services.search_service import SearchService
 from src.models.participant import Participant
-from src.config.settings import DatabaseSettings
+from src.services.search_service import SearchService
 
 
 class TestAirtableSchemaValidation:

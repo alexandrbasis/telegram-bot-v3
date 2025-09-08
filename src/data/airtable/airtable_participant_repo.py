@@ -5,25 +5,24 @@ on participant data, mapping between Participant domain objects and Airtable
 record format.
 """
 
-from typing import List, Optional, Dict, Any, Tuple, Union
 import logging
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+from src.config.field_mappings import AirtableFieldMapping
+from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
 from src.data.repositories.participant_repository import (
+    DuplicateError,
+    NotFoundError,
     ParticipantRepository,
     RepositoryError,
     ValidationError,
-    NotFoundError,
-    DuplicateError,
 )
-from src.data.airtable.airtable_client import AirtableClient, AirtableAPIError
 from src.models.participant import Participant
 from src.services.search_service import (
     SearchService,
     detect_language,
     format_participant_result,
 )
-from src.config.field_mappings import AirtableFieldMapping
-
 
 logger = logging.getLogger(__name__)
 
@@ -605,7 +604,9 @@ class AirtableParticipantRepository(ParticipantRepository):
             logger.debug(f"Finding participant by contact information: {contact_info}")
 
             # Use centralized field mapping for Contact Information field
-            contact_field = AirtableFieldMapping.get_airtable_field_name("contact_information")
+            contact_field = AirtableFieldMapping.get_airtable_field_name(
+                "contact_information"
+            )
             if not contact_field:
                 raise RepositoryError("Field mapping not found for contact_information")
             records = await self.client.search_by_field(contact_field, contact_info)
@@ -685,7 +686,9 @@ class AirtableParticipantRepository(ParticipantRepository):
             en_field = AirtableFieldMapping.build_formula_field("full_name_en")
 
             if not ru_field or not en_field:
-                raise RepositoryError("Formula field references not found for name search")
+                raise RepositoryError(
+                    "Formula field references not found for name search"
+                )
 
             formula = (
                 f"OR(SEARCH('{escaped_pattern}', {ru_field}), "

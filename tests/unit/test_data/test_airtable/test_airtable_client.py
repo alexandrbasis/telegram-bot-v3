@@ -10,16 +10,17 @@ Tests cover:
 - Bulk operations
 """
 
-import pytest
 import asyncio
 import time
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 from src.data.airtable.airtable_client import (
+    AirtableAPIError,
     AirtableClient,
     AirtableConfig,
-    AirtableAPIError,
     RateLimiter,
 )
 

@@ -6,14 +6,15 @@ exceptions are properly structured. Actual implementation testing will be
 done in concrete repository test files.
 """
 
-import pytest
 from abc import ABC
 from typing import get_type_hints
 
+import pytest
+
 from src.data.repositories.participant_repository import (
+    NotFoundError,
     ParticipantRepository,
     RepositoryError,
-    NotFoundError,
     ValidationError,
 )
 from src.models.participant import Participant

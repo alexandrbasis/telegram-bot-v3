@@ -5,8 +5,9 @@ Tests the root cause fix for ConversationHandler per_message configuration
 that was preventing search button from responding to clicks.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 from telegram.ext import ConversationHandler
 
 from src.bot.handlers.search_conversation import get_search_conversation_handler

@@ -5,22 +5,23 @@ This test module verifies that all callback_query handlers in the edit participa
 flow properly log user interactions, bot responses, and error scenarios.
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from telegram import Update, CallbackQuery, User, Message, InlineKeyboardMarkup
+from telegram import CallbackQuery, InlineKeyboardMarkup, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.edit_participant_handlers import (
-    handle_field_edit_selection,
-    handle_button_field_selection,
+    EditStates,
     cancel_editing,
+    get_user_interaction_logger,
+    handle_button_field_selection,
+    handle_field_edit_selection,
+    retry_save,
     save_changes,
     show_save_confirmation,
-    retry_save,
-    get_user_interaction_logger,
-    EditStates,
 )
-from src.models.participant import Participant, Gender, Size
+from src.models.participant import Gender, Participant, Size
 
 
 @pytest.fixture

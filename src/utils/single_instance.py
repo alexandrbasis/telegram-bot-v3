@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import os
 import sys
+import types
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, TextIO
-import types
 
 
 @dataclass

@@ -17,7 +17,14 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
 ]
 
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
 # Note: We intentionally avoid setuptools_scm and egg_info options.
 # Buildpacks on Railway may copy only this file during a metadata probe.
 # Keeping this minimal prevents errors when source files are absent.
-

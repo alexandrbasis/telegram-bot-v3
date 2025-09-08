@@ -7,9 +7,9 @@ numeric, date, and enum fields with Russian error messages.
 
 import logging
 from datetime import date
-from typing import Any, Union, Optional
+from typing import Any, Optional, Union
 
-from src.models.participant import Gender, Size, Role, Department, PaymentStatus
+from src.models.participant import Department, Gender, PaymentStatus, Role, Size
 
 logger = logging.getLogger(__name__)
 

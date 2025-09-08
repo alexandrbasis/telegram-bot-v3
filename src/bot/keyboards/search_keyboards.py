@@ -7,7 +7,6 @@ with Russian labels optimized for mobile devices.
 
 from telegram import ReplyKeyboardMarkup
 
-
 # Navigation button constants
 NAV_SEARCH_NAME = "👤 По имени"
 NAV_SEARCH_ROOM = "🚪 По комнате"

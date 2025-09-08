@@ -8,19 +8,20 @@ Tests cover:
 - Settings conversion and serialization
 """
 
-import pytest
 import os
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
+
+import pytest
 
 from src.config.settings import (
-    DatabaseSettings,
-    TelegramSettings,
-    LoggingSettings,
     ApplicationSettings,
+    DatabaseSettings,
+    LoggingSettings,
     Settings,
-    load_settings,
-    load_env_file,
+    TelegramSettings,
     get_settings,
+    load_env_file,
+    load_settings,
     reset_settings,
 )
 from src.data.airtable.airtable_client import AirtableConfig

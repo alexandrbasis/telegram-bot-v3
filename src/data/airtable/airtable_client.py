@@ -6,18 +6,17 @@ error handling, rate limiting, and connection management.
 """
 
 import asyncio
-import time
-from typing import Dict, List, Optional, Any
 import logging
+import time
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
+import httpx
 from pyairtable import Api, Table
 from pyairtable.api.types import RecordDict
-import httpx
 
-from src.data.repositories.participant_repository import RepositoryError
 from src.config.field_mappings import AirtableFieldMapping
-
+from src.data.repositories.participant_repository import RepositoryError
 
 logger = logging.getLogger(__name__)
 
@@ -247,7 +246,9 @@ class AirtableClient:
             # Translate field names to Field IDs and option values to Option IDs
             translated_fields = self._translate_fields_for_api(fields)
 
-            record = await asyncio.to_thread(self.table.update, record_id, translated_fields)
+            record = await asyncio.to_thread(
+                self.table.update, record_id, translated_fields
+            )
 
             logger.debug(f"Updated record with ID: {record['id']}")
             return record

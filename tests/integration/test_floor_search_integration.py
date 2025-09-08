@@ -5,22 +5,23 @@ Tests complete floor search workflow from command to response,
 including room grouping, Airtable integration and error scenarios.
 """
 
+import asyncio
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 import pytest_asyncio
-import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from telegram import Update, Message, User, Chat
+from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.floor_search_handlers import (
+    FloorSearchStates,
+    format_floor_results,
     handle_floor_search_command,
     process_floor_search,
     process_floor_search_with_input,
-    format_floor_results,
-    FloorSearchStates,
 )
-from src.services.service_factory import get_search_service
 from src.models.participant import Participant
+from src.services.service_factory import get_search_service
 
 
 class TestFloorSearchIntegration:
@@ -451,7 +452,7 @@ class TestFloorSearchIntegration:
     @pytest.mark.asyncio
     async def test_floor_search_cancel(self, mock_update_and_context):
         """Test cancel from WAITING_FOR_FLOOR state returns to main menu."""
-        from src.bot.handlers.search_handlers import cancel_search, SearchStates
+        from src.bot.handlers.search_handlers import SearchStates, cancel_search
         from src.bot.keyboards.search_keyboards import NAV_CANCEL
 
         update, context = mock_update_and_context
@@ -463,11 +464,11 @@ class TestFloorSearchIntegration:
         # Verify welcome message sent
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
-        
+
         # Check message content
         assert "Добро пожаловать в бот Tres Dias!" in call_args[1]["text"]
         assert "Ищите участников по имени" in call_args[1]["text"]
-        
+
         # Check reply markup is main menu keyboard
         assert call_args[1]["reply_markup"] is not None
 

@@ -6,10 +6,10 @@ This is a simple factory pattern that should eventually be replaced with a prope
 DI container.
 """
 
+from src.config.settings import get_settings
 from src.data.airtable.airtable_client import AirtableClient
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.services.search_service import SearchService
-from src.config.settings import get_settings
 
 
 def get_participant_repository() -> AirtableParticipantRepository:

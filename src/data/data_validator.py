@@ -5,14 +5,14 @@ This module provides comprehensive validation for participant data before
 database operations, ensuring data integrity and preventing API errors.
 """
 
-from typing import Dict, List, Any, Optional, Tuple, Union
-from datetime import date
 import logging
 import re
+from datetime import date
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from src.models.participant import Participant
 from src.config.field_mappings import AirtableFieldMapping, field_mapping
 from src.data.repositories.participant_repository import ValidationError
+from src.models.participant import Participant
 
 logger = logging.getLogger(__name__)
 

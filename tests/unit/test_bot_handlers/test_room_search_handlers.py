@@ -5,23 +5,24 @@ Tests bot handler functions for room search functionality with ConversationHandl
 state management and Russian interface.
 """
 
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from telegram import (
-    Update,
     CallbackQuery,
-    Message,
-    User,
     Chat,
     InlineKeyboardMarkup,
+    Message,
     ReplyKeyboardMarkup,
+    Update,
+    User,
 )
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.room_search_handlers import (
-    process_room_search,
-    handle_room_search_command,
     RoomSearchStates,
+    handle_room_search_command,
+    process_room_search,
 )
 from src.models.participant import Participant
 
