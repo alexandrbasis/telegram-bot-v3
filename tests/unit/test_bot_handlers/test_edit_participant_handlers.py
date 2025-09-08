@@ -935,11 +935,11 @@ class TestEditMenuDisplay:
 
     def test_field_labels_excludes_payment_date(self):
         """Test that field_labels dictionary does not include payment_date."""
-        # Read the handler file and check field_labels dictionary
-        with open(
-            "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py",
-            "r",
-        ) as f:
+        # Read the handler file and check field_labels dictionary (resolve path dynamically)
+        import inspect
+        from src.bot.handlers import edit_participant_handlers as eph
+        handler_path = inspect.getfile(eph)
+        with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find field_labels definition and verify payment_date is not included
@@ -957,11 +957,11 @@ class TestEditMenuDisplay:
 
     def test_field_labels_uses_field_specific_icons(self):
         """Test that field labels incorporate field-specific icons."""
-        # Read the handler file and check if field labels use icons
-        with open(
-            "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py",
-            "r",
-        ) as f:
+        # Read the handler file and check if field labels use icons (resolve path dynamically)
+        import inspect
+        from src.bot.handlers import edit_participant_handlers as eph
+        handler_path = inspect.getfile(eph)
+        with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find success message formatting and verify it uses field-specific icons
