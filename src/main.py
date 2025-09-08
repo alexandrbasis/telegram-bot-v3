@@ -183,9 +183,13 @@ async def run_bot() -> None:
 
         # If tests patched run_polling as AsyncMock, await it to satisfy expectations
         run_polling_attr = getattr(app, "run_polling", None)
-        if run_polling_attr is not None and "AsyncMock" in type(run_polling_attr).__name__:
+        if (
+            run_polling_attr is not None
+            and "AsyncMock" in type(run_polling_attr).__name__
+        ):
             logger.info("Bot starting with mocked polling (test mode)")
             from typing import Any, cast
+
             await cast(Any, run_polling_attr)(drop_pending_updates=True)
             return
 
