@@ -10,18 +10,16 @@ Tests cover:
 - Bulk operations
 """
 
-import pytest
 import asyncio
 import time
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-from src.data.airtable.airtable_client import (
-    AirtableClient,
-    AirtableConfig,
-    AirtableAPIError,
-    RateLimiter,
-)
+import pytest
+
+from src.data.airtable.airtable_client import (AirtableAPIError,
+                                               AirtableClient, AirtableConfig,
+                                               RateLimiter)
 
 
 class TestAirtableFieldIDSupport:
@@ -303,7 +301,8 @@ class TestAirtableAPIError:
 
     def test_api_error_inheritance(self):
         """Test that AirtableAPIError inherits from RepositoryError."""
-        from src.data.repositories.participant_repository import RepositoryError
+        from src.data.repositories.participant_repository import \
+            RepositoryError
 
         error = AirtableAPIError("Test")
 

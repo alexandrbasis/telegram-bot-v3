@@ -8,21 +8,15 @@ Tests cover:
 - Settings conversion and serialization
 """
 
-import pytest
 import os
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
-from src.config.settings import (
-    DatabaseSettings,
-    TelegramSettings,
-    LoggingSettings,
-    ApplicationSettings,
-    Settings,
-    load_settings,
-    load_env_file,
-    get_settings,
-    reset_settings,
-)
+import pytest
+
+from src.config.settings import (ApplicationSettings, DatabaseSettings,
+                                 LoggingSettings, Settings, TelegramSettings,
+                                 get_settings, load_env_file, load_settings,
+                                 reset_settings)
 from src.data.airtable.airtable_client import AirtableConfig
 
 
@@ -570,13 +564,10 @@ class TestConvenienceFunctions:
 
         with patch.dict(os.environ, env_vars, clear=True):
             with patch("src.config.settings._settings", None):  # Reset singleton
-                from src.config.settings import (
-                    get_airtable_config,
-                    get_database_settings,
-                    get_telegram_settings,
-                    is_debug_mode,
-                    is_production,
-                )
+                from src.config.settings import (get_airtable_config,
+                                                 get_database_settings,
+                                                 get_telegram_settings,
+                                                 is_debug_mode, is_production)
 
                 config = get_airtable_config()
                 assert isinstance(config, AirtableConfig)

@@ -1,8 +1,9 @@
 """Test project structure validation."""
 
 import importlib
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestProjectStructure:

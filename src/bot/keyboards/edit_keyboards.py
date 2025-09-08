@@ -6,9 +6,11 @@ and editing workflow control with Russian labels.
 """
 
 from typing import List
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from src.models.participant import Gender, Size, Role, Department, PaymentStatus
+from src.models.participant import (Department, Gender, PaymentStatus, Role,
+                                    Size)
 
 
 def get_field_icon(field_name: str) -> str:

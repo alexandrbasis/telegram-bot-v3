@@ -5,29 +5,19 @@ Tests conversation flow, state management, and field-specific editing workflows
 for the participant editing interface.
 """
 
+from datetime import date
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from telegram import Update, CallbackQuery, Message, User, InlineKeyboardMarkup
+from telegram import CallbackQuery, InlineKeyboardMarkup, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.edit_participant_handlers import (
-    EditStates,
-    show_participant_edit_menu,
-    handle_field_edit_selection,
-    handle_text_field_input,
-    handle_button_field_selection,
-    cancel_editing,
-    save_changes,
-)
-from src.models.participant import (
-    Participant,
-    Gender,
-    Size,
-    Role,
-    Department,
-    PaymentStatus,
-)
-from datetime import date
+    EditStates, cancel_editing, handle_button_field_selection,
+    handle_field_edit_selection, handle_text_field_input, save_changes,
+    show_participant_edit_menu)
+from src.models.participant import (Department, Gender, Participant,
+                                    PaymentStatus, Role, Size)
 
 
 @pytest.fixture
@@ -678,7 +668,8 @@ class TestSaveConfirmation:
         mock_context.user_data["editing_changes"] = changes
         mock_context.user_data["current_participant"] = participant
 
-        from src.bot.handlers.edit_participant_handlers import show_save_confirmation
+        from src.bot.handlers.edit_participant_handlers import \
+            show_save_confirmation
 
         result = await show_save_confirmation(mock_update, mock_context)
 
@@ -698,7 +689,8 @@ class TestSaveConfirmation:
         mock_context.user_data["editing_changes"] = {}
         mock_context.user_data["current_participant"] = None
 
-        from src.bot.handlers.edit_participant_handlers import show_save_confirmation
+        from src.bot.handlers.edit_participant_handlers import \
+            show_save_confirmation
 
         result = await show_save_confirmation(mock_update, mock_context)
 
@@ -786,9 +778,8 @@ class TestPaymentFieldExclusion:
         """Test that payment_status is not in BUTTON_FIELDS list."""
         mock_update.callback_query.data = "edit_field:payment_status"
 
-        from src.bot.handlers.edit_participant_handlers import (
-            handle_field_edit_selection,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            handle_field_edit_selection
 
         # This should not be handled as a button field (should fail or be treated as unknown)
         try:
@@ -811,9 +802,8 @@ class TestPaymentFieldExclusion:
         """Test that payment_date is not in TEXT_FIELDS list."""
         mock_update.callback_query.data = "edit_field:payment_date"
 
-        from src.bot.handlers.edit_participant_handlers import (
-            handle_field_edit_selection,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            handle_field_edit_selection
 
         # This should not be handled as a text field (should fail or be treated as unknown)
         try:
@@ -876,9 +866,8 @@ class TestEditMenuDisplay:
         self, mock_update, mock_context
     ):
         """Test that edit menu does not display payment status field."""
-        from src.bot.handlers.edit_participant_handlers import (
-            show_participant_edit_menu,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            show_participant_edit_menu
 
         # Mock participant with payment data
         participant = Participant(
@@ -908,9 +897,8 @@ class TestEditMenuDisplay:
         self, mock_update, mock_context
     ):
         """Test that edit menu does not display payment date field."""
-        from src.bot.handlers.edit_participant_handlers import (
-            show_participant_edit_menu,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            show_participant_edit_menu
 
         # Mock participant with payment data
         participant = Participant(
@@ -986,9 +974,8 @@ class TestDisplayUpdatedParticipant:
     def test_display_updated_participant_function(self):
         """Test that display_updated_participant function returns formatted participant result."""
         # Import the function we're testing (will fail initially - RED phase)
-        from src.bot.handlers.edit_participant_handlers import (
-            display_updated_participant,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            display_updated_participant
 
         # Create mock participant
         participant = Participant(
@@ -1018,9 +1005,8 @@ class TestDisplayUpdatedParticipant:
 
     def test_display_updated_participant_with_no_changes(self):
         """Test display_updated_participant with no pending changes."""
-        from src.bot.handlers.edit_participant_handlers import (
-            display_updated_participant,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            display_updated_participant
 
         # Create mock participant
         participant = Participant(
@@ -1041,9 +1027,8 @@ class TestDisplayUpdatedParticipant:
 
     def test_display_updated_participant_reconstruction_with_edits(self):
         """Test that participant object is properly reconstructed with all current session edits."""
-        from src.bot.handlers.edit_participant_handlers import (
-            display_updated_participant,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            display_updated_participant
 
         # Create original participant
         participant = Participant(
@@ -1088,7 +1073,8 @@ class TestDisplayRegressionIssue:
         This test simulates the production issue where participants see no information
         after field edits because current_participant is missing from context.
         """
-        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
+        from src.bot.handlers.edit_participant_handlers import \
+            handle_text_field_input
 
         # Create context WITHOUT current_participant (reproducing the regression)
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
@@ -1136,9 +1122,8 @@ class TestDisplayRegressionIssue:
         """
         REGRESSION TEST: Button field editing also fails when current_participant is None.
         """
-        from src.bot.handlers.edit_participant_handlers import (
-            handle_button_field_selection,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            handle_button_field_selection
 
         # Create context WITHOUT current_participant
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
@@ -1187,7 +1172,8 @@ class TestComprehensiveDisplayRegressionPrevention:
     @pytest.mark.asyncio
     async def test_display_function_exception_handling(self, mock_update):
         """Test that exceptions in display_updated_participant are handled gracefully."""
-        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
+        from src.bot.handlers.edit_participant_handlers import \
+            handle_text_field_input
 
         # Create context WITH participant but cause display function to fail
         participant = Participant(
@@ -1240,9 +1226,8 @@ class TestComprehensiveDisplayRegressionPrevention:
     @pytest.mark.asyncio
     async def test_button_display_function_exception_handling(self, mock_update):
         """Test button field editing with display function exceptions."""
-        from src.bot.handlers.edit_participant_handlers import (
-            handle_button_field_selection,
-        )
+        from src.bot.handlers.edit_participant_handlers import \
+            handle_button_field_selection
 
         # Create context WITH participant but cause display function to fail
         participant = Participant(
@@ -1292,7 +1277,8 @@ class TestComprehensiveDisplayRegressionPrevention:
     @pytest.mark.asyncio
     async def test_context_corruption_scenarios(self, mock_update):
         """Test various context corruption scenarios that could cause regressions."""
-        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
+        from src.bot.handlers.edit_participant_handlers import \
+            handle_text_field_input
 
         # Test 1: Empty user_data
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
@@ -1370,7 +1356,8 @@ class TestComprehensiveDisplayRegressionPrevention:
     @pytest.mark.asyncio
     async def test_multiple_field_edits_maintain_context(self, mock_update):
         """Test that participant context is maintained across multiple field edits."""
-        from src.bot.handlers.edit_participant_handlers import handle_text_field_input
+        from src.bot.handlers.edit_participant_handlers import \
+            handle_text_field_input
 
         participant = Participant(
             record_id="rec123", full_name_ru="Original Name", church="Original Church"

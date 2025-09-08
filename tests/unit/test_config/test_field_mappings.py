@@ -9,17 +9,15 @@ Tests cover:
 - Field validation logic
 """
 
-import pytest
 from datetime import date
 
-from src.config.field_mappings import (
-    AirtableFieldMapping,
-    SearchFieldMapping,
-    FieldType,
-    field_mapping,
-    search_mapping,
-)
-from src.models.participant import Role, Department, Gender, Size, PaymentStatus
+import pytest
+
+from src.config.field_mappings import (AirtableFieldMapping, FieldType,
+                                       SearchFieldMapping, field_mapping,
+                                       search_mapping)
+from src.models.participant import (Department, Gender, PaymentStatus, Role,
+                                    Size)
 
 
 class TestAirtableFieldMapping:

@@ -4,13 +4,15 @@ Unit tests for search conversation handler with room search integration.
 Tests the ConversationHandler configuration and state management for room search.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from telegram import Update, Message, User, Chat
+from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
-from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.bot.handlers.room_search_handlers import RoomSearchStates
+from src.bot.handlers.search_conversation import \
+    get_search_conversation_handler
 
 
 class TestSearchConversationRoomIntegration:

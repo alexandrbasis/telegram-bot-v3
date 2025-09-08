@@ -5,15 +5,17 @@ Tests the core file logging service that handles directory management,
 log file creation, and persistent logging infrastructure.
 """
 
-import pytest
-import tempfile
-import shutil
-import os
 import logging
+import os
+import shutil
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from src.services.file_logging_service import FileLoggingService, FileLoggingConfig
+import pytest
+
+from src.services.file_logging_service import (FileLoggingConfig,
+                                               FileLoggingService)
 
 
 @pytest.fixture

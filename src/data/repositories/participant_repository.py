@@ -7,7 +7,8 @@ without changing business logic.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 from src.models.participant import Participant
 
 

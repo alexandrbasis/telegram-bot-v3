@@ -5,35 +5,21 @@ Tests bot handler functions for name search functionality with ConversationHandl
 state management and Russian interface.
 """
 
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from telegram import (
-    Update,
-    CallbackQuery,
-    Message,
-    User,
-    Chat,
-    InlineKeyboardMarkup,
-    ReplyKeyboardMarkup,
-)
+from telegram import (CallbackQuery, Chat, InlineKeyboardMarkup, Message,
+                      ReplyKeyboardMarkup, Update, User)
 from telegram.ext import ContextTypes
 
-from src.bot.handlers.search_handlers import (
-    start_command,
-    search_button,
-    process_name_search,
-    main_menu_button,
-    process_name_search_enhanced,
-    create_participant_selection_keyboard,
-    handle_search_name_mode,
-    handle_search_room_mode,
-    handle_search_floor_mode,
-    back_to_search_modes,
-    SearchStates,
-)
 from src.bot.handlers.floor_search_handlers import FloorSearchStates
-from src.services.search_service import SearchResult
+from src.bot.handlers.search_handlers import (
+    SearchStates, back_to_search_modes, create_participant_selection_keyboard,
+    handle_search_floor_mode, handle_search_name_mode, handle_search_room_mode,
+    main_menu_button, process_name_search, process_name_search_enhanced,
+    search_button, start_command)
 from src.models.participant import Participant
+from src.services.search_service import SearchResult
 from src.services.user_interaction_logger import UserInteractionLogger
 
 
@@ -466,7 +452,7 @@ class TestEnhancedSearchHandlers:
     @pytest.fixture
     def enhanced_sample_search_results(self):
         """Enhanced sample search results with rich formatting."""
-        from src.models.participant import Role, Department
+        from src.models.participant import Department, Role
 
         participants = [
             Participant(
@@ -694,7 +680,7 @@ class TestEnhancedSearchHandlers:
             "src.bot.handlers.search_handlers.get_participant_repository"
         ) as mock_repo_getter:
 
-            from src.models.participant import Role, Department
+            from src.models.participant import Department, Role
 
             enhanced_participant = Participant(
                 full_name_ru="Александр Иванов",
@@ -1002,7 +988,8 @@ class TestUserInteractionLogging:
         mock_logger_class.return_value = mock_logger_instance
 
         # Import handler and execute
-        from src.bot.handlers.search_handlers import handle_participant_selection
+        from src.bot.handlers.search_handlers import \
+            handle_participant_selection
 
         with patch(
             "src.bot.handlers.edit_participant_handlers.show_participant_edit_menu",
@@ -1238,19 +1225,11 @@ class TestSearchKeyboards:
     def test_search_keyboards_import(self):
         """Test that search keyboards can be imported."""
         from src.bot.keyboards.search_keyboards import (
-            get_main_menu_keyboard,
-            get_search_mode_selection_keyboard,
-            get_waiting_for_name_keyboard,
-            get_waiting_for_room_keyboard,
-            get_waiting_for_floor_keyboard,
-            get_results_navigation_keyboard,
-            NAV_SEARCH_NAME,
-            NAV_SEARCH_ROOM,
-            NAV_SEARCH_FLOOR,
-            NAV_MAIN_MENU,
-            NAV_CANCEL,
-            NAV_BACK_TO_SEARCH_MODES,
-        )
+            NAV_BACK_TO_SEARCH_MODES, NAV_CANCEL, NAV_MAIN_MENU,
+            NAV_SEARCH_FLOOR, NAV_SEARCH_NAME, NAV_SEARCH_ROOM,
+            get_main_menu_keyboard, get_results_navigation_keyboard,
+            get_search_mode_selection_keyboard, get_waiting_for_floor_keyboard,
+            get_waiting_for_name_keyboard, get_waiting_for_room_keyboard)
 
         # Test constants exist
         assert NAV_SEARCH_NAME == "👤 По имени"
@@ -1262,9 +1241,8 @@ class TestSearchKeyboards:
 
     def test_search_mode_selection_keyboard(self):
         """Test search mode selection keyboard structure."""
-        from src.bot.keyboards.search_keyboards import (
-            get_search_mode_selection_keyboard,
-        )
+        from src.bot.keyboards.search_keyboards import \
+            get_search_mode_selection_keyboard
 
         keyboard = get_search_mode_selection_keyboard()
         assert isinstance(keyboard, ReplyKeyboardMarkup)

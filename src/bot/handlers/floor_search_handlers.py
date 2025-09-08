@@ -6,22 +6,18 @@ grouping, using ConversationHandler states and reply keyboards.
 """
 
 import logging
+from collections import defaultdict
 from enum import IntEnum
 from typing import List
-from collections import defaultdict
 
-from telegram import (
-    Update,
-)
+from telegram import Update
 from telegram.ext import ContextTypes
 
-from src.services.service_factory import get_search_service
-from src.models.participant import Participant
 from src.bot.keyboards.search_keyboards import (
-    get_waiting_for_floor_keyboard,
-    get_results_navigation_keyboard,
-)
+    get_results_navigation_keyboard, get_waiting_for_floor_keyboard)
 from src.bot.messages import ErrorMessages, InfoMessages, RetryMessages
+from src.models.participant import Participant
+from src.services.service_factory import get_search_service
 
 logger = logging.getLogger(__name__)
 

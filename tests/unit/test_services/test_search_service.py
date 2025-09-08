@@ -5,19 +5,16 @@ Tests the search service that provides fuzzy name matching using rapidfuzz
 library with Russian/English name normalization and similarity scoring.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from typing import List, Tuple
+from unittest.mock import AsyncMock, Mock, patch
 
-from src.services.search_service import (
-    SearchService,
-    normalize_russian,
-    SearchResult,
-    detect_language,
-    parse_name_parts,
-    format_participant_result,
-)
-from src.models.participant import Participant, Role, Department
+import pytest
+
+from src.models.participant import Department, Participant, Role
+from src.services.search_service import (SearchResult, SearchService,
+                                         detect_language,
+                                         format_participant_result,
+                                         normalize_russian, parse_name_parts)
 
 
 class TestLanguageDetection:

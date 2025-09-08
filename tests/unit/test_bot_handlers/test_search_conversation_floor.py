@@ -4,13 +4,15 @@ Unit tests for search conversation handler with floor search integration.
 Tests the ConversationHandler configuration and state management for floor search.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from telegram import Update, Message, User, Chat
+from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
-from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.bot.handlers.floor_search_handlers import FloorSearchStates
+from src.bot.handlers.search_conversation import \
+    get_search_conversation_handler
 
 
 class TestSearchConversationFloorIntegration:

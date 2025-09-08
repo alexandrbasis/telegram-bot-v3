@@ -6,11 +6,13 @@ use consistent formula field references from centralized constants instead
 of mixed hardcoded formats.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+import pytest
+
 from src.config.field_mappings import AirtableFieldMapping
+from src.data.airtable.airtable_participant_repo import \
+    AirtableParticipantRepository
 
 
 class TestFormulaConsistency:
@@ -51,7 +53,9 @@ class TestFormulaConsistency:
         ]
 
     @pytest.mark.asyncio
-    async def test_search_by_criteria_uses_consistent_formula_format(self, repository, mock_client, mock_participant_records):
+    async def test_search_by_criteria_uses_consistent_formula_format(
+        self, repository, mock_client, mock_participant_records
+    ):
         """Test that search_by_criteria uses consistent formula field format from centralized constants."""
         # RED phase - this test will fail until we update the repository method
 
@@ -59,7 +63,9 @@ class TestFormulaConsistency:
         mock_client.search_by_formula.return_value = mock_participant_records
 
         # Patch Participant.from_airtable_record to avoid complex object creation
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock()
             mock_from_record.return_value = mock_participant
 
@@ -72,25 +78,41 @@ class TestFormulaConsistency:
             formula_arg = mock_client.search_by_formula.call_args[0][0]
 
             # Should use centralized formula field references
-            expected_ru_field = AirtableFieldMapping.build_formula_field("full_name_ru")  # "{FullNameRU}"
-            expected_en_field = AirtableFieldMapping.build_formula_field("full_name_en")  # "{FullNameEN}"
+            expected_ru_field = AirtableFieldMapping.build_formula_field(
+                "full_name_ru"
+            )  # "{FullNameRU}"
+            expected_en_field = AirtableFieldMapping.build_formula_field(
+                "full_name_en"
+            )  # "{FullNameEN}"
 
-            assert expected_ru_field in formula_arg, f"Formula should contain {expected_ru_field}"
-            assert expected_en_field in formula_arg, f"Formula should contain {expected_en_field}"
+            assert (
+                expected_ru_field in formula_arg
+            ), f"Formula should contain {expected_ru_field}"
+            assert (
+                expected_en_field in formula_arg
+            ), f"Formula should contain {expected_en_field}"
 
             # Should NOT contain hardcoded inconsistent formats
-            assert "{Full Name (RU)}" not in formula_arg, "Should not contain display name format"
-            assert "{Full Name (EN)}" not in formula_arg, "Should not contain display name format"
+            assert (
+                "{Full Name (RU)}" not in formula_arg
+            ), "Should not contain display name format"
+            assert (
+                "{Full Name (EN)}" not in formula_arg
+            ), "Should not contain display name format"
 
     @pytest.mark.asyncio
-    async def test_search_by_name_uses_consistent_formula_format(self, repository, mock_client, mock_participant_records):
+    async def test_search_by_name_uses_consistent_formula_format(
+        self, repository, mock_client, mock_participant_records
+    ):
         """Test that search_by_name uses consistent formula field format from centralized constants."""
         # RED phase - this test will fail until we update the repository method
 
         # Setup: Mock the client to return participant records
         mock_client.search_by_formula.return_value = mock_participant_records
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock()
             mock_from_record.return_value = mock_participant
 
@@ -102,25 +124,41 @@ class TestFormulaConsistency:
             formula_arg = mock_client.search_by_formula.call_args[0][0]
 
             # Should use centralized formula field references
-            expected_ru_field = AirtableFieldMapping.build_formula_field("full_name_ru")  # "{FullNameRU}"
-            expected_en_field = AirtableFieldMapping.build_formula_field("full_name_en")  # "{FullNameEN}"
+            expected_ru_field = AirtableFieldMapping.build_formula_field(
+                "full_name_ru"
+            )  # "{FullNameRU}"
+            expected_en_field = AirtableFieldMapping.build_formula_field(
+                "full_name_en"
+            )  # "{FullNameEN}"
 
-            assert expected_ru_field in formula_arg, f"Formula should contain {expected_ru_field}"
-            assert expected_en_field in formula_arg, f"Formula should contain {expected_en_field}"
+            assert (
+                expected_ru_field in formula_arg
+            ), f"Formula should contain {expected_ru_field}"
+            assert (
+                expected_en_field in formula_arg
+            ), f"Formula should contain {expected_en_field}"
 
             # Should NOT contain inconsistent display name formats
-            assert "{Full Name (RU)}" not in formula_arg, "Should not contain display name format"
-            assert "{Full Name (EN)}" not in formula_arg, "Should not contain display name format"
+            assert (
+                "{Full Name (RU)}" not in formula_arg
+            ), "Should not contain display name format"
+            assert (
+                "{Full Name (EN)}" not in formula_arg
+            ), "Should not contain display name format"
 
     @pytest.mark.asyncio
-    async def test_formula_consistency_between_methods(self, repository, mock_client, mock_participant_records):
+    async def test_formula_consistency_between_methods(
+        self, repository, mock_client, mock_participant_records
+    ):
         """Test that both methods use the same formula field format for consistency."""
         # RED phase - this test will fail until both methods use consistent format
 
         # Setup
         mock_client.search_by_formula.return_value = mock_participant_records
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock()
             mock_from_record.return_value = mock_participant
 
@@ -139,13 +177,19 @@ class TestFormulaConsistency:
             en_field_ref = AirtableFieldMapping.build_formula_field("full_name_en")
 
             # Both formulas should contain consistent field references
-            assert ru_field_ref in criteria_formula, "search_by_criteria should use consistent RU field reference"
-            assert en_field_ref in criteria_formula or "full_name_en" not in str({"full_name_ru": "test"}), (
-                "search_by_criteria should use consistent EN field reference when applicable"
-            )
+            assert (
+                ru_field_ref in criteria_formula
+            ), "search_by_criteria should use consistent RU field reference"
+            assert en_field_ref in criteria_formula or "full_name_en" not in str(
+                {"full_name_ru": "test"}
+            ), "search_by_criteria should use consistent EN field reference when applicable"
 
-            assert ru_field_ref in name_formula, "search_by_name should use consistent RU field reference"
-            assert en_field_ref in name_formula, "search_by_name should use consistent EN field reference"
+            assert (
+                ru_field_ref in name_formula
+            ), "search_by_name should use consistent RU field reference"
+            assert (
+                en_field_ref in name_formula
+            ), "search_by_name should use consistent EN field reference"
 
     def test_formula_field_constants_are_correct(self):
         """Test that formula field constants produce the expected format."""
@@ -164,23 +208,33 @@ class TestFormulaConsistency:
         assert en_field != "{Full Name (EN)}", "Should not produce display name format"
 
     @pytest.mark.asyncio
-    async def test_backward_compatibility_preserved(self, repository, mock_client, mock_participant_records):
+    async def test_backward_compatibility_preserved(
+        self, repository, mock_client, mock_participant_records
+    ):
         """Test that functionality is preserved after standardizing formula references."""
         # RED phase - this test should pass once we implement standardization correctly
 
         # Setup
         mock_client.search_by_formula.return_value = mock_participant_records
 
-        with patch('src.data.airtable.airtable_participant_repo.Participant.from_airtable_record') as mock_from_record:
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
             mock_participant = MagicMock()
             mock_from_record.return_value = mock_participant
 
             # Act: Test that both methods still work functionally
-            criteria_result = await repository.search_by_criteria({"full_name_ru": "test"})
+            criteria_result = await repository.search_by_criteria(
+                {"full_name_ru": "test"}
+            )
             name_result = await repository.search_by_name("test")
 
             # Assert: Both methods should return results (functionality preserved)
             assert criteria_result is not None, "search_by_criteria should still work"
             assert name_result is not None, "search_by_name should still work"
-            assert len(criteria_result) > 0, "search_by_criteria should return participant objects"
-            assert len(name_result) > 0, "search_by_name should return participant objects"
+            assert (
+                len(criteria_result) > 0
+            ), "search_by_criteria should return participant objects"
+            assert (
+                len(name_result) > 0
+            ), "search_by_name should return participant objects"

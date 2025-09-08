@@ -5,11 +5,13 @@ Tests the fuzzy search method implementation with focus on actual functionality
 rather than detailed mocking.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock
 from typing import List, Tuple
+from unittest.mock import AsyncMock, Mock
 
-from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+import pytest
+
+from src.data.airtable.airtable_participant_repo import \
+    AirtableParticipantRepository
 from src.data.repositories.participant_repository import RepositoryError
 from src.models.participant import Participant
 

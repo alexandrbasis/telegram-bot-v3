@@ -5,21 +5,19 @@ Tests complete room search workflow from command to response,
 including Airtable integration and error scenarios.
 """
 
+import asyncio
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 import pytest_asyncio
-import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from telegram import Update, Message, User, Chat
+from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.room_search_handlers import (
-    handle_room_search_command,
-    process_room_search,
-    process_room_search_with_number,
-    RoomSearchStates,
-)
-from src.services.service_factory import get_search_service
+    RoomSearchStates, handle_room_search_command, process_room_search,
+    process_room_search_with_number)
 from src.models.participant import Participant
+from src.services.service_factory import get_search_service
 
 
 class TestRoomSearchIntegration:

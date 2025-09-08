@@ -9,36 +9,21 @@ import logging
 from enum import IntEnum
 from typing import Optional
 
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    ReplyKeyboardRemove,
-)
+from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
+                      ReplyKeyboardRemove, Update)
 from telegram.ext import ContextTypes
 
-from src.models.participant import (
-    Participant,
-    Gender,
-    Role,
-)
-from src.bot.keyboards.edit_keyboards import (
-    create_participant_edit_keyboard,
-    create_field_edit_keyboard,
-    get_field_icon,
-)
-from src.services.participant_update_service import (
-    ParticipantUpdateService,
-    ValidationError,
-)
-from src.services.user_interaction_logger import UserInteractionLogger
+from src.bot.keyboards.edit_keyboards import (create_field_edit_keyboard,
+                                              create_participant_edit_keyboard,
+                                              get_field_icon)
 from src.config.settings import get_settings
-from src.services.search_service import (
-    format_participant_full,
-)
-
+from src.models.participant import Gender, Participant, Role
+from src.services.participant_update_service import (ParticipantUpdateService,
+                                                     ValidationError)
+from src.services.search_service import format_participant_full
 # Import repository factory at module level (no circular deps)
 from src.services.service_factory import get_participant_repository
+from src.services.user_interaction_logger import UserInteractionLogger
 
 logger = logging.getLogger(__name__)
 
@@ -849,9 +834,7 @@ async def cancel_editing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Return to search results
     from src.bot.handlers.search_handlers import (
-        SearchStates,
-        get_results_navigation_keyboard,
-    )
+        SearchStates, get_results_navigation_keyboard)
 
     # Update message text; reply keyboards must be sent in a separate message
     await query.message.edit_text(text="❌ Редактирование отменено.")
@@ -995,9 +978,8 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 )
                 # Restore navigation reply keyboard for results view
                 try:
-                    from src.bot.handlers.search_handlers import (
-                        get_results_navigation_keyboard,
-                    )
+                    from src.bot.handlers.search_handlers import \
+                        get_results_navigation_keyboard
 
                     await query.message.reply_text(
                         text="Используйте клавиатуру для навигации.",
@@ -1024,9 +1006,8 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 )
                 # Restore navigation reply keyboard for results view
                 try:
-                    from src.bot.handlers.search_handlers import (
-                        get_results_navigation_keyboard,
-                    )
+                    from src.bot.handlers.search_handlers import \
+                        get_results_navigation_keyboard
 
                     await query.message.reply_text(
                         text="Используйте клавиатуру для навигации.",

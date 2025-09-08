@@ -5,10 +5,11 @@ This module defines the mapping between Python model field names and
 Airtable field names, along with validation rules and constraints.
 """
 
-from typing import Dict, List, Any, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
-from src.models.participant import Role, Department, Gender, Size, PaymentStatus
+from src.models.participant import (Department, Gender, PaymentStatus, Role,
+                                    Size)
 
 
 class FieldType(str, Enum):

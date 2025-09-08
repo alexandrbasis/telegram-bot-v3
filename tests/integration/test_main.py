@@ -5,11 +5,11 @@ Tests bot initialization, configuration, and startup processes including
 conversation handler registration and error handling setup.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 import asyncio
 import logging
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import pytest
 from telegram.ext import Application, ConversationHandler
 
 

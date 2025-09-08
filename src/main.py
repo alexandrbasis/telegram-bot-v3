@@ -6,19 +6,19 @@ proper error handling, and logging configuration including persistent file loggi
 """
 
 import logging
+import tempfile
+from pathlib import Path
 from typing import Optional
 
 from telegram import Update
+from telegram.error import Conflict, NetworkError, RetryAfter, TimedOut
 from telegram.ext import Application, ContextTypes
-from telegram.error import Conflict, NetworkError, TimedOut, RetryAfter
-from pathlib import Path
-import tempfile
 
-from src.utils.single_instance import InstanceLock
-
-from src.config.settings import get_settings, Settings
-from src.bot.handlers.search_conversation import get_search_conversation_handler
+from src.bot.handlers.search_conversation import \
+    get_search_conversation_handler
+from src.config.settings import Settings, get_settings
 from src.services.file_logging_service import FileLoggingService
+from src.utils.single_instance import InstanceLock
 
 logger = logging.getLogger(__name__)
 

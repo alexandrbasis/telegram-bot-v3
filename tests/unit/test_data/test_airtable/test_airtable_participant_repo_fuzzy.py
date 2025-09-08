@@ -5,14 +5,16 @@ Tests the fuzzy search method implementation with various scenarios
 including Russian/English name matching and similarity scoring.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from typing import List, Tuple
+from unittest.mock import AsyncMock, Mock, patch
 
-from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
-from src.data.airtable.airtable_client import AirtableClient, AirtableAPIError
+import pytest
+
+from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
+from src.data.airtable.airtable_participant_repo import \
+    AirtableParticipantRepository
 from src.data.repositories.participant_repository import RepositoryError
-from src.models.participant import Participant, Role, Department
+from src.models.participant import Department, Participant, Role
 
 
 @pytest.fixture

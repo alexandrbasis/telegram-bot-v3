@@ -5,24 +5,15 @@ Tests bot handler functions for floor search functionality with ConversationHand
 state management and Russian interface with room-by-room breakdown.
 """
 
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from telegram import (
-    Update,
-    CallbackQuery,
-    Message,
-    User,
-    Chat,
-    InlineKeyboardMarkup,
-    ReplyKeyboardMarkup,
-)
+from telegram import (CallbackQuery, Chat, InlineKeyboardMarkup, Message,
+                      ReplyKeyboardMarkup, Update, User)
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.floor_search_handlers import (
-    process_floor_search,
-    handle_floor_search_command,
-    FloorSearchStates,
-)
+    FloorSearchStates, handle_floor_search_command, process_floor_search)
 from src.models.participant import Participant
 
 

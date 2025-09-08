@@ -5,16 +5,15 @@ Tests button click logging, bot response logging, user journey tracking,
 and error handling for all user interaction scenarios.
 """
 
-import pytest
 import logging
 from datetime import datetime
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, call, patch
 
-from src.services.user_interaction_logger import (
-    UserInteractionLogger,
-    InteractionType,
-    LoggingError,
-)
+import pytest
+
+from src.services.user_interaction_logger import (InteractionType,
+                                                  LoggingError,
+                                                  UserInteractionLogger)
 
 
 class TestUserInteractionLogger:

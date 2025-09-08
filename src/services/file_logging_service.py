@@ -7,9 +7,9 @@ and dual output capabilities to complement console logging.
 
 import logging
 import logging.handlers
-from pathlib import Path
-from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 @dataclass

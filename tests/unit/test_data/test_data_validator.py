@@ -11,20 +11,18 @@ Tests cover:
 - Search criteria validation
 """
 
-import pytest
 from datetime import date, timedelta
 from unittest.mock import Mock, patch
 
-from src.data.data_validator import (
-    DataValidator,
-    ValidationResult,
-    validate_participant,
-    validate_participant_strict,
-    validate_field_value,
-    get_validator,
-)
-from src.models.participant import Participant, Role, Department, Gender, PaymentStatus
+import pytest
+
+from src.data.data_validator import (DataValidator, ValidationResult,
+                                     get_validator, validate_field_value,
+                                     validate_participant,
+                                     validate_participant_strict)
 from src.data.repositories.participant_repository import ValidationError
+from src.models.participant import (Department, Gender, Participant,
+                                    PaymentStatus, Role)
 
 
 class TestValidationResult:
