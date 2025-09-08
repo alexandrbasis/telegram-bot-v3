@@ -826,11 +826,11 @@ class TestPaymentFieldExclusion:
 
     def test_button_fields_constant_excludes_payment_status(self):
         """Test that BUTTON_FIELDS constant in handler does not include payment_status."""
-        # Read the handler file and verify field lists
-        with open(
-            "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py",
-            "r",
-        ) as f:
+        # Read the handler file and verify field lists (resolve path dynamically)
+        import inspect
+        from src.bot.handlers import edit_participant_handlers as eph
+        handler_path = inspect.getfile(eph)
+        with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find BUTTON_FIELDS definition and verify payment_status is not included
@@ -848,11 +848,11 @@ class TestPaymentFieldExclusion:
 
     def test_text_fields_constant_excludes_payment_date(self):
         """Test that TEXT_FIELDS constant in handler does not include payment_date."""
-        # Read the handler file and verify field lists
-        with open(
-            "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/src/bot/handlers/edit_participant_handlers.py",
-            "r",
-        ) as f:
+        # Read the handler file and verify field lists (resolve path dynamically)
+        import inspect
+        from src.bot.handlers import edit_participant_handlers as eph
+        handler_path = inspect.getfile(eph)
+        with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find TEXT_FIELDS definition and verify payment_date is not included
