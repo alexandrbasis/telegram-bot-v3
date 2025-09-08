@@ -5,10 +5,10 @@ Initializes and runs the Telegram bot with search conversation functionality,
 proper error handling, and logging configuration including persistent file logging.
 """
 
+import asyncio
 import logging
 import tempfile
 from pathlib import Path
-import asyncio
 from typing import Optional
 
 from telegram import Update
