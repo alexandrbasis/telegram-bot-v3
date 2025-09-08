@@ -829,6 +829,7 @@ class TestPaymentFieldExclusion:
         # Read the handler file and verify field lists (resolve path dynamically)
         import inspect
         from src.bot.handlers import edit_participant_handlers as eph
+
         handler_path = inspect.getfile(eph)
         with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -851,6 +852,7 @@ class TestPaymentFieldExclusion:
         # Read the handler file and verify field lists (resolve path dynamically)
         import inspect
         from src.bot.handlers import edit_participant_handlers as eph
+
         handler_path = inspect.getfile(eph)
         with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -938,6 +940,7 @@ class TestEditMenuDisplay:
         # Read the handler file and check field_labels dictionary (resolve path dynamically)
         import inspect
         from src.bot.handlers import edit_participant_handlers as eph
+
         handler_path = inspect.getfile(eph)
         with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -960,6 +963,7 @@ class TestEditMenuDisplay:
         # Read the handler file and check if field labels use icons (resolve path dynamically)
         import inspect
         from src.bot.handlers import edit_participant_handlers as eph
+
         handler_path = inspect.getfile(eph)
         with open(handler_path, "r", encoding="utf-8") as f:
             content = f.read()
