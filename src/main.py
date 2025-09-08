@@ -9,7 +9,6 @@ import logging
 import tempfile
 from pathlib import Path
 import asyncio
-import inspect
 from typing import Optional
 
 from telegram import Update
@@ -183,15 +182,11 @@ async def run_bot() -> None:
         app = create_application()
 
         # If tests patched run_polling as AsyncMock, await it to satisfy expectations
-        try:
-            from unittest.mock import AsyncMock  # type: ignore
-        except Exception:  # pragma: no cover - standard lib should always exist
-            AsyncMock = None  # type: ignore
-
         run_polling_attr = getattr(app, "run_polling", None)
         if run_polling_attr is not None and "AsyncMock" in type(run_polling_attr).__name__:
             logger.info("Bot starting with mocked polling (test mode)")
-            await run_polling_attr(drop_pending_updates=True)  # type: ignore[misc]
+            from typing import Any, cast
+            await cast(Any, run_polling_attr)(drop_pending_updates=True)
             return
 
         # Production path: explicit async lifecycle to avoid nested event loops
@@ -199,8 +194,11 @@ async def run_bot() -> None:
         await app.initialize()
         await app.start()
         # Updater handles receiving updates in PTB
-        await app.updater.initialize()
-        await app.updater.start_polling(drop_pending_updates=True)
+        updater = app.updater
+        if updater is None:
+            raise RuntimeError("Application.updater is not available")
+        await updater.initialize()
+        await updater.start_polling(drop_pending_updates=True)
 
         try:
             # Block until cancellation (e.g., SIGINT)
@@ -211,8 +209,8 @@ async def run_bot() -> None:
         finally:
             # Graceful shutdown
             try:
-                await app.updater.stop()
-                await app.updater.shutdown()
+                await updater.stop()
+                await updater.shutdown()
             except Exception as e:
                 logger.warning(f"Error stopping updater: {e}")
             try:
