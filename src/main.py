@@ -182,7 +182,9 @@ async def run_bot() -> None:
 
         logger.info("Bot starting with polling mode")
         try:
-            result = app.run_polling(drop_pending_updates=True)
+            from typing import Any, cast
+
+            result: Any = cast(Any, app).run_polling(drop_pending_updates=True)
             if inspect.isawaitable(result):
                 await result
         except Conflict as e:
