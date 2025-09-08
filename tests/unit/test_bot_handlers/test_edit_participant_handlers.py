@@ -828,6 +828,7 @@ class TestPaymentFieldExclusion:
         """Test that BUTTON_FIELDS constant in handler does not include payment_status."""
         # Read the handler file and verify field lists (resolve path dynamically)
         import inspect
+
         from src.bot.handlers import edit_participant_handlers as eph
 
         handler_path = inspect.getfile(eph)
@@ -851,6 +852,7 @@ class TestPaymentFieldExclusion:
         """Test that TEXT_FIELDS constant in handler does not include payment_date."""
         # Read the handler file and verify field lists (resolve path dynamically)
         import inspect
+
         from src.bot.handlers import edit_participant_handlers as eph
 
         handler_path = inspect.getfile(eph)
@@ -939,6 +941,7 @@ class TestEditMenuDisplay:
         """Test that field_labels dictionary does not include payment_date."""
         # Read the handler file and check field_labels dictionary (resolve path dynamically)
         import inspect
+
         from src.bot.handlers import edit_participant_handlers as eph
 
         handler_path = inspect.getfile(eph)
@@ -962,6 +965,7 @@ class TestEditMenuDisplay:
         """Test that field labels incorporate field-specific icons."""
         # Read the handler file and check if field labels use icons (resolve path dynamically)
         import inspect
+
         from src.bot.handlers import edit_participant_handlers as eph
 
         handler_path = inspect.getfile(eph)
