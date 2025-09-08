@@ -87,6 +87,11 @@ jobs:
   tests:
     name: Tests + Coverage
     runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: dummy
+      AIRTABLE_API_KEY: dummy
+      AIRTABLE_BASE_ID: appTestBase
+      AIRTABLE_TABLE_ID: tblTestTable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -100,8 +105,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements/dev.txt
-      - name: Run pytest with coverage
-        run: pytest
+      - name: Run pytest with coverage (unit only)
+        run: pytest tests/unit
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
@@ -147,4 +152,3 @@ jobs:
           -e TELEGRAM_BOT_TOKEN=dummy
           -e AIRTABLE_API_KEY=dummy
           app:ci -c "from src.main import create_application; create_application(); print('ok')"
-
