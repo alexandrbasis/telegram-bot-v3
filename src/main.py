@@ -5,6 +5,8 @@ Initializes and runs the Telegram bot with search conversation functionality,
 proper error handling, and logging configuration including persistent file logging.
 """
 
+import asyncio
+import inspect
 import logging
 import tempfile
 from pathlib import Path
@@ -166,12 +168,12 @@ def create_application() -> Application:
     return app
 
 
-def run_bot() -> None:
+async def run_bot() -> None:
     """
-    Run the Telegram bot with polling (synchronous).
+    Run the Telegram bot with polling (async wrapper).
 
-    Uses PTB's built-in `run_polling` in the main thread to ensure a
-    valid event loop context on Python 3.13+.
+    Calls `Application.run_polling`. If the call returns an awaitable (e.g. when
+    patched in tests), await it; otherwise, proceed without awaiting.
     """
     logger.info("Starting Telegram bot")
 
@@ -180,7 +182,9 @@ def run_bot() -> None:
 
         logger.info("Bot starting with polling mode")
         try:
-            app.run_polling(drop_pending_updates=True)
+            result = app.run_polling(drop_pending_updates=True)
+            if inspect.isawaitable(result):
+                await result
         except Conflict as e:
             logger.error(
                 "Polling conflict: %s. Likely another bot instance or service is polling this token.",
@@ -205,8 +209,8 @@ def main() -> None:
     This function does not return under normal circumstances.
     """
     try:
-        # Run the bot (synchronous run)
-        run_bot()
+        # Run the bot (async run)
+        asyncio.run(run_bot())
 
     except KeyboardInterrupt:
         print("\nBot stopped by user")
