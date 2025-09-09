@@ -170,19 +170,25 @@ Fields:
 ## Room and Floor Search Functionality
 
 ### Overview
-Complete location-based participant search functionality enabling users to find participants by room number or floor assignment. Includes both backend data layer and full frontend user interface implementation.
+Complete location-based participant search functionality enabling users to find participants by room number or floor assignment. Includes both backend data layer and full frontend user interface implementation with enhanced Russian language support.
 
-**Status**: ✅ Complete Implementation (2025-09-04)
-**Implementation**: Backend services + Frontend handlers with Russian UI and conversation flow integration
-**Test Coverage**: 55 tests total (34 backend + 21 frontend tests, 100% pass rate)
+**Status**: ✅ Enhanced Implementation (2025-01-09)
+**Implementation**: Backend services + Frontend handlers with structured Russian UI and translation utilities
+**Test Coverage**: Enhanced test suite with comprehensive translation and formatting coverage
 
 ### Core Features
 
-#### 1. Room-Based Search
-- **Purpose**: Find all participants assigned to a specific room
+#### 1. Room-Based Search with Enhanced Russian Results
+- **Purpose**: Find all participants assigned to a specific room with structured Russian formatting
 - **Input**: Room number (alphanumeric: "101", "A1", "Conference")
 - **Validation**: Non-empty string validation with whitespace trimming
-- **Output**: List of participants filtered by room assignment
+- **Output**: Structured Russian results showing participant names, roles, departments, and floor information
+
+**Enhanced Features (2025-01-09)**:
+- **Structured Display**: Russian-formatted results with role and department translations
+- **Comprehensive Information**: Shows participant names (Russian/English), role, department, and floor
+- **Translation Support**: Complete Russian translations for all departments and roles
+- **Conversation Flow**: Proper state management with Russian prompts and error messages
 
 **Technical Implementation**:
 ```python
@@ -193,6 +199,10 @@ async def find_by_room_number(self, room: str) -> List[Participant]:
 # Service method  
 async def search_by_room(self, room: str) -> List[Participant]:
     # Includes input validation and error handling
+
+# Enhanced formatting method (NEW)
+def format_room_results_russian(participants: List[Participant], room: str) -> str:
+    # Formats results with Russian labels, role/department translations, and floor info
 ```
 
 #### 2. Floor-Based Search
