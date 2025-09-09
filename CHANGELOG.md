@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Search by Room Improvement — structured Russian result formatting and conversation flow parity with floor search (TDB-53, completed 2025-09-09)
+  - Updated `process_room_search_with_number()` to build and send a single structured Russian message using a new formatter (`src/bot/handlers/room_search_handlers.py:129-171`)
+  - Results now display: name (RU with EN in parentheses), role (ru), department (ru), and floor; church info intentionally omitted
+  - Graceful handling for empty rooms by returning a clear Russian message
+
+### Added
+- Russian translation utilities for room search display (TDB-53)
+  - Added `src/utils/translations.py` with full `DEPARTMENT_RUSSIAN` mapping and helpers `department_to_russian`, `role_to_russian`
+  - New room results formatter `format_room_results_russian()` in `src/bot/handlers/room_search_handlers.py:180-220`
+  - Tests:
+    - Unit: `tests/unit/test_bot_handlers/test_room_search_handlers.py` for formatter structure and empty room handling
+    - Unit: `tests/unit/test_utils/test_translations.py` for mapping completeness and translations
+    - Unit: `tests/unit/test_bot_messages/test_info_messages.py` and `test_error_messages.py` for Russian prompt and empty-room error
+    - Integration: Updated `tests/integration/test_room_search_integration.py` to validate role/department (ru) and floor in results
+
 ### Fixed
 - Centralized Formula Field References for Airtable Integration — enhance resilience by eliminating hardcoded field references (AGB-33, completed 2025-09-07) (PR #22)
   - Centralized field mapping with back-compat aliases for display labels on Contact Information and Telegram ID (`src/config/field_mappings.py`)

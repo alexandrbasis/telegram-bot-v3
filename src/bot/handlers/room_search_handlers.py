@@ -8,6 +8,7 @@ using ConversationHandler states and reply keyboards.
 import logging
 import re
 from enum import IntEnum
+from typing import List
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -17,6 +18,8 @@ from src.bot.keyboards.search_keyboards import (
     get_waiting_for_room_keyboard,
 )
 from src.bot.messages import ErrorMessages, InfoMessages, RetryMessages
+from src.models.participant import Participant
+from src.utils.translations import department_to_russian, role_to_russian
 from src.services.service_factory import get_search_service
 
 logger = logging.getLogger(__name__)
@@ -131,30 +134,19 @@ async def process_room_search_with_number(
         # Search participants by room (for context storage)
         participants = await search_service.search_by_room(room_number)
 
-        # Get formatted results
-        formatted_results = await search_service.search_by_room_formatted(
-            room_number, language="ru"
-        )
-
         # Store results in user data
         context.user_data["room_search_results"] = participants
         context.user_data["current_room"] = room_number
 
-        if formatted_results:
-            # Create results message
-            results_message = (
-                f"🏠 Найдено участников в комнате {room_number}: "
-                f"{len(formatted_results)}\n\n"
-            )
-            results_message += "\n".join(formatted_results)
+        # Format and send results in Russian with structured fields
+        results_message = format_room_results_russian(participants, room_number)
 
+        if participants:
             logger.info(
-                f"Found {len(formatted_results)} participants in room "
+                f"Found {len(participants)} participants in room "
                 f"{room_number} for user {user.id}"
             )
-
         else:
-            results_message = ErrorMessages.no_participants_in_room(room_number)
             logger.info(
                 f"No participants found in room {room_number} " f"for user {user.id}"
             )
@@ -176,3 +168,59 @@ async def process_room_search_with_number(
         )
 
     return RoomSearchStates.SHOWING_ROOM_RESULTS
+
+
+def format_room_results_russian(
+    participants: List[Participant], room_number: str
+) -> str:
+    """
+    Format room search results in Russian with role, department, and floor.
+
+    Args:
+        participants: List of participants found in the room
+        room_number: Room identifier provided by the user
+
+    Returns:
+        Formatted multi-line string ready to send to the user
+    """
+    if not participants:
+        return ErrorMessages.no_participants_in_room(room_number)
+
+    lines: List[str] = [
+        f"🏠 Найдено участников в комнате {room_number}: {len(participants)}\n"
+    ]
+
+    for idx, p in enumerate(participants, 1):
+        name_ru = p.full_name_ru or "Неизвестно"
+        name_en = p.full_name_en or ""
+
+        # Line 1: name(s)
+        line = f"{idx}. {name_ru}"
+        if name_en and name_en != name_ru:
+            line += f" ({name_en})"
+        lines.append(line)
+
+        # Line 2: details (role, department, floor)
+        has_role = getattr(p, "role", None)
+        role_label = role_to_russian(p.role) if has_role else "Не указано"
+        dept_label = (
+            department_to_russian(p.department)
+            if getattr(p, "department", None)
+            else "Не указано"
+        )
+        floor_label = (
+            str(p.floor)
+            if getattr(p, "floor", None) not in (None, "")
+            else "Неизвестно"
+        )
+        details = (
+            f"   👥 Роль: {role_label} | 📋 Департамент: {dept_label} | "
+            f"🏢 Этаж: {floor_label}"
+        )
+        lines.append(details)
+
+        # Spacer line between participants
+        if idx != len(participants):
+            lines.append("")
+
+    return "\n".join(lines)
