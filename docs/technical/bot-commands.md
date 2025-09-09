@@ -237,6 +237,30 @@ Users can switch between different search modes using a reply keyboard interface
 Всего на этаже: 5 участников в 2 комнатах
 ```
 
+## Conversation Timeout Handling
+
+### Automatic Session Management
+All conversations include automatic timeout handling to prevent users from getting stuck in stale states:
+
+- **Timeout Period**: Configurable via `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` environment variable (default: 30 minutes)
+- **Timeout Message**: "Сессия истекла, начните заново" (Session expired, start again)
+- **Recovery Option**: "Вернуться в главное меню" button returns user to main menu
+- **State Cleanup**: Automatic conversation context cleanup prevents memory leaks
+- **Universal Coverage**: Applied to all conversation types (search, edit, room/floor search)
+
+### Timeout Scenarios
+- **Search Conversations**: User searches but doesn't interact with results
+- **Edit Workflows**: User enters editing mode but doesn't complete changes
+- **Room/Floor Search**: User initiates location search but doesn't provide input
+- **Any Conversation State**: Timeout applies to all states equally
+
+### User Recovery Flow
+1. User becomes inactive during any conversation
+2. After timeout period (default 30 minutes), bot displays timeout message
+3. User clicks "Вернуться в главное меню" button
+4. User returns to main menu and can start fresh conversation
+5. Previous conversation context is completely cleaned up
+
 ## Error Handling
 
 ### Standardized Error Messages (2025-09-05)
@@ -305,3 +329,14 @@ Error handling has been enhanced with centralized message templates located in `
 5. User clicks retry → Bot attempts save again with preserved changes
 6. Success: Changes saved and user notified
 7. Failure: Retry option remains available
+
+### Timeout Recovery Flow
+
+1. User starts participant search: `/search Иван`
+2. Bot shows search results with "Подробнее" buttons
+3. **User becomes inactive** (no interaction for 30 minutes)
+4. **Timeout Triggers**: Bot displays "Сессия истекла, начните заново"
+5. **Recovery Button**: "Вернуться в главное меню" button appears
+6. User clicks recovery button → Returns to main menu with clean state
+7. User can start fresh conversation without any residual context
+8. **Alternative**: User can also ignore timeout message and use any main menu command

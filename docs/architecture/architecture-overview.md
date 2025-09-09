@@ -30,6 +30,7 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Integration between search and editing workflows
 - **State Collision Prevention**: SearchStates uses values 10-12 to avoid conflicts with EditStates 0-2
 - **Mixed Handler Support**: ConversationHandler configured with per_message=None for proper CallbackQueryHandler tracking
+- **Automatic Timeout Handling**: Configurable conversation timeout (default 30 minutes) prevents users from getting stuck in stale states
 
 **Room and Floor Search Handlers** (New - 2025-09-04):
 - Dedicated conversation handlers for location-based searches
@@ -44,6 +45,13 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - States: FIELD_SELECTION → TEXT_INPUT/BUTTON_SELECTION → CONFIRMATION
 - Russian localization across all states
 - Field-specific validation and error handling
+
+**Conversation Timeout Handler** (New - 2025-01-09):
+- Automatic timeout handling for all conversation states
+- Configurable timeout period via `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` environment variable
+- Russian timeout message display: "Сессия истекла, начните заново"
+- Main menu recovery button for seamless user experience
+- Graceful state cleanup prevents memory leaks and stale conversation data
 
 ### Data Access Patterns
 
@@ -128,6 +136,8 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Back Navigation**: Seamless return to previous conversation states
 - **State Collision Management**: Non-overlapping state enum values prevent handler conflicts (SearchStates: 10-12, EditStates: 0-2)
 - **ConversationHandler Configuration**: Proper per_message parameter configuration ensures mixed handler types (MessageHandler + CallbackQueryHandler) work correctly
+- **Automatic Timeout Management**: All conversation states include TIMEOUT handler for inactive session cleanup
+- **Timeout Recovery**: Users can restart from main menu after session expiration with clear Russian instructions
 
 ### Data Flow
 ```

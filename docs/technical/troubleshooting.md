@@ -89,6 +89,86 @@
 4. Changes not explicitly saved are automatically discarded
 5. **State Collision Check**: If issue persists, verify ConversationHandler state enum values don't conflict
 
+### Conversation Timeout Issues
+
+#### Timeout Not Triggering
+**Problem**: Conversations don't timeout after configured period, users remain stuck in stale states
+**Causes**:
+- Missing `conversation_timeout` parameter in ConversationHandler configuration
+- Incorrect timeout value conversion (minutes to seconds)
+- Missing TIMEOUT handler registration in conversation states
+- Invalid `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` environment variable
+
+**Resolution**:
+1. **Configuration Check**: Verify ConversationHandler includes timeout parameter:
+   ```python
+   conversation_handler = ConversationHandler(
+       entry_points=[...],
+       states={...},
+       fallbacks=[...],
+       conversation_timeout=telegram_settings.conversation_timeout_minutes * 60
+   )
+   ```
+2. **Handler Registration**: Ensure TIMEOUT state is mapped to timeout handler:
+   ```python
+   states = {
+       SearchStates.WAITING_FOR_NAME: [...],
+       # Other states...
+       ConversationHandler.TIMEOUT: [MessageHandler(filters.ALL, handle_conversation_timeout)]
+   }
+   ```
+3. **Environment Variable**: Verify `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` is set correctly (1-1440 range)
+4. **Settings Loading**: Check that settings are loaded properly: `get_telegram_settings().conversation_timeout_minutes`
+
+#### Timeout Message Not Displaying
+**Problem**: Timeout triggers but user doesn't see "Сессия истекла, начните заново" message
+**Causes**:
+- Error in timeout handler message sending
+- Missing or incorrect keyboard generation
+- Network issues during message delivery
+- Bot token permissions
+
+**Resolution**:
+1. **Error Handling Check**: Timeout handler includes try/catch around message sending
+2. **Keyboard Generation**: Verify main menu keyboard is created properly
+3. **Network Connectivity**: Check bot's network connection and Telegram API accessibility
+4. **Graceful Termination**: Even if message fails, conversation should still end properly
+5. **Debug Logging**: Enable DEBUG logging to see timeout handler execution details
+
+#### Timeout Period Too Short/Long
+**Problem**: Conversations timeout too quickly or take too long to timeout
+**Causes**:
+- Incorrect `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` value
+- Misunderstanding of timeout period requirements
+- Different needs for different conversation types
+
+**Resolution**:
+1. **Environment Configuration**: Adjust `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES`:
+   - Development: 5-10 minutes for testing
+   - Production: 30-60 minutes for user comfort
+   - Complex operations: 60-120 minutes
+2. **Validation Check**: Ensure value is within valid range (1-1440 minutes)
+3. **Restart Required**: Bot restart needed for configuration changes to take effect
+4. **User Communication**: Inform users about timeout period if changed significantly
+
+#### Timeout State Cleanup Issues
+**Problem**: After timeout, conversation context not properly cleaned up, causing state conflicts
+**Causes**:
+- Missing `ConversationHandler.END` return in timeout handler
+- Incomplete context cleanup in timeout handler
+- Memory leaks from uncleared conversation data
+
+**Resolution**:
+1. **Handler Return**: Ensure timeout handler returns `ConversationHandler.END`:
+   ```python
+   async def handle_conversation_timeout(update: Update, context: ContextTypes.DEFAULT_TYPE):
+       # Handle timeout message...
+       return ConversationHandler.END  # Critical for state cleanup
+   ```
+2. **Context Cleanup**: Clear relevant context data if needed (though PTB handles most cleanup automatically)
+3. **Memory Monitoring**: Monitor bot memory usage for potential leaks
+4. **Testing**: Use integration tests to verify proper state transitions after timeout
+
 #### Cancel Operation Not Working
 **Problem**: Cancel button doesn't return user to main menu
 **Causes**: 
@@ -201,6 +281,8 @@ Set environment variable: `LOG_LEVEL=DEBUG`
 - **Display Function Failures**: Search for "display_updated_participant" error logs
 - **ConversationHandler Issues**: Search for "ConversationHandler" and "CallbackQueryHandler" logs
 - **State Conflicts**: Look for handler registration and state transition errors
+- **Timeout Handling**: Search for "timeout" and "TIMEOUT" for conversation timeout events
+- **Configuration Loading**: Look for "conversation_timeout_minutes" in settings loading logs
 
 #### Common Log Patterns
 ```
@@ -213,6 +295,11 @@ WARN - REGRESSION: current_participant is None, falling back to simple message
 INFO - REGRESSION: Context corruption detected, providing user recovery guidance
 WARN - per_message=False with mixed handler types (informational)
 ERROR - Handler registration conflict for state [N]
+INFO - Conversation timeout triggered for user [ID] after [N] minutes
+DEBUG - Sending timeout message: "Сессия истекла, начните заново"
+ERROR - Failed to send timeout message: [error details]
+INFO - Timeout handler completed, conversation ended
+DEBUG - Loading conversation_timeout_minutes: [N] from settings
 ```
 
 #### ConversationHandler Debugging
@@ -225,4 +312,11 @@ grep -r "ConversationHandler" src/bot/handlers/ -A 10
 
 # Test specific button functionality
 ./venv/bin/pytest tests/unit/test_search_button_regression.py -v
+
+# Test timeout functionality
+./venv/bin/pytest tests/unit/test_bot_handlers/test_timeout_handlers.py -v
+./venv/bin/pytest tests/integration/test_bot_handlers/test_conversation_timeout_integration.py -v
+
+# Check timeout configuration
+python -c "from src.config.settings import get_telegram_settings; print(f'Timeout: {get_telegram_settings().conversation_timeout_minutes} minutes')"
 ```
