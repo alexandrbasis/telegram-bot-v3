@@ -510,12 +510,11 @@ async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user = update.effective_user
     logger.info(f"User {user.id} cancelled search input")
 
-    # Clear transient search state
-    context.user_data["search_results"] = []
+    # Initialize user data using shared helper to fully reset state
+    initialize_main_menu_session(context)
 
-    welcome_message = (
-        "Добро пожаловать в бот Tres Dias! 🙏\n\n" "Ищите участников по имени."
-    )
+    # Get unified welcome message
+    welcome_message = get_welcome_message()
 
     await update.message.reply_text(
         text=welcome_message,

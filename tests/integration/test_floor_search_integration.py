@@ -467,7 +467,7 @@ class TestFloorSearchIntegration:
 
         # Check message content
         assert "Добро пожаловать в бот Tres Dias!" in call_args[1]["text"]
-        assert "Ищите участников по имени" in call_args[1]["text"]
+        assert "Выберите тип поиска участников" in call_args[1]["text"]
 
         # Check reply markup is main menu keyboard
         assert call_args[1]["reply_markup"] is not None
