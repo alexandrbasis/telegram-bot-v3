@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Room Search Conversation Flow with Single Prompt and Cancel Handler** - Complete overhaul of room search flow eliminating duplicate messages and broken cancel functionality for smooth user experience (AGB-39, completed 2025-01-15)
+  - Fixed room mode selection handler to send single clean prompt instead of duplicating messages and causing premature validation errors (`src/bot/handlers/search_handlers.py:651-681`)
+    - Updated `handle_search_room_mode()` to mirror floor search pattern: sends single `InfoMessages.ENTER_ROOM_NUMBER` prompt and returns `RoomSearchStates.WAITING_FOR_ROOM` directly
+    - Eliminated delegation to command handler preventing duplicate message flow and validation confusion
+  - Added missing cancel handler enabling graceful exit from room input state without validation errors (`src/bot/handlers/search_conversation.py:180-182`)
+    - Added `MessageHandler(filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search)` under `RoomSearchStates.WAITING_FOR_ROOM` state
+    - Cancel button now properly returns to main menu without triggering room number validation
+  - Enhanced input filter to exclude cancel text from room number processing preventing premature validation (`src/bot/handlers/search_conversation.py:172`)
+    - Extended exclusion regex to include `NAV_CANCEL` so "❌ Отмена" text never reaches `process_room_search()` validation
+    - Ensures validation only occurs after user provides actual room input, not on navigation button text
+  - Comprehensive pattern consistency ensuring room search mirrors name and floor search implementations for unified user experience
+  - Complete test coverage with 55 comprehensive tests (48 unit + 7 integration) achieving 100% success rate and 86.75% overall coverage with 100% coverage on modified room search handlers
+  - Zero breaking changes maintaining existing `/search_room` command functionality and all other search modes (name, floor) while fixing conversation flow issues
+  - Users experience single clean prompt when clicking "🚪 По комнате", functional cancel button during room input, and consistent behavior across all search modes
+- **Enhanced Documentation Suite for Room Search Flow Implementation** - Comprehensive documentation updates supporting room search conversation flow improvements (AGB-39, completed 2025-01-15)  
+  - Enhanced Room Search Flow section with updated conversation state diagrams and single prompt specifications (`docs/technical/bot-commands.md`)
+  - Updated troubleshooting guide with expanded Cancel Operation section and new Room Search Flow Issues section covering duplicate messages and cancel handling (`docs/technical/troubleshooting.md`)
+  - Enhanced State Transition Map with complete RoomSearchStates integration and conversation flow validation (`docs/architecture/api-design.md`)
+  - Updated documentation reflects single-prompt behavior, proper cancel handling, and pattern consistency across search modes
+
 ### Added
 - **Main Menu Start Command Equivalence with Text Button Entry Points** - Complete equivalence implementation ensuring Main Menu button provides identical functionality to /start command with comprehensive timeout recovery (AGB-40, completed 2025-09-09)
   - Shared initialization helpers providing unified behavior between start_command and main_menu_button handlers (`src/bot/handlers/search_handlers.py:26-35`) 

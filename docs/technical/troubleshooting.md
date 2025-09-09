@@ -74,6 +74,19 @@
    - Search button uses `callback_data="search"` with pattern `"^search$"`
 4. **Testing**: Run regression test `tests/unit/test_search_button_regression.py` to validate functionality
 
+#### Room Search Flow Issues (Fixed 2025-01-15)
+**Problem**: Room search shows duplicate messages and broken cancel functionality
+**Causes**:
+- Room mode handler delegating to command handler instead of direct prompt
+- Missing NAV_CANCEL handler in WAITING_FOR_ROOM state
+- Cancel text being processed as room input causing validation errors
+
+**Fixed Implementation**:
+1. **Direct Prompt Pattern**: `handle_search_room_mode()` now sends single prompt and returns `WAITING_FOR_ROOM` (mirrors floor search)
+2. **Cancel Handler Added**: NAV_CANCEL button properly registered in `RoomSearchStates.WAITING_FOR_ROOM` 
+3. **Input Filter Fixed**: Cancel text excluded from room number processing to prevent premature validation
+4. **Consistent UX**: Room search now provides same clean user experience as floor search
+
 #### Lost Editing Context
 **Problem**: User editing session becomes unresponsive or shows unexpected behavior
 **Causes**:
@@ -174,11 +187,13 @@
 **Causes**: 
 - Conversation state conflicts
 - Handler registration issues
+- Missing NAV_CANCEL handlers in conversation waiting states
 
 **Resolution**:
 1. Use "Вернуться в главное меню" button from confirmation screen
 2. If unresponsive, restart bot session
 3. Check logs for conversation handler errors
+4. **Room Search Cancel Fix** (2025-01-15): Ensure NAV_CANCEL handlers are properly registered in all waiting states, especially RoomSearchStates.WAITING_FOR_ROOM
 
 ### Data Consistency Issues
 

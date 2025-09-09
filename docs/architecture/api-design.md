@@ -249,6 +249,14 @@ BUTTON_SELECTION:
 
 CONFIRMATION:
   → END (after save/cancel)
+
+RoomSearchStates (Enhanced 2025-01-15):
+WAITING_FOR_ROOM:
+  → SHOWING_RESULTS (valid room input)
+  → WAITING_FOR_ROOM (validation error retry)
+  → END (cancel button - NAV_CANCEL handler)
+  → MAIN_MENU (main menu button - NAV_MAIN_MENU handler)
+  → SEARCH_MODE_SELECTION (back to search modes - NAV_BACK_TO_SEARCH_MODES handler)
 ```
 
 ## Error Response APIs

@@ -1275,17 +1275,14 @@ class TestSearchModeSelection:
     @pytest.mark.asyncio
     async def test_handle_search_room_mode(self, mock_update_message, mock_context):
         """Test room search mode selection handler."""
-        with patch(
-            "src.bot.handlers.room_search_handlers.handle_room_search_command"
-        ) as mock_room_handler:
-            mock_room_handler.return_value = 20  # RoomSearchStates.WAITING_FOR_ROOM
+        # Execute handler
+        result = await handle_search_room_mode(mock_update_message, mock_context)
 
-            # Execute handler
-            result = await handle_search_room_mode(mock_update_message, mock_context)
-
-            # Verify room search handler was called
-            mock_room_handler.assert_called_once_with(mock_update_message, mock_context)
-            assert result == 20
+        # Should prompt for room number and return waiting state
+        mock_update_message.message.reply_text.assert_called_once()
+        call_args = mock_update_message.message.reply_text.call_args[1]
+        assert "Введите номер комнаты" in call_args["text"]
+        assert result == 20  # RoomSearchStates.WAITING_FOR_ROOM
 
     @pytest.mark.asyncio
     async def test_handle_search_floor_mode(self, mock_update_message, mock_context):

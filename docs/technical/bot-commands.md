@@ -314,15 +314,21 @@ Error handling has been enhanced with centralized message templates located in `
 12. Bot saves to Airtable and confirms: "Участник успешно обновлен"
 13. User returns to search results with context preserved
 
-### Room Search Flow
+### Room Search Flow (Enhanced 2025-01-15)
 1. User clicks "🔍 Поиск участников" in main menu
 2. Bot displays search mode selection keyboard
 3. User clicks "🏠 Поиск по комнате" (Room Search)
-4. Bot prompts: "Введите номер комнаты для поиска:"
-5. User types: `205`
+4. Bot prompts: "Введите номер комнаты для поиска:" (single clean prompt)
+5. User types: `205` OR clicks "❌ Отмена" to return to main menu
 6. Bot displays room search results with participant list
 7. User can click "Подробнее" to view/edit participant details
 8. Navigation options: return to search mode selection or main menu
+
+**Enhanced User Experience (2025-01-15)**:
+- **Single Clean Prompt**: Room search mode sends exactly one message asking for room number
+- **Proper Cancel Support**: Cancel button works correctly during room input without validation errors
+- **No Duplicate Messages**: Eliminated duplicate prompts that previously confused users
+- **Consistent Pattern**: Room search now mirrors floor search behavior for UI consistency
 
 ### Floor Search Flow
 1. User types: `/search_floor 2`
