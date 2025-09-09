@@ -8,7 +8,12 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from telegram import Chat, Message, Update, User
-from telegram.ext import ContextTypes, ConversationHandler
+from telegram.ext import (
+    CallbackQueryHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+)
 
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import get_telegram_settings
@@ -52,8 +57,13 @@ class TestSearchConversationTimeoutIntegration:
         # Get timeout handlers
         timeout_handlers = handler.states[ConversationHandler.TIMEOUT]
 
-        # Should have exactly one timeout handler
-        assert len(timeout_handlers) == 1
+        # Should have handlers registered (message + callback query)
+        assert len(timeout_handlers) >= 1
+
+        # Verify presence of both MessageHandler and CallbackQueryHandler for timeout
+        handler_types = {type(h).__name__ for h in timeout_handlers}
+        assert "MessageHandler" in handler_types
+        assert "CallbackQueryHandler" in handler_types
 
         # Handler should be callable
         timeout_handler = timeout_handlers[0]

@@ -47,7 +47,9 @@ from src.bot.handlers.search_handlers import (
     search_button,
     start_command,
 )
-from src.bot.handlers.timeout_handlers import handle_conversation_timeout
+from src.bot.handlers.timeout_handlers import (
+    get_timeout_recovery_handlers,
+)
 from src.bot.keyboards.search_keyboards import (
     NAV_BACK_TO_SEARCH_MODES,
     NAV_CANCEL,
@@ -245,7 +247,8 @@ def get_search_conversation_handler() -> ConversationHandler:
             ],
             # === TIMEOUT STATE ===
             ConversationHandler.TIMEOUT: [
-                MessageHandler(filters.ALL, handle_conversation_timeout),
+                # Handle both messages and callback queries after timeout
+                *get_timeout_recovery_handlers(),
             ],
         },
         fallbacks=[CommandHandler("start", start_command)],

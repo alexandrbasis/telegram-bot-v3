@@ -9,7 +9,13 @@ import logging
 from typing import Optional
 
 from telegram import Update
-from telegram.ext import CallbackContext, ConversationHandler
+from telegram.ext import (
+    CallbackContext,
+    CallbackQueryHandler,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
 from src.bot.keyboards.search_keyboards import get_main_menu_keyboard
 
@@ -40,6 +46,13 @@ async def handle_conversation_timeout(
         logger.warning("Conversation timeout called with None update")
         return ConversationHandler.END
 
+    # If this was triggered by a callback query, answer it to stop the spinner
+    try:
+        if update.callback_query:
+            await update.callback_query.answer(text="⏰ Сессия истекла. Меню ниже.")
+    except Exception as e:
+        logger.debug(f"Failed to answer callback query on timeout: {e}")
+
     chat_id = update.effective_chat.id
 
     # Russian timeout message with emoji and recovery instruction
@@ -59,3 +72,23 @@ async def handle_conversation_timeout(
 
     # End the conversation regardless of message send success
     return ConversationHandler.END
+
+
+def get_timeout_recovery_handlers():
+    """
+    Standard timeout recovery handlers for ConversationHandler.TIMEOUT.
+
+    Returns a list containing both a MessageHandler and a CallbackQueryHandler
+    bound to `handle_conversation_timeout`, ensuring that after a timeout both
+    regular messages and inline button taps (callback queries) trigger the
+    recovery flow and that callback queries are answered to stop the spinner.
+
+    Usage:
+        ConversationHandler.TIMEOUT: [
+            *get_timeout_recovery_handlers(),
+        ]
+    """
+    return [
+        MessageHandler(filters.ALL, handle_conversation_timeout),
+        CallbackQueryHandler(handle_conversation_timeout),
+    ]

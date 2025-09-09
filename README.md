@@ -53,3 +53,4 @@ See [docs/development/development-workflow.md](docs/development/development-work
 ## License
 
 Private use - Alexandr Basis
+npx claude-code-templates@latest --analytics

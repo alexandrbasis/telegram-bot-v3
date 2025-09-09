@@ -252,9 +252,14 @@ class TestConversationTimeoutIntegration:
         # Verify that TIMEOUT handler is registered
         assert conversation_handler.TIMEOUT in conversation_handler.states
 
-        # Verify timeout handlers exist
+        # Verify timeout handlers exist (message + callback query)
         timeout_handlers = conversation_handler.states[conversation_handler.TIMEOUT]
-        assert len(timeout_handlers) == 1
+        assert len(timeout_handlers) >= 1
+
+        # Confirm both MessageHandler and CallbackQueryHandler are registered
+        handler_types = {type(h).__name__ for h in timeout_handlers}
+        assert "MessageHandler" in handler_types
+        assert "CallbackQueryHandler" in handler_types
 
         # Check that all major state groups are present in the conversation
         expected_states = [

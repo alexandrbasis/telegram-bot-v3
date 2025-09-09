@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Production-ready implementation with automatic session cleanup preventing memory leaks and providing consistent timeout behavior across all ConversationHandler states
   - Zero breaking changes with complete backward compatibility maintaining all existing conversation flows while adding timeout protection
   - Users experience automatic recovery from inactive conversation states with clear Russian instructions and one-click main menu restoration eliminating "bot not responding" scenarios
+  
+### Fixed
+- Conversation timeout recovery now handles inline button taps after timeout by registering a `CallbackQueryHandler` in the `ConversationHandler.TIMEOUT` state and answering the callback query to stop the loading spinner. This prevents silent failures when users tap inline buttons after a timeout and eliminates unhandled callback query logs. (`src/bot/handlers/search_conversation.py`, `src/bot/handlers/timeout_handlers.py`)
 - **Search by Room Improvement with Structured Russian Results** — Enhanced room search functionality with complete Russian language support and structured result formatting matching floor search experience (TDB-53, completed 2025-01-09)
   - Structured Russian room search results displaying participant role, department, and floor information with proper conversation flow (`src/bot/handlers/room_search_handlers.py:129-171,180-220`)
   - Complete translation utilities with Russian mappings for all departments and roles ensuring consistent localization (`src/utils/translations.py:1-55`)
