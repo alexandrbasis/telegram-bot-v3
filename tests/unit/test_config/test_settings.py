@@ -208,6 +208,7 @@ class TestTelegramSettings:
             assert settings.max_message_length == 4096
             assert settings.command_timeout == 30
             assert settings.admin_user_ids == []
+            assert settings.conversation_timeout_minutes == 30  # Default 30 minutes
 
     def test_environment_variable_loading(self):
         """Test loading Telegram settings from environment."""
@@ -218,6 +219,7 @@ class TestTelegramSettings:
             "TELEGRAM_MAX_MESSAGE_LENGTH": "2048",
             "TELEGRAM_COMMAND_TIMEOUT": "60",
             "TELEGRAM_ADMIN_IDS": "123456789,987654321",
+            "TELEGRAM_CONVERSATION_TIMEOUT_MINUTES": "45",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -229,6 +231,7 @@ class TestTelegramSettings:
             assert settings.max_message_length == 2048
             assert settings.command_timeout == 60
             assert settings.admin_user_ids == [123456789, 987654321]
+            assert settings.conversation_timeout_minutes == 45
 
     def test_admin_ids_parsing(self):
         """Test parsing of admin user IDs from comma-separated string."""
@@ -258,14 +261,51 @@ class TestTelegramSettings:
             "TELEGRAM_BOT_TOKEN": "valid_token",
             "TELEGRAM_MAX_MESSAGE_LENGTH": "5000",  # Too long
         }
-
+        
         with patch.dict(os.environ, env_vars, clear=True):
             settings = TelegramSettings()
-
             with pytest.raises(ValueError) as exc_info:
                 settings.validate()
-
             assert "Max message length" in str(exc_info.value)
+
+    def test_validation_conversation_timeout_negative(self):
+        """Test validation failure with negative conversation timeout."""
+        env_vars = {
+            "TELEGRAM_BOT_TOKEN": "valid_token",
+            "TELEGRAM_CONVERSATION_TIMEOUT_MINUTES": "-10",
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = TelegramSettings()
+            with pytest.raises(ValueError) as exc_info:
+                settings.validate()
+            assert "conversation timeout must be positive" in str(exc_info.value).lower()
+
+    def test_validation_conversation_timeout_zero(self):
+        """Test validation failure with zero conversation timeout."""
+        env_vars = {
+            "TELEGRAM_BOT_TOKEN": "valid_token",
+            "TELEGRAM_CONVERSATION_TIMEOUT_MINUTES": "0",
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = TelegramSettings()
+            with pytest.raises(ValueError) as exc_info:
+                settings.validate()
+            assert "conversation timeout must be positive" in str(exc_info.value).lower()
+
+    def test_validation_conversation_timeout_too_large(self):
+        """Test validation failure with excessive conversation timeout."""
+        env_vars = {
+            "TELEGRAM_BOT_TOKEN": "valid_token",
+            "TELEGRAM_CONVERSATION_TIMEOUT_MINUTES": "1441",  # > 24 hours
+        }
+        
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = TelegramSettings()
+            with pytest.raises(ValueError) as exc_info:
+                settings.validate()
+            assert "conversation timeout must be between 1 and 1440 minutes" in str(exc_info.value).lower()
 
 
 class TestLoggingSettings:

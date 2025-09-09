@@ -83,7 +83,7 @@ Target: 90%+ coverage across all implementation areas
 ---
 
 # TECHNICAL TASK
-**Status**: ✅ Plan Reviewed | **Reviewed by**: Plan Reviewer Agent | **Date**: 2025-01-09
+**Status**: 🟡 In Progress | **Started by**: Implementation Agent | **Date**: 2025-01-09
 
 ## Technical Requirements
 - [ ] Add conversation_timeout parameter to ConversationHandler configuration
@@ -143,6 +143,6 @@ Target: 90%+ coverage across all implementation areas
 - **URL**: https://linear.app/alexandrbasis/issue/AGB-37/add-conversation-timeout-handler-to-telegram-bot
 
 ### PR Details
-- **Branch**: [Will be added during implementation]
+- **Branch**: feature/AGB-37-conversation-timeout-handler
 - **PR URL**: [Will be added during implementation]
 - **Status**: [Draft/Review/Merged]
