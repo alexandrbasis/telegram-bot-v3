@@ -48,7 +48,6 @@ from src.bot.handlers.search_handlers import (
     start_command,
 )
 from src.bot.handlers.timeout_handlers import handle_conversation_timeout
-from src.config.settings import get_telegram_settings
 from src.bot.keyboards.search_keyboards import (
     NAV_BACK_TO_SEARCH_MODES,
     NAV_CANCEL,
@@ -57,6 +56,7 @@ from src.bot.keyboards.search_keyboards import (
     NAV_SEARCH_NAME,
     NAV_SEARCH_ROOM,
 )
+from src.config.settings import get_telegram_settings
 
 logger = logging.getLogger(__name__)
 

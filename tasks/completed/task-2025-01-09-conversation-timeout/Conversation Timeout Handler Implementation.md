@@ -168,7 +168,19 @@ Target: 90%+ coverage across all implementation areas
 - **ID**: AGB-37
 - **URL**: https://linear.app/alexandrbasis/issue/AGB-37/add-conversation-timeout-handler-to-telegram-bot
 
-### PR Details
-- **Branch**: feature/AGB-37-conversation-timeout-handler
-- **PR URL**: [Will be added during implementation]
-- **Status**: [Draft/Review/Merged]
+### PR Traceability
+- **PR ID/URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/31
+- **Branch**: feature/AGB-37-conversation-timeout-handler → main
+- **Status**: ✅ APPROVED → ✅ MERGED
+- **SHA**: 8058c7c
+- **Date**: 2025-09-09
+
+## Task Completion
+**Date**: 2025-09-09  
+**Status**: ✅ COMPLETED AND MERGED
+
+**Overview**: Implemented comprehensive conversation timeout handling with automatic inactive session recovery, Russian user interface ("Сессия истекла, начните заново"), and configurable timeout periods. Universal integration across all ConversationHandler states ensures consistent user experience.
+
+**Quality**: Code review passed (2 rounds), all tests passed (747 tests, 86% coverage), CI green, flake8 and mypy clean
+
+**Impact**: Eliminates "bot not responding" scenarios, provides clear recovery path for stuck users, prevents memory leaks from stale conversation states. Zero breaking changes with complete backward compatibility.

@@ -51,9 +51,7 @@ async def handle_conversation_timeout(
     # Send timeout message with main menu keyboard for recovery
     try:
         await context.bot.send_message(
-            chat_id=chat_id,
-            text=timeout_message,
-            reply_markup=get_main_menu_keyboard()
+            chat_id=chat_id, text=timeout_message, reply_markup=get_main_menu_keyboard()
         )
         logger.info(f"Sent timeout message to chat {chat_id}")
     except Exception as e:
