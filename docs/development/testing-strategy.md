@@ -28,15 +28,28 @@ Comprehensive testing strategy following the 3-layer architecture with emphasis 
 ```
 tests/
 ├── unit/
-│   ├── test_bot/
-│   │   ├── test_handlers/
-│   │   └── test_keyboards/
+│   ├── test_bot_handlers/
+│   │   ├── test_search_handlers.py      # Includes equivalence tests for start/main menu
+│   │   ├── test_cancel_handler.py       # Cancel handler consistency tests
+│   │   └── test_edit_participant_handlers.py
+│   ├── test_bot_keyboards/
 │   ├── test_services/
 │   └── test_data/
 ├── integration/
+│   └── test_bot_handlers/
+│       └── test_timeout_recovery_integration.py  # Timeout recovery with text buttons
 ├── fixtures/
 └── conftest.py
 ```
+
+### Main Menu Start Command Equivalence Testing (2025-09-09)
+**Test Coverage**: 12 comprehensive tests across multiple files ensuring Main Menu button provides identical functionality to `/start` command.
+
+**Test Categories**:
+1. **Shared Helper Tests**: Validation of `initialize_main_menu_session()` and `get_welcome_message()` functions
+2. **Equivalence Tests**: Verification that both handlers produce identical results (state, messages, keyboard)
+3. **Integration Tests**: Text button entry points for timeout recovery
+4. **Cancel Handler Tests**: Consistency with shared initialization helpers
 
 ## Participant Editing Interface Testing
 
@@ -631,6 +644,7 @@ test_floor_search_russian_formatting()
 - [x] ✅ **Performance validation ensuring <3 second response times**
 - [x] ✅ **End-to-end workflow testing with real Airtable field integration**
 - [x] ✅ **Alphanumeric room number support and multi-room floor grouping**
+- [x] ✅ **Main Menu Start Command Equivalence Testing (2025-09-09)**: Comprehensive test coverage for shared initialization helpers, start/main menu button equivalence, timeout recovery entry points, and cancel handler consistency
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 

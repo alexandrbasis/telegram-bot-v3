@@ -24,9 +24,11 @@ from src.bot.handlers.search_handlers import (
     SearchStates,
     back_to_search_modes,
     create_participant_selection_keyboard,
+    get_welcome_message,
     handle_search_floor_mode,
     handle_search_name_mode,
     handle_search_room_mode,
+    initialize_main_menu_session,
     main_menu_button,
     process_name_search,
     process_name_search_enhanced,
@@ -118,6 +120,37 @@ class TestStartCommandHandler:
         # Should initialize user_data
         assert "search_results" in mock_context.user_data
         assert mock_context.user_data["search_results"] == []
+        assert "force_direct_name_input" in mock_context.user_data
+        assert mock_context.user_data["force_direct_name_input"] is True
+
+    @patch("src.bot.handlers.search_handlers.initialize_main_menu_session")
+    @patch("src.bot.handlers.search_handlers.get_welcome_message")
+    @pytest.mark.asyncio
+    async def test_start_command_uses_shared_initialization(
+        self,
+        mock_get_welcome_message,
+        mock_initialize_main_menu_session,
+        mock_update_message,
+        mock_context,
+    ):
+        """Test that start_command uses shared initialization helpers."""
+        # Setup mocks
+        mock_get_welcome_message.return_value = "Test welcome message"
+
+        # Execute handler
+        result = await start_command(mock_update_message, mock_context)
+
+        # Verify shared helpers were called
+        mock_initialize_main_menu_session.assert_called_once_with(mock_context)
+        mock_get_welcome_message.assert_called_once()
+
+        # Verify message uses shared welcome text
+        mock_update_message.message.reply_text.assert_called_once()
+        call_args = mock_update_message.message.reply_text.call_args
+        assert "Test welcome message" in call_args[1]["text"]
+
+        # Should return correct state
+        assert result == SearchStates.MAIN_MENU
 
 
 class TestSearchButtonHandler:
@@ -420,6 +453,55 @@ class TestMainMenuButtonHandler:
 
         # Should return MAIN_MENU state
         assert result == SearchStates.MAIN_MENU
+
+    @patch("src.bot.handlers.search_handlers.initialize_main_menu_session")
+    @patch("src.bot.handlers.search_handlers.get_welcome_message")
+    @pytest.mark.asyncio
+    async def test_main_menu_button_uses_shared_initialization(
+        self,
+        mock_get_welcome_message,
+        mock_initialize_main_menu_session,
+        mock_callback_query,
+        mock_context,
+    ):
+        """Test that main_menu_button uses shared initialization helpers."""
+        # Setup mocks
+        mock_get_welcome_message.return_value = "Test unified welcome message"
+
+        # Execute handler
+        result = await main_menu_button(mock_callback_query, mock_context)
+
+        # Verify shared helpers were called
+        mock_initialize_main_menu_session.assert_called_once_with(mock_context)
+        mock_get_welcome_message.assert_called_once()
+
+        # Verify message uses shared welcome text
+        mock_callback_query.callback_query.message.edit_text.assert_called_once()
+        edit_call_args = mock_callback_query.callback_query.message.edit_text.call_args
+        assert "Test unified welcome message" in edit_call_args.kwargs["text"]
+
+        # Should return correct state
+        assert result == SearchStates.MAIN_MENU
+
+    @patch("src.bot.handlers.search_handlers.get_welcome_message")
+    @pytest.mark.asyncio
+    async def test_main_menu_button_equivalent_welcome_message(
+        self, mock_get_welcome_message, mock_callback_query, mock_context
+    ):
+        """Test that main_menu_button shows equivalent welcome message as start_command."""
+        # Setup mock to return the unified message
+        unified_message = (
+            "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+        )
+        mock_get_welcome_message.return_value = unified_message
+
+        # Execute handler
+        await main_menu_button(mock_callback_query, mock_context)
+
+        # Verify the unified welcome message is used
+        mock_get_welcome_message.assert_called_once()
+        edit_call_args = mock_callback_query.callback_query.message.edit_text.call_args
+        assert unified_message in edit_call_args.kwargs["text"]
 
 
 class TestHandlerIntegration:
@@ -1283,3 +1365,223 @@ class TestSearchKeyboards:
         # Verify keyboard properties
         assert keyboard.resize_keyboard is True
         assert keyboard.one_time_keyboard is False
+
+
+class TestSharedInitializationHelpers:
+    """Test shared initialization helper functions for start_command and main_menu_button equivalence."""
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    def test_initialize_main_menu_session(self, mock_context):
+        """Test that initialize_main_menu_session properly sets user_data."""
+        # Execute initialization
+        initialize_main_menu_session(mock_context)
+
+        # Verify user_data is properly initialized
+        assert "search_results" in mock_context.user_data
+        assert mock_context.user_data["search_results"] == []
+        assert "force_direct_name_input" in mock_context.user_data
+        assert mock_context.user_data["force_direct_name_input"] is True
+
+    def test_initialize_main_menu_session_preserves_other_data(self, mock_context):
+        """Test that initialize_main_menu_session preserves existing user_data."""
+        # Add some existing data
+        mock_context.user_data["existing_key"] = "existing_value"
+        mock_context.user_data["current_participant"] = "some_participant"
+
+        # Execute initialization
+        initialize_main_menu_session(mock_context)
+
+        # Verify existing data is preserved
+        assert mock_context.user_data["existing_key"] == "existing_value"
+        assert mock_context.user_data["current_participant"] == "some_participant"
+
+        # Verify new data is set
+        assert mock_context.user_data["search_results"] == []
+        assert mock_context.user_data["force_direct_name_input"] is True
+
+    def test_get_welcome_message(self):
+        """Test that get_welcome_message returns unified Russian welcome text."""
+        message = get_welcome_message()
+
+        # Should contain key Russian phrases
+        assert "Добро пожаловать" in message
+        assert "Tres Dias" in message
+        assert "🙏" in message
+        assert "участников" in message
+
+        # Should be a string
+        assert isinstance(message, str)
+        assert len(message.strip()) > 0
+
+    def test_get_welcome_message_consistency(self):
+        """Test that get_welcome_message returns consistent text across multiple calls."""
+        message1 = get_welcome_message()
+        message2 = get_welcome_message()
+
+        # Should return identical text every time
+        assert message1 == message2
+
+
+class TestStartCommandMainMenuButtonEquivalence:
+    """Test equivalence between start_command and main_menu_button functionality."""
+
+    @pytest.fixture
+    def mock_update_message(self):
+        """Mock Update object for start_command (message)."""
+        update = Mock(spec=Update)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+
+        user.id = 123456
+        user.first_name = "TestUser"
+
+        message.from_user = user
+        message.reply_text = AsyncMock()
+
+        update.message = message
+        update.effective_user = user
+
+        return update
+
+    @pytest.fixture
+    def mock_update_callback(self):
+        """Mock Update object for main_menu_button (callback query)."""
+        update = Mock(spec=Update)
+        callback_query = Mock()
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+
+        user.id = 123456
+        user.first_name = "TestUser"
+        user.username = "testuser"
+
+        callback_query.from_user = user
+        callback_query.data = "main_menu"
+        callback_query.answer = AsyncMock()
+        callback_query.message = message
+
+        message.edit_text = AsyncMock()
+        message.reply_text = AsyncMock()
+
+        update.callback_query = callback_query
+        update.effective_user = user
+        update.message = None
+
+        return update
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.mark.asyncio
+    async def test_start_command_and_main_menu_button_equivalent_initialization(
+        self, mock_update_message, mock_update_callback, mock_context
+    ):
+        """Test that both handlers initialize user_data identically."""
+        # Test start_command initialization
+        context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context1.user_data = {}
+        await start_command(mock_update_message, context1)
+
+        # Test main_menu_button initialization
+        context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context2.user_data = {}
+        await main_menu_button(mock_update_callback, context2)
+
+        # Both should have identical user_data initialization
+        assert (
+            context1.user_data["search_results"]
+            == context2.user_data["search_results"]
+            == []
+        )
+        assert (
+            context1.user_data["force_direct_name_input"]
+            == context2.user_data["force_direct_name_input"]
+            == True
+        )
+
+    @pytest.mark.asyncio
+    async def test_start_command_and_main_menu_button_equivalent_welcome_message(
+        self, mock_update_message, mock_update_callback, mock_context
+    ):
+        """Test that both handlers use identical welcome message."""
+        # Test start_command welcome message
+        context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context1.user_data = {}
+        await start_command(mock_update_message, context1)
+
+        start_call_args = mock_update_message.message.reply_text.call_args
+        start_welcome_message = start_call_args[1]["text"]
+
+        # Test main_menu_button welcome message
+        context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context2.user_data = {}
+        await main_menu_button(mock_update_callback, context2)
+
+        main_menu_edit_args = (
+            mock_update_callback.callback_query.message.edit_text.call_args
+        )
+        main_menu_welcome_message = main_menu_edit_args[1]["text"]
+
+        # Both should use identical welcome message
+        assert start_welcome_message == main_menu_welcome_message
+        assert "Добро пожаловать в бот Tres Dias! 🙏" in start_welcome_message
+        assert "Выберите тип поиска участников" in start_welcome_message
+
+    @pytest.mark.asyncio
+    async def test_start_command_and_main_menu_button_equivalent_return_state(
+        self, mock_update_message, mock_update_callback, mock_context
+    ):
+        """Test that both handlers return identical conversation state."""
+        # Test start_command return state
+        context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context1.user_data = {}
+        result1 = await start_command(mock_update_message, context1)
+
+        # Test main_menu_button return state
+        context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context2.user_data = {}
+        result2 = await main_menu_button(mock_update_callback, context2)
+
+        # Both should return identical conversation state
+        assert result1 == result2 == SearchStates.MAIN_MENU
+
+    @pytest.mark.asyncio
+    async def test_start_command_and_main_menu_button_keyboard_equivalence(
+        self, mock_update_message, mock_update_callback, mock_context
+    ):
+        """Test that both handlers provide equivalent keyboard functionality."""
+        # Test start_command keyboard
+        context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context1.user_data = {}
+        await start_command(mock_update_message, context1)
+
+        start_call_args = mock_update_message.message.reply_text.call_args
+        start_keyboard = start_call_args[1]["reply_markup"]
+
+        # Test main_menu_button keyboard (from the reply_text call)
+        context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context2.user_data = {}
+        await main_menu_button(mock_update_callback, context2)
+
+        main_menu_reply_args = (
+            mock_update_callback.callback_query.message.reply_text.call_args
+        )
+        main_menu_keyboard = main_menu_reply_args[1]["reply_markup"]
+
+        # Both should provide ReplyKeyboardMarkup
+        assert isinstance(start_keyboard, ReplyKeyboardMarkup)
+        assert isinstance(main_menu_keyboard, ReplyKeyboardMarkup)
+
+        # Both should have the same keyboard structure
+        assert len(start_keyboard.keyboard) == len(main_menu_keyboard.keyboard)
+        assert start_keyboard.resize_keyboard == main_menu_keyboard.resize_keyboard

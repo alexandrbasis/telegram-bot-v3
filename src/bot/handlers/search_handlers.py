@@ -78,6 +78,35 @@ def get_user_interaction_logger():
 NAV_SEARCH = "🔍 Поиск участников"
 
 
+def initialize_main_menu_session(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Initialize main menu session state for both start_command and main_menu_button.
+
+    Sets up common user_data keys required for search functionality while
+    preserving any existing user data.
+
+    Args:
+        context: Bot context containing user_data
+    """
+    # Initialize search results to empty list
+    context.user_data["search_results"] = []
+    # Flag conversation-driven flows to prefer direct name entry upon pressing search
+    context.user_data["force_direct_name_input"] = True
+
+
+def get_welcome_message() -> str:
+    """
+    Get unified Russian welcome message for both start_command and main_menu_button.
+
+    Provides consistent welcome text to ensure equivalent user experience
+    regardless of entry point (start command or main menu button).
+
+    Returns:
+        str: Russian welcome message text
+    """
+    return "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+
+
 def create_participant_selection_keyboard(
     search_results: List[SearchResult],
 ) -> InlineKeyboardMarkup:
@@ -144,15 +173,11 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user = update.effective_user
     logger.info(f"User {user.id} ({user.first_name}) started the bot")
 
-    # Initialize user data
-    context.user_data["search_results"] = []
-    # Flag conversation-driven flows to prefer direct name entry upon pressing search
-    context.user_data["force_direct_name_input"] = True
+    # Initialize user data using shared helper
+    initialize_main_menu_session(context)
 
-    # Send Russian welcome message with search button
-    welcome_message = (
-        "Добро пожаловать в бот Tres Dias! 🙏\n\n" "Выберите тип поиска участников."
-    )
+    # Get unified welcome message
+    welcome_message = get_welcome_message()
 
     await update.message.reply_text(
         text=welcome_message,
@@ -449,13 +474,11 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     logger.info(f"User {user.id} returned to main menu")
 
-    # Clear search results
-    context.user_data["search_results"] = []
+    # Initialize user data using shared helper
+    initialize_main_menu_session(context)
 
-    # Return to main menu
-    welcome_message = (
-        "Добро пожаловать в бот Tres Dias! 🙏\n\n" "Ищите участников по имени."
-    )
+    # Get unified welcome message
+    welcome_message = get_welcome_message()
 
     if query:
         await query.message.edit_text(text=welcome_message)
@@ -487,12 +510,11 @@ async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user = update.effective_user
     logger.info(f"User {user.id} cancelled search input")
 
-    # Clear transient search state
-    context.user_data["search_results"] = []
+    # Initialize user data using shared helper to fully reset state
+    initialize_main_menu_session(context)
 
-    welcome_message = (
-        "Добро пожаловать в бот Tres Dias! 🙏\n\n" "Ищите участников по имени."
-    )
+    # Get unified welcome message
+    welcome_message = get_welcome_message()
 
     await update.message.reply_text(
         text=welcome_message,

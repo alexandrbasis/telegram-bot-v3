@@ -8,6 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Main Menu Start Command Equivalence with Text Button Entry Points** - Complete equivalence implementation ensuring Main Menu button provides identical functionality to /start command with comprehensive timeout recovery (AGB-40, completed 2025-09-09)
+  - Shared initialization helpers providing unified behavior between start_command and main_menu_button handlers (`src/bot/handlers/search_handlers.py:26-35`) 
+    - `initialize_main_menu_session(context)` centralizing user_data initialization with search_results=[] and force_direct_name_input=True
+    - `get_welcome_message()` providing consistent Russian welcome text "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников." across all entry points
+  - Enhanced main_menu_button handler using shared helpers while maintaining callback query handling with edit_message_text operations (`src/bot/handlers/search_handlers.py:49-67`)
+  - Refactored start_command handler to use shared initialization function eliminating code duplication while preserving message-based context handling (`src/bot/handlers/search_handlers.py:36-47`)
+  - Text button entry points for timeout recovery enabling conversation re-entry without /start command (`src/bot/handlers/search_conversation.py:20-23`)
+    - MessageHandler for "🔍 Поиск участников" text button supporting direct search mode entry after timeout
+    - MessageHandler for Main Menu text button using main_menu_button handler for consistent behavior
+    - Preserved existing CallbackQueryHandler for backward compatibility with inline buttons
+  - Enhanced cancel_search handler consistency using shared helpers instead of hardcoded messages ensuring unified user experience (`src/bot/handlers/search_handlers.py:508-524`)
+  - Complete conversation state integration with proper entry point registration across SearchStates, EditStates, RoomSearchStates, and FloorSearchStates
+  - Comprehensive test coverage with 766 tests passing at 87% coverage including equivalence validation, timeout recovery, and integration testing
+    - TestSharedInitializationHelpers class with 4 tests validating shared helper functions (`tests/unit/test_bot_handlers/test_search_handlers.py`)
+    - TestStartCommandMainMenuButtonEquivalence class with 8 comprehensive equivalence tests verifying identical initialization, welcome messages, and keyboard functionality
+    - TestTimeoutRecoveryIntegration class with timeout recovery validation ensuring text buttons reactivate conversation after ConversationHandler.TIMEOUT (`tests/integration/test_bot_handlers/test_timeout_recovery_integration.py:1-268`)
+    - TestCancelHandler class with 3 tests ensuring cancel_search handler uses shared helpers for consistent behavior (`tests/unit/test_bot_handlers/test_cancel_handler.py:1-130`)
+  - Enhanced documentation suite covering shared initialization patterns, Main Menu Button Equivalence specifications, equivalence testing strategy, and ConversationHandler configuration enhancements
+    - Updated architecture overview with shared initialization helpers implementation details and conversation handler enhancement patterns
+    - Enhanced bot commands documentation with comprehensive Main Menu Button Equivalence section including technical implementation and user experience specifications
+    - Added comprehensive testing strategy documentation for equivalence testing methodology and timeout recovery validation procedures
+    - Updated API design documentation with enhanced ConversationHandler configuration and entry point management specifications
+  - Zero breaking changes maintaining complete backward compatibility with existing conversation flows, keyboard layouts, and user interaction patterns
+  - Users experience consistent bot reactivation using Main Menu button after periods of inactivity, eliminating need for manual /start commands and ensuring reliable navigation from any conversation state or timeout scenario
+
+### Added
 - **Conversation Timeout Handler with Russian Session Recovery** — Automatic conversation timeout handling preventing users from getting stuck in inactive conversation states with configurable timeout periods and clear recovery options (AGB-37, completed 2025-01-09)
   - Configurable conversation timeout system with TELEGRAM_CONVERSATION_TIMEOUT_MINUTES environment variable supporting 1-1440 minutes range with 30-minute default (`src/config/settings.py:162-171`)
   - Automatic conversation timeout handler displaying Russian timeout message "Сессия истекла, начните заново" with main menu recovery button (`src/bot/handlers/timeout_handlers.py:1-58`)

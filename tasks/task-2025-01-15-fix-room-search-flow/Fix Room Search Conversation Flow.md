@@ -1,0 +1,182 @@
+# Task: Fix Room Search Conversation Flow
+**Created**: 2025-01-15 | **Status**: Ready for Implementation
+
+## Tracking & Progress
+### Linear Issue
+- **ID**: AGB-39
+- **URL**: https://linear.app/alexandrbasis/issue/AGB-39/fix-room-search-conversation-flow-duplicate-messages-and-broken-cancel
+
+### PR Details
+- **Branch**: basisalexandr/agb-39-fix-room-search-conversation-flow-duplicate-messages-and
+- **PR URL**: [Will be added during implementation]
+- **Status**: [Draft/Review/Merged]
+
+## Business Requirements (Gate 1 - Approval Required)
+**Status**: ✅ Approved | **Approved by**: User | **Date**: 2025-01-15
+
+### Business Context
+Fix the room search conversation flow to provide a smooth user experience by eliminating duplicate messages and premature validation errors.
+
+### Primary Objective
+Ensure that when a user clicks "search by room", they receive only one message asking for the room number and the bot properly waits for their input without showing validation errors.
+
+### Use Cases
+1. **Happy Path Room Search Flow**
+   - User clicks "search by room" button
+   - Bot sends single message: "Пожалуйста, введите номер комнаты:"
+   - Bot waits for user input
+   - User enters room number (e.g., "201", "A10", "B205")
+   - Bot validates and processes the search
+   - **Acceptance Criteria**: Only one message appears after clicking search button, no premature error messages
+
+2. **Cancel During Room Number Input**
+   - User clicks "search by room" button
+   - Bot prompts for room number
+   - User clicks "Отмена" button
+   - Bot returns to main menu without validation errors
+   - **Acceptance Criteria**: Cancel button properly exits room search flow and returns to main menu
+
+3. **Error Handling After Input**
+   - User enters invalid room number after being prompted
+   - Bot shows appropriate error message with examples
+   - Bot asks for room number again
+   - **Acceptance Criteria**: Validation only occurs after user provides input, not before
+
+### Success Metrics
+- [ ] No duplicate messages when initiating room search
+- [ ] No premature validation error messages
+- [ ] Single clean prompt message when room search is selected
+- [ ] Cancel button properly returns to main menu without validation errors
+- [ ] Proper conversation state management during room search flow
+
+### Constraints
+- Must maintain existing room number validation logic (supporting both digits and letters)
+- Must preserve existing conversation handler structure
+- Must not break other search functionality (by name, etc.)
+
+## Test Plan (Gate 2 - Approval Required)
+**Status**: ✅ Approved | **Approved by**: User | **Date**: 2025-01-15
+
+### Test Coverage Strategy
+Target: 90%+ coverage across all implementation areas
+
+### Proposed Test Categories
+
+#### Business Logic Tests
+- [ ] Test room search initiation sends only one message
+- [ ] Test cancel button during room input returns to main menu
+- [ ] Test room number validation only after user input
+- [ ] Test valid room number formats (digits only, alphanumeric)
+- [ ] Test conversation state transitions during room search flow
+
+#### State Transition Tests
+- [ ] Test transition from main menu to room search prompt state
+- [ ] Test transition from room search prompt to waiting for input state
+- [ ] Test transition from waiting for input to main menu on cancel
+- [ ] Test transition from waiting for input to search results on valid input
+- [ ] Test transition from waiting for input back to prompt on invalid input
+
+#### Error Handling Tests
+- [ ] Test no premature validation messages on room search initiation
+- [ ] Test proper error message format for invalid room numbers
+- [ ] Test cancel button handling during different conversation states
+- [ ] Test conversation recovery after validation errors
+
+#### Integration Tests
+- [ ] Test room search conversation handler integration with main conversation
+- [ ] Test keyboard button responses for room search and cancel
+- [ ] Test message flow consistency across conversation states
+
+#### User Interaction Tests
+- [ ] Test "search by room" button click response
+- [ ] Test "Отмена" button click during room input
+- [ ] Test room number input processing
+- [ ] Test message formatting and user feedback
+
+### Test-to-Requirement Mapping
+- Business Requirement 1 (Single message on room search) → Tests: room search initiation, state transitions, message counting
+- Business Requirement 2 (Cancel returns to main menu) → Tests: cancel button handling, state transitions to main menu
+- Business Requirement 3 (Validation only after input) → Tests: premature validation prevention, error handling flow
+
+## TECHNICAL TASK
+**Status**: ✅ Plan Reviewed | **Reviewed by**: Plan Reviewer Agent | **Date**: 2025-01-15
+
+### Technical Requirements
+- [ ] Fix `handle_search_room_mode` to mirror floor search pattern: send a single prompt and transition to waiting state (no delegation to command handler)
+- [ ] Add `NAV_CANCEL` handler to `RoomSearchStates.WAITING_FOR_ROOM` and exclude cancel from text-input filter
+- [ ] Ensure validation runs only after user provides room input
+- [ ] Preserve existing room validation (alphanumeric allowed, must contain digits) and message copy
+- [ ] Keep `/search_room` command entry point behavior unchanged for direct command usage
+- [ ] Do not break name and floor search flows; preserve conversation integration
+
+### Implementation Steps & Change Log
+
+- [ ] Step 1: Fix Room Search Mode Handler
+  - [ ] Sub-step 1.1: Update `handle_search_room_mode()` in `search_handlers.py`
+    - **Path**: `src/bot/handlers/search_handlers.py:629`
+    - **Change**: Stop delegating to `handle_room_search_command`. Instead, send `InfoMessages.ENTER_ROOM_NUMBER` with `get_waiting_for_room_keyboard()` and return `RoomSearchStates.WAITING_FOR_ROOM`.
+    - **Accept**: Selecting "🚪 По комнате" sends exactly one prompt: "Введите номер комнаты для поиска:" and transitions to `RoomSearchStates.WAITING_FOR_ROOM`.
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_handlers.py::TestSearchModeSelection::test_handle_search_room_mode`
+    - **Changelog**: Updated `src/bot/handlers/search_handlers.py:629–651` to mirror floor mode pattern.
+
+- [ ] Step 2: Add Missing Cancel Handler to Room Waiting State
+  - [ ] Sub-step 2.1: Add `NAV_CANCEL` handler in room waiting state in `search_conversation.py`
+    - **Path**: `src/bot/handlers/search_conversation.py:159`
+    - **Change**: Add `MessageHandler(filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search)` under `RoomSearchStates.WAITING_FOR_ROOM`.
+    - **Accept**: Pressing "❌ Отмена" during room input returns to main menu without triggering validation.
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_conversation_room.py` (add cancel-in-room-wait test)
+    - **Changelog**: Added cancel handler in `RoomSearchStates.WAITING_FOR_ROOM` at `src/bot/handlers/search_conversation.py:169–176`.
+
+- [ ] Step 3: Exclude Cancel From Room Input Filter
+  - [ ] Sub-step 3.1: Update the room input `filters.TEXT` exclusion regex
+    - **Path**: `src/bot/handlers/search_conversation.py:162–168`
+    - **Change**: Extend the exclusion to `...|^{re.escape(NAV_CANCEL)}$|...` so "❌ Отмена" is not treated as room input.
+    - **Accept**: Cancel text never reaches `process_room_search()`; no premature validation occurs.
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_conversation_room.py` (assert cancel not processed as input)
+    - **Changelog**: Updated exclusion regex in room input handler at `src/bot/handlers/search_conversation.py:164`.
+
+- [ ] Step 4: Update Unit Tests
+  - [ ] Sub-step 4.1: Adjust search mode selection test for room
+    - **Path**: `tests/unit/test_bot_handlers/test_search_handlers.py:1194–1206`
+    - **Change**: Remove delegation patch; assert one prompt with room message and return `RoomSearchStates.WAITING_FOR_ROOM`.
+  - [ ] Sub-step 4.2: Add cancel tests for room waiting state
+    - **Path**: `tests/unit/test_bot_handlers/test_search_conversation_room.py`
+    - **Change**: Add tests that in `RoomSearchStates.WAITING_FOR_ROOM` pressing "❌ Отмена" routes to `cancel_search` and transitions to main menu; ensure cancel is excluded from text input.
+  - **Accept**: All unit tests pass and reflect single-prompt behavior and working cancel.
+  - **Run**: `./venv/bin/pytest tests/unit/test_bot_handlers/test_search_handlers.py tests/unit/test_bot_handlers/test_search_conversation_room.py -v`
+
+- [ ] Step 5: Integration Testing  
+  - [ ] Sub-step 5.1: Verify complete room search flow and cancel
+    - **Path**: `tests/integration/test_room_search_integration.py`
+    - **Change**: Optionally add cancel-in-room-wait integration test; existing command-without-param flow already asserts `WAITING_FOR_ROOM`.
+    - **Accept**: End-to-end room search has single prompts, proper cancel, and stable message flow.
+    - **Run**: `./venv/bin/pytest tests/integration/test_room_search_integration.py -v`
+
+### Task Splitting Evaluation
+**Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-01-15
+**Decision**: No Split Needed
+**Reasoning**: Task represents focused, interdependent changes (30 lines) addressing single user experience issue. Changes are tightly coupled and provide no independent value when separated. Single PR is more efficient for implementation and review.
+
+### Constraints
+- Must maintain existing room number validation: alphanumeric allowed, must contain at least one digit
+- Use standardized messages/keyboard: `InfoMessages.ENTER_ROOM_NUMBER`, `get_waiting_for_room_keyboard()`
+- Preserve `/search_room` command entry behavior (with and without param)
+- Preserve conversation structure and other search modes (name, floor)
+- Match floor search interaction pattern for consistency
+
+## Implementation Notes (New)
+- Room mode selection now mirrors floor mode selection:
+  - Name mode: `handle_search_name_mode()` prompts and returns `WAITING_FOR_NAME`
+  - Floor mode: `handle_search_floor_mode()` prompts and returns `WAITING_FOR_FLOOR`
+  - Room mode: update to prompt and return `WAITING_FOR_ROOM` (no delegation)
+- Room waiting state should handle: text input → `process_room_search`, main menu → `main_menu_button`, back to search modes → `back_to_search_modes`, cancel → `cancel_search`.
+
+## File References (for reviewers)
+- `src/bot/handlers/search_handlers.py:629` — `handle_search_room_mode()`
+- `src/bot/handlers/search_conversation.py:159` — `RoomSearchStates.WAITING_FOR_ROOM` handlers block
+- `src/bot/handlers/room_search_handlers.py:102` — `process_room_search_with_number()` validation and results formatting
+- `src/bot/messages.py:94` — `InfoMessages.ENTER_ROOM_NUMBER`
+- `src/bot/keyboards/search_keyboards.py:58` — `get_waiting_for_room_keyboard()`
+- `tests/unit/test_bot_handlers/test_search_handlers.py:1194` — room mode selection test
+- `tests/unit/test_bot_handlers/test_search_conversation_room.py:1` — room conversation tests
+- `tests/integration/test_room_search_integration.py:151` — asserts `WAITING_FOR_ROOM` without param

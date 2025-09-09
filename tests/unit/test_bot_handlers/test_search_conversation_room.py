@@ -21,8 +21,9 @@ class TestSearchConversationRoomIntegration:
         """Test that conversation handler includes room search command."""
         handler = get_search_conversation_handler()
 
-        # Check that we have 3 entry points (start, search_room, search_floor)
-        assert len(handler.entry_points) == 3
+        # Check that we have at least 3 entry points (start, search_room, search_floor)
+        # Note: We now have 6+ entry points including text button handlers for timeout recovery
+        assert len(handler.entry_points) >= 3
 
         # Check that search_room command is registered as entry point
         entry_commands = []
