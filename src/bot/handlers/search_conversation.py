@@ -90,6 +90,11 @@ def get_search_conversation_handler() -> ConversationHandler:
             CommandHandler("start", start_command),
             CommandHandler("search_room", handle_room_search_command),
             CommandHandler("search_floor", handle_floor_search_command),
+            # Entry points for text buttons to allow re-entry after timeout
+            MessageHandler(filters.Regex("^🔍 Поиск участников$"), search_button),
+            MessageHandler(filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), start_command),
+            # Keep inline button support for stale buttons
+            CallbackQueryHandler(search_button, pattern="^search$"),
         ],
         states={
             # === SEARCH STATES ===
