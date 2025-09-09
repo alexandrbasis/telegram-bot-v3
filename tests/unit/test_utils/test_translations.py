@@ -1,7 +1,11 @@
 import pytest
 
 from src.models.participant import Department, Role
-from src.utils.translations import DEPARTMENT_RUSSIAN, department_to_russian, role_to_russian
+from src.utils.translations import (
+    DEPARTMENT_RUSSIAN,
+    department_to_russian,
+    role_to_russian,
+)
 
 
 def test_department_russian_mapping_complete():

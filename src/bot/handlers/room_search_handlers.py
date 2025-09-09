@@ -19,8 +19,8 @@ from src.bot.keyboards.search_keyboards import (
 )
 from src.bot.messages import ErrorMessages, InfoMessages, RetryMessages
 from src.models.participant import Participant
-from src.utils.translations import department_to_russian, role_to_russian
 from src.services.service_factory import get_search_service
+from src.utils.translations import department_to_russian, role_to_russian
 
 logger = logging.getLogger(__name__)
 

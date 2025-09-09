@@ -9,7 +9,6 @@ from typing import Optional, Union
 
 from src.models.participant import Department, Role
 
-
 # Complete Russian translations for Department enum values
 DEPARTMENT_RUSSIAN = {
     Department.ROE.value: "РОЭ",

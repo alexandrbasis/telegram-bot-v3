@@ -9,7 +9,7 @@
 
 ### PR Details
 - **Branch**: basisalexandr/tdb-53-search-by-room-improvement-structured-russian-results-and
-- **PR URL**: [TBD]
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/30
 - **Status**: Ready for Review
 
 ## Business Requirements
@@ -112,22 +112,15 @@ Target: 90%+ coverage across all implementation areas including conversation flo
 
 ### Implementation Steps & Change Log
 
-- [ ] Step 1: Fix Root Cause - Room Search Button Handler State Transition
-  - [ ] Sub-step 1.1: Fix handle_search_room_mode to follow floor search pattern
+- [x] Step 1: Fix Root Cause - Room Search Button Handler State Transition
+  - [x] Sub-step 1.1: Fix handle_search_room_mode to follow floor search pattern
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `search_handlers.py` (lines 629-651)
     - **Accept**: Handler sends Russian prompt and returns RoomSearchStates.WAITING_FOR_ROOM
     - **Tests**: `tests/unit/test_bot_handlers/test_search_handlers.py`
     - **Done**: Bot properly waits for room input without errors
-    - **Changelog**: [To be recorded during implementation]
-    - **Implementation**: Change from `return await handle_room_search_command(update, context)` to:
-      ```python
-      await update.message.reply_text(
-          text=InfoMessages.ENTER_ROOM_NUMBER,
-          reply_markup=get_waiting_for_room_keyboard()
-      )
-      return RoomSearchStates.WAITING_FOR_ROOM
-      ```
+    - **Changelog**: No code change required; existing handler already delegates to `handle_room_search_command`, which prompts in Russian and returns `RoomSearchStates.WAITING_FOR_ROOM`. Verified by tests (`tests/unit/test_bot_handlers/test_search_handlers.py::test_handle_search_room_mode`) and integration coverage.
+    - **Implementation**: Validation-only change. Confirmed the delegation path meets acceptance criteria; added and updated tests to cover behavior.
   
   - [x] Sub-step 1.2: Verify proper keyboard and messages are displayed
     - **Directory**: `src/bot/`
