@@ -78,6 +78,35 @@ def get_user_interaction_logger():
 NAV_SEARCH = "🔍 Поиск участников"
 
 
+def initialize_main_menu_session(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Initialize main menu session state for both start_command and main_menu_button.
+    
+    Sets up common user_data keys required for search functionality while
+    preserving any existing user data.
+    
+    Args:
+        context: Bot context containing user_data
+    """
+    # Initialize search results to empty list
+    context.user_data["search_results"] = []
+    # Flag conversation-driven flows to prefer direct name entry upon pressing search
+    context.user_data["force_direct_name_input"] = True
+
+
+def get_welcome_message() -> str:
+    """
+    Get unified Russian welcome message for both start_command and main_menu_button.
+    
+    Provides consistent welcome text to ensure equivalent user experience
+    regardless of entry point (start command or main menu button).
+    
+    Returns:
+        str: Russian welcome message text
+    """
+    return "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+
+
 def create_participant_selection_keyboard(
     search_results: List[SearchResult],
 ) -> InlineKeyboardMarkup:

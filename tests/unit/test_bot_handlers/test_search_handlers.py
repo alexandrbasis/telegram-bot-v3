@@ -24,9 +24,11 @@ from src.bot.handlers.search_handlers import (
     SearchStates,
     back_to_search_modes,
     create_participant_selection_keyboard,
+    get_welcome_message,
     handle_search_floor_mode,
     handle_search_name_mode,
     handle_search_room_mode,
+    initialize_main_menu_session,
     main_menu_button,
     process_name_search,
     process_name_search_enhanced,
@@ -1283,3 +1285,64 @@ class TestSearchKeyboards:
         # Verify keyboard properties
         assert keyboard.resize_keyboard is True
         assert keyboard.one_time_keyboard is False
+
+
+class TestSharedInitializationHelpers:
+    """Test shared initialization helper functions for start_command and main_menu_button equivalence."""
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    def test_initialize_main_menu_session(self, mock_context):
+        """Test that initialize_main_menu_session properly sets user_data."""
+        # Execute initialization
+        initialize_main_menu_session(mock_context)
+        
+        # Verify user_data is properly initialized
+        assert "search_results" in mock_context.user_data
+        assert mock_context.user_data["search_results"] == []
+        assert "force_direct_name_input" in mock_context.user_data
+        assert mock_context.user_data["force_direct_name_input"] is True
+        
+    def test_initialize_main_menu_session_preserves_other_data(self, mock_context):
+        """Test that initialize_main_menu_session preserves existing user_data."""
+        # Add some existing data
+        mock_context.user_data["existing_key"] = "existing_value"
+        mock_context.user_data["current_participant"] = "some_participant"
+        
+        # Execute initialization
+        initialize_main_menu_session(mock_context)
+        
+        # Verify existing data is preserved
+        assert mock_context.user_data["existing_key"] == "existing_value"
+        assert mock_context.user_data["current_participant"] == "some_participant"
+        
+        # Verify new data is set
+        assert mock_context.user_data["search_results"] == []
+        assert mock_context.user_data["force_direct_name_input"] is True
+        
+    def test_get_welcome_message(self):
+        """Test that get_welcome_message returns unified Russian welcome text."""
+        message = get_welcome_message()
+        
+        # Should contain key Russian phrases
+        assert "Добро пожаловать" in message
+        assert "Tres Dias" in message
+        assert "🙏" in message
+        assert "участников" in message
+        
+        # Should be a string
+        assert isinstance(message, str)
+        assert len(message.strip()) > 0
+        
+    def test_get_welcome_message_consistency(self):
+        """Test that get_welcome_message returns consistent text across multiple calls."""
+        message1 = get_welcome_message()
+        message2 = get_welcome_message()
+        
+        # Should return identical text every time
+        assert message1 == message2
