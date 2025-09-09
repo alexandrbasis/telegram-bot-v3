@@ -89,13 +89,54 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult:
     return ValidationResult(is_valid=True, cleaned_value=floor_str)
 ```
 
-### Integration Testing and Validation (2025-09-05)
+### Russian Translation Utilities (Added 2025-01-09)
 
-#### Comprehensive Integration Test Coverage
-**Test Files**: 3 dedicated integration test files with 28 total tests
-- `test_room_search_integration.py`: 7 tests covering room search workflows
+#### Department and Role Translation Support
+Complete Russian translation mappings for all participant fields have been implemented to provide consistent localized user interface.
+
+**Translation File**: `src/utils/translations.py`
+
+```python
+# Department translations (all 13 departments)
+DEPARTMENT_RUSSIAN = {
+    Department.ROE: "ROE",
+    Department.CHAPEL: "Капелла", 
+    Department.SETUP: "Подготовка",
+    Department.PALANKA: "Паланка",
+    Department.ADMINISTRATION: "Администрация",
+    Department.KITCHEN: "Кухня",
+    Department.DECORATION: "Декорация",
+    Department.BELL: "Колокол",
+    Department.REFRESHMENT: "Освежение",
+    Department.WORSHIP: "Богослужение", 
+    Department.MEDIA: "Медиа",
+    Department.CLERGY: "Клир",
+    Department.RECTORATE: "Ректорат"
+}
+
+# Role translations
+ROLE_RUSSIAN = {
+    Role.CANDIDATE: "Кандидат",
+    Role.TEAM: "Команда"
+}
+
+# Translation helper function
+def translate_to_russian(value, translation_dict):
+    """Translate enum value to Russian with fallback to original value"""
+    return translation_dict.get(value, str(value))
+```
+
+#### Usage in Room Search Results
+These translations are used by the `format_room_results_russian()` function to display all participant information in Russian, providing a consistent and user-friendly experience.
+
+### Integration Testing and Validation (2025-01-09)
+
+#### Enhanced Test Coverage with Translation Validation  
+**Test Files**: Enhanced integration test coverage including translation testing
+- `test_room_search_integration.py`: Enhanced with Russian translation validation
 - `test_floor_search_integration.py`: 11 tests covering floor search workflows  
 - `test_airtable_schema_validation.py`: 10 tests validating field mappings
+- `test_translations.py`: New test file for translation utilities validation
 
 #### Verified Field Mappings
 Field IDs have been validated through comprehensive integration testing with actual Airtable API calls:

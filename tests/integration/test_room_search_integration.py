@@ -19,7 +19,7 @@ from src.bot.handlers.room_search_handlers import (
     process_room_search,
     process_room_search_with_number,
 )
-from src.models.participant import Participant
+from src.models.participant import Department, Participant, Role
 from src.services.service_factory import get_search_service
 
 
@@ -64,6 +64,8 @@ class TestRoomSearchIntegration:
                 full_name_ru="Иван Петров",
                 full_name_en="Ivan Petrov",
                 nickname="Vanya",
+                role=Role.TEAM,
+                department=Department.ADMINISTRATION,
                 floor=2,
                 room_number="201",
             ),
@@ -72,6 +74,8 @@ class TestRoomSearchIntegration:
                 full_name_ru="Мария Сидорова",
                 full_name_en="Maria Sidorova",
                 nickname="Masha",
+                role=Role.CANDIDATE,
+                department=Department.WORSHIP,
                 floor=2,
                 room_number="201",
             ),
@@ -91,12 +95,6 @@ class TestRoomSearchIntegration:
         ) as mock_get_service:
             mock_service = Mock()
             mock_service.search_by_room = AsyncMock(return_value=sample_participants)
-            mock_service.search_by_room_formatted = AsyncMock(
-                return_value=[
-                    "1. Иван Петров (Ivan Petrov) - Vanya",
-                    "2. Мария Сидорова (Maria Sidorova) - Masha",
-                ]
-            )
             mock_get_service.return_value = mock_service
 
             # Execute room search
@@ -104,9 +102,6 @@ class TestRoomSearchIntegration:
 
             # Verify service calls
             mock_service.search_by_room.assert_called_once_with("201")
-            mock_service.search_by_room_formatted.assert_called_once_with(
-                "201", language="ru"
-            )
 
             # Verify response sent to user
             assert update.message.reply_text.call_count == 2  # Loading + results
@@ -115,11 +110,19 @@ class TestRoomSearchIntegration:
             loading_call = update.message.reply_text.call_args_list[0]
             assert "🔍 Ищу участников в комнате 201" in loading_call[1]["text"]
 
-            # Check results message
+            # Check results message and Russian details
             results_call = update.message.reply_text.call_args_list[1]
-            assert "🏠 Найдено участников в комнате 201: 2" in results_call[1]["text"]
-            assert "Иван Петров" in results_call[1]["text"]
-            assert "Мария Сидорова" in results_call[1]["text"]
+            text = results_call[1]["text"]
+            assert "🏠 Найдено участников в комнате 201: 2" in text
+            assert "Иван Петров" in text
+            assert "Мария Сидорова" in text
+            # Role and department in Russian
+            assert "Роль: Команда" in text
+            assert "Департамент: Администрация" in text
+            assert "Роль: Кандидат" in text
+            assert "Департамент: Прославление" in text
+            # Floor present
+            assert "Этаж: 2" in text
 
             # Verify context data stored
             assert context.user_data["room_search_results"] == sample_participants
@@ -178,7 +181,6 @@ class TestRoomSearchIntegration:
         ) as mock_get_service:
             mock_service = Mock()
             mock_service.search_by_room = AsyncMock(return_value=[])
-            mock_service.search_by_room_formatted = AsyncMock(return_value=[])
             mock_get_service.return_value = mock_service
 
             # Execute room search
@@ -186,9 +188,6 @@ class TestRoomSearchIntegration:
 
             # Verify service calls
             mock_service.search_by_room.assert_called_once_with("999")
-            mock_service.search_by_room_formatted.assert_called_once_with(
-                "999", language="ru"
-            )
 
             # Verify no participants message sent
             update.message.reply_text.assert_called_once()
@@ -244,12 +243,7 @@ class TestRoomSearchIntegration:
                 await asyncio.sleep(0.1)  # Simulate realistic API delay
                 return sample_participants
 
-            async def mock_format_delay(*args, **kwargs):
-                await asyncio.sleep(0.1)  # Simulate formatting delay
-                return ["1. Иван Петров", "2. Мария Сидорова"]
-
             mock_service.search_by_room = mock_search_delay
-            mock_service.search_by_room_formatted = mock_format_delay
             mock_get_service.return_value = mock_service
 
             # Measure execution time
@@ -284,6 +278,8 @@ class TestRoomSearchIntegration:
                 full_name_ru="Алексей Кузнецов",
                 full_name_en="Alexey Kuznetsov",
                 nickname="Alex",
+                role=Role.TEAM,
+                department=Department.MEDIA,
                 floor=2,
                 room_number="A201",
             )
@@ -297,9 +293,6 @@ class TestRoomSearchIntegration:
             mock_service.search_by_room = AsyncMock(
                 return_value=alphanumeric_participants
             )
-            mock_service.search_by_room_formatted = AsyncMock(
-                return_value=["1. Алексей Кузнецов (Alexey Kuznetsov) - Alex"]
-            )
             mock_get_service.return_value = mock_service
 
             # Execute room search
@@ -307,9 +300,6 @@ class TestRoomSearchIntegration:
 
             # Verify service calls with alphanumeric room
             mock_service.search_by_room.assert_called_once_with("A201")
-            mock_service.search_by_room_formatted.assert_called_once_with(
-                "A201", language="ru"
-            )
 
             # Verify successful result
             assert result_state == RoomSearchStates.SHOWING_ROOM_RESULTS
@@ -319,3 +309,5 @@ class TestRoomSearchIntegration:
             call_args = update.message.reply_text.call_args
             assert "🏠 Найдено участников в комнате A201: 1" in call_args[1]["text"]
             assert "Алексей Кузнецов" in call_args[1]["text"]
+            assert "Роль: Команда" in call_args[1]["text"]
+            assert "Департамент: Медиа" in call_args[1]["text"]

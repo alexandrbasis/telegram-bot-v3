@@ -6,18 +6,36 @@
 Search for participants by name (Russian or English), nickname, or other details. Available via command or main menu "🔍 Поиск участников" button.
 
 ### /search_room [room_number]
-Search for participants assigned to a specific room number. Supports alphanumeric room identifiers.
+Search for participants assigned to a specific room number with enhanced structured Russian results. Supports alphanumeric room identifiers.
 
 **Usage Examples:**
 - `/search_room 205` - Find participants in room 205
 - `/search_room A1` - Find participants in room A1
 - `/search_room Conference` - Find participants in Conference room
 
-**Features:**
+**Enhanced Features (2025-01-09):**
+- **Structured Russian Results**: Displays participant information with role, department, and floor translations
+- **Complete Translation Support**: All departments and roles displayed in Russian using comprehensive translation mappings
+- **Rich Formatting**: Shows participant names (Russian/English), translated role/department, and floor context
 - **Input Validation**: Validates room number format with user-friendly Russian error messages
 - **Russian Interface**: Complete Russian language support throughout the interaction
 - **Empty Room Handling**: Shows appropriate message when room is empty
 - **Navigation**: Reply keyboard for easy mode switching between search types
+
+**Example Structured Output:**
+```
+🏠 Комната 205:
+
+👤 Иван Петров (Иван Петров)
+   Роль: Кандидат
+   Департамент: ROE
+   Этаж: 2
+
+👤 Мария Иванова (Maria Ivanova)  
+   Роль: Команда
+   Департамент: Кухня
+   Этаж: 2
+```
 
 ### /search_floor [floor_number]
 Search for participants on a specific floor with room-by-room breakdown.

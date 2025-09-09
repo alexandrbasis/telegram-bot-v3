@@ -33,26 +33,34 @@
 #### Room/Floor Search API (New - 2025-09-04)
 **Purpose**: Location-based participant search by room number or floor
 
-**Room Search**: `/search room:[room_number]`
+**Room Search**: `/search room:[room_number]` (Enhanced 2025-01-09)
 - **Input**: Room number (alphanumeric: "101", "A1", "Conference")
 - **Validation**: Non-empty string, handles numeric and alphanumeric formats
-- **Response**: List of participants assigned to specific room
+- **Response**: Structured Russian-formatted results with role, department, and floor information
 
 **Floor Search**: `/search floor:[floor_number]`
 - **Input**: Floor number (integer or string: "1", "2", "Ground")
 - **Validation**: Union[int, str] with proper conversion
 - **Response**: Participants grouped by room on specified floor
 
-**Example Room Search Response**:
+**Enhanced Room Search Response (2025-01-09)**:
 ```
-Участники в комнате: "205"
+🏠 Комната 205:
 
-1. Иван Петров | Кандидат | Комната: 205
-   [Подробнее]
+👤 Иван Петров (Иван Петров)
+   Роль: Кандидат
+   Департамент: ROE
+   Этаж: 2
 
-2. Мария Смирнова | Команда | Комната: 205
-   [Подробнее]
+👤 Мария Иванова (Maria Ivanova)
+   Роль: Команда
+   Департамент: Кухня  
+   Этаж: 2
+
+Всего найдено: 2 участника
 ```
+
+**Translation Support**: Complete Russian translations for all departments and roles using `src/utils/translations.py` utility module.
 
 **Example Floor Search Response**:
 ```
@@ -236,6 +244,45 @@ CONFIRMATION:
 
 [Назад к поиску]
 ```
+
+## Translation API (Added 2025-01-09)
+
+### Russian Translation Utilities
+**Module**: `src/utils/translations.py`
+
+**Purpose**: Provides consistent Russian translations for all enum values used in participant display
+
+```python
+# Department translation dictionary
+DEPARTMENT_RUSSIAN: Dict[Department, str] = {
+    Department.ROE: "ROE",
+    Department.CHAPEL: "Капелла",
+    Department.SETUP: "Подготовка",
+    Department.PALANKA: "Паланка",
+    Department.ADMINISTRATION: "Администрация",
+    Department.KITCHEN: "Кухня",
+    Department.DECORATION: "Декорация",
+    Department.BELL: "Колокол",
+    Department.REFRESHMENT: "Освежение",
+    Department.WORSHIP: "Богослужение",
+    Department.MEDIA: "Медиа", 
+    Department.CLERGY: "Клир",
+    Department.RECTORATE: "Ректорат"
+}
+
+# Role translation dictionary  
+ROLE_RUSSIAN: Dict[Role, str] = {
+    Role.CANDIDATE: "Кандидат",
+    Role.TEAM: "Команда"
+}
+
+# Translation helper function
+def translate_to_russian(value: Any, translation_dict: Dict) -> str:
+    """Translate enum value to Russian with fallback to original value"""
+    return translation_dict.get(value, str(value))
+```
+
+**Usage**: Used by room search formatting functions to ensure consistent Russian display of participant information across all interfaces.
 
 ## Data Model API
 
