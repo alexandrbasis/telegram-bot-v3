@@ -114,14 +114,14 @@ Target: 90%+ coverage across all implementation areas
     - **Done**: Handler function created, tested, and properly formatted
     - **Changelog**: [Created handle_conversation_timeout function with Russian timeout message, main menu keyboard recovery, edge case handling, 100% test coverage with 6 comprehensive test cases]
 
-- [ ] Step 3: Update ConversationHandler with timeout configuration
-  - [ ] Sub-step 3.1: Add timeout parameter to conversation handler
+- [x] ✅ Step 3: Update ConversationHandler with timeout configuration - Completed 2025-01-09
+  - [x] ✅ Sub-step 3.1: Add timeout parameter to conversation handler - Completed 2025-01-09
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/search_conversation.py`
     - **Accept**: ConversationHandler includes conversation_timeout and ConversationHandler.TIMEOUT handler
-    - **Tests**: `tests/unit/test_bot_handlers/test_search_conversation.py`
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_conversation_timeout.py`
     - **Done**: Timeout configuration applied, handler registered for TIMEOUT state
-    - **Changelog**: []
+    - **Changelog**: [Added conversation_timeout parameter with minutes-to-seconds conversion, registered handle_conversation_timeout for TIMEOUT state, imported settings for dynamic configuration, comprehensive integration tests with 7 test cases covering all timeout scenarios]
 
 - [ ] Step 4: Test integration and verify timeout behavior
   - [ ] Sub-step 4.1: Create comprehensive integration tests
