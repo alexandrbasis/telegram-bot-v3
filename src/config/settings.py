@@ -124,7 +124,9 @@ class TelegramSettings:
         default_factory=lambda: int(os.getenv("TELEGRAM_COMMAND_TIMEOUT", "30"))
     )
     conversation_timeout_minutes: int = field(
-        default_factory=lambda: int(os.getenv("TELEGRAM_CONVERSATION_TIMEOUT_MINUTES", "30"))
+        default_factory=lambda: int(
+            os.getenv("TELEGRAM_CONVERSATION_TIMEOUT_MINUTES", "30")
+        )
     )
 
     # Admin settings
@@ -156,7 +158,9 @@ class TelegramSettings:
             raise ValueError("Conversation timeout must be positive")
 
         if self.conversation_timeout_minutes > 1440:  # 24 hours max
-            raise ValueError("Conversation timeout must be between 1 and 1440 minutes (24 hours)")
+            raise ValueError(
+                "Conversation timeout must be between 1 and 1440 minutes (24 hours)"
+            )
 
 
 @dataclass
