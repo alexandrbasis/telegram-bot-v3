@@ -474,13 +474,11 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     logger.info(f"User {user.id} returned to main menu")
 
-    # Clear search results
-    context.user_data["search_results"] = []
+    # Initialize user data using shared helper
+    initialize_main_menu_session(context)
 
-    # Return to main menu
-    welcome_message = (
-        "Добро пожаловать в бот Tres Dias! 🙏\n\n" "Ищите участников по имени."
-    )
+    # Get unified welcome message
+    welcome_message = get_welcome_message()
 
     if query:
         await query.message.edit_text(text=welcome_message)

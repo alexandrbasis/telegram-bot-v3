@@ -451,6 +451,50 @@ class TestMainMenuButtonHandler:
         # Should return MAIN_MENU state
         assert result == SearchStates.MAIN_MENU
 
+    @patch("src.bot.handlers.search_handlers.initialize_main_menu_session")
+    @patch("src.bot.handlers.search_handlers.get_welcome_message")
+    @pytest.mark.asyncio
+    async def test_main_menu_button_uses_shared_initialization(
+        self, mock_get_welcome_message, mock_initialize_main_menu_session,
+        mock_callback_query, mock_context
+    ):
+        """Test that main_menu_button uses shared initialization helpers."""
+        # Setup mocks
+        mock_get_welcome_message.return_value = "Test unified welcome message"
+        
+        # Execute handler
+        result = await main_menu_button(mock_callback_query, mock_context)
+        
+        # Verify shared helpers were called
+        mock_initialize_main_menu_session.assert_called_once_with(mock_context)
+        mock_get_welcome_message.assert_called_once()
+        
+        # Verify message uses shared welcome text
+        mock_callback_query.callback_query.message.edit_text.assert_called_once()
+        edit_call_args = mock_callback_query.callback_query.message.edit_text.call_args
+        assert "Test unified welcome message" in edit_call_args.kwargs["text"]
+        
+        # Should return correct state
+        assert result == SearchStates.MAIN_MENU
+
+    @patch("src.bot.handlers.search_handlers.get_welcome_message")  
+    @pytest.mark.asyncio
+    async def test_main_menu_button_equivalent_welcome_message(
+        self, mock_get_welcome_message, mock_callback_query, mock_context
+    ):
+        """Test that main_menu_button shows equivalent welcome message as start_command."""
+        # Setup mock to return the unified message
+        unified_message = "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+        mock_get_welcome_message.return_value = unified_message
+        
+        # Execute handler
+        await main_menu_button(mock_callback_query, mock_context)
+        
+        # Verify the unified welcome message is used
+        mock_get_welcome_message.assert_called_once()
+        edit_call_args = mock_callback_query.callback_query.message.edit_text.call_args
+        assert unified_message in edit_call_args.kwargs["text"]
+
 
 class TestHandlerIntegration:
     """Integration tests for handler flow."""
