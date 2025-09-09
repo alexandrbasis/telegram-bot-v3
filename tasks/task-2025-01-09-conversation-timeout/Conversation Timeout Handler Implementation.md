@@ -96,14 +96,14 @@ Target: 90%+ coverage across all implementation areas
 
 ## Implementation Steps & Change Log
 
-- [ ] Step 1: Add timeout configuration to settings
-  - [ ] Sub-step 1.1: Add conversation timeout settings to TelegramSettings
+- [x] ✅ Step 1: Add timeout configuration to settings - Completed 2025-01-09
+  - [x] ✅ Sub-step 1.1: Add conversation timeout settings to TelegramSettings - Completed 2025-01-09
     - **Directory**: `src/config/`
     - **Files to create/modify**: `src/config/settings.py`
     - **Accept**: TelegramSettings contains conversation_timeout_minutes with env var support and validation
     - **Tests**: `tests/unit/test_config/test_settings.py`
     - **Done**: Settings validation passes, timeout accessible via get_telegram_settings()
-    - **Changelog**: []
+    - **Changelog**: [Added conversation_timeout_minutes field with 30-minute default, TELEGRAM_CONVERSATION_TIMEOUT_MINUTES env var support, validation for 1-1440 minutes range, comprehensive test coverage]
 
 - [ ] Step 2: Create timeout handler function and keyboard
   - [ ] Sub-step 2.1: Implement timeout message handler
