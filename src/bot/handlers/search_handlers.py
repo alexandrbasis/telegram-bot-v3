@@ -173,15 +173,11 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user = update.effective_user
     logger.info(f"User {user.id} ({user.first_name}) started the bot")
 
-    # Initialize user data
-    context.user_data["search_results"] = []
-    # Flag conversation-driven flows to prefer direct name entry upon pressing search
-    context.user_data["force_direct_name_input"] = True
+    # Initialize user data using shared helper
+    initialize_main_menu_session(context)
 
-    # Send Russian welcome message with search button
-    welcome_message = (
-        "Добро пожаловать в бот Tres Dias! 🙏\n\n" "Выберите тип поиска участников."
-    )
+    # Get unified welcome message
+    welcome_message = get_welcome_message()
 
     await update.message.reply_text(
         text=welcome_message,

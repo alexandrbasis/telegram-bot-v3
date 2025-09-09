@@ -120,6 +120,34 @@ class TestStartCommandHandler:
         # Should initialize user_data
         assert "search_results" in mock_context.user_data
         assert mock_context.user_data["search_results"] == []
+        assert "force_direct_name_input" in mock_context.user_data
+        assert mock_context.user_data["force_direct_name_input"] is True
+
+    @patch("src.bot.handlers.search_handlers.initialize_main_menu_session")
+    @patch("src.bot.handlers.search_handlers.get_welcome_message")
+    @pytest.mark.asyncio
+    async def test_start_command_uses_shared_initialization(
+        self, mock_get_welcome_message, mock_initialize_main_menu_session,
+        mock_update_message, mock_context
+    ):
+        """Test that start_command uses shared initialization helpers."""
+        # Setup mocks
+        mock_get_welcome_message.return_value = "Test welcome message"
+        
+        # Execute handler
+        result = await start_command(mock_update_message, mock_context)
+        
+        # Verify shared helpers were called
+        mock_initialize_main_menu_session.assert_called_once_with(mock_context)
+        mock_get_welcome_message.assert_called_once()
+        
+        # Verify message uses shared welcome text
+        mock_update_message.message.reply_text.assert_called_once()
+        call_args = mock_update_message.message.reply_text.call_args
+        assert "Test welcome message" in call_args[1]["text"]
+        
+        # Should return correct state
+        assert result == SearchStates.MAIN_MENU
 
 
 class TestSearchButtonHandler:
