@@ -654,7 +654,8 @@ async def handle_search_room_mode(
     """
     Handle room search mode selection.
 
-    Delegates to room search handler.
+    Prompts user to enter room number and transitions to
+    RoomSearchStates.WAITING_FOR_ROOM.
 
     Args:
         update: Telegram update object
@@ -666,11 +667,18 @@ async def handle_search_room_mode(
     user = update.effective_user
     logger.info(f"User {user.id} selected room search mode")
 
-    # Import room search handler dynamically to avoid circular dependency
-    from src.bot.handlers.room_search_handlers import handle_room_search_command
+    # Import state enum and keyboard dynamically to avoid circular dependency
+    from src.bot.handlers.room_search_handlers import RoomSearchStates
+    from src.bot.keyboards.search_keyboards import get_waiting_for_room_keyboard
+    from src.bot.messages import InfoMessages
 
-    # Simulate a room search command call
-    return await handle_room_search_command(update, context)
+    # Ask for room number and set waiting state
+    await update.message.reply_text(
+        text=InfoMessages.ENTER_ROOM_NUMBER,
+        reply_markup=get_waiting_for_room_keyboard(),
+    )
+
+    return RoomSearchStates.WAITING_FOR_ROOM
 
 
 async def handle_search_floor_mode(
