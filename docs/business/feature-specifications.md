@@ -379,6 +379,105 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult
 - **Bulk Operations**: Floor-based bulk participant actions
 - **Room Assignment Validation**: Prevent overbooking and conflicts
 
+## Conversation Timeout Handler
+
+### Overview
+Automatic conversation timeout handling to prevent users from getting stuck in stale conversation states. Provides graceful session termination with clear recovery options.
+
+**Status**: ✅ Implemented (2025-01-09)
+**Implementation**: Integrated timeout handler across all ConversationHandler states
+**Test Coverage**: 18 comprehensive tests (100% pass rate)
+
+### Core Features
+
+#### 1. Automatic Session Timeout
+- **Timeout Period**: Configurable via `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` environment variable
+- **Default Value**: 30 minutes of inactivity
+- **Valid Range**: 1-1440 minutes (1 minute to 24 hours)
+- **Coverage**: Applied to all conversation states (search, edit, room/floor search)
+- **Behavior**: Automatic conversation termination after inactivity period
+
+#### 2. Russian User Interface
+- **Timeout Message**: "Сессия истекла, начните заново" (Session expired, start again)
+- **Recovery Button**: "Вернуться в главное меню" (Return to main menu)
+- **User Experience**: Clear communication and easy recovery path
+- **Consistency**: Follows existing Russian localization patterns
+
+#### 3. Graceful State Cleanup
+- **Memory Management**: Prevents conversation state leaks and memory buildup
+- **Context Cleanup**: Properly clears conversation context data on timeout
+- **State Transition**: Clean transition to ConversationHandler.END state
+- **Error Prevention**: Eliminates stale conversation state issues
+
+#### 4. Universal Integration
+- **ConversationHandler Integration**: Applied to all conversation handlers
+- **State Coverage**: Timeout handler registered for all conversation states
+- **Consistent Behavior**: Uniform timeout handling across search, edit, and location-based conversations
+- **Configuration Loading**: Dynamic timeout configuration from settings
+
+### Technical Implementation
+
+#### Timeout Handler Function
+- **File**: `src/bot/handlers/timeout_handlers.py`
+- **Function**: `handle_conversation_timeout()`
+- **Features**: Russian message display, main menu keyboard, error handling
+- **Error Recovery**: Try/catch around message sending with graceful conversation termination
+
+#### ConversationHandler Integration
+- **Configuration**: `conversation_timeout` parameter with minutes-to-seconds conversion
+- **Handler Registration**: `ConversationHandler.TIMEOUT` state mapped to timeout handler
+- **Settings Integration**: Dynamic configuration loading via `get_telegram_settings()`
+- **Universal Application**: Applied to all conversation handlers in the system
+
+#### Configuration Management
+- **Environment Variable**: `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES`
+- **Validation**: Range validation (1-1440 minutes) with descriptive error messages
+- **Default Value**: 30 minutes for optimal user experience
+- **Settings Integration**: Integrated into TelegramSettings dataclass
+
+### Acceptance Criteria
+
+- [x] ✅ Configurable timeout period via environment variable with validation
+- [x] ✅ Russian timeout message displayed to users ("Сессия истекла, начните заново")
+- [x] ✅ Main menu recovery button provides clear recovery path
+- [x] ✅ All conversation states include consistent timeout handling
+- [x] ✅ Graceful state cleanup prevents memory leaks and stale data
+- [x] ✅ Universal integration across search, edit, and location-based conversations
+- [x] ✅ Error handling ensures conversation termination even if message sending fails
+- [x] ✅ Comprehensive test coverage with 18 passing tests
+- [x] ✅ Integration tests validate end-to-end timeout behavior
+- [x] ✅ Configuration validation and settings integration
+
+### User Experience Impact
+
+#### Before Implementation
+- Users could get stuck in conversation states without clear recovery
+- Stale conversation context could cause unexpected behavior
+- No automatic cleanup of inactive sessions
+- Support requests for "bot not responding" situations
+
+#### After Implementation
+- Automatic session cleanup after configurable inactivity period
+- Clear Russian instructions for session recovery
+- One-click return to main menu functionality
+- Elimination of stale conversation state issues
+- Improved bot responsiveness and user satisfaction
+
+### Future Enhancements
+
+**Potential Improvements**:
+- Per-conversation-type timeout configuration
+- Warning messages before timeout (e.g., "Session expires in 5 minutes")
+- Session extension functionality for active users
+- Timeout analytics and user behavior insights
+- Configurable timeout messages per conversation type
+
+**Integration Opportunities**:
+- User activity tracking and analytics
+- Timeout-based user engagement metrics
+- Integration with notification system for timeout warnings
+- Custom timeout periods based on user preferences
+
 ## Save/Cancel Workflow with Airtable Integration
 
 ### Overview

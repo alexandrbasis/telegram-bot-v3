@@ -47,6 +47,8 @@ from src.bot.handlers.search_handlers import (
     search_button,
     start_command,
 )
+from src.bot.handlers.timeout_handlers import handle_conversation_timeout
+from src.config.settings import get_telegram_settings
 from src.bot.keyboards.search_keyboards import (
     NAV_BACK_TO_SEARCH_MODES,
     NAV_CANCEL,
@@ -241,8 +243,14 @@ def get_search_conversation_handler() -> ConversationHandler:
                 CallbackQueryHandler(save_changes, pattern="^save_changes$"),
                 CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
             ],
+            # === TIMEOUT STATE ===
+            ConversationHandler.TIMEOUT: [
+                MessageHandler(filters.ALL, handle_conversation_timeout),
+            ],
         },
         fallbacks=[CommandHandler("start", start_command)],
+        # Timeout configuration: Convert minutes to seconds
+        conversation_timeout=get_telegram_settings().conversation_timeout_minutes * 60,
         per_message=False,  # Required for mixed handler types (CommandHandler + MessageHandler + CallbackQueryHandler)
         # Note: PTB may emit a warning about CallbackQueryHandler tracking, but this is expected
         # for mixed conversations and functionality works correctly as verified by tests
