@@ -5,8 +5,9 @@ Tests the cancel_search handler to ensure it properly resets user state
 and provides consistent welcome message behavior.
 """
 
-import pytest
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from src.bot.handlers.search_handlers import SearchStates, cancel_search
 
@@ -86,8 +87,8 @@ class TestCancelSearchHandler:
     async def test_cancel_search_equivalence_to_shared_helpers(self):
         """Test that cancel_search provides equivalent initialization to start_command/main_menu_button."""
         from src.bot.handlers.search_handlers import (
-            initialize_main_menu_session,
             get_welcome_message,
+            initialize_main_menu_session,
         )
 
         # Create mock update and context
