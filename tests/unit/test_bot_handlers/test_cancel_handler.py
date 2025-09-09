@@ -26,7 +26,7 @@ class TestCancelSearchHandler:
         mock_context.user_data = {
             "search_results": [{"participant": "test"}],
             "force_direct_name_input": False,
-            "other_state": "should_remain"
+            "other_state": "should_remain",
         }
 
         # Call the handler
@@ -35,10 +35,14 @@ class TestCancelSearchHandler:
         # Verify state is properly reset using shared helper
         assert mock_context.user_data["search_results"] == []
         assert mock_context.user_data["force_direct_name_input"] is True
-        assert mock_context.user_data["other_state"] == "should_remain"  # Other data preserved
+        assert (
+            mock_context.user_data["other_state"] == "should_remain"
+        )  # Other data preserved
 
         # Verify unified welcome message is used
-        expected_message = "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+        expected_message = (
+            "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+        )
         mock_update.message.reply_text.assert_called_once()
         call_args = mock_update.message.reply_text.call_args
         assert call_args[1]["text"] == expected_message
@@ -68,7 +72,9 @@ class TestCancelSearchHandler:
         assert mock_context.user_data["force_direct_name_input"] is True
 
         # Verify unified welcome message is used
-        expected_message = "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+        expected_message = (
+            "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+        )
         mock_update.message.reply_text.assert_called_once()
         call_args = mock_update.message.reply_text.call_args
         assert call_args[1]["text"] == expected_message
@@ -79,8 +85,11 @@ class TestCancelSearchHandler:
     @pytest.mark.asyncio
     async def test_cancel_search_equivalence_to_shared_helpers(self):
         """Test that cancel_search provides equivalent initialization to start_command/main_menu_button."""
-        from src.bot.handlers.search_handlers import initialize_main_menu_session, get_welcome_message
-        
+        from src.bot.handlers.search_handlers import (
+            initialize_main_menu_session,
+            get_welcome_message,
+        )
+
         # Create mock update and context
         mock_update = Mock()
         mock_update.effective_user.id = 12345
@@ -98,9 +107,18 @@ class TestCancelSearchHandler:
         initialize_main_menu_session(comparison_context)
 
         # Verify equivalent state initialization
-        assert mock_context.user_data["search_results"] == comparison_context.user_data["search_results"]
-        assert mock_context.user_data["force_direct_name_input"] == comparison_context.user_data["force_direct_name_input"]
-        assert mock_context.user_data["existing_data"] == comparison_context.user_data["existing_data"]
+        assert (
+            mock_context.user_data["search_results"]
+            == comparison_context.user_data["search_results"]
+        )
+        assert (
+            mock_context.user_data["force_direct_name_input"]
+            == comparison_context.user_data["force_direct_name_input"]
+        )
+        assert (
+            mock_context.user_data["existing_data"]
+            == comparison_context.user_data["existing_data"]
+        )
 
         # Verify equivalent welcome message
         expected_message = get_welcome_message()
