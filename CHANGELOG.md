@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Conversation Timeout Handler with Russian Session Recovery** — Automatic conversation timeout handling preventing users from getting stuck in inactive conversation states with configurable timeout periods and clear recovery options (AGB-37, completed 2025-01-09)
+  - Configurable conversation timeout system with TELEGRAM_CONVERSATION_TIMEOUT_MINUTES environment variable supporting 1-1440 minutes range with 30-minute default (`src/config/settings.py:162-171`)
+  - Automatic conversation timeout handler displaying Russian timeout message "Сессия истекла, начните заново" with main menu recovery button (`src/bot/handlers/timeout_handlers.py:1-58`)
+  - Complete ConversationHandler integration with timeout configuration and TIMEOUT state handler registration across all conversation states (`src/bot/handlers/search_conversation.py:23-24,192`)
+  - Comprehensive timeout handling with graceful error handling, proper state cleanup, and conversation termination returning ConversationHandler.END (`src/bot/handlers/timeout_handlers.py:18-48`)
+  - Robust error handling with try-catch blocks around message sending ensuring conversation termination even when timeout message delivery fails
+  - Complete Russian language interface for timeout scenarios with main menu keyboard recovery maintaining consistent user experience
+  - Enhanced documentation suite with comprehensive environment variables table including TELEGRAM_CONVERSATION_TIMEOUT_MINUTES specifications (`docs/`)
+  - Conversation management section with timeout handling details and automatic session management capabilities
+  - Complete timeout handler feature specification with troubleshooting section for timeout-related issues
+  - Comprehensive testing infrastructure with 18 comprehensive tests achieving 100% pass rate covering all timeout scenarios:
+    - Configuration validation tests ensuring proper timeout parameter loading and range validation (`tests/unit/test_config/test_settings.py`)
+    - Timeout handler unit tests with 6 test cases covering message delivery, keyboard generation, error scenarios, and state termination (`tests/unit/test_bot_handlers/test_timeout_handlers.py:1-47`)
+    - ConversationHandler integration tests with 7 test cases validating timeout parameter registration and TIMEOUT state handler configuration (`tests/unit/test_bot_handlers/test_search_conversation_timeout.py:1-134`)
+    - End-to-end integration tests with 11 test cases covering timeout behavior from all conversation states, Russian message content validation, keyboard recovery workflow, and complete state cleanup verification (`tests/integration/test_bot_handlers/test_conversation_timeout_integration.py:1-321`)
+  - Production-ready implementation with automatic session cleanup preventing memory leaks and providing consistent timeout behavior across all ConversationHandler states
+  - Zero breaking changes with complete backward compatibility maintaining all existing conversation flows while adding timeout protection
+  - Users experience automatic recovery from inactive conversation states with clear Russian instructions and one-click main menu restoration eliminating "bot not responding" scenarios
 - **Search by Room Improvement with Structured Russian Results** — Enhanced room search functionality with complete Russian language support and structured result formatting matching floor search experience (TDB-53, completed 2025-01-09)
   - Structured Russian room search results displaying participant role, department, and floor information with proper conversation flow (`src/bot/handlers/room_search_handlers.py:129-171,180-220`)
   - Complete translation utilities with Russian mappings for all departments and roles ensuring consistent localization (`src/utils/translations.py:1-55`)
