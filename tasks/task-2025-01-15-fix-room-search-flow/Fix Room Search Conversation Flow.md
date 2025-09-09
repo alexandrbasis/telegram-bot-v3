@@ -1,5 +1,5 @@
 # Task: Fix Room Search Conversation Flow
-**Created**: 2025-01-15 | **Status**: Ready for Implementation
+**Created**: 2025-01-15 | **Status**: In Progress | **Started**: 2025-01-15
 
 ## Tracking & Progress
 ### Linear Issue
@@ -7,7 +7,7 @@
 - **URL**: https://linear.app/alexandrbasis/issue/AGB-39/fix-room-search-conversation-flow-duplicate-messages-and-broken-cancel
 
 ### PR Details
-- **Branch**: basisalexandr/agb-39-fix-room-search-conversation-flow-duplicate-messages-and
+- **Branch**: feature/agb-39-fix-room-search-conversation-flow
 - **PR URL**: [Will be added during implementation]
 - **Status**: [Draft/Review/Merged]
 
@@ -111,46 +111,51 @@ Target: 90%+ coverage across all implementation areas
 
 ### Implementation Steps & Change Log
 
-- [ ] Step 1: Fix Room Search Mode Handler
-  - [ ] Sub-step 1.1: Update `handle_search_room_mode()` in `search_handlers.py`
-    - **Path**: `src/bot/handlers/search_handlers.py:629`
+- [x] ✅ Step 1: Fix Room Search Mode Handler - Completed 2025-01-15
+  - **Notes**: Updated handle_search_room_mode() to mirror floor search pattern; sends single prompt and returns RoomSearchStates.WAITING_FOR_ROOM
+  - [x] Sub-step 1.1: Update `handle_search_room_mode()` in `search_handlers.py`
+    - **Path**: `src/bot/handlers/search_handlers.py:651-681`
     - **Change**: Stop delegating to `handle_room_search_command`. Instead, send `InfoMessages.ENTER_ROOM_NUMBER` with `get_waiting_for_room_keyboard()` and return `RoomSearchStates.WAITING_FOR_ROOM`.
     - **Accept**: Selecting "🚪 По комнате" sends exactly one prompt: "Введите номер комнаты для поиска:" and transitions to `RoomSearchStates.WAITING_FOR_ROOM`.
     - **Tests**: `tests/unit/test_bot_handlers/test_search_handlers.py::TestSearchModeSelection::test_handle_search_room_mode`
-    - **Changelog**: Updated `src/bot/handlers/search_handlers.py:629–651` to mirror floor mode pattern.
+    - **Changelog**: Updated `src/bot/handlers/search_handlers.py:651–681` to mirror floor mode pattern. Updated test to expect direct prompt behavior.
 
-- [ ] Step 2: Add Missing Cancel Handler to Room Waiting State
-  - [ ] Sub-step 2.1: Add `NAV_CANCEL` handler in room waiting state in `search_conversation.py`
-    - **Path**: `src/bot/handlers/search_conversation.py:159`
-    - **Change**: Add `MessageHandler(filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search)` under `RoomSearchStates.WAITING_FOR_ROOM`.
-    - **Accept**: Pressing "❌ Отмена" during room input returns to main menu without triggering validation.
-    - **Tests**: `tests/unit/test_bot_handlers/test_search_conversation_room.py` (add cancel-in-room-wait test)
-    - **Changelog**: Added cancel handler in `RoomSearchStates.WAITING_FOR_ROOM` at `src/bot/handlers/search_conversation.py:169–176`.
+- [x] ✅ Step 2: Add Missing Cancel Handler to Room Waiting State - Completed 2025-01-15  
+  - **Notes**: Added NAV_CANCEL handler to WAITING_FOR_ROOM state, returns to main menu without validation errors
+  - [x] Sub-step 2.1: Add `NAV_CANCEL` handler in room waiting state in `search_conversation.py`
+    - **Path**: `src/bot/handlers/search_conversation.py:180-182`
+    - **Change**: Added `MessageHandler(filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search)` under `RoomSearchStates.WAITING_FOR_ROOM`.
+    - **Accept**: Pressing "❌ Отмена" during room input returns to main menu without triggering validation. ✅
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_conversation_room.py::test_cancel_during_room_input_returns_to_main_menu`
+    - **Changelog**: Added cancel handler in `RoomSearchStates.WAITING_FOR_ROOM` at `src/bot/handlers/search_conversation.py:180–182`.
 
-- [ ] Step 3: Exclude Cancel From Room Input Filter
-  - [ ] Sub-step 3.1: Update the room input `filters.TEXT` exclusion regex
-    - **Path**: `src/bot/handlers/search_conversation.py:162–168`
-    - **Change**: Extend the exclusion to `...|^{re.escape(NAV_CANCEL)}$|...` so "❌ Отмена" is not treated as room input.
-    - **Accept**: Cancel text never reaches `process_room_search()`; no premature validation occurs.
-    - **Tests**: `tests/unit/test_bot_handlers/test_search_conversation_room.py` (assert cancel not processed as input)
-    - **Changelog**: Updated exclusion regex in room input handler at `src/bot/handlers/search_conversation.py:164`.
+- [x] ✅ Step 3: Exclude Cancel From Room Input Filter - Completed 2025-01-15
+  - **Notes**: Updated room input filter regex to exclude NAV_CANCEL from being processed as room number
+  - [x] Sub-step 3.1: Update the room input `filters.TEXT` exclusion regex
+    - **Path**: `src/bot/handlers/search_conversation.py:172`
+    - **Change**: Extended the exclusion to `rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"` so "❌ Отмена" is not treated as room input.
+    - **Accept**: Cancel text never reaches `process_room_search()`; no premature validation occurs. ✅
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_conversation_room.py::test_cancel_text_not_processed_as_room_input`
+    - **Changelog**: Updated exclusion regex in room input handler at `src/bot/handlers/search_conversation.py:172`.
 
-- [ ] Step 4: Update Unit Tests
-  - [ ] Sub-step 4.1: Adjust search mode selection test for room
-    - **Path**: `tests/unit/test_bot_handlers/test_search_handlers.py:1194–1206`
-    - **Change**: Remove delegation patch; assert one prompt with room message and return `RoomSearchStates.WAITING_FOR_ROOM`.
-  - [ ] Sub-step 4.2: Add cancel tests for room waiting state
-    - **Path**: `tests/unit/test_bot_handlers/test_search_conversation_room.py`
-    - **Change**: Add tests that in `RoomSearchStates.WAITING_FOR_ROOM` pressing "❌ Отмена" routes to `cancel_search` and transitions to main menu; ensure cancel is excluded from text input.
-  - **Accept**: All unit tests pass and reflect single-prompt behavior and working cancel.
-  - **Run**: `./venv/bin/pytest tests/unit/test_bot_handlers/test_search_handlers.py tests/unit/test_bot_handlers/test_search_conversation_room.py -v`
+- [x] ✅ Step 4: Update Unit Tests - Completed 2025-01-15
+  - **Notes**: All unit tests updated and passing, both room mode and cancel functionality verified
+  - [x] Sub-step 4.1: Adjust search mode selection test for room
+    - **Path**: `tests/unit/test_bot_handlers/test_search_handlers.py:1276-1285`
+    - **Change**: Removed delegation patch; assert one prompt with room message and return `RoomSearchStates.WAITING_FOR_ROOM`. ✅
+  - [x] Sub-step 4.2: Add cancel tests for room waiting state
+    - **Path**: `tests/unit/test_bot_handlers/test_search_conversation_room.py:140-198`
+    - **Change**: Added tests that in `RoomSearchStates.WAITING_FOR_ROOM` pressing "❌ Отмена" routes to `cancel_search` and transitions to main menu; ensured cancel is excluded from text input. ✅
+  - **Accept**: All unit tests pass and reflect single-prompt behavior and working cancel. ✅
+  - **Run**: `./venv/bin/pytest tests/unit/test_bot_handlers/test_search_handlers.py tests/unit/test_bot_handlers/test_search_conversation_room.py -v` ✅ (48 tests passed)
 
-- [ ] Step 5: Integration Testing  
-  - [ ] Sub-step 5.1: Verify complete room search flow and cancel
+- [x] ✅ Step 5: Integration Testing - Completed 2025-01-15
+  - **Notes**: All integration tests pass, end-to-end room search flow verified with single prompts and stable message flow
+  - [x] Sub-step 5.1: Verify complete room search flow and cancel
     - **Path**: `tests/integration/test_room_search_integration.py`
-    - **Change**: Optionally add cancel-in-room-wait integration test; existing command-without-param flow already asserts `WAITING_FOR_ROOM`.
-    - **Accept**: End-to-end room search has single prompts, proper cancel, and stable message flow.
-    - **Run**: `./venv/bin/pytest tests/integration/test_room_search_integration.py -v`
+    - **Change**: Existing command-without-param flow already asserts `WAITING_FOR_ROOM`; no additional tests needed.
+    - **Accept**: End-to-end room search has single prompts, proper cancel, and stable message flow. ✅
+    - **Run**: `./venv/bin/pytest tests/integration/test_room_search_integration.py -v` ✅ (7 tests passed)
 
 ### Task Splitting Evaluation
 **Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-01-15
