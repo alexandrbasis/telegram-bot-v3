@@ -52,6 +52,7 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Russian timeout message display: "Сессия истекла, начните заново"
 - Main menu recovery button for seamless user experience
 - Graceful state cleanup prevents memory leaks and stale conversation data
+- **Text Button Entry Points**: MessageHandler entry points for "🔍 Поиск участников" and Main Menu text buttons enable conversation re-entry after timeout without requiring /start command
 
 ### Data Access Patterns
 
@@ -116,7 +117,7 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 ## Component Integration
 
 ### Search → Edit → Save Workflow
-1. User searches via `/search` command
+1. User searches via `/search` command or Main Menu button
 2. Results display with "Подробнее" (Details) buttons  
 3. Button click transitions to participant editing interface
 4. Editing interface shows complete profile with 13 edit buttons
@@ -125,6 +126,12 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 7. User confirms save operation or cancels to discard changes
 8. Changes committed via repository `update_by_id()` method with retry mechanism
 9. User returns to search results with context preserved
+
+**Main Menu Start Command Equivalence** (Enhanced 2025-09-09):
+- **Shared Initialization**: Both `/start` command and Main Menu button use shared helpers (`initialize_main_menu_session()` and `get_welcome_message()`) ensuring identical functionality
+- **Consistent Welcome Message**: Both entry points display the same Russian welcome: "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+- **State Initialization**: Both handlers set identical user_data keys (`search_results = []`, `force_direct_name_input = True`)
+- **Timeout Recovery**: Text button handlers allow re-entry after conversation timeout without requiring manual /start commands
 
 ### State Management
 - **Context Preservation**: User data maintained across state transitions

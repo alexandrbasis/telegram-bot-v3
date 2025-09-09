@@ -5,6 +5,12 @@
 ### /search [query] and Search Button
 Search for participants by name (Russian or English), nickname, or other details. Available via command or main menu "🔍 Поиск участников" button.
 
+**Main Menu Button Equivalence** (Enhanced 2025-09-09):
+- Main Menu button provides identical functionality to `/start` command
+- **Shared Initialization**: Both use `initialize_main_menu_session()` and `get_welcome_message()` helpers
+- **Consistent Welcome**: Same Russian message: "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+- **Entry Point Recovery**: Text button handlers enable conversation re-entry after timeout without manual `/start`
+
 ### /search_room [room_number]
 Search for participants assigned to a specific room number with enhanced structured Russian results. Supports alphanumeric room identifiers.
 
@@ -177,9 +183,14 @@ Each participant field can be edited through dedicated "Изменить [Field]
 - **Save Success**: Displays complete updated participant information using format_participant_result() with all applied changes, providing full context instead of simple confirmation message
 
 #### Cancel and Navigation
-- **"Отмена" (Cancel)**: Discards all changes and returns to main menu
+- **"Отмена" (Cancel)**: Discards all changes and returns to main menu using shared initialization helpers for consistent state reset
 - **"Назад к поиску" (Back to Search)**: Returns to search results without saving
 - **"Вернуться в главное меню" (Return to Main Menu)**: Cancel confirmation option
+
+**Enhanced Cancel Handler** (2025-09-09):
+- Uses shared `initialize_main_menu_session()` and `get_welcome_message()` for consistent state management
+- Provides same unified welcome message as start command and main menu button
+- Ensures proper state reset with search_results clearing and force_direct_name_input flag setting
 
 #### Error Handling and Retry
 - **Save Failure**: Automatic retry buttons appear on Airtable update errors

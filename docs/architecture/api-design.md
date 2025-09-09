@@ -192,8 +192,13 @@ Error: "Ошибка: Дата должна быть в формате ГГГГ-
 
 #### Cancel Changes API
 **Triggers**: "Отмена" or "Назад к поиску" buttons
-**Behavior**: Discards unsaved changes and returns to search results
-**Response**: Returns to previous search results page with context preserved
+**Behavior**: Discards unsaved changes and returns to main menu using shared initialization
+**Response**: Returns to main menu with unified welcome message and consistent state reset
+
+**Enhanced Cancel Handler** (2025-09-09):
+- Uses `initialize_main_menu_session()` for consistent state management
+- Displays unified welcome message via `get_welcome_message()`
+- Ensures identical behavior to start command and main menu button
 
 ## ConversationHandler State Machine
 
@@ -204,6 +209,27 @@ class EditStates:
     TEXT_INPUT = "text_input"                # Handle text input for free text fields
     BUTTON_SELECTION = "button_selection"    # Handle inline keyboard button selections
     CONFIRMATION = "confirmation"            # Save/cancel workflow
+
+class SearchStates:
+    MAIN_MENU = 10                           # Main menu with search options
+    SEARCH_MODE_SELECTION = 11               # Search type selection (name/room/floor)
+    AWAITING_INPUT = 12                      # Waiting for search input
+```
+
+### Entry Point Configuration (Enhanced 2025-09-09)
+**Main Menu Start Command Equivalence**:
+- **CommandHandler**: `/start` command entry point
+- **CallbackQueryHandler**: Main menu button callback
+- **MessageHandler Entry Points** (Timeout Recovery):
+  - `"🔍 Поиск участников"` text button
+  - Main menu text button pattern
+  - Enables conversation re-entry after timeout without `/start` command
+
+**Shared Initialization**:
+```python
+# Both handlers use shared helper functions:
+initialize_main_menu_session(context)  # Sets user_data keys consistently
+get_welcome_message()                   # Returns unified Russian welcome message
 ```
 
 ### State Transition Map
