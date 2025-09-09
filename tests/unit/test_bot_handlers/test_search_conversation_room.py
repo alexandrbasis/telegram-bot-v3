@@ -112,3 +112,87 @@ class TestSearchConversationRoomIntegration:
 
         # Should have replied to user
         mock_update_room_command.message.reply_text.assert_called()
+
+    @pytest.fixture
+    def mock_update_cancel_button(self):
+        """Mock Update object for cancel button press during room input."""
+        update = Mock(spec=Update)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        chat = Mock(spec=Chat)
+
+        user.id = 123456789
+        user.first_name = "TestUser"
+
+        chat.id = 123456789
+        chat.type = "private"
+
+        message.from_user = user
+        message.chat = chat
+        message.text = "❌ Отмена"  # NAV_CANCEL text
+        message.reply_text = AsyncMock()
+        message.entities = []  # No command entities for text message
+
+        update.effective_user = user
+        update.message = message
+        update.effective_message = message
+
+        return update
+
+    @pytest.mark.asyncio
+    async def test_cancel_during_room_input_returns_to_main_menu(
+        self, mock_update_cancel_button, mock_context
+    ):
+        """Test that cancel button during room input returns to main menu."""
+        # Get conversation handler
+        handler = get_search_conversation_handler()
+
+        # Get the cancel handler from WAITING_FOR_ROOM state
+        room_waiting_handlers = handler.states[RoomSearchStates.WAITING_FOR_ROOM]
+        
+        cancel_handler = None
+        for h in room_waiting_handlers:
+            # Look for cancel handler by checking the callback function name
+            if hasattr(h, "callback") and "cancel_search" in str(h.callback):
+                cancel_handler = h
+                break
+
+        assert cancel_handler is not None, "Cancel handler not found in WAITING_FOR_ROOM state"
+
+        # Execute the cancel handler
+        result = await cancel_handler.callback(mock_update_cancel_button, mock_context)
+
+        # Should return to main menu (SearchStates.MAIN_MENU)
+        from src.bot.handlers.search_handlers import SearchStates
+        assert result == SearchStates.MAIN_MENU
+
+        # Should have replied to user
+        mock_update_cancel_button.message.reply_text.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_cancel_text_not_processed_as_room_input(
+        self, mock_update_cancel_button, mock_context
+    ):
+        """Test that cancel button text doesn't get processed as room input."""
+        # Get conversation handler
+        handler = get_search_conversation_handler()
+
+        # Get the text handler from WAITING_FOR_ROOM state (for room number input)
+        room_waiting_handlers = handler.states[RoomSearchStates.WAITING_FOR_ROOM]
+        
+        text_handler = None
+        for h in room_waiting_handlers:
+            # Look for the text input handler (process_room_search)
+            if hasattr(h, "callback") and "process_room_search" in str(h.callback):
+                text_handler = h
+                break
+
+        assert text_handler is not None, "Room text input handler not found"
+
+        # Check that the text handler's filter excludes cancel button text
+        test_update = mock_update_cancel_button
+        
+        # The filter should reject cancel button text
+        # Note: This tests the exclusion regex in Step 3
+        filter_result = text_handler.filters.check_update(test_update)
+        assert filter_result is False, "Cancel text should be excluded from room input filter"

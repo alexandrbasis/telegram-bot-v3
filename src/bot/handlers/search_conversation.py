@@ -169,13 +169,16 @@ def get_search_conversation_handler() -> ConversationHandler:
                     filters.TEXT
                     & ~filters.COMMAND
                     & ~filters.Regex(
-                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"
+                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"
                     ),
                     process_room_search,
                 ),
                 # Navigation via reply keyboard
                 MessageHandler(
                     filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                ),
+                MessageHandler(
+                    filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
                 ),
                 MessageHandler(
                     filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
