@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Airtable Schema Update with DateOfBirth and Age Fields** - Complete schema synchronization and model enhancement adding demographic fields with comprehensive validation and testing (AGB-44, completed 2025-09-10)
+  - Enhanced Participant model with Optional demographic fields supporting flexible data collection (`src/models/participant.py:141-152`)
+    - `date_of_birth` (Optional[date]) with proper date validation and ISO format serialization
+    - `age` (Optional[int]) with constraint validation (ge=0) for reasonable age values
+    - Bidirectional Airtable conversion maintaining None value handling for backward compatibility
+  - Real Airtable field mapping integration with production field IDs discovered via live API (`src/config/field_mappings.py:61-62`)
+    - DateOfBirth: `fld1rN2cffxKuZh4i` (17-character field ID, date type)
+    - Age: `fldZPh65PIekEbgvs` (17-character field ID, number type with 0-120 range)
+    - Added to AIRTABLE_FIELD_IDS, PYTHON_TO_AIRTABLE, FIELD_TYPES, and FIELD_CONSTRAINTS mappings
+    - Application-side validation with clear documentation about constraint boundaries
+  - Production schema discovery and validation scripts for live API verification (`scripts/`)
+    - `scripts/discover_real_schema.py` with enhanced error handling and environment variable validation
+    - `scripts/validate_production_schema.py` supporting CI/CD integration with proper exit codes
+    - Comprehensive field existence validation and type compatibility checking
+  - Complete schema documentation updates with real field specifications (`docs/data-integration/airtable_database_structure.md:134,153`)
+    - DateOfBirth field documentation with ISO date format examples and validation constraints
+    - Age field documentation with numeric range specifications and implementation considerations
+    - Updated sample record structure reflecting real production data
+  - Comprehensive test coverage with 782 tests passing achieving excellent coverage across all components
+    - Model validation tests for new fields with serialization, deserialization, and roundtrip conversion
+    - Field mapping tests ensuring proper bidirectional translation and constraint validation
+    - Repository integration tests confirming seamless data persistence and retrieval
+    - Backward compatibility tests validating existing records without new fields parse correctly
+  - Enhanced field constraints and validation system with Russian error messages (`src/config/field_mappings.py`)
+    - DateOfBirth uses DATE type with proper ISO string conversion for Airtable integration
+    - Age implements NUMBER type with min=0, max=120 constraints and descriptive metadata
+    - Application-side validation clearly documented with implementation boundaries
+  - Complete backward compatibility preservation ensuring existing functionality remains unaffected
+    - Optional field implementation allows existing records to function without modification  
+    - All existing tests continue to pass confirming no breaking changes introduced
+    - Graceful handling of None values throughout conversion and validation processes
+  - Production readiness with real field IDs validated against live Airtable base
+    - Successfully connected to production Airtable base `appRp7Vby2JMzN0mC` and table `tbl8ivwOdAUvMi3Jy`
+    - Discovered real field schema with proper 17-character field ID format validation
+    - Generated `discovered_real_schema.json` with complete field metadata for future reference
+
+### Added
+- **Enhanced Documentation Suite for Airtable Schema Update** - Comprehensive documentation improvements supporting DateOfBirth and Age field integration (AGB-44, completed 2025-09-10)
+  - Updated API design documentation with enhanced field specifications and validation requirements (`docs/architecture/api-design.md`)
+    - DateOfBirth and Age field integration patterns with Pydantic validation examples
+    - Enhanced repository pattern documentation with Optional field handling specifications
+    - Updated conversion method documentation with serialization and deserialization patterns
+  - Enhanced field mapping documentation with real production field IDs and constraint specifications (`docs/data-integration/field-mappings.md`)
+    - Complete field ID reference table with 17-character Airtable field identifiers
+    - Field type and constraint documentation with validation boundary explanations
+    - Bidirectional mapping examples with Python model to Airtable field translations
+  - Comprehensive testing strategy documentation with schema validation and compatibility testing (`docs/development/testing-strategy.md`)
+    - TDD implementation approach documentation with test-driven development patterns
+    - Schema discovery and validation testing methodology with live API integration
+    - Backward compatibility testing strategy with existing record validation procedures
+  - Enhanced project plan documentation with implementation details and completion status (`PROJECT_PLAN.md`)
+    - Updated Phase 2 status with Airtable schema synchronization completion
+    - Enhanced technical requirements with real field ID integration specifications
+    - Updated implementation milestones with comprehensive test coverage achievements
+
 ### Fixed
 - **Critical Search Mode Button Processing Bug Resolution** - Fixed all three search mode buttons (name, room, floor) being processed as search queries instead of navigation commands, restoring proper search functionality across the bot (AGB-41, completed 2025-09-10)
   - Root cause resolution for navigation button text being processed as search queries due to missing `NAV_SEARCH_*` constants in WAITING state MessageHandler exclusion filters (`src/bot/handlers/search_conversation.py:133,172,205`)
