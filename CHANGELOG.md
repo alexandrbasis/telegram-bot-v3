@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Airtable Schema Update with DateOfBirth and Age Fields** - Complete schema synchronization and model enhancement adding demographic fields with comprehensive validation and testing (AGB-44, completed 2025-09-10)
+- **Airtable Schema Update with DateOfBirth and Age Fields** - Complete schema synchronization and model enhancement adding demographic fields with comprehensive validation and testing (AGB-44, completed 2025-09-10, SHA c562bd0, merged via PR #35)
   - Enhanced Participant model with Optional demographic fields supporting flexible data collection (`src/models/participant.py:141-152`)
     - `date_of_birth` (Optional[date]) with proper date validation and ISO format serialization
     - `age` (Optional[int]) with constraint validation (ge=0) for reasonable age values
@@ -44,8 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Discovered real field schema with proper 17-character field ID format validation
     - Generated `discovered_real_schema.json` with complete field metadata for future reference
 
-### Added
-- **Enhanced Documentation Suite for Airtable Schema Update** - Comprehensive documentation improvements supporting DateOfBirth and Age field integration (AGB-44, completed 2025-09-10)
+### Added  
+- **Enhanced Documentation Suite for Airtable Schema Update** - Comprehensive documentation improvements supporting DateOfBirth and Age field integration (AGB-44, completed 2025-09-10, SHA c562bd0, merged via PR #35)
   - Updated API design documentation with enhanced field specifications and validation requirements (`docs/architecture/api-design.md`)
     - DateOfBirth and Age field integration patterns with Pydantic validation examples
     - Enhanced repository pattern documentation with Optional field handling specifications
