@@ -59,7 +59,7 @@ class AirtableFieldMapping:
         "PaymentDate": "fldylOQLqcBwkmzlh",
         # New fields (DateOfBirth and Age) - Real field IDs from live Airtable API
         "DateOfBirth": "fld1rN2cffxKuZh4i",  # date field (discovered 2025-09-10)
-        "Age": "fldZPh65PIekEbgvs",  # number field (discovered 2025-09-10)  
+        "Age": "fldZPh65PIekEbgvs",  # number field (discovered 2025-09-10)
         # Accommodation fields (confirmed from live Airtable schema)
         "Floor": "fldlzG1sVg01hsy2g",
         "RoomNumber": "fldJTPjo8AHQaADVu",

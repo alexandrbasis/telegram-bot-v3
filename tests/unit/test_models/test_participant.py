@@ -305,8 +305,12 @@ class TestAirtableFieldMapping:
     def test_to_airtable_fields_excludes_none(self):
         """Test that None values are excluded from Airtable fields."""
         participant = Participant(
-            full_name_ru="Test", full_name_en=None, payment_amount=None, gender=None,
-            date_of_birth=None, age=None
+            full_name_ru="Test",
+            full_name_en=None,
+            payment_amount=None,
+            gender=None,
+            date_of_birth=None,
+            age=None,
         )
 
         fields = participant.to_airtable_fields()
@@ -370,9 +374,7 @@ class TestAirtableFieldMapping:
         assert "Age" not in fields
 
         # Only Age
-        participant = Participant(
-            full_name_ru="Test User", date_of_birth=None, age=39
-        )
+        participant = Participant(full_name_ru="Test User", date_of_birth=None, age=39)
         fields = participant.to_airtable_fields()
         assert fields["Age"] == 39
         assert "DateOfBirth" not in fields

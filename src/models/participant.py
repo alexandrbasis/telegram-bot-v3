@@ -112,7 +112,9 @@ class Participant(BaseModel):
     payment_date: Optional[date] = Field(None, description="Date of payment")
 
     # New fields
-    date_of_birth: Optional[date] = Field(None, description="Participant's date of birth")
+    date_of_birth: Optional[date] = Field(
+        None, description="Participant's date of birth"
+    )
     age: Optional[int] = Field(
         None, ge=0, description="Participant's age in years (must be non-negative)"
     )

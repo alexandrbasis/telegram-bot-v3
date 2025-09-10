@@ -44,10 +44,11 @@ class TestAirtableFieldMapping:
             == "PaymentDate"
         )
         assert AirtableFieldMapping.get_airtable_field_name("record_id") == "id"
-        
+
         # Test new fields
         assert (
-            AirtableFieldMapping.get_airtable_field_name("date_of_birth") == "DateOfBirth"
+            AirtableFieldMapping.get_airtable_field_name("date_of_birth")
+            == "DateOfBirth"
         )
         assert AirtableFieldMapping.get_airtable_field_name("age") == "Age"
 
@@ -71,7 +72,7 @@ class TestAirtableFieldMapping:
             AirtableFieldMapping.get_python_field_name("PaymentDate") == "payment_date"
         )
         assert AirtableFieldMapping.get_python_field_name("id") == "record_id"
-        
+
         # Test new fields reverse mappings
         assert (
             AirtableFieldMapping.get_python_field_name("DateOfBirth") == "date_of_birth"
@@ -100,7 +101,7 @@ class TestAirtableFieldMapping:
         # Test date fields
         assert AirtableFieldMapping.get_field_type("PaymentDate") == FieldType.DATE
         assert AirtableFieldMapping.get_field_type("DateOfBirth") == FieldType.DATE
-        
+
         # Test age field (number type)
         assert AirtableFieldMapping.get_field_type("Age") == FieldType.NUMBER
 
@@ -136,7 +137,7 @@ class TestAirtableFieldMapping:
         date_constraints = AirtableFieldMapping.get_field_constraints("DateOfBirth")
         assert "description" in date_constraints
         assert "Participant's date of birth" in date_constraints["description"]
-        
+
         age_constraints = AirtableFieldMapping.get_field_constraints("Age")
         assert age_constraints["min_value"] == 0
         assert age_constraints["max_value"] == 120
@@ -345,7 +346,9 @@ class TestFieldValidation:
         assert "at most 120" in error
 
         # Test Age type validation
-        is_valid, error = AirtableFieldMapping.validate_field_value("Age", "twenty-five")
+        is_valid, error = AirtableFieldMapping.validate_field_value(
+            "Age", "twenty-five"
+        )
         assert is_valid is False
         assert "must be a number" in error
 
@@ -634,7 +637,7 @@ class TestAirtableFieldIDs:
 
         # Test date field (1)
         assert AirtableFieldMapping.get_field_id("PaymentDate") == "fldylOQLqcBwkmzlh"
-        
+
         # Test new fields (real field IDs from live Airtable)
         assert AirtableFieldMapping.get_field_id("DateOfBirth") == "fld1rN2cffxKuZh4i"
         assert AirtableFieldMapping.get_field_id("Age") == "fldZPh65PIekEbgvs"
