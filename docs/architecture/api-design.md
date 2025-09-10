@@ -348,9 +348,11 @@ class Participant(BaseModel):
     submitted_by: Optional[str] = None
     room_number: Optional[str] = None   # Room assignment (alphanumeric)
     floor: Optional[Union[int, str]] = None  # Floor number or name
+    date_of_birth: Optional[date] = None    # Date of birth (ISO date format)
+    age: Optional[int] = None               # Age in years (0-120 range)
 ```
 
-### Field Mapping (Airtable) - Validated 2025-09-05
+### Field Mapping (Airtable) - Updated 2025-09-10
 ```python
 # Internal field → Airtable field ID mapping (Integration tested)
 FIELD_MAPPINGS = {
@@ -359,6 +361,8 @@ FIELD_MAPPINGS = {
     "gender": "fldZZZZZZZZZZZZZZ",
     "room_number": "fldJTPjo8AHQaADVu",  # RoomNumber field (TEXT type, alphanumeric)
     "floor": "fldlzG1sVg01hsy2g",        # Floor field (Union[int, str])
+    "date_of_birth": "fld1rN2cffxKuZh4i",  # DateOfBirth field (DATE type, ISO format)
+    "age": "fldZPh65PIekEbgvs",           # Age field (NUMBER type, 0-120 range)
     # ... etc for all fields
 }
 ```

@@ -6,11 +6,15 @@
 The following field mappings enable room and floor-based participant search functionality:
 
 ```python
-# Field mappings for location-based search
+# Field mappings for location-based search and demographic data
 FIELD_MAPPINGS = {
     # Room/Floor search fields
     "room_number": "fldJTPjo8AHQaADVu",  # RoomNumber field in Airtable
     "floor": "fldlzG1sVg01hsy2g",        # Floor field in Airtable
+    
+    # Demographic data fields (Added 2025-09-10)
+    "date_of_birth": "fld1rN2cffxKuZh4i",  # DateOfBirth field in Airtable
+    "age": "fldZPh65PIekEbgvs",           # Age field in Airtable
     
     # Other participant fields
     "full_name_ru": "fld...",
@@ -34,6 +38,22 @@ FIELD_MAPPINGS = {
 - **Data Type**: Number or single line text
 - **Validation**: Accepts numeric floors (1, 2, 3) or named floors ("Ground", "Basement")
 - **Search Usage**: `find_by_floor(floor: Union[int, str])` method in repository
+
+#### DateOfBirth Field (fld1rN2cffxKuZh4i) - Added 2025-09-10
+- **Internal Model**: `date_of_birth: Optional[date]`
+- **Airtable Field**: "DateOfBirth"
+- **Data Type**: Date
+- **Validation**: ISO date format (YYYY-MM-DD), Python date object
+- **Constraints**: Valid date values, application-side validation
+- **Conversion**: to_airtable_fields() serializes as ISO string, from_airtable_record() deserializes to date object
+
+#### Age Field (fldZPh65PIekEbgvs) - Added 2025-09-10
+- **Internal Model**: `age: Optional[int]`
+- **Airtable Field**: "Age"
+- **Data Type**: Number
+- **Validation**: Integer values with application-side constraints (0-120 range)
+- **Constraints**: Minimum 0, Maximum 120 (application-enforced, not Airtable-enforced)
+- **Conversion**: Bidirectional integer handling in conversion methods
 
 ### Security Enhancements
 
