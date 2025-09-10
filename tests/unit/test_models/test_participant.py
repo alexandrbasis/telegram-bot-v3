@@ -219,6 +219,30 @@ class TestParticipantValidation:
         participant = Participant(full_name_ru="Test", room_number="")
         assert participant.room_number is None
 
+    def test_new_fields_validation(self):
+        """Test validation of new DateOfBirth and Age fields."""
+        # Test valid DateOfBirth
+        birth_date = date(1990, 5, 15)
+        participant = Participant(full_name_ru="Test", date_of_birth=birth_date)
+        assert participant.date_of_birth == birth_date
+
+        # Test valid Age
+        participant = Participant(full_name_ru="Test", age=25)
+        assert participant.age == 25
+
+        # Test Age constraints (should be >= 0)
+        with pytest.raises(ValidationError) as exc_info:
+            Participant(full_name_ru="Test", age=-1)
+        assert "Input should be greater than or equal to 0" in str(exc_info.value)
+
+        # Test Age as None (optional)
+        participant = Participant(full_name_ru="Test", age=None)
+        assert participant.age is None
+
+        # Test DateOfBirth as None (optional)
+        participant = Participant(full_name_ru="Test", date_of_birth=None)
+        assert participant.date_of_birth is None
+
 
 class TestAirtableFieldMapping:
     """Test suite for Airtable API field mapping."""
@@ -250,6 +274,8 @@ class TestAirtableFieldMapping:
             payment_date=payment_date,
             floor=3,
             room_number="101A",
+            date_of_birth=date(1990, 5, 15),
+            age=35,
         )
 
         fields = participant.to_airtable_fields()
@@ -270,6 +296,8 @@ class TestAirtableFieldMapping:
             "PaymentDate": "2025-08-27",
             "Floor": 3,
             "RoomNumber": "101A",
+            "DateOfBirth": "1990-05-15",
+            "Age": 35,
         }
 
         assert fields == expected
@@ -277,7 +305,8 @@ class TestAirtableFieldMapping:
     def test_to_airtable_fields_excludes_none(self):
         """Test that None values are excluded from Airtable fields."""
         participant = Participant(
-            full_name_ru="Test", full_name_en=None, payment_amount=None, gender=None
+            full_name_ru="Test", full_name_en=None, payment_amount=None, gender=None,
+            date_of_birth=None, age=None
         )
 
         fields = participant.to_airtable_fields()
@@ -288,6 +317,8 @@ class TestAirtableFieldMapping:
         assert "Gender" not in fields
         assert "Floor" not in fields
         assert "RoomNumber" not in fields
+        assert "DateOfBirth" not in fields
+        assert "Age" not in fields
 
     def test_accommodation_fields_serialization(self):
         """Test Floor and Room Number fields serialize correctly to Airtable format."""
@@ -318,6 +349,41 @@ class TestAirtableFieldMapping:
         fields = participant.to_airtable_fields()
         assert fields["RoomNumber"] == "Suite 100"
         assert "Floor" not in fields
+
+    def test_new_fields_serialization(self):
+        """Test DateOfBirth and Age fields serialize correctly to Airtable format."""
+        # Both fields present
+        birth_date = date(1985, 12, 25)
+        participant = Participant(
+            full_name_ru="Test User", date_of_birth=birth_date, age=39
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["DateOfBirth"] == "1985-12-25"
+        assert fields["Age"] == 39
+
+        # Only DateOfBirth
+        participant = Participant(
+            full_name_ru="Test User", date_of_birth=birth_date, age=None
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["DateOfBirth"] == "1985-12-25"
+        assert "Age" not in fields
+
+        # Only Age
+        participant = Participant(
+            full_name_ru="Test User", date_of_birth=None, age=39
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["Age"] == 39
+        assert "DateOfBirth" not in fields
+
+        # Neither field set
+        participant = Participant(
+            full_name_ru="Test User", date_of_birth=None, age=None
+        )
+        fields = participant.to_airtable_fields()
+        assert "DateOfBirth" not in fields
+        assert "Age" not in fields
 
 
 class TestAirtableRecordCreation:
@@ -354,6 +420,8 @@ class TestAirtableRecordCreation:
                 "PaymentDate": "2025-08-27",
                 "Floor": 3,
                 "RoomNumber": "301A",
+                "DateOfBirth": "1990-05-15",
+                "Age": 35,
             },
         }
 
@@ -375,6 +443,8 @@ class TestAirtableRecordCreation:
         assert participant.payment_date == date(2025, 8, 27)
         assert participant.floor == 3
         assert participant.room_number == "301A"
+        assert participant.date_of_birth == date(1990, 5, 15)
+        assert participant.age == 35
 
     def test_from_airtable_record_missing_fields(self):
         """Test handling of Airtable records with missing required fields."""
@@ -455,6 +525,45 @@ class TestAirtableRecordCreation:
         assert participant.floor is None
         assert participant.room_number == "Suite 100"
 
+    def test_new_fields_deserialization(self):
+        """Test DateOfBirth and Age fields deserialize correctly from Airtable records."""
+        # Both fields present
+        record = {
+            "id": "rec123456789",
+            "fields": {
+                "FullNameRU": "Test User",
+                "DateOfBirth": "1985-12-25",
+                "Age": 39,
+            },
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.date_of_birth == date(1985, 12, 25)
+        assert participant.age == 39
+
+        # Only DateOfBirth present
+        record = {
+            "id": "rec987654321",
+            "fields": {"FullNameRU": "Test User 2", "DateOfBirth": "1990-06-15"},
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.date_of_birth == date(1990, 6, 15)
+        assert participant.age is None
+
+        # Only Age present
+        record = {
+            "id": "rec555666777",
+            "fields": {"FullNameRU": "Test User 3", "Age": 25},
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.age == 25
+        assert participant.date_of_birth is None
+
+        # Neither field present (should be None)
+        record = {"id": "rec111111111", "fields": {"FullNameRU": "Test User 4"}}
+        participant = Participant.from_airtable_record(record)
+        assert participant.date_of_birth is None
+        assert participant.age is None
+
 
 class TestParticipantRoundtrip:
     """Test suite for roundtrip conversions (model -> Airtable -> model)."""
@@ -473,6 +582,8 @@ class TestParticipantRoundtrip:
             payment_date=date(2025, 8, 27),
             floor=3,
             room_number="301A",
+            date_of_birth=date(1985, 3, 10),
+            age=40,
         )
 
         # Convert to Airtable format
@@ -496,6 +607,8 @@ class TestParticipantRoundtrip:
         assert restored.payment_date == original.payment_date
         assert restored.floor == original.floor
         assert restored.room_number == original.room_number
+        assert restored.date_of_birth == original.date_of_birth
+        assert restored.age == original.age
         assert restored.record_id == "rec123456789"
 
     def test_roundtrip_conversion_accommodation_fields_only(self):
@@ -521,4 +634,29 @@ class TestParticipantRoundtrip:
         assert restored.full_name_ru == original.full_name_ru
         assert restored.floor == original.floor
         assert restored.room_number == original.room_number
+        assert restored.record_id == "rec123456789"
+
+    def test_roundtrip_conversion_new_fields_only(self):
+        """Test roundtrip conversion with only DateOfBirth and Age fields set."""
+        original = Participant(
+            full_name_ru="Test User", date_of_birth=date(1992, 8, 20), age=32
+        )
+
+        # Convert to Airtable format
+        airtable_fields = original.to_airtable_fields()
+
+        # Verify Airtable format includes new fields
+        assert airtable_fields["DateOfBirth"] == "1992-08-20"
+        assert airtable_fields["Age"] == 32
+
+        # Create mock Airtable record
+        airtable_record = {"id": "rec123456789", "fields": airtable_fields}
+
+        # Convert back to participant
+        restored = Participant.from_airtable_record(airtable_record)
+
+        # Verify new field data integrity
+        assert restored.full_name_ru == original.full_name_ru
+        assert restored.date_of_birth == original.date_of_birth
+        assert restored.age == original.age
         assert restored.record_id == "rec123456789"
