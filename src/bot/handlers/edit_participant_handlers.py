@@ -380,6 +380,8 @@ async def handle_field_edit_selection(
         "payment_amount",
         "floor",
         "room_number",
+        "date_of_birth",
+        "age",
     ]
 
     if field_name in BUTTON_FIELDS:

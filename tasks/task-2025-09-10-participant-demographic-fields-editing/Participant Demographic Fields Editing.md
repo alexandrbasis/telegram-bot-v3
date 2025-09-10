@@ -273,3 +273,30 @@ Target: 90%+ coverage across all implementation areas
 - **Integration**: 4 tests for Airtable field mapping and persistence
 - **User Interaction**: 6 tests for keyboard buttons, prompts, and input flows
 - **All 795 tests passing** including the 15 new demographic field tests
+
+## Code Review Resolution (2025-09-10)
+
+### Issue Identified - [P1] Route date_of_birth and age buttons to text input flow
+**Problem**: Demographic field buttons were exposed in the edit keyboard but not properly classified in `handle_field_edit_selection`. Users received "unknown field" errors instead of being able to edit these fields.
+
+**Root Cause**: The `TEXT_FIELDS` list in `edit_participant_handlers.py` lines 373-383 did not include "date_of_birth" and "age" fields, causing the field classification logic to fall through to the unknown field error branch.
+
+**Solution Applied**: Added "date_of_birth" and "age" to the `TEXT_FIELDS` list to ensure proper routing to `show_field_text_prompt` function.
+
+**File Modified**: `src/bot/handlers/edit_participant_handlers.py`
+- **Lines Changed**: 373-385
+- **Change**: Extended TEXT_FIELDS list to include demographic fields
+- **Before**: TEXT_FIELDS contained 9 fields (full_name_ru through room_number)
+- **After**: TEXT_FIELDS contains 11 fields (added date_of_birth and age)
+
+**Verification**:
+- [x] Demographic field validation tests pass (test_validate_date_of_birth_field_valid_date, test_validate_age_field_valid_range)
+- [x] Edit handler text field routing tests pass
+- [x] No regression in existing functionality
+- [x] Fix addresses the exact issue reported in code review
+
+### Code Review Status: ✅ Resolved
+- **Issue Priority**: P1 (Critical)
+- **Resolution Date**: 2025-09-10
+- **Verification**: All relevant tests passing
+- **Ready for Re-review**: Yes
