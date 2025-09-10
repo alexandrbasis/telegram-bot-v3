@@ -22,6 +22,7 @@ from src.bot.keyboards.edit_keyboards import (
     create_participant_edit_keyboard,
     get_field_icon,
 )
+from src.bot.messages import InfoMessages
 from src.config.settings import get_settings
 from src.models.participant import Gender, Participant, Role
 from src.services.participant_update_service import (
@@ -474,6 +475,8 @@ async def show_field_text_prompt(
         "payment_date": "Отправьте дату в формате ГГГГ-ММ-ДД:",
         "floor": "Отправьте этаж (только цифры):",
         "room_number": "Отправьте номер комнаты (только цифры):",
+        "date_of_birth": InfoMessages.ENTER_DATE_OF_BIRTH,
+        "age": InfoMessages.ENTER_AGE,
     }
 
     prompt = field_prompts.get(
