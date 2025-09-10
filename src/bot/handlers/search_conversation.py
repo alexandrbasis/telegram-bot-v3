@@ -130,7 +130,7 @@ def get_search_conversation_handler() -> ConversationHandler:
                     filters.TEXT
                     & ~filters.COMMAND
                     & ~filters.Regex(
-                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"
+                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_NAME)}$"
                     ),
                     process_name_search,
                 ),
@@ -169,7 +169,7 @@ def get_search_conversation_handler() -> ConversationHandler:
                     filters.TEXT
                     & ~filters.COMMAND
                     & ~filters.Regex(
-                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"
+                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_ROOM)}$"
                     ),
                     process_room_search,
                 ),
@@ -202,7 +202,7 @@ def get_search_conversation_handler() -> ConversationHandler:
                     filters.TEXT
                     & ~filters.COMMAND
                     & ~filters.Regex(
-                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"
+                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_FLOOR)}$"
                     ),
                     process_floor_search,
                 ),

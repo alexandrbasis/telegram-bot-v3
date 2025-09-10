@@ -250,13 +250,22 @@ BUTTON_SELECTION:
 CONFIRMATION:
   → END (after save/cancel)
 
-RoomSearchStates (Enhanced 2025-01-15):
-WAITING_FOR_ROOM:
-  → SHOWING_RESULTS (valid room input)
-  → WAITING_FOR_ROOM (validation error retry)
+SearchStates (Fixed 2025-09-10):
+SEARCH_MODE_SELECTION:
+  → WAITING_FOR_NAME ("👤 По имени" button - NAV_SEARCH_NAME handler)
+  → WAITING_FOR_ROOM ("🚪 По комнате" button - NAV_SEARCH_ROOM handler)
+  → WAITING_FOR_FLOOR ("🏢 По этажу" button - NAV_SEARCH_FLOOR handler)
+  → END (cancel/main menu buttons)
+
+WAITING_FOR_NAME/ROOM/FLOOR (Critical Fix):
+  → SHOWING_RESULTS (valid user input)
+  → WAITING_FOR_* (validation error retry)
   → END (cancel button - NAV_CANCEL handler)
   → MAIN_MENU (main menu button - NAV_MAIN_MENU handler)
   → SEARCH_MODE_SELECTION (back to search modes - NAV_BACK_TO_SEARCH_MODES handler)
+  
+  Note: Navigation button text (NAV_SEARCH_*) now properly excluded from input processing
+        via MessageHandler exclusion filters to prevent button text being treated as queries
 ```
 
 ## Error Response APIs

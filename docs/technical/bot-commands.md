@@ -206,16 +206,18 @@ Each participant field can be edited through dedicated "Изменить [Field]
 Users can switch between different search modes using a reply keyboard interface:
 
 **Available Modes:**
-- **"🔍 Поиск по имени" (Name Search)**: Traditional participant name search
-- **"🏠 Поиск по комнате" (Room Search)**: Search by room number  
-- **"🏢 Поиск по этажу" (Floor Search)**: Search by floor with room breakdown
+- **"👤 По имени" (Name Search)**: Traditional participant name search
+- **"🚪 По комнате" (Room Search)**: Search by room number  
+- **"🏢 По этажу" (Floor Search)**: Search by floor with room breakdown
 
 **Navigation Flow:**
 1. User clicks main menu "🔍 Поиск участников" button
 2. Bot displays search mode selection keyboard
-3. User selects desired search mode
+3. User selects desired search mode by clicking the appropriate button
 4. Bot prompts for appropriate input (name, room number, or floor)
 5. Results displayed with option to return to mode selection
+
+**Critical Fix (2025-09-10)**: Search mode buttons now correctly transition to input waiting states instead of being processed as search queries. The buttons "👤 По имени", "🚪 По комнате", and "🏢 По этажу" properly trigger prompt messages and wait for user input rather than immediately searching for the button text itself.
 
 ## Room and Floor Search Results
 

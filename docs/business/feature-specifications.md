@@ -153,6 +153,20 @@ Fields:
 - [x] ✅ Russian localization across all UI elements including error messages
 - [x] ✅ Integration with existing search functionality and conversation flows
 
+### Recent Bug Fixes
+
+#### Search Mode Button Processing Bug Fix (2025-09-10)
+**Problem**: Critical search functionality bug where search mode buttons ("👤 По имени", "🚪 По комнате", "🏢 По этажу") were being processed as search queries instead of navigation commands.
+
+**Impact**: Users could not perform name searches as clicking the name search button would immediately search for the button text "👤 По имени" instead of prompting for participant name input.
+
+**Resolution**: Fixed MessageHandler exclusion filters in `search_conversation.py` to properly exclude navigation button constants:
+- Added `NAV_SEARCH_NAME` to WAITING_FOR_NAME filter (line 133)
+- Added `NAV_SEARCH_ROOM` to WAITING_FOR_ROOM filter (line 172)  
+- Added `NAV_SEARCH_FLOOR` to WAITING_FOR_FLOOR filter (line 205)
+
+**Result**: All three search modes now follow the correct button→prompt→input pattern, restoring full search functionality.
+
 ### Future Enhancements
 
 **Potential Improvements**:

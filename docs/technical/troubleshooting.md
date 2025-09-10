@@ -74,6 +74,22 @@
    - Search button uses `callback_data="search"` with pattern `"^search$"`
 4. **Testing**: Run regression test `tests/unit/test_search_button_regression.py` to validate functionality
 
+#### Name Search Button Processed as Query (Fixed 2025-09-10)
+**Problem**: Search mode buttons ("👤 По имени", "🚪 По комнате", "🏢 По этажу") were being processed as search queries instead of navigation commands
+**Root Cause**: Missing `NAV_SEARCH_*` constants in WAITING state MessageHandler exclusion filters
+**Symptoms**:
+- Clicking "👤 По имени" button triggers search for "👤 По имени" text instead of transitioning to input waiting state
+- "No participants found" error when clicking search mode buttons
+- Affected all three search modes (name, room, floor)
+
+**Fixed Implementation**:
+1. **Filter Pattern Fix**: Added navigation button constants to exclusion regex patterns in `search_conversation.py`:
+   - Line 133: Added `NAV_SEARCH_NAME` to WAITING_FOR_NAME filter exclusion
+   - Line 172: Added `NAV_SEARCH_ROOM` to WAITING_FOR_ROOM filter exclusion
+   - Line 205: Added `NAV_SEARCH_FLOOR` to WAITING_FOR_FLOOR filter exclusion
+2. **Consistent Behavior**: All three search modes now follow correct button→prompt→input pattern
+3. **Test Coverage**: Comprehensive test suite in `test_search_conversation_name.py` prevents regression
+
 #### Room Search Flow Issues (Fixed 2025-01-15)
 **Problem**: Room search shows duplicate messages and broken cancel functionality
 **Causes**:
