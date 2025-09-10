@@ -300,3 +300,38 @@ Target: 90%+ coverage across all implementation areas
 - **Resolution Date**: 2025-09-10
 - **Verification**: All relevant tests passing
 - **Ready for Re-review**: Yes
+
+## Code Review Round 2 Resolution (2025-09-10)
+
+### Enhancement Applied - Specific Format Prompts Integration
+**Request**: Integrate specific format prompts instead of generic fallback prompts for better user experience with demographic fields.
+
+**Solution Applied**: Added InfoMessages constants to field_prompts dictionary for specific format guidance.
+
+**File Modified**: `src/bot/handlers/edit_participant_handlers.py`
+- **Lines Changed**: 25 (import), 478-479 (field_prompts)
+- **Import Added**: `from src.bot.messages import InfoMessages`
+- **Fields Added**: 
+  - `"date_of_birth": InfoMessages.ENTER_DATE_OF_BIRTH` (provides "📅 Введите дату рождения в формате ГГГГ-ММ-ДД (например: 1990-05-15):")
+  - `"age": InfoMessages.ENTER_AGE` (provides "🔢 Введите возраст (от 0 до 120):")
+
+**Enhancement Impact**:
+- Users now receive specific format examples when editing demographic fields
+- Improved user experience with clear guidance on required date format and age range
+- Consistent with existing field prompts that provide format-specific instructions
+- Maintains Russian language consistency with established prompt patterns
+
+**Verification**:
+- [x] All 795 tests continue to pass
+- [x] No diagnostics or linting errors introduced
+- [x] Import properly added and InfoMessages constants correctly referenced
+- [x] Field prompts now provide specific format guidance instead of generic fallback
+
+**Commit**: 963f3a1 - "enhance: integrate specific format prompts for demographic fields"
+
+### Code Review Round 2 Status: ✅ COMPLETE
+- **Enhancement Priority**: Minor (Nice to Have)
+- **Resolution Date**: 2025-09-10  
+- **Implementation**: Fully functional with optimal user experience
+- **All 795 Tests**: ✅ Passing
+- **Status**: Ready for final review and merge approval
