@@ -46,7 +46,7 @@ Fields:
 - **Contact (Контакты)**: Optional 
 - **Submitted By (Кто подал)**: Optional
 
-**Special Validation Fields (2 fields)**
+**Special Validation Fields (4 fields)**
 - Custom validation logic
 - Format-specific error messages  
 - Shows complete participant display after update
@@ -54,6 +54,8 @@ Fields:
 Fields:
 - **Payment Amount (Сумма платежа)**: Integer ≥ 0
 - **Payment Date (Дата платежа)**: YYYY-MM-DD format
+- **Date of Birth (Дата рождения)**: YYYY-MM-DD format with Russian format template ("ГГГГ-ММ-ДД")
+- **Age (Возраст)**: Integer range 0-120 with Russian range validation
 
 #### 3. Conversation Flow Management
 
@@ -136,7 +138,7 @@ Fields:
 
 ### Acceptance Criteria
 
-- [x] ✅ All 13 participant fields accessible through editing interface
+- [x] ✅ All 15 participant fields accessible through editing interface (including DateOfBirth and Age added 2025-09-10)
 - [x] ✅ Button-based fields show correct options with Russian labels
 - [x] ✅ Text fields accept and validate input with Russian prompts
 - [x] ✅ State management maintains editing context properly
@@ -152,6 +154,25 @@ Fields:
 - [x] ✅ Complete test coverage (41 tests total including 11 regression tests, 100% pass rate)
 - [x] ✅ Russian localization across all UI elements including error messages
 - [x] ✅ Integration with existing search functionality and conversation flows
+
+### Recent Features
+
+#### Demographic Fields Editing (2025-09-10)
+**Enhancement**: Added comprehensive demographic field editing capabilities for participant management.
+
+**New Fields**:
+- **Date of Birth (Дата рождения)**: Complete YYYY-MM-DD format validation with Russian prompts
+- **Age (Возраст)**: Numeric validation with 0-120 range constraints
+
+**Implementation Details**:
+- Added demographic field icons: 🎂 (Date of Birth) and 🔢 (Age) in edit keyboard
+- Enhanced search results to display demographic information with "Date of Birth: YYYY-MM-DD | Age: XX years" format
+- Backward compatibility maintained with "N/A" display for missing demographic data
+- Russian input prompts with format examples: "📅 Введите дату рождения в формате ГГГГ-ММ-ДД"
+- Comprehensive validation with Russian error messages for invalid formats and ranges
+- Complete integration with existing save/cancel workflow and state management
+
+**Test Coverage**: 15 new tests covering validation, display formatting, keyboard integration, and error handling scenarios.
 
 ### Recent Bug Fixes
 

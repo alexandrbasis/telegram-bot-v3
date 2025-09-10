@@ -76,9 +76,10 @@ Search for participants on a specific floor with room-by-room breakdown.
 
 **Search Results Display:**
 - Shows up to 10 participants per page
-- Displays: Name (Russian/English), Role, Department, Match Quality
+- Displays: Name (Russian/English), Role, Department, Demographics (Date of Birth, Age), Match Quality
 - "Подробнее" (Details) button for each participant
 - Pagination with "Назад" (Back) and "Далее" (Next) buttons
+- Enhanced display format includes demographic info: "Date of Birth: YYYY-MM-DD | Age: XX years" (or "N/A" for missing data)
 
 ## Participant Editing Interface
 
@@ -98,6 +99,8 @@ After searching, click "Подробнее" (Details) on any participant to acce
 - Payment Status: [Оплачено/Частично/Не оплачено]
 - Payment Amount: [Amount]
 - Payment Date: [Date]
+- Date of Birth: [YYYY-MM-DD or N/A]
+- Age: [XX years or N/A]
 - Submitted By: [Name]
 
 ### Enhanced Field Editing Display
@@ -173,6 +176,16 @@ Each participant field can be edited through dedicated "Изменить [Field]
    - Click button → Bot prompts: "Отправьте дату в формате ГГГГ-ММ-ДД"
    - Type date → Validation (YYYY-MM-DD format) → Complete participant display with updated information
    - Error message if invalid: "Ошибка: Дата должна быть в формате ГГГГ-ММ-ДД"
+
+3. **"Изменить дату рождения" (Edit Date of Birth)** ✨ *New Field Added 2025-09-10*
+   - Click button → Bot prompts: "📅 Введите дату рождения в формате ГГГГ-ММ-ДД (например: 1990-05-15):"
+   - Type date → Validation (YYYY-MM-DD format) → Complete participant display with updated information
+   - Error message if invalid: "Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)"
+
+4. **"Изменить возраст" (Edit Age)** ✨ *New Field Added 2025-09-10*
+   - Click button → Bot prompts: "🔢 Введите возраст (от 0 до 120):"
+   - Type age → Validation (0-120 integer range) → Complete participant display with updated information
+   - Error messages if invalid: "Возраст должен быть от 0 до 120" or "Возраст должен быть числом"
 
 ### Save/Cancel Actions
 
