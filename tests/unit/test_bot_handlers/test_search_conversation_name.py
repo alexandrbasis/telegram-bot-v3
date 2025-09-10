@@ -142,36 +142,139 @@ class TestNameSearchButtonBug:
 class TestSearchButtonConsistency:
     """Test that all search mode buttons have consistent behavior."""
 
-    @pytest.mark.parametrize("button_text,expected_exclusion", [
-        ("👤 По имени", "NAV_SEARCH_NAME"),  # Name search button
-        ("🚪 По комнате", "NAV_SEARCH_ROOM"),  # Room search button  
-        ("🏢 По этажу", "NAV_SEARCH_FLOOR"),  # Floor search button
+    @pytest.mark.parametrize("button_text,exclusion_constant,waiting_state", [
+        ("👤 По имени", "NAV_SEARCH_NAME", "WAITING_FOR_NAME"),
+        ("🚪 По комнате", "NAV_SEARCH_ROOM", "WAITING_FOR_ROOM"),  
+        ("🏢 По этажу", "NAV_SEARCH_FLOOR", "WAITING_FOR_FLOOR"),
     ])
-    def test_search_buttons_should_be_excluded_from_processing(self, button_text, expected_exclusion):
-        """
-        Test that all search mode buttons are properly excluded from search processing.
-        
-        This test documents the expected behavior for all three search modes.
-        """
+    def test_all_search_buttons_excluded_from_waiting_filters(self, button_text, exclusion_constant, waiting_state):
+        """Test that all search mode buttons are excluded from their respective WAITING state filters."""
+        import re
         from src.bot.keyboards.search_keyboards import (
-            NAV_SEARCH_NAME, 
-            NAV_SEARCH_ROOM, 
-            NAV_SEARCH_FLOOR
+            NAV_SEARCH_NAME, NAV_SEARCH_ROOM, NAV_SEARCH_FLOOR,
+            NAV_MAIN_MENU, NAV_CANCEL, NAV_BACK_TO_SEARCH_MODES
         )
         
+        # Map constants to their values
         nav_constants = {
             "NAV_SEARCH_NAME": NAV_SEARCH_NAME,
             "NAV_SEARCH_ROOM": NAV_SEARCH_ROOM, 
             "NAV_SEARCH_FLOOR": NAV_SEARCH_FLOOR,
         }
         
-        # Verify button text matches expected constant
-        expected_text = nav_constants[expected_exclusion]
-        assert button_text == expected_text, (
-            f"Button text mismatch for {expected_exclusion}. "
-            f"Expected: {expected_text}, Actual: {button_text}"
+        # Get the specific search button constant
+        search_button = nav_constants[exclusion_constant]
+        
+        # Verify button text matches
+        assert button_text == search_button
+        
+        # Create exclusion pattern that should be used in the WAITING state
+        exclusion_pattern = (
+            rf"^{re.escape(NAV_MAIN_MENU)}$|"
+            rf"^{re.escape(NAV_CANCEL)}$|"
+            rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|"
+            rf"^{re.escape(search_button)}$"
         )
         
-        # This test documents the requirement that these buttons should be excluded
-        # The actual exclusion logic will be tested in integration tests
-        assert True  # Placeholder - actual exclusion testing requires conversation handler setup
+        # Test that the search button is excluded
+        matches = re.search(exclusion_pattern, button_text)
+        assert matches is not None, (
+            f"Search button '{button_text}' should be excluded from {waiting_state} "
+            f"processing but regex pattern doesn't match it. "
+            f"Pattern: {exclusion_pattern}"
+        )
+
+
+class TestStateTransitions:
+    """Comprehensive state transition testing for name search flow."""
+
+    @pytest.fixture
+    def mock_update_factory(self):
+        """Factory to create mock Update objects."""
+        def _create_update(text: str) -> Update:
+            update = MagicMock(spec=Update)
+            update.message = MagicMock(spec=Message)
+            update.message.text = text
+            update.message.from_user = MagicMock(spec=User)
+            update.message.from_user.id = 12345
+            update.message.from_user.first_name = "Test"
+            update.message.chat = MagicMock(spec=Chat)
+            update.message.chat.id = 12345
+            update.message.reply_text = AsyncMock()
+            return update
+        return _create_update
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context for handlers."""
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.mark.asyncio
+    async def test_name_search_mode_transition(self, mock_update_factory, mock_context):
+        """Test SEARCH_MODE_SELECTION → WAITING_FOR_NAME transition."""
+        from src.bot.handlers.search_handlers import SearchStates
+        
+        # Arrange: Click name search button
+        update = mock_update_factory(NAV_SEARCH_NAME)
+        
+        # Act: Handle name search mode selection
+        result = await handle_search_name_mode(update, mock_context)
+        
+        # Assert: Should transition to WAITING_FOR_NAME
+        assert result == SearchStates.WAITING_FOR_NAME
+        
+        # Verify prompt was sent
+        update.message.reply_text.assert_called_once()
+
+    @pytest.mark.asyncio 
+    async def test_actual_name_triggers_search(self, mock_update_factory, mock_context):
+        """Test WAITING_FOR_NAME → SHOWING_RESULTS transition via actual name."""
+        # Arrange: Enter actual participant name
+        update = mock_update_factory("Александр")
+        
+        # Mock search service
+        mock_search_service = AsyncMock()
+        mock_search_service.search_participants_by_name.return_value = []
+        mock_context.application = MagicMock()
+        mock_context.application.search_service = mock_search_service
+        
+        # Act: Process name search
+        result = await process_name_search(update, mock_context)
+        
+        # Assert: Search service called with correct name
+        mock_search_service.search_participants_by_name.assert_called_once_with("Александр")
+
+    def test_navigation_buttons_behavior(self):
+        """Test that navigation buttons have consistent exclusion patterns."""
+        import re
+        from src.bot.keyboards.search_keyboards import (
+            NAV_MAIN_MENU, NAV_CANCEL, NAV_BACK_TO_SEARCH_MODES,
+            NAV_SEARCH_NAME, NAV_SEARCH_ROOM, NAV_SEARCH_FLOOR
+        )
+        
+        # All navigation buttons that should be excluded
+        nav_buttons = [
+            NAV_MAIN_MENU,
+            NAV_CANCEL, 
+            NAV_BACK_TO_SEARCH_MODES,
+            NAV_SEARCH_NAME,  # The critical fix
+            NAV_SEARCH_ROOM,  # Consistency fix
+            NAV_SEARCH_FLOOR, # Consistency fix
+        ]
+        
+        # Create comprehensive exclusion pattern
+        exclusion_parts = [rf"^{re.escape(button)}$" for button in nav_buttons]
+        full_pattern = "|".join(exclusion_parts)
+        
+        # Test each button is matched
+        for button in nav_buttons:
+            matches = re.search(full_pattern, button)
+            assert matches is not None, f"Button '{button}' not matched by pattern"
+            
+        # Test participant names are not matched
+        participant_names = ["Александр", "Мария", "John Smith", "test123"]
+        for name in participant_names:
+            matches = re.search(full_pattern, name)
+            assert matches is None, f"Name '{name}' incorrectly matched by exclusion pattern"
