@@ -57,6 +57,9 @@ class AirtableFieldMapping:
         "PaymentAmount": "fldyP24ZbeGD8nnaZ",
         # Date field (1)
         "PaymentDate": "fldylOQLqcBwkmzlh",
+        # New fields (DateOfBirth and Age)
+        "DateOfBirth": "fldDATEOFBIRTH123",  # From schema discovery
+        "Age": "fldAGE456789012",  # From schema discovery  
         # Accommodation fields (confirmed from live Airtable schema)
         "Floor": "fldlzG1sVg01hsy2g",
         "RoomNumber": "fldJTPjo8AHQaADVu",
@@ -125,6 +128,9 @@ class AirtableFieldMapping:
         "payment_amount": "PaymentAmount",
         # Date fields
         "payment_date": "PaymentDate",
+        # New fields
+        "date_of_birth": "DateOfBirth",
+        "age": "Age",
         # Accommodation (exact Airtable field names)
         "floor": "Floor",
         "room_number": "RoomNumber",
@@ -151,6 +157,9 @@ class AirtableFieldMapping:
         "PaymentStatus": FieldType.SINGLE_SELECT,
         "PaymentAmount": FieldType.NUMBER,
         "PaymentDate": FieldType.DATE,
+        # New fields
+        "DateOfBirth": FieldType.DATE,
+        "Age": FieldType.NUMBER,
         # Accommodation fields
         "Floor": FieldType.NUMBER,
         # RoomNumber supports alphanumeric values (e.g., "A201"), so treat as text
@@ -200,6 +209,13 @@ class AirtableFieldMapping:
             "description": "Payment amount in currency units (integer)",
         },
         "PaymentDate": {"description": "Date when payment was received"},
+        # New field constraints
+        "DateOfBirth": {"description": "Participant's date of birth"},
+        "Age": {
+            "min_value": 0,
+            "max_value": 120,
+            "description": "Participant's age in years",
+        },
         # Basic constraints for accommodation fields
         "Floor": {"min_value": 0, "description": "Accommodation floor (numeric)"},
         # Room number is text to allow alphanumeric values
