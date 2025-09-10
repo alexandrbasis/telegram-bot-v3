@@ -14,7 +14,7 @@
 1. **Participant Management**
    - Add new participants with basic information (name, room, role, contact details)
    - Store and retrieve participant data
-   - Edit/update participant information
+   - Edit/update participant information including demographic fields (date of birth, age)
 
 2. **Search & Discovery**
    - Search participants by name (partial matching)

@@ -39,6 +39,8 @@ def get_field_icon(field_name: str) -> str:
         "payment_amount": "💵",  # money
         "floor": "🏢",  # building/floor
         "room_number": "🚪",  # door/room
+        "date_of_birth": "🎂",  # birthday cake
+        "age": "🔢",  # input numbers
     }
 
     return field_icons.get(field_name, "✏️")  # Default to pencil for unknown fields
@@ -138,6 +140,20 @@ def create_participant_edit_keyboard() -> InlineKeyboardMarkup:
                 f"{get_field_icon('room_number')} Номер комнаты",
                 callback_data="edit_field:room_number",
             )
+        ]
+    )
+
+    # Demographic fields
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                f"{get_field_icon('date_of_birth')} Дата рождения",
+                callback_data="edit_field:date_of_birth",
+            ),
+            InlineKeyboardButton(
+                f"{get_field_icon('age')} Возраст",
+                callback_data="edit_field:age",
+            ),
         ]
     )
 

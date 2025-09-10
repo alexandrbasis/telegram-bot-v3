@@ -40,7 +40,14 @@ class ParticipantUpdateService:
 
     BUTTON_FIELDS = ["gender", "size", "role", "department", "payment_status"]
 
-    SPECIAL_FIELDS = ["payment_amount", "payment_date", "floor", "room_number"]
+    SPECIAL_FIELDS = [
+        "payment_amount",
+        "payment_date",
+        "floor",
+        "room_number",
+        "date_of_birth",
+        "age",
+    ]
 
     # Required fields that cannot be empty
     REQUIRED_FIELDS = ["full_name_ru"]
@@ -76,6 +83,12 @@ class ParticipantUpdateService:
 
         elif field_name == "room_number":
             return self._validate_room_number(user_input)
+
+        elif field_name == "date_of_birth":
+            return self._validate_date_of_birth(user_input)
+
+        elif field_name == "age":
+            return self._validate_age(user_input)
 
         else:
             raise ValidationError(f"Неизвестное поле для валидации: {field_name}")
@@ -154,6 +167,47 @@ class ParticipantUpdateService:
         if value == "":
             return ""
         return value
+
+    def _validate_date_of_birth(self, user_input: str) -> date:
+        """Validate date of birth field in YYYY-MM-DD format."""
+        if not user_input:
+            raise ValidationError("Дата рождения не может быть пустой")
+
+        try:
+            # Expected format: YYYY-MM-DD
+            year, month, day = user_input.split("-")
+            if len(year) != 4 or len(month) != 2 or len(day) != 2:
+                raise ValueError("Wrong format")
+            parsed_date = date(int(year), int(month), int(day))
+            return parsed_date
+        except ValueError as e:
+            if (
+                "invalid literal" in str(e)
+                or len(user_input.split("-")) != 3
+                or "Wrong format" in str(e)
+            ):
+                raise ValidationError(
+                    "Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)"
+                )
+            else:
+                raise ValidationError("Некорректная дата. Проверьте день и месяц.")
+        except Exception:
+            raise ValidationError("Неверный формат даты. Используйте ГГГГ-ММ-ДД")
+
+    def _validate_age(self, user_input: str) -> int:
+        """Validate age field as integer in 0-120 range."""
+        if not user_input:
+            raise ValidationError("Возраст не может быть пустым")
+
+        try:
+            age = int(user_input)
+            if age < 0 or age > 120:
+                raise ValidationError("Возраст должен быть от 0 до 120")
+
+            logger.info(f"Age validated: {age}")
+            return age
+        except ValueError:
+            raise ValidationError("Возраст должен быть числом")
 
     def convert_button_value(
         self, field_name: str, selected_value: str
