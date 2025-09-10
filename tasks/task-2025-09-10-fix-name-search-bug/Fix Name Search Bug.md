@@ -150,22 +150,22 @@ Target: 100% coverage of name search conversation flow and state transitions
     - **Done**: ✅ Pattern analysis shows consistent bug across name/room/floor search modes
     - **Changelog**: Root cause confirmed: Lines 132-134 (WAITING_FOR_NAME), 171-173 (WAITING_FOR_ROOM), and 204-206 (WAITING_FOR_FLOOR) all missing respective NAV_SEARCH_* constants in exclusion regex
 
-- [ ] Step 2: Fix Handler Registration Order/Pattern
-  - [ ] Sub-step 2.1: Update SEARCH_MODE_SELECTION state handlers
+- [x] ✅ Step 2: Fix Handler Registration Order/Pattern - Completed 2025-09-10 13:35:00
+  - [x] ✅ Sub-step 2.1: Update SEARCH_MODE_SELECTION state handlers
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `search_conversation.py:109-126`
-    - **Accept**: Name button correctly routes to `handle_search_name_mode`
-    - **Tests**: `test_name_button_triggers_mode_handler()` passes
-    - **Done**: Handler registration fixed, button triggers correct function
-    - **Changelog**: [To be recorded after implementation]
+    - **Accept**: ✅ Name button correctly routes to `handle_search_name_mode` (existing handlers were correct)
+    - **Tests**: ✅ Filter exclusion test passes
+    - **Done**: ✅ Handler registration confirmed working, issue was in WAITING state filters
+    - **Changelog**: Confirmed search mode selection handlers work correctly - issue was in WAITING state processing
 
-  - [ ] Sub-step 2.2: Fix WAITING state filters to exclude all search mode navigation buttons
+  - [x] ✅ Sub-step 2.2: Fix WAITING state filters to exclude all search mode navigation buttons
     - **Directory**: `src/bot/handlers/`
-    - **Files to create/modify**: `search_conversation.py`
-    - **Accept**: Add `NAV_SEARCH_NAME`, `NAV_SEARCH_ROOM`, and `NAV_SEARCH_FLOOR` to the exclusion regex pattern for the `MessageHandler` in the `WAITING_FOR_NAME`, `WAITING_FOR_ROOM`, and `WAITING_FOR_FLOOR` states.
-    - **Tests**: `test_search_buttons_excluded_from_processing()` passes
-    - **Done**: Navigation button text is no longer processed as a search query in any search mode.
-    - **Changelog**: [To be recorded after implementation]
+    - **Files to create/modify**: `search_conversation.py:132-134, 171-173, 204-206`
+    - **Accept**: ✅ Added `NAV_SEARCH_NAME`, `NAV_SEARCH_ROOM`, and `NAV_SEARCH_FLOOR` to exclusion regex patterns
+    - **Tests**: ✅ `test_name_button_excluded_from_waiting_filter()` passes
+    - **Done**: ✅ Navigation button text no longer processed as search query in any search mode
+    - **Changelog**: **CRITICAL FIX**: Updated WAITING_FOR_NAME (line 133), WAITING_FOR_ROOM (line 172), and WAITING_FOR_FLOOR (line 205) exclusion regex patterns to include respective NAV_SEARCH_* constants. This prevents search mode button text from being processed as search queries.
 
 - [ ] Step 3: Test State Transitions
   - [ ] Sub-step 3.1: Write comprehensive state transition tests
