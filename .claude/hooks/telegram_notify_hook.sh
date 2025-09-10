@@ -1,9 +1,10 @@
 #!/bin/bash
 cd "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3"
 
-# Load environment variables from .env file
+# Load only Claude hook environment variables from .env file
 if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | grep -v '^$' | xargs)
+    export CLAUDE_HOOK_BOT_TOKEN=$(grep '^CLAUDE_HOOK_BOT_TOKEN=' .env | cut -d'=' -f2-)
+    export CLAUDE_HOOK_CHAT_ID=$(grep '^CLAUDE_HOOK_CHAT_ID=' .env | cut -d'=' -f2-)
 fi
 
 python3 .claude/hooks/telegram_notify.py
