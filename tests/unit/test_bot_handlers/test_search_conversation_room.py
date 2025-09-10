@@ -149,7 +149,7 @@ class TestSearchConversationRoomIntegration:
 
         # Get the cancel handler from WAITING_FOR_ROOM state
         room_waiting_handlers = handler.states[RoomSearchStates.WAITING_FOR_ROOM]
-        
+
         cancel_handler = None
         for h in room_waiting_handlers:
             # Look for cancel handler by checking the callback function name
@@ -157,13 +157,16 @@ class TestSearchConversationRoomIntegration:
                 cancel_handler = h
                 break
 
-        assert cancel_handler is not None, "Cancel handler not found in WAITING_FOR_ROOM state"
+        assert (
+            cancel_handler is not None
+        ), "Cancel handler not found in WAITING_FOR_ROOM state"
 
         # Execute the cancel handler
         result = await cancel_handler.callback(mock_update_cancel_button, mock_context)
 
         # Should return to main menu (SearchStates.MAIN_MENU)
         from src.bot.handlers.search_handlers import SearchStates
+
         assert result == SearchStates.MAIN_MENU
 
         # Should have replied to user
@@ -179,7 +182,7 @@ class TestSearchConversationRoomIntegration:
 
         # Get the text handler from WAITING_FOR_ROOM state (for room number input)
         room_waiting_handlers = handler.states[RoomSearchStates.WAITING_FOR_ROOM]
-        
+
         text_handler = None
         for h in room_waiting_handlers:
             # Look for the text input handler (process_room_search)
@@ -191,8 +194,10 @@ class TestSearchConversationRoomIntegration:
 
         # Check that the text handler's filter excludes cancel button text
         test_update = mock_update_cancel_button
-        
+
         # The filter should reject cancel button text
         # Note: This tests the exclusion regex in Step 3
         filter_result = text_handler.filters.check_update(test_update)
-        assert filter_result is False, "Cancel text should be excluded from room input filter"
+        assert (
+            filter_result is False
+        ), "Cancel text should be excluded from room input filter"
