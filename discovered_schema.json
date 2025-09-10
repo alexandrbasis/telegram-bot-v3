@@ -1,0 +1,16 @@
+{
+  "fields": [
+    {
+      "name": "DateOfBirth",
+      "id": "fldDATEOFBIRTH123",
+      "type": "date",
+      "description": "Participant's date of birth"
+    },
+    {
+      "name": "Age",
+      "id": "fldAGE456789012",
+      "type": "number",
+      "description": "Participant's age in years"
+    }
+  ]
+}
