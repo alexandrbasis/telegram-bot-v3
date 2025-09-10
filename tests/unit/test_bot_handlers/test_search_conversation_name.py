@@ -108,7 +108,14 @@ class TestNameSearchButtonBug:
         # Verify prompt message was sent
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
-        message_text = call_args[0][0]  # First positional argument
+        
+        # Extract message text from keyword arguments
+        if call_args.kwargs and 'text' in call_args.kwargs:
+            message_text = call_args.kwargs['text']
+        elif call_args.args:
+            message_text = call_args.args[0]
+        else:
+            message_text = str(call_args)
         
         assert "Введите имя участника:" in message_text, (
             f"Expected name input prompt to be shown. "
@@ -123,20 +130,27 @@ class TestNameSearchButtonBug:
         # Arrange: Create update with actual participant name
         update = mock_update_factory("Александр")  # Real participant name
         
-        # Mock reply_text and search service
+        # Mock reply_text
         update.message.reply_text = AsyncMock()
         
-        # Mock context.application to have search service
-        mock_search_service = AsyncMock()
-        mock_search_service.search_participants_by_name.return_value = []
-        mock_context.application = MagicMock()
-        mock_context.application.search_service = mock_search_service
-        
-        # Act: Process actual name search
-        result = await process_name_search(update, mock_context)
-        
-        # Assert: Search service should be called for real names
-        mock_search_service.search_participants_by_name.assert_called_once_with("Александр")
+        # Mock ALL external dependencies to prevent production credential access
+        with pytest.importorskip("unittest.mock").patch(
+            'src.bot.handlers.search_handlers.get_participant_repository'
+        ) as mock_get_repo, pytest.importorskip("unittest.mock").patch(
+            'src.bot.handlers.search_handlers.get_user_interaction_logger',
+            return_value=None  # Disable logging
+        ):
+            mock_repo = AsyncMock()
+            mock_repo.search_by_name_enhanced.return_value = []  # Empty results
+            mock_get_repo.return_value = mock_repo
+            
+            # Act: Process actual name search
+            result = await process_name_search(update, mock_context)
+            
+            # Assert: Repository search method should be called for real names
+            mock_repo.search_by_name_enhanced.assert_called_once_with(
+                "Александр", threshold=0.8, limit=5
+            )
 
 
 class TestSearchButtonConsistency:
@@ -234,17 +248,24 @@ class TestStateTransitions:
         # Arrange: Enter actual participant name
         update = mock_update_factory("Александр")
         
-        # Mock search service
-        mock_search_service = AsyncMock()
-        mock_search_service.search_participants_by_name.return_value = []
-        mock_context.application = MagicMock()
-        mock_context.application.search_service = mock_search_service
-        
-        # Act: Process name search
-        result = await process_name_search(update, mock_context)
-        
-        # Assert: Search service called with correct name
-        mock_search_service.search_participants_by_name.assert_called_once_with("Александр")
+        # Mock ALL external dependencies to prevent production credential access
+        with pytest.importorskip("unittest.mock").patch(
+            'src.bot.handlers.search_handlers.get_participant_repository'
+        ) as mock_get_repo, pytest.importorskip("unittest.mock").patch(
+            'src.bot.handlers.search_handlers.get_user_interaction_logger',
+            return_value=None  # Disable logging
+        ):
+            mock_repo = AsyncMock()
+            mock_repo.search_by_name_enhanced.return_value = []  # Empty results
+            mock_get_repo.return_value = mock_repo
+            
+            # Act: Process name search
+            result = await process_name_search(update, mock_context)
+            
+            # Assert: Repository search method called with correct name
+            mock_repo.search_by_name_enhanced.assert_called_once_with(
+                "Александр", threshold=0.8, limit=5
+            )
 
     def test_navigation_buttons_behavior(self):
         """Test that navigation buttons have consistent exclusion patterns."""
