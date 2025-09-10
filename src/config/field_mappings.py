@@ -57,6 +57,9 @@ class AirtableFieldMapping:
         "PaymentAmount": "fldyP24ZbeGD8nnaZ",
         # Date field (1)
         "PaymentDate": "fldylOQLqcBwkmzlh",
+        # New fields (DateOfBirth and Age) - Real field IDs from live Airtable API
+        "DateOfBirth": "fld1rN2cffxKuZh4i",  # date field (discovered 2025-09-10)
+        "Age": "fldZPh65PIekEbgvs",  # number field (discovered 2025-09-10)
         # Accommodation fields (confirmed from live Airtable schema)
         "Floor": "fldlzG1sVg01hsy2g",
         "RoomNumber": "fldJTPjo8AHQaADVu",
@@ -125,6 +128,9 @@ class AirtableFieldMapping:
         "payment_amount": "PaymentAmount",
         # Date fields
         "payment_date": "PaymentDate",
+        # New fields
+        "date_of_birth": "DateOfBirth",
+        "age": "Age",
         # Accommodation (exact Airtable field names)
         "floor": "Floor",
         "room_number": "RoomNumber",
@@ -151,6 +157,9 @@ class AirtableFieldMapping:
         "PaymentStatus": FieldType.SINGLE_SELECT,
         "PaymentAmount": FieldType.NUMBER,
         "PaymentDate": FieldType.DATE,
+        # New fields
+        "DateOfBirth": FieldType.DATE,
+        "Age": FieldType.NUMBER,
         # Accommodation fields
         "Floor": FieldType.NUMBER,
         # RoomNumber supports alphanumeric values (e.g., "A201"), so treat as text
@@ -167,6 +176,9 @@ class AirtableFieldMapping:
     REQUIRED_FIELDS: List[str] = ["FullNameRU"]  # Primary field required by Airtable
 
     # Field constraints and validation rules
+    # NOTE: All constraints below are enforced at the application level only.
+    # Airtable does not enforce these constraints on its side, so validation
+    # must be performed before sending data to Airtable.
     FIELD_CONSTRAINTS: Dict[str, Dict[str, Any]] = {
         "FullNameRU": {
             "min_length": 1,
@@ -200,6 +212,13 @@ class AirtableFieldMapping:
             "description": "Payment amount in currency units (integer)",
         },
         "PaymentDate": {"description": "Date when payment was received"},
+        # New field constraints
+        "DateOfBirth": {"description": "Participant's date of birth"},
+        "Age": {
+            "min_value": 0,
+            "max_value": 120,  # Note: Application-side validation only, not enforced in Airtable
+            "description": "Participant's age in years (validated in application, not in Airtable)",
+        },
         # Basic constraints for accommodation fields
         "Floor": {"min_value": 0, "description": "Accommodation floor (numeric)"},
         # Room number is text to allow alphanumeric values

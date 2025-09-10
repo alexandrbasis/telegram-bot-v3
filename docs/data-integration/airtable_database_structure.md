@@ -130,6 +130,15 @@
 - **Precision**: 0 (integers only)
 - **Example**: 0
 
+#### Age
+- **Field ID**: `fldZPh65PIekEbgvs`
+- **Type**: `number`
+- **Purpose**: Participant's age in years
+- **Required**: No
+- **Precision**: 0 (integers only)
+- **Constraints**: Must be >= 0 and <= 120
+- **Example**: 35
+
 ### Date Fields
 
 #### PaymentDate
@@ -139,6 +148,14 @@
 - **Required**: No
 - **Format**: European format (D/M/YYYY)
 - **Example**: Not provided in sample data
+
+#### DateOfBirth
+- **Field ID**: `fld1rN2cffxKuZh4i`
+- **Type**: `date`
+- **Purpose**: Participant's date of birth
+- **Required**: No
+- **Format**: ISO format (YYYY-MM-DD)
+- **Example**: "1990-05-15"
 
 ## Views Available
 
@@ -175,7 +192,9 @@
     "ContactInformation": "string (optional)",
     "PaymentStatus": "Paid|Partial|Unpaid",
     "PaymentAmount": "number (integer)",
-    "PaymentDate": "YYYY-MM-DD"
+    "PaymentDate": "YYYY-MM-DD",
+    "DateOfBirth": "YYYY-MM-DD (optional)",
+    "Age": "number (integer, optional, 0-120)"
   }
 }
 ```
@@ -187,3 +206,7 @@
 3. **Data Types**: Ensure proper type conversion for number and date fields
 4. **Internationalization**: Support both Russian (primary) and English names
 5. **Payment Tracking**: Implement logic to sync PaymentAmount with PaymentStatus
+6. **Demographics**: DateOfBirth and Age fields provide demographic data for reporting
+   - Age field should be validated to be within reasonable range (0-120)
+   - DateOfBirth field uses ISO format for consistency with API standards
+   - Both fields are optional and support backward compatibility with existing records

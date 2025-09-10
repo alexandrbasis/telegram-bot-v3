@@ -45,6 +45,13 @@ class TestAirtableFieldMapping:
         )
         assert AirtableFieldMapping.get_airtable_field_name("record_id") == "id"
 
+        # Test new fields
+        assert (
+            AirtableFieldMapping.get_airtable_field_name("date_of_birth")
+            == "DateOfBirth"
+        )
+        assert AirtableFieldMapping.get_airtable_field_name("age") == "Age"
+
         # Test non-existent field
         assert AirtableFieldMapping.get_airtable_field_name("non_existent") is None
 
@@ -65,6 +72,12 @@ class TestAirtableFieldMapping:
             AirtableFieldMapping.get_python_field_name("PaymentDate") == "payment_date"
         )
         assert AirtableFieldMapping.get_python_field_name("id") == "record_id"
+
+        # Test new fields reverse mappings
+        assert (
+            AirtableFieldMapping.get_python_field_name("DateOfBirth") == "date_of_birth"
+        )
+        assert AirtableFieldMapping.get_python_field_name("Age") == "age"
 
         # Test non-existent field
         assert AirtableFieldMapping.get_python_field_name("NonExistent") is None
@@ -87,6 +100,10 @@ class TestAirtableFieldMapping:
 
         # Test date fields
         assert AirtableFieldMapping.get_field_type("PaymentDate") == FieldType.DATE
+        assert AirtableFieldMapping.get_field_type("DateOfBirth") == FieldType.DATE
+
+        # Test age field (number type)
+        assert AirtableFieldMapping.get_field_type("Age") == FieldType.NUMBER
 
         # Test non-existent field
         assert AirtableFieldMapping.get_field_type("NonExistent") is None
@@ -115,6 +132,16 @@ class TestAirtableFieldMapping:
         constraints = AirtableFieldMapping.get_field_constraints("Church")
         assert constraints["max_length"] == 100
         assert "required" not in constraints or not constraints["required"]
+
+        # Test new field constraints
+        date_constraints = AirtableFieldMapping.get_field_constraints("DateOfBirth")
+        assert "description" in date_constraints
+        assert "Participant's date of birth" in date_constraints["description"]
+
+        age_constraints = AirtableFieldMapping.get_field_constraints("Age")
+        assert age_constraints["min_value"] == 0
+        assert age_constraints["max_value"] == 120
+        assert "description" in age_constraints
 
         # Test non-existent field
         constraints = AirtableFieldMapping.get_field_constraints("NonExistent")
@@ -279,6 +306,51 @@ class TestFieldValidation:
         )
         assert is_valid is False
         assert "must be a date" in error
+
+    def test_validate_new_fields(self):
+        """Test validation of new DateOfBirth and Age fields."""
+        # Test valid DateOfBirth
+        is_valid, error = AirtableFieldMapping.validate_field_value(
+            "DateOfBirth", date(1990, 5, 15)
+        )
+        assert is_valid is True
+        assert error == ""
+
+        # Test valid DateOfBirth as string
+        is_valid, error = AirtableFieldMapping.validate_field_value(
+            "DateOfBirth", "1990-05-15"
+        )
+        assert is_valid is True
+        assert error == ""
+
+        # Test invalid DateOfBirth type
+        is_valid, error = AirtableFieldMapping.validate_field_value(
+            "DateOfBirth", 12345
+        )
+        assert is_valid is False
+        assert "must be a date" in error
+
+        # Test valid Age
+        is_valid, error = AirtableFieldMapping.validate_field_value("Age", 25)
+        assert is_valid is True
+        assert error == ""
+
+        # Test Age minimum constraint
+        is_valid, error = AirtableFieldMapping.validate_field_value("Age", -1)
+        assert is_valid is False
+        assert "at least 0" in error
+
+        # Test Age maximum constraint
+        is_valid, error = AirtableFieldMapping.validate_field_value("Age", 121)
+        assert is_valid is False
+        assert "at most 120" in error
+
+        # Test Age type validation
+        is_valid, error = AirtableFieldMapping.validate_field_value(
+            "Age", "twenty-five"
+        )
+        assert is_valid is False
+        assert "must be a number" in error
 
     def test_validate_type_mismatch(self):
         """Test validation with wrong data types."""
@@ -566,6 +638,10 @@ class TestAirtableFieldIDs:
         # Test date field (1)
         assert AirtableFieldMapping.get_field_id("PaymentDate") == "fldylOQLqcBwkmzlh"
 
+        # Test new fields (real field IDs from live Airtable)
+        assert AirtableFieldMapping.get_field_id("DateOfBirth") == "fld1rN2cffxKuZh4i"
+        assert AirtableFieldMapping.get_field_id("Age") == "fldZPh65PIekEbgvs"
+
         # Test non-existent field
         assert AirtableFieldMapping.get_field_id("NonExistent") is None
 
@@ -631,6 +707,8 @@ class TestFieldMappingCompleteness:
             "payment_status",
             "payment_amount",
             "payment_date",
+            "date_of_birth",
+            "age",
             "record_id",
         ]
 

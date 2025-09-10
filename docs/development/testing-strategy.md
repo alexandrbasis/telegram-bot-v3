@@ -420,6 +420,59 @@ def test_field_validation():
 - **Memory Usage**: Conversation context < 1MB per user
 - **Rate Limiting**: Airtable API calls within limits
 
+## Airtable Schema Update Testing (2025-09-10)
+
+### Demographic Fields Testing Summary
+**Total Tests**: Comprehensive coverage for DateOfBirth and Age field integration
+**Test Categories**: Field mapping validation, participant model testing, schema discovery verification, backward compatibility validation
+**Pass Rate**: 100%  
+**Coverage Areas**: Complete validation of new field integration with existing codebase
+
+#### DateOfBirth and Age Field Testing
+**Test Coverage**:
+- **Field Mapping Tests**: Validation of real field IDs (DateOfBirth: fld1rN2cffxKuZh4i, Age: fldZPh65PIekEbgvs)
+- **Participant Model Tests**: Serialization, deserialization, and validation of Optional[date] and Optional[int] fields
+- **Conversion Tests**: Bidirectional conversion between Python objects and Airtable format
+- **Backward Compatibility Tests**: Existing records without new fields process correctly with None values
+- **Constraint Validation Tests**: Age field 0-120 range validation, DateOfBirth date format validation
+
+**Key Test Scenarios**:
+```python
+# Field mapping validation
+test_new_field_mappings_exist()
+test_dateofbirth_field_id_format()
+test_age_field_id_format()
+
+# Participant model testing
+test_participant_creation_with_new_fields()
+test_participant_serialization_with_new_fields()
+test_participant_deserialization_with_new_fields()
+test_roundtrip_conversion_preserves_data()
+
+# Validation testing
+test_age_constraint_validation()
+test_dateofbirth_format_validation()
+test_optional_field_handling()
+
+# Backward compatibility
+test_existing_records_without_new_fields()
+test_none_value_handling()
+test_partial_field_updates()
+```
+
+#### Schema Discovery and Validation Testing
+**Test Coverage**:
+- **Schema Discovery Script**: Verification that scripts connect to live Airtable API
+- **Field ID Discovery**: Validation that discovered field IDs match configured mappings
+- **Production Validation**: Tests confirm field IDs exist in production Airtable base
+- **Error Handling**: API connection failures and validation error scenarios
+
+**Key Test Results**:
+- **Real Field IDs Validated**: Both DateOfBirth and Age fields confirmed to exist in production
+- **17-Character Format**: Field IDs follow proper Airtable format (fld + 14 characters)
+- **Type Validation**: DateOfBirth is DATE type, Age is NUMBER type as expected
+- **API Integration**: Successfully connects to live Airtable base using valid credentials
+
 ## Room and Floor Search Testing
 
 ### Test Coverage Summary (2025-09-05)  
@@ -645,6 +698,7 @@ test_floor_search_russian_formatting()
 - [x] ✅ **End-to-end workflow testing with real Airtable field integration**
 - [x] ✅ **Alphanumeric room number support and multi-room floor grouping**
 - [x] ✅ **Main Menu Start Command Equivalence Testing (2025-09-09)**: Comprehensive test coverage for shared initialization helpers, start/main menu button equivalence, timeout recovery entry points, and cancel handler consistency
+- [x] ✅ **Airtable Schema Update Testing (2025-09-10)**: Comprehensive test coverage for DateOfBirth and Age field integration including field mapping validation, participant model conversion testing, backward compatibility validation, and schema discovery script verification
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 

@@ -111,6 +111,14 @@ class Participant(BaseModel):
     # Date field
     payment_date: Optional[date] = Field(None, description="Date of payment")
 
+    # New fields
+    date_of_birth: Optional[date] = Field(
+        None, description="Participant's date of birth"
+    )
+    age: Optional[int] = Field(
+        None, ge=0, description="Participant's age in years (must be non-negative)"
+    )
+
     # Accommodation fields
     # Floor is stored as a number in Airtable (but accept int or str input upstream)
     floor: Optional[Union[int, str]] = Field(
@@ -190,6 +198,12 @@ class Participant(BaseModel):
         if self.payment_date:
             fields["PaymentDate"] = self.payment_date.isoformat()
 
+        # New fields
+        if self.date_of_birth:
+            fields["DateOfBirth"] = self.date_of_birth.isoformat()
+        if self.age is not None:
+            fields["Age"] = self.age
+
         # Accommodation fields (exact Airtable field names)
         if self.floor is not None:
             # Ensure numeric when possible; Airtable field is numeric
@@ -216,10 +230,14 @@ class Participant(BaseModel):
         """
         fields = record.get("fields", {})
 
-        # Convert date string to date object if present
+        # Convert date strings to date objects if present
         payment_date = None
         if fields.get("PaymentDate"):
             payment_date = date.fromisoformat(fields["PaymentDate"])
+
+        date_of_birth = None
+        if fields.get("DateOfBirth"):
+            date_of_birth = date.fromisoformat(fields["DateOfBirth"])
 
         # Ensure we have the required field
         full_name_ru = fields.get("FullNameRU", "")
@@ -247,6 +265,8 @@ class Participant(BaseModel):
             ),
             payment_amount=fields.get("PaymentAmount"),
             payment_date=payment_date,
+            date_of_birth=date_of_birth,
+            age=fields.get("Age"),
             floor=fields.get("Floor"),
             room_number=fields.get("RoomNumber"),
         )
