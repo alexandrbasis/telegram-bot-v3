@@ -131,7 +131,7 @@
 - **Example**: 0
 
 #### Age
-- **Field ID**: `fldAGE456789012`
+- **Field ID**: `fldZPh65PIekEbgvs`
 - **Type**: `number`
 - **Purpose**: Participant's age in years
 - **Required**: No
@@ -150,7 +150,7 @@
 - **Example**: Not provided in sample data
 
 #### DateOfBirth
-- **Field ID**: `fldDATEOFBIRTH123`
+- **Field ID**: `fld1rN2cffxKuZh4i`
 - **Type**: `date`
 - **Purpose**: Participant's date of birth
 - **Required**: No

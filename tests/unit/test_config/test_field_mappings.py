@@ -635,9 +635,9 @@ class TestAirtableFieldIDs:
         # Test date field (1)
         assert AirtableFieldMapping.get_field_id("PaymentDate") == "fldylOQLqcBwkmzlh"
         
-        # Test new fields
-        assert AirtableFieldMapping.get_field_id("DateOfBirth") == "fldDATEOFBIRTH123"
-        assert AirtableFieldMapping.get_field_id("Age") == "fldAGE456789012"
+        # Test new fields (real field IDs from live Airtable)
+        assert AirtableFieldMapping.get_field_id("DateOfBirth") == "fld1rN2cffxKuZh4i"
+        assert AirtableFieldMapping.get_field_id("Age") == "fldZPh65PIekEbgvs"
 
         # Test non-existent field
         assert AirtableFieldMapping.get_field_id("NonExistent") is None

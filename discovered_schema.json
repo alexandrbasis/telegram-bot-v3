@@ -1,16 +1,16 @@
 {
-  "fields": [
-    {
-      "name": "DateOfBirth",
-      "id": "fldDATEOFBIRTH123",
-      "type": "date",
-      "description": "Participant's date of birth"
+  "note": "This file contained mock data and has been replaced with real schema data.",
+  "real_schema_file": "discovered_real_schema.json",
+  "target_fields": {
+    "DateOfBirth": {
+      "real_id": "fld1rN2cffxKuZh4i",
+      "type": "date"
     },
-    {
-      "name": "Age",
-      "id": "fldAGE456789012",
-      "type": "number",
-      "description": "Participant's age in years"
+    "Age": {
+      "real_id": "fldZPh65PIekEbgvs", 
+      "type": "number"
     }
-  ]
+  },
+  "discovered_at": "2025-09-10",
+  "status": "Real field IDs successfully obtained from live Airtable API"
 }
