@@ -43,6 +43,8 @@ class TestCreateParticipantEditKeyboard:
             "role",
             "department",
             "payment_amount",
+            "date_of_birth",
+            "age",
         ]
 
         # These fields should NOT be present (automated by payment logic)
@@ -283,6 +285,8 @@ class TestFieldIconMapping:
             "role": "👥",
             "department": "📋",
             "payment_amount": "💵",
+            "date_of_birth": "🎂",  # birthday cake
+            "age": "🔢",  # input numbers
         }
 
         for field_name, expected_icon in expected_mappings.items():
@@ -328,6 +332,8 @@ class TestFieldIconMapping:
             "👥",
             "📋",
             "💵",
+            "🎂",  # date_of_birth
+            "🔢",  # age
         ]
 
         # Check that buttons use field-specific icons, not generic ✏️
