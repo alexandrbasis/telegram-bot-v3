@@ -15,8 +15,8 @@ from src.services.search_service import (
     SearchResult,
     SearchService,
     detect_language,
-    format_participant_result,
     format_participant_full,
+    format_participant_result,
     normalize_russian,
     parse_name_parts,
 )
@@ -340,6 +340,7 @@ class TestRichResultFormatting:
     def test_format_participant_with_demographic_fields(self):
         """Test demographic fields display as 'Date of Birth: YYYY-MM-DD | Age: XX years' when available."""
         from datetime import date
+
         participant = Participant(
             full_name_ru="Петр Смирнов",
             full_name_en="Petr Smirnov",
@@ -369,7 +370,7 @@ class TestRichResultFormatting:
     def test_format_participant_partial_demographic_fields(self):
         """Test demographic fields display with mixed availability (some N/A, some values)."""
         participant = Participant(
-            full_name_ru="Игорь Кузнецов", 
+            full_name_ru="Игорь Кузнецов",
             full_name_en="Igor Kuznetsov",
             age=29,
             # date_of_birth not set
@@ -770,9 +771,10 @@ class TestFullParticipantFormatting:
     def test_format_participant_full_with_demographic_fields(self):
         """Test that format_participant_full includes demographic fields with Russian labels."""
         from datetime import date
+
         participant = Participant(
             full_name_ru="Анна Петрова",
-            full_name_en="Anna Petrova", 
+            full_name_en="Anna Petrova",
             church="Храм Христа Спасителя",
             date_of_birth=date(1985, 3, 20),
             age=39,

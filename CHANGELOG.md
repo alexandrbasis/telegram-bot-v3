@@ -8,6 +8,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Participant Demographic Fields Editing Interface** - Complete demographic information management system enabling event organizers to view and edit participant date of birth and age fields through intuitive bot interface with comprehensive Russian language support (AGB-46, completed 2025-09-10, PR #36)
+  - Enhanced participant editing interface with demographic field buttons and Russian labels (`src/bot/keyboards/edit_keyboards.py:89,92`)
+    - DateOfBirth field with birthday cake icon "🎂 Дата рождения" for intuitive field identification
+    - Age field with numeric input icon "🔢 Возраст" maintaining consistent visual patterns  
+    - Seamless integration after accommodation fields preserving logical field grouping
+  - Comprehensive search results display formatting with demographic information visibility (`src/services/search_service.py:124-127,215-220`)
+    - "Date of Birth: YYYY-MM-DD | Age: XX years" format for data-rich participants
+    - "Date of Birth: N/A | Age: N/A" fallback for backward compatibility with existing records
+    - Demographic section placement after accommodation information for logical information hierarchy
+  - Advanced demographic field validation with Russian error messaging and format guidance (`src/services/participant_update_service.py:126-156,69-73`)
+    - DateOfBirth validation supporting YYYY-MM-DD format with Python datetime parsing
+    - Age validation enforcing 0-120 integer range with comprehensive bounds checking
+    - Russian error messages: "Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)" and "Возраст должен быть от 0 до 120"
+  - User-focused input prompts with specific format examples and clear guidance (`src/bot/messages.py:95-98`)
+    - DateOfBirth prompt: "📅 Введите дату рождения в формате ГГГГ-ММ-ДД (например: 1990-05-15):" with concrete template
+    - Age prompt: "🔢 Введите возраст (от 0 до 120):" with explicit range specification
+    - Format-specific guidance replacing generic prompts for enhanced user experience
+  - Complete text input workflow integration with proper state management (`src/bot/handlers/edit_participant_handlers.py:373-385,478-479`)
+    - DateOfBirth and Age fields added to TEXT_FIELDS classification for correct routing
+    - InfoMessages integration providing field-specific prompts instead of generic fallbacks
+    - Seamless state transitions through FIELD_SELECTION → TEXT_INPUT → FIELD_SELECTION workflow
+  - Enhanced full participant display with demographic field formatting (`src/services/search_service.py:168-172`)
+    - Russian field labels with icons: "🎂 Дата рождения" and "🔢 Возраст" for consistent interface
+    - ISO date format display with N/A fallback for missing values maintaining data presentation standards
+    - Complete participant context display including updated demographic information after edits
+  - Production-ready backward compatibility ensuring graceful handling of participants without demographic data
+    - Optional field implementation allows existing records to function without modification
+    - All existing functionality preserved with 795 tests passing including 15 new demographic field tests
+    - Demographic display logic handles None values with proper "N/A" fallbacks throughout the interface
+  - Comprehensive test coverage with complete validation scenarios and error handling
+    - DateOfBirth validation tests covering valid dates, invalid formats, and error message validation
+    - Age validation tests covering valid ranges, boundary conditions, and out-of-range errors  
+    - Handler integration tests ensuring proper button routing and text input processing
+    - Display formatting tests verifying search results and full participant display with demographic information
+  - Enhanced documentation suite with demographic fields editing specifications across 5 major files
+    - Updated business feature specifications with demographic editing use cases and acceptance criteria
+    - Enhanced technical bot commands documentation with demographic field interaction flows
+    - Architecture API design updates reflecting demographic field validation and display patterns
+    - PROJECT_PLAN.md updates documenting complete demographic fields implementation status
+    - Field mappings documentation enhanced with demographic field specifications and validation rules
+
+### Added
 - **Airtable Schema Update with DateOfBirth and Age Fields** - Complete schema synchronization and model enhancement adding demographic fields with comprehensive validation and testing (AGB-44, completed 2025-09-10, SHA c562bd0, merged via PR #35)
   - Enhanced Participant model with Optional demographic fields supporting flexible data collection (`src/models/participant.py:141-152`)
     - `date_of_birth` (Optional[date]) with proper date validation and ISO format serialization

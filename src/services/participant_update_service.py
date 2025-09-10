@@ -40,7 +40,14 @@ class ParticipantUpdateService:
 
     BUTTON_FIELDS = ["gender", "size", "role", "department", "payment_status"]
 
-    SPECIAL_FIELDS = ["payment_amount", "payment_date", "floor", "room_number", "date_of_birth", "age"]
+    SPECIAL_FIELDS = [
+        "payment_amount",
+        "payment_date",
+        "floor",
+        "room_number",
+        "date_of_birth",
+        "age",
+    ]
 
     # Required fields that cannot be empty
     REQUIRED_FIELDS = ["full_name_ru"]
@@ -174,7 +181,11 @@ class ParticipantUpdateService:
             parsed_date = date(int(year), int(month), int(day))
             return parsed_date
         except ValueError as e:
-            if "invalid literal" in str(e) or len(user_input.split("-")) != 3 or "Wrong format" in str(e):
+            if (
+                "invalid literal" in str(e)
+                or len(user_input.split("-")) != 3
+                or "Wrong format" in str(e)
+            ):
                 raise ValidationError(
                     "Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)"
                 )

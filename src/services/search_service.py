@@ -146,9 +146,10 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
     result_parts.append(f" | Floor: {floor_display}, Room: {room_display}")
 
     # Append demographic info: Date of Birth and Age
+    date_of_birth_val = getattr(participant, "date_of_birth", None)
     date_of_birth_display = (
-        participant.date_of_birth.isoformat()
-        if getattr(participant, "date_of_birth", None) is not None
+        date_of_birth_val.isoformat()
+        if date_of_birth_val is not None
         else "N/A"
     )
     age_display = (
@@ -156,7 +157,9 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
         if getattr(participant, "age", None) not in (None, "")
         else "N/A"
     )
-    result_parts.append(f" | Date of Birth: {date_of_birth_display} | Age: {age_display}")
+    result_parts.append(
+        f" | Date of Birth: {date_of_birth_display} | Age: {age_display}"
+    )
 
     return "".join(result_parts)
 
@@ -276,12 +279,12 @@ def format_participant_full(participant: Participant, language: str = "ru") -> s
 
     # Demographic info
     date_of_birth_val = getattr(participant, "date_of_birth", None)
-    date_of_birth_display = date_of_birth_val.isoformat() if date_of_birth_val is not None else "Не указано"
-    lines.append(f"{labels['date_of_birth']}: {date_of_birth_display}")
-    
-    lines.append(
-        f"{labels['age']}: {value_or_na(getattr(participant, 'age', None))}"
+    date_of_birth_display = (
+        date_of_birth_val.isoformat() if date_of_birth_val is not None else "Не указано"
     )
+    lines.append(f"{labels['date_of_birth']}: {date_of_birth_display}")
+
+    lines.append(f"{labels['age']}: {value_or_na(getattr(participant, 'age', None))}")
 
     return "\n".join(lines)
 
