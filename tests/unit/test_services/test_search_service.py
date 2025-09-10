@@ -16,6 +16,7 @@ from src.services.search_service import (
     SearchService,
     detect_language,
     format_participant_result,
+    format_participant_full,
     normalize_russian,
     parse_name_parts,
 )
@@ -335,6 +336,49 @@ class TestRichResultFormatting:
         assert "Administration" in result
         assert "Holy Trinity Church" in result
         assert "Floor: 2, Room: 204" in result
+
+    def test_format_participant_with_demographic_fields(self):
+        """Test demographic fields display as 'Date of Birth: YYYY-MM-DD | Age: XX years' when available."""
+        from datetime import date
+        participant = Participant(
+            full_name_ru="Петр Смирнов",
+            full_name_en="Petr Smirnov",
+            date_of_birth=date(1990, 5, 15),
+            age=33,
+        )
+
+        result = format_participant_result(participant, "ru")
+
+        assert "Петр Смирнов" in result
+        assert "Petr Smirnov" in result
+        assert "Date of Birth: 1990-05-15 | Age: 33 years" in result
+
+    def test_format_participant_demographic_fields_with_na_fallbacks(self):
+        """Test demographic fields display as 'N/A' when not set in participant."""
+        participant = Participant(
+            full_name_ru="Ольга Ковалева",
+            full_name_en="Olga Kovaleva",
+            # No demographic data
+        )
+
+        result = format_participant_result(participant, "ru")
+
+        assert "Ольга Ковалева" in result
+        assert "Date of Birth: N/A | Age: N/A" in result
+
+    def test_format_participant_partial_demographic_fields(self):
+        """Test demographic fields display with mixed availability (some N/A, some values)."""
+        participant = Participant(
+            full_name_ru="Игорь Кузнецов", 
+            full_name_en="Igor Kuznetsov",
+            age=29,
+            # date_of_birth not set
+        )
+
+        result = format_participant_result(participant, "ru")
+
+        assert "Игорь Кузнецов" in result
+        assert "Date of Birth: N/A | Age: 29 years" in result
 
 
 class TestRussianNormalization:
@@ -718,3 +762,41 @@ class TestRoomFloorSearchService:
         assert len(result) == 1
         assert "Участник Тест" in result[0]
         assert "Floor: 2, Room: 205" in result[0]
+
+
+class TestFullParticipantFormatting:
+    """Test format_participant_full function with demographic fields."""
+
+    def test_format_participant_full_with_demographic_fields(self):
+        """Test that format_participant_full includes demographic fields with Russian labels."""
+        from datetime import date
+        participant = Participant(
+            full_name_ru="Анна Петрова",
+            full_name_en="Anna Petrova", 
+            church="Храм Христа Спасителя",
+            date_of_birth=date(1985, 3, 20),
+            age=39,
+        )
+
+        result = format_participant_full(participant, "ru")
+
+        # Verify demographic fields are present with Russian labels
+        assert "👤 Имя (русское): Анна Петрова" in result
+        assert "⛪ Церковь: Храм Христа Спасителя" in result
+        # Demographic fields should be included
+        assert "🎂 Дата рождения: 1985-03-20" in result
+        assert "🔢 Возраст: 39" in result
+
+    def test_format_participant_full_demographic_fields_with_na_fallbacks(self):
+        """Test that format_participant_full shows 'Не указано' for missing demographic fields."""
+        participant = Participant(
+            full_name_ru="Борис Козлов",
+            full_name_en="Boris Kozlov",
+            # No demographic data
+        )
+
+        result = format_participant_full(participant, "ru")
+
+        # Verify demographic fields show "Не указано" when missing
+        assert "🎂 Дата рождения: Не указано" in result
+        assert "🔢 Возраст: Не указано" in result
