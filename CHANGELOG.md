@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Critical Search Mode Button Processing Bug Resolution** - Fixed all three search mode buttons (name, room, floor) being processed as search queries instead of navigation commands, restoring proper search functionality across the bot (AGB-41, completed 2025-09-10)
+  - Root cause resolution for navigation button text being processed as search queries due to missing `NAV_SEARCH_*` constants in WAITING state MessageHandler exclusion filters (`src/bot/handlers/search_conversation.py:133,172,205`)
+    - Added `NAV_SEARCH_NAME` to WAITING_FOR_NAME filter preventing "👤 По имени" from triggering participant search
+    - Added `NAV_SEARCH_ROOM` to WAITING_FOR_ROOM filter preventing "🚪 По комнате" from causing immediate validation errors  
+    - Added `NAV_SEARCH_FLOOR` to WAITING_FOR_FLOOR filter preventing "🏢 По этажу" from bypassing proper workflow
+  - Comprehensive pattern consistency ensuring all three search modes follow button→prompt→input workflow eliminating "Participants not found" errors on navigation button clicks
+  - Complete test coverage with 9 comprehensive tests achieving 100% success rate covering filter exclusion logic, state transitions, and workflow verification (`tests/unit/test_bot_handlers/test_search_conversation_name.py`)
+    - TestNameSearchButtonBug class with filter exclusion validation and button text processing prevention
+    - TestSearchButtonConsistency class with parametrized testing across all three search modes
+    - TestStateTransitions class with complete workflow verification from button click to input processing
+  - Code review fixes addressing test mocking issues and security isolation with hermetic test environment preventing production credential access
+  - Regression testing with 146/146 existing tests passing confirming no functionality disruption while restoring intended search behavior
+  - Enhanced documentation suite with troubleshooting sections, corrected button navigation flows, and proper state transition documentation across technical specifications
+    - Updated `/docs/technical/troubleshooting.md` with search button bug troubleshooting section and resolution patterns
+    - Enhanced `/docs/technical/bot-commands.md` with corrected button names and proper navigation flow documentation
+    - Updated `/docs/architecture/api-design.md` with accurate state transition diagrams and conversation handler specifications
+    - Added Recent Bug Fixes section to `/docs/business/feature-specifications.md` with implementation context and user impact details
+  - Zero breaking changes maintaining complete backward compatibility while restoring core search functionality that serves the bot's primary purpose
+  - Users can now successfully click search mode buttons to access input prompts instead of encountering immediate "no participants found" errors, enabling proper participant search workflows across all accommodation and identification search methods
 - **Room Search Conversation Flow with Single Prompt and Cancel Handler** - Complete overhaul of room search flow eliminating duplicate messages and broken cancel functionality for smooth user experience (AGB-39, completed 2025-01-15)
   - Fixed room mode selection handler to send single clean prompt instead of duplicating messages and causing premature validation errors (`src/bot/handlers/search_handlers.py:651-681`)
     - Updated `handle_search_room_mode()` to mirror floor search pattern: sends single `InfoMessages.ENTER_ROOM_NUMBER` prompt and returns `RoomSearchStates.WAITING_FOR_ROOM` directly
