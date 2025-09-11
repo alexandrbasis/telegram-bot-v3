@@ -485,7 +485,11 @@ class TestPaginationNavigationHandler:
         # Verify response includes range info (shows current data from service)
         call_args = mock_next_update.callback_query.edit_message_text.call_args
         message_text = call_args[1]["text"]
-        assert "(элементы 21-21 из 50)" in message_text
+        # Allow MarkdownV2 escaped hyphen as well
+        assert (
+            "(элементы 21-21 из 50)" in message_text
+            or "(элементы 21\\-21 из 50)" in message_text
+        )
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")

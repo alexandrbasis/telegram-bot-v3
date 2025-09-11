@@ -26,8 +26,9 @@ async def handle_get_list_request(
     """
     message_text = (
         "Выберите тип списка участников:\n\n"
-        "👥 **Команда** - участники команды\n"
-        "🎯 **Кандидаты** - кандидаты на участие"
+        # Escape '-' for MarkdownV2
+        "👥 **Команда** \\- участники команды\n"
+        "🎯 **Кандидаты** \\- кандидаты на участие"
     )
 
     keyboard = get_role_selection_keyboard()
@@ -75,7 +76,8 @@ async def handle_role_selection(
         # Format message with title and participant data
         start_pos = data["current_offset"] + 1
         end_pos = data["current_offset"] + data["actual_displayed"]
-        page_info = f" (элементы {start_pos}-{end_pos} из {data['total_count']})"
+        # Escape '-' in range for MarkdownV2
+        page_info = f" (элементы {start_pos}\\-{end_pos} из {data['total_count']})"
         message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
         # Add pagination keyboard based on data
@@ -191,7 +193,8 @@ async def handle_list_navigation(
             # Format message with title and participant data
             start_pos = data["current_offset"] + 1
             end_pos = data["current_offset"] + data["actual_displayed"]
-            page_info = f" (элементы {start_pos}-{end_pos} из {data['total_count']})"
+            # Escape '-' in range for MarkdownV2
+            page_info = f" (элементы {start_pos}\\-{end_pos} из {data['total_count']})"
             message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
             # Add pagination keyboard based on data

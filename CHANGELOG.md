@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Telegram MarkdownV2 parse errors in the Get List flow when sending the role selection prompt and page range title. Escaped '-' in both locations to prevent "Can't parse entities" errors in production (AGB-45 hotfix, completed 2025-09-11).
+  - src/bot/handlers/list_handlers.py
+  - tests/unit/test_bot_handlers/test_list_handlers.py
+
+### Changed
+- Dependencies: use `python-telegram-bot[job-queue]` to enable ConversationHandler timeouts and remove JobQueue warnings in production (requirements/base.txt).
+
 ### Added
 - **Participant Lists Feature (Get List Menu Option)** - Complete bulk participant listing functionality allowing event organizers instant access to categorized participant lists by role with pagination, message length management, and Russian language support (AGB-45, completed 2025-09-11, PR #38, SHA e4d9042f, merged 2025-09-11T10:35:31Z)
   - Main menu integration with "📋 Получить список" button alongside existing search functionality (`src/bot/keyboards/search_keyboards.py:24`)
