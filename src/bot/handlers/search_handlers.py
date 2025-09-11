@@ -14,6 +14,7 @@ from telegram.ext import ContextTypes
 
 from src.bot.keyboards.search_keyboards import (
     NAV_MAIN_MENU,
+    get_floor_discovery_keyboard,
     get_main_menu_keyboard,
     get_results_navigation_keyboard,
     get_search_mode_selection_keyboard,
@@ -703,10 +704,10 @@ async def handle_search_floor_mode(
     # Import state enum dynamically to avoid circular dependency
     from src.bot.handlers.floor_search_handlers import FloorSearchStates
 
-    # Ask for floor number and set waiting state
+    # Ask for floor number and provide discovery button (consistent with /search_floor)
     await update.message.reply_text(
-        text=InfoMessages.ENTER_FLOOR_NUMBER,
-        reply_markup=get_waiting_for_floor_keyboard(),
+        text=InfoMessages.ENTER_FLOOR_WITH_DISCOVERY,
+        reply_markup=get_floor_discovery_keyboard(),
     )
 
     return FloorSearchStates.WAITING_FOR_FLOOR

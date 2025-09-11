@@ -290,6 +290,7 @@ def get_search_conversation_handler() -> ConversationHandler:
         fallbacks=[CommandHandler("start", start_command)],
         # Timeout configuration: Convert minutes to seconds
         conversation_timeout=get_telegram_settings().conversation_timeout_minutes * 60,
+        allow_reentry=True,
         per_message=False,  # Required for mixed handler types (CommandHandler + MessageHandler + CallbackQueryHandler)
         # Note: PTB may emit a warning about CallbackQueryHandler tracking, but this is expected
         # for mixed conversations and functionality works correctly as verified by tests
