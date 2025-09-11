@@ -605,6 +605,33 @@ class SearchService:
 
         return formatted_results
 
+    async def get_available_floors(self) -> List[int]:
+        """
+        Get list of unique floors that contain participants.
+
+        Retrieves all floors from the repository that have at least one participant,
+        returning them sorted in ascending order. Handles all repository errors
+        gracefully by logging and returning empty list.
+
+        Returns:
+            List of unique floor numbers (as integers) that contain participants,
+            sorted in ascending order. Returns empty list if no floors found
+            or if any error occurs.
+
+        Raises:
+            RuntimeError: If repository is not configured
+        """
+        if not self.repository:
+            raise RuntimeError("Repository not configured for floor operations")
+
+        try:
+            floors = await self.repository.get_available_floors()
+            logger.info(f"Retrieved {len(floors)} unique floors with participants")
+            return floors
+        except Exception as e:
+            logger.warning(f"Failed to retrieve available floors: {e}")
+            return []
+
 
 def format_match_quality(similarity_score: float) -> str:
     """

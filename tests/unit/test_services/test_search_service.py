@@ -802,3 +802,69 @@ class TestFullParticipantFormatting:
         # Verify demographic fields show "Не указано" when missing
         assert "🎂 Дата рождения: Не указано" in result
         assert "🔢 Возраст: Не указано" in result
+
+
+class TestSearchServiceFloorDiscovery:
+    """Test service layer floor discovery functionality."""
+
+    @pytest.fixture
+    def mock_repository(self):
+        """Mock repository with floor discovery capabilities."""
+        repository = Mock()
+        repository.get_available_floors = AsyncMock()
+        return repository
+
+    @pytest.fixture
+    def search_service(self, mock_repository):
+        """SearchService instance with mock repository."""
+        return SearchService(repository=mock_repository)
+
+    @pytest.mark.asyncio
+    async def test_get_available_floors_success(self, search_service, mock_repository):
+        """Test successful floor discovery returns floors from repository."""
+        # Mock repository returning floors
+        mock_repository.get_available_floors.return_value = [1, 2, 3, 5]
+
+        # This test should FAIL - method doesn't exist yet
+        result = await search_service.get_available_floors()
+
+        # Should return floors from repository
+        assert result == [1, 2, 3, 5]
+        mock_repository.get_available_floors.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_available_floors_empty_result(self, search_service, mock_repository):
+        """Test floor discovery with empty result."""
+        # Mock repository returning empty list
+        mock_repository.get_available_floors.return_value = []
+
+        result = await search_service.get_available_floors()
+
+        assert result == []
+        mock_repository.get_available_floors.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_available_floors_repository_error(self, search_service, mock_repository):
+        """Test floor discovery handles repository errors gracefully."""
+        from src.data.repositories.participant_repository import RepositoryError
+        
+        # Mock repository raising error
+        mock_repository.get_available_floors.side_effect = RepositoryError("Database connection failed")
+
+        # Should return empty list and log error, not raise exception
+        result = await search_service.get_available_floors()
+
+        assert result == []
+        mock_repository.get_available_floors.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_available_floors_unexpected_error(self, search_service, mock_repository):
+        """Test floor discovery handles unexpected errors gracefully."""
+        # Mock repository raising unexpected error
+        mock_repository.get_available_floors.side_effect = Exception("Unexpected error")
+
+        # Should return empty list and log error, not raise exception
+        result = await search_service.get_available_floors()
+
+        assert result == []
+        mock_repository.get_available_floors.assert_called_once()
