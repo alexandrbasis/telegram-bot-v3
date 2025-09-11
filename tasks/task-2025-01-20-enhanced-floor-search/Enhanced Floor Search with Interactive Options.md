@@ -102,6 +102,9 @@ Target: 90%+ coverage across all implementation areas including business logic, 
 - [ ] Implement floor selection handling for inline button responses
 - [ ] Maintain backward compatibility with existing numeric floor input processing
 - [ ] Ensure Russian language consistency across all new messages
+- [ ] Add strict callback patterns and acknowledge callback queries
+- [ ] Add 5-minute in-memory caching for discovery results (module/class-level)
+- [ ] Apply 10s timeout around discovery to fail fast and fallback to manual input
 
 ### Implementation Steps & Change Log
 
@@ -130,14 +133,31 @@ Target: 90%+ coverage across all implementation areas including business logic, 
 - All messages and interface elements must be in Russian
 - Error handling must gracefully fall back to manual input on API failures
 - Cache floor discovery results for 5 minutes using simple in-memory dict with timestamp cleanup
+- Acknowledge callback queries (answer) and prefer editing the original discovery message when listing floors
+- Prefer retrieving only the `Floor` field from Airtable for discovery to minimize payload
 
 ### Error Handling Strategy
 - **API Failures**: Return empty list, log warning, show manual input fallback message
-- **Timeout Scenarios**: 10-second timeout on floor discovery, fallback to manual input
+- **Timeout Scenarios**: 10-second timeout on floor discovery (wrap discovery in `asyncio.wait_for`), fallback to manual input
 - **Empty Results**: Show helpful message "В данный момент участники не размещены ни на одном этаже. Пришлите номер этажа цифрой."
 - **Callback Errors**: Invalid callback data gracefully ignored with log entry
 
 ### Callback Data Specification
-- **Floor Discovery Button**: `"floor_discovery"`
-- **Floor Selection Buttons**: `"floor_select_1"`, `"floor_select_2"`, etc.
+- **Floor Discovery Button**: `"floor_discovery"` (pattern: `^floor_discovery$`)
+- **Floor Selection Buttons**: `"floor_select_1"`, `"floor_select_2"`, etc. (pattern: `^floor_select_(\d+)$`)
 - **Button Text Format**: Floor numbers displayed as "Этаж 1", "Этаж 2", etc.
+
+### Design Decisions
+- **Floor type**: Treat floors as integers (per Airtable schema `Floor` is numeric). Reject non-numeric in selection callback; manual input keeps existing numeric validation.
+- **Sorting**: Sort floors ascending numerically; deduplicate.
+- **Caching placement**: Implement cache at repository module/class level (singleton-style) keyed by `(base_id, table_identifier)` to persist across service/repo factory calls.
+- **UI/UX**: Acknowledge callback queries (`CallbackQuery.answer()`), layout floor buttons in rows of 3; prefer editing the discovery message to show available floors with selection keyboard.
+- **Minimal retrieval**: Fetch only the `Floor` field when discovering floors.
+
+### Message Updates
+- Add `InfoMessages.ENTER_FLOOR_WITH_DISCOVERY = "Выберите этаж из списка или пришлите номер этажа цифрой:"`.
+- When listing floors: prepend header like `"Доступные этажи:"` and render buttons; also keep guidance for manual input.
+
+### Test Notes
+- Update tests that assert the simple `ENTER_FLOOR_NUMBER` prompt to account for the enhanced prompt when discovery is enabled.
+- Add tests for discovery callback, selection callback, timeout fallback, and callback acknowledgement.

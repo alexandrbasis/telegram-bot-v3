@@ -48,13 +48,14 @@ Integrate floor discovery UI components with conversation handler registration a
 - [ ] Validate error recovery scenarios and callback timeout handling
 - [ ] Ensure backward compatibility with existing floor search functionality
 - [ ] Verify all state transitions work correctly with new callback handlers
+ - [ ] Use strict callback patterns and acknowledge callback queries where applicable
 
 ## Implementation Steps & Change Log
 - [ ] Step 1: Update conversation handler registration
   - [ ] Sub-step 1.1: Register floor discovery callback handlers in ConversationHandler
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `search_conversation.py`
-    - **Accept**: CallbackQueryHandler entries for "floor_discovery" and "floor_select_*" patterns
+    - **Accept**: CallbackQueryHandler entries for patterns `^floor_discovery$` and `^floor_select_(\d+)$`
     - **Tests**: Update existing `tests/unit/test_bot_handlers/test_search_conversation_floor.py`
     - **Done**: Conversation flow includes callback handlers in WAITING_FOR_FLOOR state
     - **Callback Registration**: Both handlers registered in FloorSearchStates.WAITING_FOR_FLOOR state
@@ -64,7 +65,7 @@ Integrate floor discovery UI components with conversation handler registration a
   - [ ] Sub-step 2.1: End-to-end floor discovery flow integration testing
     - **Directory**: `tests/integration/test_bot_handlers/`
     - **Files to create/modify**: Add test cases to existing integration test files
-    - **Accept**: Complete user journey: floor search → discovery button → floor selection → results
+    - **Accept**: Complete user journey: floor search → discovery button → floors list (inline) → floor selection → results
     - **Tests**: Integration test covering both discovery path and traditional input path
     - **Done**: Integration test validates all state transitions, error recovery, callback handling
     - **Error Recovery**: Tests API failure fallback, empty results handling, callback timeout scenarios
@@ -96,6 +97,8 @@ Integrate floor discovery UI components with conversation handler registration a
 - [ ] Integration tests: Error recovery and callback timeout scenarios
 - [ ] Integration tests: Conversation state transitions with new callback handlers
 - [ ] Performance tests: Verify callback handler response times within acceptable limits
+ - [ ] Registration tests: Assert patterns `^floor_discovery$` and `^floor_select_(\d+)$` are registered under `FloorSearchStates.WAITING_FOR_FLOOR`
+ - [ ] Callback UX tests: Verify callback is acknowledged (`answer()` called) and message edits are applied when available
 
 ## Success Criteria
 - [ ] All acceptance criteria met for conversation integration

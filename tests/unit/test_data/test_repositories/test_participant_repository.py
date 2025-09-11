@@ -119,9 +119,10 @@ class TestParticipantRepositoryInterface:
         annotations = method.__annotations__
         # Should have return annotation (List[int])
         assert "return" in annotations
-        
+
         # Verify it's an async method
         import inspect
+
         assert inspect.iscoroutinefunction(method) or hasattr(
             method, "__code__"
         ), "get_available_floors should be async"

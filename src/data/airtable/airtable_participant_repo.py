@@ -1230,64 +1230,76 @@ class AirtableParticipantRepository(ParticipantRepository):
             RepositoryError: If floor discovery fails
         """
         try:
-            # Create cache key
-            cache_key = f"{self.client.base_id}:{self.client.table_id}"
+            # Create cache key using config (AirtableClient exposes config, not base_id/table_id directly)
+            table_identifier = (
+                self.client.config.table_id
+                if self.client.config.table_id
+                else self.client.config.table_name
+            )
+            cache_key = f"{self.client.config.base_id}:{table_identifier}"
             current_time = time.time()
-            
+
             # Clean up expired cache entries
             expired_keys = [
-                key for key, (timestamp, _) in _FLOOR_CACHE.items() 
+                key
+                for key, (timestamp, _) in _FLOOR_CACHE.items()
                 if current_time - timestamp > _FLOOR_CACHE_TTL_SECONDS
             ]
             for key in expired_keys:
                 del _FLOOR_CACHE[key]
-            
+
             # Check if we have fresh cached data
             if cache_key in _FLOOR_CACHE:
                 timestamp, floors = _FLOOR_CACHE[cache_key]
                 if current_time - timestamp <= _FLOOR_CACHE_TTL_SECONDS:
                     logger.debug(f"Using cached floor data: {floors}")
                     return floors
-            
+
             # Fetch floor data from Airtable with timeout
             logger.debug("Fetching floor data from Airtable")
             floor_field_name = AirtableFieldMapping.get_airtable_field_name("floor")
-            
+            if not floor_field_name:
+                logger.warning("Floor field mapping not found; returning empty list")
+                return []
+
             try:
                 # Use timeout to enforce 10-second discovery limit
                 records = await asyncio.wait_for(
-                    self.client.list_records(fields=[floor_field_name]),
-                    timeout=10
+                    self.client.list_records(fields=[floor_field_name]), timeout=10
                 )
             except asyncio.TimeoutError:
-                logger.warning("Floor discovery timed out after 10 seconds, returning empty list")
+                logger.warning(
+                    "Floor discovery timed out after 10 seconds, returning empty list"
+                )
                 return []
-            
+
             # Extract and process floor values
-            floors = set()
+            from typing import Set
+
+            floor_set: Set[int] = set()
             for record in records:
                 floor_value = record.get("fields", {}).get(floor_field_name)
-                
+
                 # Filter out None, empty strings, and invalid values
                 if floor_value is not None and floor_value != "":
                     try:
                         # Convert to int, filtering out non-numeric floors
                         floor_int = int(floor_value)
-                        floors.add(floor_int)
+                        floor_set.add(floor_int)
                     except (ValueError, TypeError):
                         # Skip non-numeric floor values (like "Ground")
                         logger.debug(f"Skipping non-numeric floor value: {floor_value}")
                         continue
-            
+
             # Convert to sorted list
-            result = sorted(list(floors))
-            
+            result = sorted(list(floor_set))
+
             # Cache the result
             _FLOOR_CACHE[cache_key] = (current_time, result)
-            
+
             logger.info(f"Floor discovery completed: {len(result)} unique floors found")
             return result
-            
+
         except AirtableAPIError as e:
             logger.warning(f"Airtable API error during floor discovery: {e}")
             return []

@@ -32,7 +32,7 @@ from src.models.participant import Department, Gender, Participant, Role
 def mock_airtable_client():
     """Fixture providing a mock AirtableClient."""
     client = Mock(spec=AirtableClient)
-    
+
     # Mock client attributes needed for caching
     client.base_id = "appTestBase123456789"
     client.table_id = "tblTestTable12345678"
@@ -151,6 +151,7 @@ def repository(mock_airtable_client):
 def clear_floor_cache():
     """Fixture that clears the floor cache before each test."""
     from src.data.airtable.airtable_participant_repo import _FLOOR_CACHE
+
     _FLOOR_CACHE.clear()
     yield
     _FLOOR_CACHE.clear()
@@ -976,9 +977,11 @@ class TestRoomFloorSearchMethods:
             await repository.find_by_floor(floor)
 
     @pytest.mark.asyncio
-    async def test_get_available_floors_success(self, repository, mock_airtable_client, clear_floor_cache):
+    async def test_get_available_floors_success(
+        self, repository, mock_airtable_client, clear_floor_cache
+    ):
         """Test successful floor discovery returns sorted unique floors."""
-        
+
         # Mock Airtable client returning records with floor data
         mock_records = [
             {"id": "rec1", "fields": {"Floor": 2}},
@@ -987,7 +990,7 @@ class TestRoomFloorSearchMethods:
             {"id": "rec4", "fields": {"Floor": 2}},  # Duplicate
             {"id": "rec5", "fields": {"Floor": 1}},  # Duplicate
         ]
-        
+
         mock_airtable_client.list_records.return_value = mock_records
 
         # This test should FAIL - method doesn't exist yet
@@ -995,7 +998,7 @@ class TestRoomFloorSearchMethods:
 
         # Should return unique floors, sorted ascending
         assert result == [1, 2, 3]
-        
+
         # Should use fields parameter to only fetch floor data
         mock_airtable_client.list_records.assert_called_once()
         call_args = mock_airtable_client.list_records.call_args
@@ -1003,17 +1006,22 @@ class TestRoomFloorSearchMethods:
         # Floor field mapping should be used
 
     @pytest.mark.asyncio
-    async def test_get_available_floors_with_none_values(self, repository, mock_airtable_client, clear_floor_cache):
+    async def test_get_available_floors_with_none_values(
+        self, repository, mock_airtable_client, clear_floor_cache
+    ):
         """Test floor discovery filters out None and invalid floor values."""
-        
+
         mock_records = [
             {"id": "rec1", "fields": {"Floor": 2}},
             {"id": "rec2", "fields": {"Floor": None}},  # Should be filtered out
             {"id": "rec3", "fields": {}},  # No floor field - should be filtered out
             {"id": "rec4", "fields": {"Floor": 1}},
-            {"id": "rec5", "fields": {"Floor": ""}},  # Empty string - should be filtered out
+            {
+                "id": "rec5",
+                "fields": {"Floor": ""},
+            },  # Empty string - should be filtered out
         ]
-        
+
         mock_airtable_client.list_records.return_value = mock_records
 
         result = await repository.get_available_floors()
@@ -1022,7 +1030,9 @@ class TestRoomFloorSearchMethods:
         assert result == [1, 2]
 
     @pytest.mark.asyncio
-    async def test_get_available_floors_empty_result(self, repository, mock_airtable_client, clear_floor_cache):
+    async def test_get_available_floors_empty_result(
+        self, repository, mock_airtable_client, clear_floor_cache
+    ):
         """Test floor discovery with no participants returns empty list."""
         mock_airtable_client.list_records.return_value = []
 
@@ -1031,7 +1041,9 @@ class TestRoomFloorSearchMethods:
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_get_available_floors_api_timeout(self, repository, mock_airtable_client, clear_floor_cache):
+    async def test_get_available_floors_api_timeout(
+        self, repository, mock_airtable_client, clear_floor_cache
+    ):
         """Test floor discovery handles timeout gracefully."""
         # Mock timeout error
         mock_airtable_client.list_records.side_effect = asyncio.TimeoutError()
@@ -1042,20 +1054,24 @@ class TestRoomFloorSearchMethods:
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_get_available_floors_api_error(self, repository, mock_airtable_client, clear_floor_cache):
+    async def test_get_available_floors_api_error(
+        self, repository, mock_airtable_client, clear_floor_cache
+    ):
         """Test floor discovery handles API errors gracefully."""
         # Mock API error
         mock_airtable_client.list_records.side_effect = AirtableAPIError(
             "Rate limit exceeded", status_code=429
         )
 
-        # Should return empty list and log warning, not raise exception  
+        # Should return empty list and log warning, not raise exception
         result = await repository.get_available_floors()
 
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_get_available_floors_caching_behavior(self, repository, mock_airtable_client, clear_floor_cache):
+    async def test_get_available_floors_caching_behavior(
+        self, repository, mock_airtable_client, clear_floor_cache
+    ):
         """Test that floor discovery uses caching to avoid repeated API calls."""
         # Mock successful first call
         mock_records = [
@@ -1076,19 +1092,21 @@ class TestRoomFloorSearchMethods:
         assert mock_airtable_client.list_records.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_get_available_floors_cache_expiry(self, repository, mock_airtable_client, clear_floor_cache):
+    async def test_get_available_floors_cache_expiry(
+        self, repository, mock_airtable_client, clear_floor_cache
+    ):
         """Test that cache expires after TTL and makes fresh API call."""
         # Mock successful responses
         mock_records_first = [{"id": "rec1", "fields": {"Floor": 1}}]
         mock_records_second = [{"id": "rec2", "fields": {"Floor": 2}}]
-        
+
         mock_airtable_client.list_records.side_effect = [
             mock_records_first,
-            mock_records_second
+            mock_records_second,
         ]
 
         # Mock time to control cache expiry
-        with patch('src.data.airtable.airtable_participant_repo.time') as mock_time:
+        with patch("src.data.airtable.airtable_participant_repo.time") as mock_time:
             # First call at time 0
             mock_time.time.return_value = 0
             result1 = await repository.get_available_floors()

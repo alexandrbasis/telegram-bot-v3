@@ -356,6 +356,9 @@ class ParticipantRepository(ABC):
         Retrieves all floors from the database that contain participants,
         filtering out empty floors and returning them sorted in ascending order.
 
+        Args:
+            None
+
         Returns:
             List of unique floor numbers (as integers) that contain participants,
             sorted in ascending order. Returns empty list if no floors found
