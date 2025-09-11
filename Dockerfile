@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for better caching)
-COPY requirements.txt .
+COPY requirements/ ./requirements/
 
-# Install Python dependencies
+# Install Python dependencies (base set for production image)
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements/base.txt
 
 # Copy the application source code
 COPY src/ ./src/
