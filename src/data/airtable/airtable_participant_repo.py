@@ -5,7 +5,9 @@ on participant data, mapping between Participant domain objects and Airtable
 record format.
 """
 
+import asyncio
 import logging
+import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from src.config.field_mappings import AirtableFieldMapping
@@ -25,6 +27,11 @@ from src.services.search_service import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Module-level cache for floor discovery with TTL
+# Cache key format: "{base_id}:{table_identifier}" -> (timestamp, floors)
+_FLOOR_CACHE: Dict[str, Tuple[float, List[int]]] = {}
+_FLOOR_CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
 class AirtableParticipantRepository(ParticipantRepository):
@@ -1205,3 +1212,97 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(
                 f"Unexpected error finding participants by floor: {e}", e
             )
+
+    async def get_available_floors(self) -> List[int]:
+        """
+        Return unique numeric floors that have at least one participant.
+
+        Retrieves all floors from the database that contain participants,
+        filtering out empty floors and returning them sorted in ascending order.
+        Uses 5-minute caching to optimize performance.
+
+        Returns:
+            List of unique floor numbers (as integers) that contain participants,
+            sorted in ascending order. Returns empty list if no floors found
+            or if an error occurs.
+
+        Raises:
+            RepositoryError: If floor discovery fails
+        """
+        try:
+            # Create cache key using config (AirtableClient exposes config, not base_id/table_id directly)
+            table_identifier = (
+                self.client.config.table_id
+                if self.client.config.table_id
+                else self.client.config.table_name
+            )
+            cache_key = f"{self.client.config.base_id}:{table_identifier}"
+            current_time = time.time()
+
+            # Clean up expired cache entries
+            expired_keys = [
+                key
+                for key, (timestamp, _) in _FLOOR_CACHE.items()
+                if current_time - timestamp > _FLOOR_CACHE_TTL_SECONDS
+            ]
+            for key in expired_keys:
+                del _FLOOR_CACHE[key]
+
+            # Check if we have fresh cached data
+            if cache_key in _FLOOR_CACHE:
+                timestamp, floors = _FLOOR_CACHE[cache_key]
+                if current_time - timestamp <= _FLOOR_CACHE_TTL_SECONDS:
+                    logger.debug(f"Using cached floor data: {floors}")
+                    return floors
+
+            # Fetch floor data from Airtable with timeout
+            logger.debug("Fetching floor data from Airtable")
+            floor_field_name = AirtableFieldMapping.get_airtable_field_name("floor")
+            if not floor_field_name:
+                logger.warning("Floor field mapping not found; returning empty list")
+                return []
+
+            try:
+                # Use timeout to enforce 10-second discovery limit
+                records = await asyncio.wait_for(
+                    self.client.list_records(fields=[floor_field_name]), timeout=10
+                )
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "Floor discovery timed out after 10 seconds, returning empty list"
+                )
+                return []
+
+            # Extract and process floor values
+            from typing import Set
+
+            floor_set: Set[int] = set()
+            for record in records:
+                floor_value = record.get("fields", {}).get(floor_field_name)
+
+                # Filter out None, empty strings, and invalid values
+                if floor_value is not None and floor_value != "":
+                    try:
+                        # Convert to int, filtering out non-numeric floors
+                        floor_int = int(floor_value)
+                        floor_set.add(floor_int)
+                    except (ValueError, TypeError):
+                        # Skip non-numeric floor values (like "Ground")
+                        logger.debug(f"Skipping non-numeric floor value: {floor_value}")
+                        continue
+
+            # Convert to sorted list
+            result = sorted(list(floor_set))
+
+            # Cache the result
+            _FLOOR_CACHE[cache_key] = (current_time, result)
+
+            logger.info(f"Floor discovery completed: {len(result)} unique floors found")
+            return result
+
+        except AirtableAPIError as e:
+            logger.warning(f"Airtable API error during floor discovery: {e}")
+            return []
+        except Exception as e:
+            logger.warning(f"Unexpected error during floor discovery: {e}")
+            return []

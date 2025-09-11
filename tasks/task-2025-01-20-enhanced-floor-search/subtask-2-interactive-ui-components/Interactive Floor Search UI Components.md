@@ -48,33 +48,35 @@ Create interactive UI components for floor discovery, including inline keyboards
 - [ ] Implement callback handlers for floor discovery and floor selection
 - [ ] Update floor input prompt to include inline keyboard
 - [ ] Ensure all UI components handle error states and empty results
+ - [ ] Acknowledge callback queries and use strict callback patterns
+ - [ ] Prefer editing the discovery message to show floors list with buttons
 
 ## Implementation Steps & Change Log
 - [ ] Step 1: Create inline keyboard for floor discovery
   - [ ] Sub-step 1.1: Add floor discovery inline keyboard functions
     - **Directory**: `src/bot/keyboards/`
     - **Files to create/modify**: `search_keyboards.py`
-    - **Accept**: Inline keyboard with "Показать доступные этажи" button, callback data "floor_discovery"
+    - **Accept**: Inline keyboard with "Показать доступные этажи" button, callback data `floor_discovery` (pattern `^floor_discovery$`)
     - **Tests**: Add test cases to existing `tests/unit/test_bot_keyboards/test_search_keyboards.py`
     - **Done**: Keyboard renders properly with callback data, integrated with waiting_for_floor message
-    - **Callback Patterns**: "floor_discovery" for discovery button, "floor_select_{number}" for individual floor selection
+    - **Callback Patterns**: `floor_discovery` for discovery button, `floor_select_{number}` for individual floor selection (pattern `^floor_select_(\d+)$`)
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 - [ ] Step 2: Update floor search messages
   - [ ] Sub-step 2.1: Add floor discovery messages to InfoMessages class
     - **Directory**: `src/bot/`
     - **Files to create/modify**: `messages.py`
-    - **Accept**: Russian messages following InfoMessages pattern: ENTER_FLOOR_WITH_DISCOVERY, AVAILABLE_FLOORS_DISPLAY
+    - **Accept**: Russian messages following InfoMessages pattern: `ENTER_FLOOR_WITH_DISCOVERY`, optional display header for available floors
     - **Tests**: Add test cases to existing message tests
     - **Done**: All required Russian messages added with consistent formatting and emoji usage
-    - **Message Patterns**: ENTER_FLOOR_WITH_DISCOVERY = "Выберите этаж из списка или пришлите номер этажа цифрой:"
+    - **Message Patterns**: `ENTER_FLOOR_WITH_DISCOVERY = "Выберите этаж из списка или пришлите номер этажа цифрой:"`
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 - [ ] Step 3: Create floor discovery callback handlers
   - [ ] Sub-step 3.1: Create handle_floor_discovery_callback function
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `floor_search_handlers.py`
-    - **Accept**: Processes "floor_discovery" callback, displays available floors with selection buttons
+    - **Accept**: Processes `floor_discovery` callback, acknowledges callback, displays available floors with selection buttons (3 per row), edits original message if present
     - **Tests**: Add test cases to existing `tests/unit/test_bot_handlers/test_floor_search_handlers.py`
     - **Done**: Callback handles floor discovery, formats results, shows selection options
     - **Error Handling**: API failures show "Произошла ошибка. Пришлите номер этажа цифрой.", empty floors show helpful message
@@ -83,7 +85,7 @@ Create interactive UI components for floor discovery, including inline keyboards
   - [ ] Sub-step 3.2: Create handle_floor_selection_callback function
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `floor_search_handlers.py`
-    - **Accept**: Processes "floor_select_{number}" callback, triggers floor search with selected number
+    - **Accept**: Processes `floor_select_{number}` callback, parses number via regex `^floor_select_(\d+)$`, triggers floor search with selected number
     - **Tests**: Add test cases to existing `tests/unit/test_bot_handlers/test_floor_search_handlers.py`
     - **Done**: Floor selection triggers existing process_floor_search_with_input function
     - **Callback Pattern**: Extracts floor number from "floor_select_{number}" pattern
@@ -93,7 +95,7 @@ Create interactive UI components for floor discovery, including inline keyboards
   - [ ] Sub-step 4.1: Update floor input prompt with inline keyboard
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `floor_search_handlers.py`
-    - **Accept**: handle_floor_search_command uses enhanced message with inline keyboard from Step 1.1
+    - **Accept**: `handle_floor_search_command` uses enhanced message with inline discovery keyboard from Step 1.1 (`ENTER_FLOOR_WITH_DISCOVERY`)
     - **Tests**: Update existing `tests/unit/test_bot_handlers/test_floor_search_handlers.py`
     - **Done**: Message combines inline keyboard with text instructions, maintains backward compatibility
     - **Changelog**: [Record changes made with file paths and line ranges]
@@ -104,6 +106,7 @@ Create interactive UI components for floor discovery, including inline keyboards
 - [ ] Unit tests: Callback handler logic and error scenarios in `tests/unit/test_bot_handlers/`
 - [ ] UI component tests: Empty results handling and error state displays
 - [ ] Integration tests: Callback workflow from discovery to floor selection
+ - [ ] Ensure tests acknowledge callback queries (`answer()` called) and handle edited messages
 
 ## Success Criteria
 - [ ] All acceptance criteria met for interactive UI components
@@ -111,3 +114,20 @@ Create interactive UI components for floor discovery, including inline keyboards
 - [ ] Russian language consistency maintained across all UI elements
 - [ ] Error states handled gracefully with user-friendly messages
 - [ ] Callback handlers integrate properly with existing conversation flow
+
+## Implementation Notes (Concrete Guidance)
+
+- Keyboard builders:
+  - Discovery: single inline button `"Показать доступные этажи"` → callback `floor_discovery`.
+  - Floors list: build inline keyboard with rows of up to 3 buttons, text `"Этаж {n}"`, callback `floor_select_{n}`.
+
+- Messages:
+  - Use `InfoMessages.ENTER_FLOOR_WITH_DISCOVERY` in the prompt shown when waiting for floor.
+  - When no floors available, send: `"В данный момент участники не размещены ни на одном этаже. Пришлите номер этажа цифрой."`.
+
+- Handlers:
+  - `handle_floor_discovery_callback`: `await query.answer()`, get floors from `SearchService.get_available_floors()`, render keyboard; if `update.callback_query.message` is present, prefer `edit_text` to swap button/message in place.
+  - `handle_floor_selection_callback`: parse floor from data via regex; call `process_floor_search_with_input(update, context, str(floor))` for reuse.
+
+- Error Handling:
+  - On repo/service error or timeout, show manual input fallback: `"Произошла ошибка. Пришлите номер этажа цифрой."`.
