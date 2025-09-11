@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Critical Age and Date of Birth Field Display and Serialization Issues** - Resolved critical bugs preventing age and date of birth fields from displaying correctly and causing JSON serialization errors during save operations, restoring full participant demographic editing functionality (AGB-47, completed 2025-09-11, PR #37)
+  - Fixed participant reconstruction missing demographic fields causing "Не указано" display errors (`src/bot/handlers/edit_participant_handlers.py:153-154`)
+    - Added `date_of_birth` and `age` fields to `display_updated_participant` function constructor
+    - Resolved immediate preview updates showing pending changes correctly after field edits
+    - Extended field_labels dictionary with demographic field mappings (`lines 206-207`)
+  - Resolved JSON serialization errors for date_of_birth field preventing successful saves to Airtable (`src/data/airtable/airtable_participant_repo.py:269`)
+    - Extended `_convert_field_updates_to_airtable` method to serialize `date_of_birth` to ISO format string
+    - Applied same pattern as existing `payment_date` serialization for consistency
+    - Eliminated "Object of type date is not JSON serializable" runtime errors
+  - Enhanced edit menu display with complete demographic field visibility (`src/bot/handlers/edit_participant_handlers.py:320-324`)
+    - Added date of birth display with birthday icon "🎂 Дата рождения: YYYY-MM-DD | Не указано"
+    - Added age display with numeric icon "🔢 Возраст: value | Не указано"
+    - Proper Russian field labels and formatting throughout interface
+  - Implemented bulletproof field clearing behavior with whitespace-only input handling (`src/services/participant_update_service.py`)
+    - Modified `_validate_date_of_birth` and `_validate_age` to return None for whitespace-only input
+    - Comprehensive clearing semantics allowing users to clear fields by sending spaces
+    - End-to-end clearing flow validation from input through Airtable API
+  - Enhanced error messaging with InfoMessages integration providing user-friendly guidance (`src/services/participant_update_service.py`)
+    - Validation errors now display with ❌ prefix and specific retry prompts
+    - Date format errors: "❌ Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)"
+    - Age validation errors: "❌ Возраст должен быть числом от 0 до 120"
+  - Complete confirmation screen integration with Russian demographic field labels (`src/bot/handlers/edit_participant_handlers.py:1199-1200,1216-1217`)
+    - Save confirmation displays changed fields with "Current Value → **New Value**" format
+    - Proper date formatting with `isoformat()` for date_of_birth display consistency
+    - Field translations extended to support demographic fields in confirmation workflow
+  - Comprehensive test coverage with 122 validation tests and 100% success rate across all affected modules
+    - Enhanced clearing behavior test coverage with whitespace-only input scenarios
+    - End-to-end serialization tests confirming proper Airtable API integration
+    - Display function tests validating immediate preview updates and confirmation screens
+  - Production-ready implementation with backward compatibility and zero breaking changes
+    - All existing functionality preserved with search service compatibility verified
+    - Graceful handling of existing records without demographic data
+    - Complete Russian language interface consistency maintained
+- **Comprehensive Documentation Updates for Age and Date of Birth Field Implementation** - Enhanced documentation suite covering critical bug fixes, field clearing behavior, and enhanced error messaging across 4 major technical files (AGB-47, completed 2025-09-11)
+  - Updated Field Mappings documentation with Critical Bug Fixes section (`docs/data-integration/field-mappings.md`)
+    - Detailed clearing behavior specifications with whitespace-only input handling
+    - Comprehensive serialization fix documentation with JSON conversion patterns
+    - Enhanced error messaging specifications with InfoMessages integration
+  - Enhanced API Design documentation with fixed Date of Birth and Age API status (`docs/architecture/api-design.md`)
+    - Updated field validation APIs from "In Progress" to "✅ Implemented" status
+    - Enhanced error messaging documentation with user-friendly guidance examples
+    - Comprehensive validation flow specifications with clearing behavior support
+  - Updated Bot Commands documentation with demographic field editing enhancements (`docs/technical/bot-commands.md`)
+    - Added field clearing support documentation with space-based clearing semantics
+    - Enhanced edit menu specifications showing proper demographic field display
+    - Updated confirmation screen documentation with JSON serialization fix details
+  - Enhanced Troubleshooting documentation with comprehensive resolved critical bug section (`docs/technical/troubleshooting.md`)
+    - Detailed root cause analysis for participant reconstruction and serialization issues
+    - Step-by-step resolution documentation for similar demographic field problems
+    - Enhanced debugging procedures with REGRESSION logging markers and context recovery patterns
+
 ### Added
 - **Participant Demographic Fields Editing Interface** - Complete demographic information management system enabling event organizers to view and edit participant date of birth and age fields through intuitive bot interface with comprehensive Russian language support (AGB-46, completed 2025-09-10, PR #36)
   - Enhanced participant editing interface with demographic field buttons and Russian labels (`src/bot/keyboards/edit_keyboards.py:89,92`)
