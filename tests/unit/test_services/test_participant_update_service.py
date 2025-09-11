@@ -167,22 +167,22 @@ class TestValidateFieldInput:
 
     def test_validate_date_of_birth_field_invalid_format(self):
         """Test validation of date_of_birth field with invalid format raises error."""
-        with pytest.raises(ValidationError, match="Неверный формат даты.*ГГГГ-ММ-ДД"):
+        with pytest.raises(ValidationError, match="❌ Неверный формат даты.*Введите дату рождения"):
             self.service.validate_field_input("date_of_birth", "15/05/1990")
 
-        with pytest.raises(ValidationError, match="Неверный формат даты.*ГГГГ-ММ-ДД"):
+        with pytest.raises(ValidationError, match="❌ Неверный формат даты.*Введите дату рождения"):
             self.service.validate_field_input(
                 "date_of_birth", "1990-5-15"
             )  # No zero padding
 
     def test_validate_date_of_birth_field_invalid_date(self):
         """Test validation of date_of_birth field with invalid date values."""
-        with pytest.raises(ValidationError, match="Некорректная дата"):
+        with pytest.raises(ValidationError, match="❌ Некорректная дата.*Введите дату рождения"):
             self.service.validate_field_input(
                 "date_of_birth", "1990-13-01"
             )  # Invalid month
 
-        with pytest.raises(ValidationError, match="Некорректная дата"):
+        with pytest.raises(ValidationError, match="❌ Некорректная дата.*Введите дату рождения"):
             self.service.validate_field_input(
                 "date_of_birth", "1990-02-30"
             )  # Invalid day
@@ -195,19 +195,43 @@ class TestValidateFieldInput:
 
     def test_validate_age_field_invalid_range(self):
         """Test validation of age field with values outside 0-120 range raises error."""
-        with pytest.raises(ValidationError, match="Возраст должен быть от 0 до 120"):
+        with pytest.raises(ValidationError, match="❌ Возраст должен быть от 0 до 120.*Введите возраст"):
             self.service.validate_field_input("age", "121")
 
-        with pytest.raises(ValidationError, match="Возраст должен быть от 0 до 120"):
+        with pytest.raises(ValidationError, match="❌ Возраст должен быть от 0 до 120.*Введите возраст"):
             self.service.validate_field_input("age", "-1")
 
     def test_validate_age_field_non_numeric(self):
         """Test validation of age field with non-numeric input raises error."""
-        with pytest.raises(ValidationError, match="Возраст должен быть числом"):
+        with pytest.raises(ValidationError, match="❌ Возраст должен быть числом.*Введите возраст"):
             self.service.validate_field_input("age", "двадцать пять")
 
-        with pytest.raises(ValidationError, match="Возраст должен быть числом"):
+        with pytest.raises(ValidationError, match="❌ Возраст должен быть числом.*Введите возраст"):
             self.service.validate_field_input("age", "25.5")
+
+    def test_validate_date_of_birth_field_clearing_behavior(self):
+        """Test that whitespace-only input clears date_of_birth field."""
+        # Whitespace should be treated as clearing the field
+        result = self.service.validate_field_input("date_of_birth", "   ")
+        assert result is None
+
+        result = self.service.validate_field_input("date_of_birth", "\t\n ")
+        assert result is None
+
+        result = self.service.validate_field_input("date_of_birth", "")
+        assert result is None
+
+    def test_validate_age_field_clearing_behavior(self):
+        """Test that whitespace-only input clears age field."""
+        # Whitespace should be treated as clearing the field
+        result = self.service.validate_field_input("age", "   ")
+        assert result is None
+
+        result = self.service.validate_field_input("age", "\t\n ")
+        assert result is None
+
+        result = self.service.validate_field_input("age", "")
+        assert result is None
 
 
 class TestConvertButtonValue:

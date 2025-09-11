@@ -993,3 +993,29 @@ class TestFieldConversion:
         # Should pass None through for clearing fields
         assert result["DateOfBirth"] is None
         assert result["Age"] is None
+
+    def test_clearing_behavior_end_to_end(self, repository):
+        """Test that clearing behavior works end-to-end with validation and conversion."""
+        from src.services.participant_update_service import ParticipantUpdateService
+        
+        service = ParticipantUpdateService()
+        
+        # Test clearing date_of_birth
+        validated_dob = service.validate_field_input("date_of_birth", "   ")
+        assert validated_dob is None
+        
+        # Test clearing age
+        validated_age = service.validate_field_input("age", "\t\n ")
+        assert validated_age is None
+        
+        # Test that None values are properly converted for Airtable
+        field_updates = {
+            "date_of_birth": validated_dob,
+            "age": validated_age,
+        }
+        
+        result = repository._convert_field_updates_to_airtable(field_updates)
+        
+        # Should properly pass None to Airtable for field clearing
+        assert result["DateOfBirth"] is None
+        assert result["Age"] is None
