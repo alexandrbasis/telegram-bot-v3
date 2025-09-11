@@ -117,6 +117,28 @@ class TestShowParticipantEditMenu:
         assert isinstance(call_args[1]["reply_markup"], InlineKeyboardMarkup)
 
     @pytest.mark.asyncio
+    async def test_show_edit_menu_includes_date_of_birth_and_age(
+        self, mock_update, mock_context
+    ):
+        """Test that edit menu displays date_of_birth and age fields."""
+        # Add date_of_birth and age to participant
+        mock_context.user_data["current_participant"].date_of_birth = date(1990, 5, 15)
+        mock_context.user_data["current_participant"].age = 33
+
+        result = await show_participant_edit_menu(mock_update, mock_context)
+
+        # Should return FIELD_SELECTION state
+        assert result == EditStates.FIELD_SELECTION
+
+        # Get the message text
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]["text"]
+
+        # Should include date_of_birth and age fields
+        assert "🎂 Дата рождения: 1990-05-15" in message_text
+        assert "🔢 Возраст: 33" in message_text
+
+    @pytest.mark.asyncio
     async def test_show_edit_menu_without_participant_shows_error(self, mock_update):
         """Test showing edit menu without participant data shows error."""
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
@@ -692,6 +714,40 @@ class TestSaveConfirmation:
         assert "Новое Имя" in message_text  # Should show new value
         assert "TEAM" in message_text  # Should show role change
         assert "500" in message_text  # Should show payment amount
+
+    @pytest.mark.asyncio
+    @patch("src.bot.handlers.edit_participant_handlers.get_participant_repository")
+    async def test_save_confirmation_includes_date_of_birth_and_age(
+        self, mock_get_repo, mock_update, mock_context
+    ):
+        """Test that save confirmation shows date_of_birth and age fields with proper formatting."""
+        participant = Participant(
+            record_id="rec123", 
+            full_name_ru="Тест Участник", 
+            date_of_birth=date(1990, 5, 15),
+            age=33
+        )
+        changes = {
+            "date_of_birth": date(1995, 8, 20),
+            "age": 28,
+        }
+        mock_context.user_data["editing_changes"] = changes
+        mock_context.user_data["current_participant"] = participant
+
+        from src.bot.handlers.edit_participant_handlers import show_save_confirmation
+
+        result = await show_save_confirmation(mock_update, mock_context)
+
+        # Should show confirmation with changes summary
+        mock_update.callback_query.message.edit_text.assert_called()
+        call_args = mock_update.callback_query.message.edit_text.call_args
+        message_text = call_args[1]["text"]
+
+        # Should show date_of_birth in ISO format and age as number
+        assert "Дата рождения" in message_text
+        assert "1995-08-20" in message_text  # Updated date_of_birth
+        assert "Возраст" in message_text
+        assert "28" in message_text  # Updated age
 
     @pytest.mark.asyncio
     async def test_save_confirmation_no_changes(self, mock_update, mock_context):
