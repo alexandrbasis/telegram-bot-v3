@@ -21,6 +21,8 @@ from telegram.ext import ContextTypes
 
 from src.bot.handlers.floor_search_handlers import (
     FloorSearchStates,
+    handle_floor_discovery_callback,
+    handle_floor_selection_callback,
     handle_floor_search_command,
     process_floor_search,
 )
@@ -358,3 +360,207 @@ class TestProcessFloorSearch:
 
         # Room 201 should come before room 205 (sorted order)
         assert room_201_index < room_205_index
+
+
+class TestHandleFloorDiscoveryCallback:
+    """Test floor discovery callback handler."""
+    
+    @pytest.fixture
+    def mock_callback_update(self):
+        """Mock Update object for callback query."""
+        update = Mock(spec=Update)
+        query = Mock(spec=CallbackQuery)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        chat = Mock(spec=Chat)
+        
+        user.id = 123456789
+        chat.id = 987654321
+        
+        query.data = "floor_discovery"
+        query.message = message
+        query.answer = AsyncMock()
+        message.edit_text = AsyncMock()
+        
+        update.callback_query = query
+        update.effective_user = user
+        update.effective_chat = chat
+        update.message = None
+        
+        return update
+    
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        context.bot = Mock()
+        context.bot.send_message = AsyncMock()
+        return context
+    
+    @pytest.mark.asyncio
+    async def test_floor_discovery_with_available_floors(
+        self, mock_callback_update, mock_context
+    ):
+        """Test floor discovery when floors are available."""
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_service:
+            # Mock search service to return available floors
+            search_service = AsyncMock()
+            search_service.get_available_floors = AsyncMock(return_value=[1, 2, 3])
+            mock_service.return_value = search_service
+            
+            # Execute handler
+            await handle_floor_discovery_callback(mock_callback_update, mock_context)
+            
+            # Verify callback was acknowledged
+            mock_callback_update.callback_query.answer.assert_called_once()
+            
+            # Verify message was edited with floor selection keyboard
+            mock_callback_update.callback_query.message.edit_text.assert_called_once()
+            call_args = mock_callback_update.callback_query.message.edit_text.call_args
+            
+            assert "📍 Доступные этажи:" in call_args.kwargs["text"]
+            assert isinstance(call_args.kwargs["reply_markup"], InlineKeyboardMarkup)
+    
+    @pytest.mark.asyncio
+    async def test_floor_discovery_with_no_floors(
+        self, mock_callback_update, mock_context
+    ):
+        """Test floor discovery when no floors are available."""
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_service:
+            # Mock search service to return empty list
+            search_service = AsyncMock()
+            search_service.get_available_floors = AsyncMock(return_value=[])
+            mock_service.return_value = search_service
+            
+            # Execute handler
+            await handle_floor_discovery_callback(mock_callback_update, mock_context)
+            
+            # Verify callback was acknowledged
+            mock_callback_update.callback_query.answer.assert_called_once()
+            
+            # Verify message was edited with no floors message
+            mock_callback_update.callback_query.message.edit_text.assert_called_once()
+            call_args = mock_callback_update.callback_query.message.edit_text.call_args
+            
+            assert "В данный момент участники не размещены" in call_args.kwargs["text"]
+            assert call_args.kwargs.get("reply_markup") is None
+    
+    @pytest.mark.asyncio
+    async def test_floor_discovery_error_handling(
+        self, mock_callback_update, mock_context
+    ):
+        """Test floor discovery error handling."""
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_service:
+            # Mock search service to raise exception
+            search_service = AsyncMock()
+            search_service.get_available_floors = AsyncMock(
+                side_effect=Exception("API Error")
+            )
+            mock_service.return_value = search_service
+            
+            # Execute handler
+            await handle_floor_discovery_callback(mock_callback_update, mock_context)
+            
+            # Verify callback was acknowledged
+            mock_callback_update.callback_query.answer.assert_called_once()
+            
+            # Verify error message was sent
+            mock_callback_update.callback_query.message.edit_text.assert_called_once()
+            call_args = mock_callback_update.callback_query.message.edit_text.call_args
+            
+            assert "Произошла ошибка" in call_args.kwargs["text"]
+
+
+class TestHandleFloorSelectionCallback:
+    """Test floor selection callback handler."""
+    
+    @pytest.fixture
+    def mock_callback_update(self):
+        """Mock Update object for callback query."""
+        update = Mock(spec=Update)
+        query = Mock(spec=CallbackQuery)
+        message = Mock(spec=Message)
+        user = Mock(spec=User)
+        chat = Mock(spec=Chat)
+        
+        user.id = 123456789
+        chat.id = 987654321
+        
+        query.data = "floor_select_2"
+        query.message = message
+        query.answer = AsyncMock()
+        message.edit_text = AsyncMock()
+        message.reply_text = AsyncMock()
+        message.text = None
+        
+        update.callback_query = query
+        update.effective_user = user
+        update.effective_chat = chat
+        update.message = None
+        
+        return update
+    
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+    
+    @pytest.mark.asyncio
+    async def test_floor_selection_valid(self, mock_callback_update, mock_context):
+        """Test valid floor selection."""
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_service:
+            # Mock search service
+            search_service = AsyncMock()
+            search_service.search_by_floor = AsyncMock(return_value=[])
+            mock_service.return_value = search_service
+            
+            # Execute handler
+            result = await handle_floor_selection_callback(
+                mock_callback_update, mock_context
+            )
+            
+            # Verify callback was acknowledged
+            mock_callback_update.callback_query.answer.assert_called_once()
+            
+            # Verify searching message was sent
+            first_call = mock_callback_update.callback_query.message.edit_text.call_args_list[0]
+            assert "🔍 Ищу участников на этаже 2" in first_call.kwargs["text"]
+            
+            # Verify floor was stored in context
+            assert mock_context.user_data["current_floor"] == "2"
+            
+            # Verify next state
+            assert result == FloorSearchStates.SHOWING_FLOOR_RESULTS
+    
+    @pytest.mark.asyncio
+    async def test_floor_selection_invalid_data(self, mock_callback_update, mock_context):
+        """Test floor selection with invalid callback data."""
+        # Set invalid callback data
+        mock_callback_update.callback_query.data = "invalid_data"
+        
+        # Execute handler
+        result = await handle_floor_selection_callback(
+            mock_callback_update, mock_context
+        )
+        
+        # Verify callback was acknowledged
+        mock_callback_update.callback_query.answer.assert_called_once()
+        
+        # Verify error message was sent
+        mock_callback_update.callback_query.message.edit_text.assert_called_once()
+        call_args = mock_callback_update.callback_query.message.edit_text.call_args
+        assert "❌ Произошла системная ошибка" in call_args.kwargs["text"]
+        
+        # Verify state returned to waiting
+        assert result == FloorSearchStates.WAITING_FOR_FLOOR
