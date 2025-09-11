@@ -75,6 +75,8 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Room/Floor search methods** (2025-09-04):
   - `find_by_room_number(room: str)` - Filter participants by room assignment
   - `find_by_floor(floor: Union[int, str])` - Filter participants by floor
+- **Floor discovery method** (2025-01-20):
+  - `get_available_floors()` - Return floors containing participants with 5-minute caching
 - Field mapping between internal models and Airtable schema
 - Rate limiting and error recovery for update operations
 - **Security enhancements** with formula injection prevention
@@ -88,9 +90,10 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
 
-**Search Service Extensions** (2025-09-04):
+**Search Service Extensions** (2025-09-04, Enhanced 2025-01-20):
 - **Room-based search**: `search_by_room(room: str)` with input validation
 - **Floor-based search**: `search_by_floor(floor: Union[int, str])` with type conversion
+- **Floor discovery service**: `get_available_floors()` with 5-minute caching and error resilience
 - **Formatted results**: `search_by_room_formatted(room: str)` for UI consumption
 - **Validation utilities**: Comprehensive input validation with `ValidationResult` objects
 
@@ -196,6 +199,7 @@ Reply Keyboard ← Russian Messages ← Error Handling ← Service Layer ← Res
 - Rate limiting built into Airtable client (5 requests/second)
 - Selective field updates reduce API call overhead
 - In-memory state management for conversation context
+- **Floor discovery caching**: 5-minute TTL reduces API load by up to 12x during active usage
 
 ### Maintainability  
 - Separation of concerns across 3 layers

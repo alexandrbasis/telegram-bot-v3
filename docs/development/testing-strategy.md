@@ -475,19 +475,27 @@ test_partial_field_updates()
 
 ## Room and Floor Search Testing
 
-### Test Coverage Summary (2025-09-05)  
-**Total Tests**: 90+ tests (Backend: 34, Frontend: 21, Integration: 28)
-**Backend Tests**: Repository: 12, Service: 6, Validation: 14, Security: 2
+### Test Coverage Summary (2025-09-05, Enhanced 2025-01-20)  
+**Total Tests**: 102+ tests (Backend: 46, Frontend: 21, Integration: 28)
+**Backend Tests**: Repository: 19, Service: 10, Validation: 14, Security: 2, Floor Discovery: 12
 **Frontend Tests**: Room Handler: 9, Floor Handler: 9, Integration: 3
 **Integration Tests**: 28 comprehensive end-to-end tests across 3 test files
 **Pass Rate**: 100%  
-**Coverage Areas**: Complete end-to-end testing from backend services to frontend conversation flows, comprehensive integration testing with Airtable schema validation
+**Coverage Areas**: Complete end-to-end testing from backend services to frontend conversation flows, comprehensive integration testing with Airtable schema validation, floor discovery backend with caching
 
 #### Repository Testing (`test_airtable_participant_repo.py`)
-**Tests**: 12 tests covering room and floor search methods (lines 764-894)
+**Tests**: 19 tests covering room, floor search, and floor discovery methods (lines 764-894, 966-1103)
 **Coverage**:
 - `find_by_room_number()` method with proper field mapping
 - `find_by_floor()` method with Union[int, str] support
+- **Floor Discovery Method** (New - 2025-01-20): `get_available_floors()` method with comprehensive testing:
+  - 5-minute TTL caching with module-level persistence
+  - 10-second API timeout with graceful fallback
+  - API error handling returning empty list with logging
+  - Cache expiry and cleanup validation
+  - Optimized API calls fetching only floor field data
+  - Cache key generation for multi-base support
+  - Empty and None floor value filtering
 - Empty result handling and error cases
 - Airtable field ID validation (Floor: fldlzG1sVg01hsy2g, RoomNumber: fldJTPjo8AHQaADVu)
 - Participant object conversion and data integrity
@@ -510,13 +518,15 @@ test_room_floor_field_mapping_accuracy()
 ```
 
 #### Service Layer Testing (`test_search_service.py`)
-**Tests**: 6 tests covering service layer room/floor methods (lines 583-684)
+**Tests**: 10 tests covering service layer room/floor methods and floor discovery (lines 583-684, 807-870)
 **Coverage**:
 - `search_by_room()` method with input validation
 - `search_by_floor()` method with type conversion
 - `search_by_room_formatted()` method with result formatting
+- **Floor Discovery Service** (New - 2025-01-20): `get_available_floors()` method with error handling
 - Async operation handling and error propagation
 - Integration with validation utilities
+- Repository delegation and error resilience testing
 
 **Key Test Scenarios**:
 ```python

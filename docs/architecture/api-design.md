@@ -42,6 +42,7 @@
 - **Input**: Floor number (integer or string: "1", "2", "Ground")
 - **Validation**: Union[int, str] with proper conversion
 - **Response**: Participants grouped by room on specified floor
+- **Floor Discovery**: Utilizes backend `get_available_floors()` service to determine floors containing participants
 
 **Enhanced Room Search Response (2025-01-09)**:
 ```
@@ -347,6 +348,43 @@ def translate_to_russian(value: Any, translation_dict: Dict) -> str:
 ```
 
 **Usage**: Used by room search formatting functions to ensure consistent Russian display of participant information across all interfaces.
+
+## Floor Discovery API (New - 2025-01-20)
+
+### Backend Floor Discovery Service
+**Purpose**: Discover all floors that contain participants for interactive floor search
+
+**Service Method**: `SearchService.get_available_floors()`
+- **Returns**: `List[int]` - Numeric floors sorted ascending
+- **Caching**: 5-minute TTL in-memory cache with timestamp cleanup
+- **Error Handling**: API failures return empty list with logged warnings
+- **Performance**: 10-second timeout with graceful fallback
+
+**Implementation Details**:
+```python
+# Service layer method
+async def get_available_floors(self) -> List[int]:
+    """Get list of floors that have participants."""
+    try:
+        return await self.repository.get_available_floors()
+    except Exception as e:
+        logger.warning(f"Failed to get available floors: {e}")
+        return []
+```
+
+**Repository Interface**:
+```python
+# Abstract repository method
+async def get_available_floors(self) -> List[int]:
+    """Return unique numeric floors that have at least one participant."""
+    raise NotImplementedError
+```
+
+**Airtable Implementation**:
+- Module-level cache: `Dict[str, Tuple[float, List[int]]]` with TTL cleanup
+- API optimization: Fetches only floor field data to minimize payload
+- Error resilience: Returns empty list on API failures with warning logs
+- Cache key: `f"{base_id}:{table_identifier}"` for multi-base support
 
 ## Data Model API
 

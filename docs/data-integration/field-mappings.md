@@ -62,6 +62,7 @@ Resolved critical bugs affecting participant editing interface:
 - **Data Type**: Number or single line text
 - **Validation**: Accepts numeric floors (1, 2, 3) or named floors ("Ground", "Basement")
 - **Search Usage**: `find_by_floor(floor: Union[int, str])` method in repository
+- **Floor Discovery Usage** (New - 2025-01-20): `get_available_floors()` method for backend floor discovery with caching
 
 #### DateOfBirth Field (fld1rN2cffxKuZh4i) - Updated 2025-09-11
 - **Internal Model**: `date_of_birth: Optional[date]`
@@ -204,11 +205,13 @@ FIELD_MAPPINGS = {
 #### Repository Layer Integration (Tested)
 - `AirtableParticipantRepository.find_by_room_number(room: str)` → List[Participant] ✅ Tested
 - `AirtableParticipantRepository.find_by_floor(floor: Union[int, str])` → List[Participant] ✅ Tested
+- **Floor Discovery** (New - 2025-01-20): `AirtableParticipantRepository.get_available_floors()` → List[int] ✅ Tested (12 tests including caching and error handling)
 
 #### Service Layer Integration (Tested)
 - `SearchService.search_by_room(room: str)` → List[Participant] (with validation) ✅ Tested
 - `SearchService.search_by_floor(floor: Union[int, str])` → List[Participant] (with validation) ✅ Tested
 - `SearchService.search_by_room_formatted(room: str)` → str (formatted results) ✅ Tested
+- **Floor Discovery Service** (New - 2025-01-20): `SearchService.get_available_floors()` → List[int] (with caching and error handling) ✅ Tested
 
 #### Error Handling (Comprehensive Testing)
 - **Validation Errors**: Invalid room/floor format ✅ Tested with standardized messages
