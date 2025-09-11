@@ -46,13 +46,22 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Russian localization across all states
 - Field-specific validation and error handling
 
-**Conversation Timeout Handler** (New - 2025-01-09):
-- Automatic timeout handling for all conversation states
+**Participant Lists Handler** (New - 2025-01-20):
+- Role-based bulk participant list access via "📋 Получить список" main menu button
+- **List Navigation States**: Integrated with existing SearchStates for seamless conversation flow
+- **Offset-based Pagination**: Advanced pagination system prevents participant skipping during message length trimming
+- **Dynamic Page Sizing**: Automatically adjusts participants per page to stay under Telegram's 4096-character limit
+- **State Management**: Maintains current role and navigation offset in user context
+- **MarkdownV2 Escaping**: Safe rendering of user-generated content preventing formatting injection attacks
+- Integration with existing main menu and conversation patterns without breaking changes
+
+**Conversation Timeout Handler** (2025-01-09):
+- Automatic timeout handling for all conversation states including new list functionality
 - Configurable timeout period via `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` environment variable
 - Russian timeout message display: "Сессия истекла, начните заново"
 - Main menu recovery button for seamless user experience
 - Graceful state cleanup prevents memory leaks and stale conversation data
-- **Text Button Entry Points**: MessageHandler entry points for "🔍 Поиск участников" and Main Menu text buttons enable conversation re-entry after timeout without requiring /start command
+- **Text Button Entry Points**: MessageHandler entry points for "🔍 Поиск участников", "📋 Получить список", and Main Menu text buttons enable conversation re-entry after timeout without requiring /start command
 
 ### Data Access Patterns
 
@@ -84,6 +93,16 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Floor-based search**: `search_by_floor(floor: Union[int, str])` with type conversion
 - **Formatted results**: `search_by_room_formatted(room: str)` for UI consumption
 - **Validation utilities**: Comprehensive input validation with `ValidationResult` objects
+
+**Participant List Service** (2025-01-20):
+- **Role-based List Access**: `get_team_members_list()` and `get_candidates_list()` methods
+- **Server-side Filtering**: Leverages existing repository `get_by_role()` methods for efficient Airtable queries
+- **Advanced Pagination**: Offset-based pagination with continuity guarantee preventing participant skipping
+- **Dynamic Message Length Handling**: Iterative participant removal to stay under 4096-character Telegram limit
+- **Russian Formatting**: Complete Russian localization with DD.MM.YYYY date format and numbered list display
+- **MarkdownV2 Support**: Safe content escaping preventing formatting injection from user-generated data
+- **Pagination Metadata**: Returns navigation information (current_offset, next_offset, prev_offset, actual_displayed)
+- **Empty Result Handling**: Graceful "Участники не найдены." messaging for empty role categories
 
 **Validation Strategies**:
 - **Required Fields**: Russian name (min length 1)
@@ -126,6 +145,17 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 7. User confirms save operation or cancels to discard changes
 8. Changes committed via repository `update_by_id()` method with retry mechanism
 9. User returns to search results with context preserved
+
+### Get List → Navigation → Main Menu Workflow (New - 2025-01-20)
+1. User clicks "📋 Получить список" from main menu
+2. Bot displays role selection: "👥 Команда" (Team) or "🎯 Кандидаты" (Candidates) 
+3. User selects role → Bot displays paginated numbered list with complete participant information
+4. **Advanced Pagination Navigation**: User can navigate pages using "◀️ Назад" and "▶️ Далее" buttons
+   - Offset-based navigation ensures no participants are skipped during message length trimming
+   - Dynamic page sizing automatically adjusts to stay under 4096-character limit
+   - State management maintains current role and navigation position across page transitions
+5. **Main Menu Return**: "🏠 Главное меню" button provides clean return to main menu with proper state reset
+6. **Coexistence**: List functionality operates alongside existing search without interference or state conflicts
 
 **Main Menu Start Command Equivalence** (Enhanced 2025-09-09):
 - **Shared Initialization**: Both `/start` command and Main Menu button use shared helpers (`initialize_main_menu_session()` and `get_welcome_message()`) ensuring identical functionality

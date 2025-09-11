@@ -21,10 +21,23 @@
 ## Search & Discovery
 
 **As an event organizer, I want to:**
-- Find participants by name with `/search name`
-- See all participants in a specific room with `/search room X`
-- List participants by role with `/search role pilgrim`
-- Browse all participants with pagination
+- **Find participants by name with fuzzy matching** ✅ *Implemented*
+  - Use `/search name` command or main menu "🔍 Поиск участников" button
+  - Find participants with Russian or English names
+  - See match quality indicators (Отличное совпадение, Хорошее совпадение, Частичное совпадение)
+  - Access detailed participant information through "Подробнее" buttons
+- **Search participants by room and floor** ✅ *Implemented*
+  - Find all participants in a specific room with `/search_room number`
+  - View all participants on a floor with `/search_floor number`
+  - See structured Russian results with role and department information
+  - Get room-by-room breakdown for floor searches
+- **Access quick participant lists by role** ✅ *Implemented*
+  - Click "📋 Получить список" from main menu for instant bulk access
+  - View complete team member roster for logistics planning (clothing sizes, churches, dates)
+  - Review candidate lists for administrative tasks and committee discussions
+  - Navigate through large lists with advanced pagination that prevents skipping participants
+  - Get 2-click access without requiring search queries
+- Browse all participants with offset-based pagination that handles large datasets efficiently
 
 ## Payment Tracking
 
