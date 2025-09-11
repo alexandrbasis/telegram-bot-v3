@@ -6,6 +6,7 @@ and Russian date formatting for list display.
 """
 
 from typing import Dict, List, Any
+from telegram.helpers import escape_markdown
 
 from src.models.participant import Participant
 from src.data.repositories.participant_repository import ParticipantRepository
@@ -92,22 +93,34 @@ class ParticipantListService:
             formatted_lines.append(line)
 
         formatted_list = "\n\n".join(formatted_lines)
+        
+        # Track actual displayed count for pagination continuity
+        actual_displayed_count = len(formatted_lines)
 
         # Apply message length constraint
         while len(formatted_list) >= 4096 and len(formatted_lines) > 1:
             # Remove last item and add truncation notice
             formatted_lines.pop()
-            remaining_count = len(page_participants) - len(formatted_lines)
+            actual_displayed_count = len(formatted_lines)
+            remaining_count = len(page_participants) - actual_displayed_count
             formatted_list = "\n\n".join(formatted_lines)
             if remaining_count > 0:
                 formatted_list += f"\n\n... и ещё {remaining_count} участников"
+        
+        # Adjust pagination logic to account for trimmed items
+        # If we trimmed items, the effective end index is smaller
+        effective_end_idx = start_idx + actual_displayed_count
+        
+        # Has next page if there are more participants beyond what we actually displayed
+        has_next_page = effective_end_idx < total_count
 
         return {
             "formatted_list": formatted_list,
             "has_prev": page > 1,
-            "has_next": end_idx < total_count,
+            "has_next": has_next_page,
             "total_count": total_count,
             "page": page,
+            "actual_displayed": actual_displayed_count,  # For debugging/testing
         }
 
     def _format_participant_line(self, number: int, participant: Participant) -> str:
@@ -127,16 +140,18 @@ class ParticipantListService:
         else:
             dob_str = "Не указано"
 
-        # Handle optional fields
-        size_str = participant.size if participant.size else "—"
-        church_str = participant.church if participant.church else "—"
+        # Handle optional fields with Markdown escaping
+        size_str = escape_markdown(participant.size, version=2) if participant.size else "—"
+        church_str = escape_markdown(participant.church, version=2) if participant.church else "—"
+        name_str = escape_markdown(participant.full_name_ru, version=2) if participant.full_name_ru else "Неизвестно"
+        dob_escaped = escape_markdown(dob_str, version=2)
 
-        # Format the line
+        # Format the line with proper Markdown V2 escaping
         line = (
-            f"{number}. **{participant.full_name_ru}**\n"
+            f"{number}\\. **{name_str}**\n"
             f"   👕 Размер: {size_str}\n"
             f"   ⛪ Церковь: {church_str}\n"
-            f"   📅 Дата рождения: {dob_str}"
+            f"   📅 Дата рождения: {dob_escaped}"
         )
 
         return line

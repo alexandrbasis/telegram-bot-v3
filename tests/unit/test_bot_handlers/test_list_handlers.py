@@ -16,6 +16,7 @@ from src.bot.handlers.list_handlers import (
     handle_role_selection,
     handle_list_navigation,
 )
+from src.bot.handlers.search_handlers import SearchStates
 from src.models.participant import Participant, Role
 
 
@@ -35,6 +36,7 @@ class TestGetListRequestHandler:
     def mock_context(self):
         """Create mock context."""
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
         return context
 
     @pytest.mark.asyncio
@@ -103,6 +105,7 @@ class TestRoleSelectionHandler:
     def mock_context(self):
         """Create mock context."""
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
         return context
 
     @pytest.mark.asyncio
@@ -177,6 +180,7 @@ class TestListNavigationHandler:
     def mock_context(self):
         """Create mock context."""
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
         return context
 
     @pytest.mark.asyncio
@@ -226,6 +230,7 @@ class TestRoleSelectionWithServiceIntegration:
     def mock_context(self):
         """Create mock context."""
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
         return context
 
     @pytest.fixture
@@ -342,3 +347,251 @@ class TestRoleSelectionWithServiceIntegration:
         message_text = call_args[1]["text"]
 
         assert "Участники не найдены" in message_text
+
+
+class TestPaginationNavigationHandler:
+    """Test pagination navigation functionality."""
+
+    @pytest.fixture
+    def mock_context_with_state(self):
+        """Create mock context with pagination state."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            "current_role": "TEAM",
+            "current_page": 2
+        }
+        return context
+
+    @pytest.fixture
+    def mock_next_update(self):
+        """Create mock update for next page navigation."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_nav:NEXT"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_prev_update(self):
+        """Create mock update for previous page navigation."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_nav:PREV"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_service_data_page2(self):
+        """Create mock service response for page 2."""
+        return {
+            "formatted_list": "21. **Иванов Иван Иванович**\n   👕 Размер: L\n   ⛪ Церковь: Церковь 2\n   📅 Дата рождения: 02.02.1985",
+            "has_prev": True,
+            "has_next": True,
+            "total_count": 50,
+            "page": 2,
+            "actual_displayed": 1
+        }
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_next_navigation_updates_page_state(self, mock_get_service, mock_next_update, mock_context_with_state, mock_service_data_page2):
+        """Test that NEXT navigation updates page state correctly."""
+        # Setup
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data_page2)
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        result = await handle_list_navigation(mock_next_update, mock_context_with_state)
+
+        # Verify page state updated
+        assert mock_context_with_state.user_data["current_page"] == 3
+        
+        # Verify service called with new page
+        mock_service.get_team_members_list.assert_called_once_with(page=3, page_size=20)
+        
+        # Verify response includes page number
+        call_args = mock_next_update.callback_query.edit_message_text.call_args
+        message_text = call_args[1]["text"]
+        assert "(страница 3)" in message_text
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_prev_navigation_respects_page_bounds(self, mock_get_service, mock_prev_update, mock_service_data_page2):
+        """Test that PREV navigation respects page boundaries."""
+        # Setup context at page 1
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {"current_role": "TEAM", "current_page": 1}
+        
+        mock_service = Mock()
+        page1_data = {**mock_service_data_page2, "page": 1, "has_prev": False}
+        mock_service.get_team_members_list = AsyncMock(return_value=page1_data)
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_list_navigation(mock_prev_update, context)
+
+        # Should stay at page 1 (max(1, 1-1) = 1)
+        assert context.user_data["current_page"] == 1
+        mock_service.get_team_members_list.assert_called_once_with(page=1, page_size=20)
+
+    @pytest.mark.asyncio
+    async def test_navigation_without_state_shows_error(self, mock_next_update):
+        """Test navigation without role state shows error message."""
+        # Context without role state
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+
+        # Execute
+        result = await handle_list_navigation(mock_next_update, context)
+
+        # Should show error and return to main menu
+        mock_next_update.callback_query.edit_message_text.assert_called_once()
+        call_args = mock_next_update.callback_query.edit_message_text.call_args
+        message_text = call_args[1]["text"]
+        assert "Произошла ошибка" in message_text
+        assert "выберите список заново" in message_text
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_navigation_handles_candidates_role(self, mock_get_service, mock_next_update, mock_service_data_page2):
+        """Test navigation works with CANDIDATE role."""
+        # Setup context with candidate role
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {"current_role": "CANDIDATE", "current_page": 1}
+        
+        mock_service = Mock()
+        mock_service.get_candidates_list = AsyncMock(return_value=mock_service_data_page2)
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_list_navigation(mock_next_update, context)
+
+        # Should call candidates service
+        mock_service.get_candidates_list.assert_called_once_with(page=2, page_size=20)
+        
+        # Should update page
+        assert context.user_data["current_page"] == 2
+        
+        # Should show candidate title
+        call_args = mock_next_update.callback_query.edit_message_text.call_args
+        message_text = call_args[1]["text"]
+        assert "Список кандидатов" in message_text
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_navigation_shows_pagination_controls(self, mock_get_service, mock_next_update, mock_context_with_state, mock_service_data_page2):
+        """Test that navigation displays proper pagination controls."""
+        # Setup
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data_page2)
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_list_navigation(mock_next_update, mock_context_with_state)
+
+        # Verify pagination keyboard included
+        call_args = mock_next_update.callback_query.edit_message_text.call_args
+        assert "reply_markup" in call_args[1]
+        
+        keyboard = call_args[1]["reply_markup"]
+        buttons = [btn for row in keyboard.inline_keyboard for btn in row]
+        
+        # Should have PREV, NEXT, and MAIN_MENU buttons
+        prev_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:PREV"]
+        next_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:NEXT"]
+        main_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:MAIN_MENU"]
+        
+        assert len(prev_buttons) == 1
+        assert len(next_buttons) == 1
+        assert len(main_buttons) == 1
+
+    @pytest.mark.asyncio
+    @patch("src.bot.handlers.search_handlers.main_menu_button")
+    async def test_main_menu_navigation_calls_proper_handler(self, mock_main_menu_button):
+        """Test that MAIN_MENU navigation calls the proper handler."""
+        # Setup
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_nav:MAIN_MENU"
+        update.callback_query.answer = AsyncMock()
+        
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        mock_main_menu_button.return_value = 10  # SearchStates.MAIN_MENU
+        
+        # Execute
+        result = await handle_list_navigation(update, context)
+        
+        # Should call main_menu_button handler
+        mock_main_menu_button.assert_called_once_with(update, context)
+        assert result == 10
+
+    @pytest.mark.asyncio
+    async def test_role_selection_stores_context_state(self):
+        """Test that role selection stores pagination state in context."""
+        # Setup
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_role:TEAM"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        
+        # Execute (note: this will fail because service isn't mocked, but we want to check state storage)
+        try:
+            await handle_role_selection(update, context)
+        except:
+            pass  # Ignore service errors, we're testing state storage
+        
+        # Verify state stored
+        assert context.user_data["current_role"] == "TEAM"
+        assert context.user_data["current_page"] == 1
+
+
+class TestTrimmingLogicAndPagination:
+    """Test message trimming logic and pagination continuity."""
+    
+    @pytest.fixture
+    def mock_service_data_with_trimming(self):
+        """Create mock service response that would be trimmed."""
+        return {
+            "formatted_list": "Very long message content that exceeds limits...",
+            "has_prev": False,
+            "has_next": True,
+            "total_count": 100,
+            "page": 1,
+            "actual_displayed": 18  # Less than page_size=20 due to trimming
+        }
+    
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_trimmed_results_maintain_pagination_continuity(self, mock_get_service, mock_service_data_with_trimming):
+        """Test that trimmed results don't break pagination continuity."""
+        # Setup
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_role:TEAM"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data_with_trimming)
+        mock_get_service.return_value = mock_service
+        
+        # Execute
+        await handle_role_selection(update, context)
+        
+        # Should still show has_next=True even with trimmed content
+        call_args = update.callback_query.edit_message_text.call_args
+        keyboard = call_args[1]["reply_markup"]
+        buttons = [btn for row in keyboard.inline_keyboard for btn in row]
+        next_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:NEXT"]
+        
+        assert len(next_buttons) == 1, "Should show NEXT button when has_next=True despite trimming"

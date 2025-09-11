@@ -109,15 +109,15 @@ class TestParticipantListService:
         result = await service.get_team_members_list(page=1, page_size=20)
         formatted_list = result["formatted_list"]
 
-        # Should be numbered list format
-        assert "1." in formatted_list
-        assert "2." in formatted_list
+        # Should be numbered list format (with MarkdownV2 escaping)
+        assert "1\\." in formatted_list
+        assert "2\\." in formatted_list
 
         # Should contain all participant information
         assert "Иванов Иван Иванович" in formatted_list
         assert "Петров Петр Петрович" in formatted_list
-        assert "15.06.1985" in formatted_list  # DD.MM.YYYY format
-        assert "03.12.1990" in formatted_list
+        assert "15\\.06\\.1985" in formatted_list  # DD.MM.YYYY format with MarkdownV2 escaping
+        assert "03\\.12\\.1990" in formatted_list
         assert "M" in formatted_list  # Size
         assert "L" in formatted_list
         assert "Церковь Святого Духа" in formatted_list
@@ -139,7 +139,7 @@ class TestParticipantListService:
         formatted_list = result["formatted_list"]
 
         # Should format single digit day/month with leading zeros
-        assert "07.01.1995" in formatted_list
+        assert "07\\.01\\.1995" in formatted_list
 
     @pytest.mark.asyncio
     async def test_missing_date_of_birth_handling(self, service, mock_repository):
@@ -240,6 +240,6 @@ class TestParticipantListService:
 
         # Should handle missing fields gracefully
         assert "Минималист Мин Минович" in formatted_list
-        assert "10.05.1985" in formatted_list
+        assert "10\\.05\\.1985" in formatted_list
         # Should show placeholders for missing fields
         assert formatted_list.count("—") >= 2  # For missing size and church
