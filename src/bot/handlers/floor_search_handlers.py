@@ -132,7 +132,7 @@ async def handle_floor_search_command(
             text=InfoMessages.ENTER_FLOOR_WITH_DISCOVERY,
             reply_markup=get_floor_discovery_keyboard(),
         )
-        
+
         # Also show the reply keyboard for navigation
         await update.message.reply_text(
             text="Используйте кнопку выше или введите номер:",
@@ -236,65 +236,61 @@ async def handle_floor_discovery_callback(
 ) -> None:
     """
     Handle floor discovery button callback.
-    
+
     Fetches available floors from the backend and displays them as selection buttons.
     Acknowledges the callback query and edits the original message if possible.
-    
+
     Args:
         update: Telegram update object with callback query
         context: Bot context
     """
     query = update.callback_query
     user = update.effective_user
-    
+
     # Acknowledge the callback to stop the loading spinner
     await query.answer()
-    
+
     logger.info(f"User {user.id} triggered floor discovery")
-    
+
     try:
         # Get search service and fetch available floors
         search_service = get_search_service()
         floors = await search_service.get_available_floors()
-        
+
         if floors:
             # Create floor selection keyboard
             keyboard = get_floor_selection_keyboard(floors)
             message_text = InfoMessages.AVAILABLE_FLOORS_HEADER
-            
+
             logger.info(f"Found {len(floors)} available floors for user {user.id}")
         else:
             # No floors available
             keyboard = None
             message_text = InfoMessages.NO_FLOORS_AVAILABLE
-            
+
             logger.info(f"No floors available for user {user.id}")
-        
+
         # Edit the original message if present, otherwise send new message
         if query.message:
-            await query.message.edit_text(
-                text=message_text,
-                reply_markup=keyboard
-            )
+            await query.message.edit_text(text=message_text, reply_markup=keyboard)
         else:
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
                 text=message_text,
-                reply_markup=keyboard
+                reply_markup=keyboard,
             )
-            
+
     except Exception as e:
         logger.error(f"Error during floor discovery for user {user.id}: {e}")
-        
+
         # Send error message
         error_text = InfoMessages.FLOOR_DISCOVERY_ERROR
-        
+
         if query.message:
             await query.message.edit_text(text=error_text)
         else:
             await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text=error_text
+                chat_id=update.effective_chat.id, text=error_text
             )
 
 
@@ -303,46 +299,42 @@ async def handle_floor_selection_callback(
 ) -> int:
     """
     Handle floor selection button callback.
-    
+
     Processes the selected floor number from callback data and triggers
     the floor search with the selected number.
-    
+
     Args:
         update: Telegram update object with callback query
         context: Bot context
-        
+
     Returns:
         Next conversation state (SHOWING_FLOOR_RESULTS)
     """
     query = update.callback_query
     user = update.effective_user
-    
+
     # Acknowledge the callback
     await query.answer()
-    
+
     # Extract floor number from callback data using regex
     match = re.match(r"^floor_select_(\d+)$", query.data)
     if not match:
         logger.error(f"Invalid floor selection callback data: {query.data}")
-        await query.message.edit_text(
-            text=ErrorMessages.SYSTEM_ERROR_GENERIC
-        )
+        await query.message.edit_text(text=ErrorMessages.SYSTEM_ERROR_GENERIC)
         return FloorSearchStates.WAITING_FOR_FLOOR
-    
+
     floor_number = match.group(1)
     logger.info(f"User {user.id} selected floor {floor_number}")
-    
+
     # Store the floor selection
     context.user_data["current_floor"] = floor_number
-    
+
     # Send searching message
-    await query.message.edit_text(
-        text=InfoMessages.searching_floor(int(floor_number))
-    )
-    
+    await query.message.edit_text(text=InfoMessages.searching_floor(int(floor_number)))
+
     # Create a temporary message object for process_floor_search_with_input
     # This allows us to reuse the existing search logic
     update.message = query.message
-    
+
     # Process the floor search with the selected floor
     return await process_floor_search_with_input(update, context, floor_number)

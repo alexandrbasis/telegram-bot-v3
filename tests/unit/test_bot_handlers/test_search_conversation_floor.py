@@ -39,32 +39,34 @@ class TestSearchConversationFloorIntegration:
         # Check that floor search states are configured
         assert FloorSearchStates.WAITING_FOR_FLOOR in handler.states
         assert FloorSearchStates.SHOWING_FLOOR_RESULTS in handler.states
-    
+
     def test_floor_search_callback_handlers_registered(self):
         """Test that floor discovery and selection callback handlers are registered."""
         handler = get_search_conversation_handler()
-        
+
         # Get handlers for WAITING_FOR_FLOOR state
         floor_state_handlers = handler.states[FloorSearchStates.WAITING_FOR_FLOOR]
-        
+
         # Extract callback patterns from CallbackQueryHandlers
         callback_patterns = []
         for h in floor_state_handlers:
-            if hasattr(h, 'pattern'):
-                if hasattr(h.pattern, 'pattern'):
+            if hasattr(h, "pattern"):
+                if hasattr(h.pattern, "pattern"):
                     # Regex pattern object
                     callback_patterns.append(h.pattern.pattern)
                 else:
                     # String pattern
                     callback_patterns.append(str(h.pattern))
-        
+
         # Verify floor discovery callback is registered
-        assert any('floor_discovery' in p for p in callback_patterns), \
-            "floor_discovery callback handler not registered"
-        
+        assert any(
+            "floor_discovery" in p for p in callback_patterns
+        ), "floor_discovery callback handler not registered"
+
         # Verify floor selection callback is registered with regex pattern
-        assert any('floor_select' in p and r'\d+' in p for p in callback_patterns), \
-            "floor_select callback handler with number pattern not registered"
+        assert any(
+            "floor_select" in p and r"\d+" in p for p in callback_patterns
+        ), "floor_select callback handler with number pattern not registered"
 
     @pytest.fixture
     def mock_update_floor_command(self):
