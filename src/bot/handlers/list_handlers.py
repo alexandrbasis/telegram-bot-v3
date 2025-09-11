@@ -77,7 +77,10 @@ async def handle_role_selection(
         start_pos = data["current_offset"] + 1
         end_pos = data["current_offset"] + data["actual_displayed"]
         # Escape '-' in range for MarkdownV2
-        page_info = f" (элементы {start_pos}\\-{end_pos} из {data['total_count']})"
+        # Escape parentheses and '-' for MarkdownV2
+        page_info = (
+            f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
+        )
         message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
         # Add pagination keyboard based on data
@@ -193,8 +196,10 @@ async def handle_list_navigation(
             # Format message with title and participant data
             start_pos = data["current_offset"] + 1
             end_pos = data["current_offset"] + data["actual_displayed"]
-            # Escape '-' in range for MarkdownV2
-            page_info = f" (элементы {start_pos}\\-{end_pos} из {data['total_count']})"
+            # Escape parentheses and '-' for MarkdownV2
+            page_info = (
+                f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
+            )
             message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
             # Add pagination keyboard based on data

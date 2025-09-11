@@ -489,6 +489,7 @@ class TestPaginationNavigationHandler:
         assert (
             "(элементы 21-21 из 50)" in message_text
             or "(элементы 21\\-21 из 50)" in message_text
+            or "\\(элементы 21\\-21 из 50\\)" in message_text
         )
 
     @pytest.mark.asyncio
