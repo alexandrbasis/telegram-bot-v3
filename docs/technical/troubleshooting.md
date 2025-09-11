@@ -2,6 +2,36 @@
 
 ## Participant Editing Issues
 
+### Date of Birth and Age Field Issues (Fixed 2025-09-11)
+
+#### Critical Bug: Fields Not Displaying and JSON Serialization Error
+**Problem**: Age and date of birth fields not displaying correctly in edit interface and causing "Object of type date is not JSON serializable" errors during save operations.
+
+**Symptoms**:
+- Age and date of birth show as "Не указано" even when data exists
+- Save operations fail with JSON serialization error: "Object of type date is not JSON serializable"  
+- Missing fields in edit menu and confirmation screens
+- Values don't persist or display after successful edits
+
+**Root Causes**:
+1. **Participant Reconstruction**: `display_updated_participant()` function missing `date_of_birth` and `age` fields in Participant constructor
+2. **Date Serialization**: Airtable repository missing date_of_birth serialization (only handled payment_date)
+3. **UI Integration**: Missing Russian labels and formatting in edit menu and confirmation screens
+
+**Resolution (Implemented)**:
+1. **Fixed Participant Reconstruction**: Added date_of_birth and age fields to participant construction in edit handlers
+2. **Extended Date Serialization**: Updated `_convert_field_updates_to_airtable()` to serialize date_of_birth to ISO format  
+3. **Enhanced UI Integration**: Added proper Russian labels (🎂 Дата рождения, 🔢 Возраст) in all display contexts
+4. **Robust Clearing Behavior**: Implemented whitespace-only input → None clearing for both fields
+5. **Enhanced Error Messages**: Improved validation errors with ❌ prefix and InfoMessages guidance
+
+**Files Modified**:
+- `src/bot/handlers/edit_participant_handlers.py`: Participant reconstruction and UI labels
+- `src/data/airtable/airtable_participant_repo.py`: Date serialization extension  
+- `src/services/participant_update_service.py`: Clearing behavior and error messaging
+
+**Verification**: 116/116 tests pass, including comprehensive clearing behavior and end-to-end serialization tests
+
 ### Display Regression Issues (2025-09-02)
 
 #### Participant Information Not Visible During Editing

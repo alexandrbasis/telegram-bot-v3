@@ -99,8 +99,8 @@ After searching, click "Подробнее" (Details) on any participant to acce
 - Payment Status: [Оплачено/Частично/Не оплачено]
 - Payment Amount: [Amount]
 - Payment Date: [Date]
-- Date of Birth: [YYYY-MM-DD or N/A]
-- Age: [XX years or N/A]
+- 🎂 Date of Birth: [YYYY-MM-DD or Не указано] *Fixed display issue 2025-09-11*
+- 🔢 Age: [XX years or Не указано] *Fixed display issue 2025-09-11*
 - Submitted By: [Name]
 
 ### Enhanced Field Editing Display
@@ -177,15 +177,19 @@ Each participant field can be edited through dedicated "Изменить [Field]
    - Type date → Validation (YYYY-MM-DD format) → Complete participant display with updated information
    - Error message if invalid: "Ошибка: Дата должна быть в формате ГГГГ-ММ-ДД"
 
-3. **"Изменить дату рождения" (Edit Date of Birth)** ✨ *New Field Added 2025-09-10*
+3. **"Изменить дату рождения" (Edit Date of Birth)** 🔧 *Fixed 2025-09-11*
    - Click button → Bot prompts: "📅 Введите дату рождения в формате ГГГГ-ММ-ДД (например: 1990-05-15):"
    - Type date → Validation (YYYY-MM-DD format) → Complete participant display with updated information
-   - Error message if invalid: "Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)"
+   - **Clearing Support**: Send only whitespace to clear field (displays "Не указано")
+   - **Fixed JSON Serialization**: Resolves "Object of type date is not JSON serializable" error
+   - Error message if invalid: "❌ Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)" + InfoMessages guidance
 
-4. **"Изменить возраст" (Edit Age)** ✨ *New Field Added 2025-09-10*
+4. **"Изменить возраст" (Edit Age)** 🔧 *Fixed 2025-09-11*
    - Click button → Bot prompts: "🔢 Введите возраст (от 0 до 120):"
    - Type age → Validation (0-120 integer range) → Complete participant display with updated information
-   - Error messages if invalid: "Возраст должен быть от 0 до 120" or "Возраст должен быть числом"
+   - **Clearing Support**: Send only whitespace to clear field (displays "Не указано")
+   - **Fixed Display**: Resolves missing age field in participant reconstruction after editing
+   - Error messages if invalid: "❌ Возраст должен быть от 0 до 120" or "❌ Возраст должен быть числом" + InfoMessages guidance
 
 ### Save/Cancel Actions
 
