@@ -33,9 +33,11 @@ def mock_airtable_client():
     """Fixture providing a mock AirtableClient."""
     client = Mock(spec=AirtableClient)
 
-    # Mock client attributes needed for caching
-    client.base_id = "appTestBase123456789"
-    client.table_id = "tblTestTable12345678"
+    # Mock client config attributes needed for caching
+    client.config = Mock()
+    client.config.base_id = "appTestBase123456789"
+    client.config.table_id = "tblTestTable12345678"
+    client.config.table_name = "TestTable"
 
     # Default successful responses
     client.create_record = AsyncMock(
