@@ -5,11 +5,12 @@ Provides role-based participant filtering, list formatting with pagination,
 and Russian date formatting for list display.
 """
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from telegram.helpers import escape_markdown
 
-from src.models.participant import Participant
 from src.data.repositories.participant_repository import ParticipantRepository
+from src.models.participant import Participant
 
 
 class ParticipantListService:
@@ -151,16 +152,17 @@ class ParticipantListService:
 
         # Handle optional fields with Markdown escaping
         size_str = (
-            escape_markdown(participant.size, version=2)
-            if participant.size else "—"
+            escape_markdown(participant.size, version=2) if participant.size else "—"
         )
         church_str = (
             escape_markdown(participant.church, version=2)
-            if participant.church else "—"
+            if participant.church
+            else "—"
         )
         name_str = (
             escape_markdown(participant.full_name_ru, version=2)
-            if participant.full_name_ru else "Неизвестно"
+            if participant.full_name_ru
+            else "Неизвестно"
         )
         dob_escaped = escape_markdown(dob_str, version=2)
 

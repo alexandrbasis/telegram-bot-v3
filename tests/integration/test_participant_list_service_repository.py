@@ -5,9 +5,10 @@ Tests that the service correctly integrates with the existing Airtable
 repository role filtering functionality.
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock
 from datetime import date
+from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from src.models.participant import Participant, Role
 from src.services.participant_list_service import ParticipantListService

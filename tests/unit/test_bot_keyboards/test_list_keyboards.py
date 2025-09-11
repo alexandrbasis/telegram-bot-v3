@@ -9,8 +9,8 @@ import pytest
 from telegram import InlineKeyboardMarkup
 
 from src.bot.keyboards.list_keyboards import (
-    get_role_selection_keyboard,
     get_list_pagination_keyboard,
+    get_role_selection_keyboard,
 )
 
 

@@ -5,9 +5,10 @@ Tests role-based filtering, list formatting, pagination, and date formatting
 for participant list display functionality.
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock
 from datetime import date
+from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from src.models.participant import Participant, Role
 from src.services.participant_list_service import ParticipantListService
@@ -122,7 +123,9 @@ class TestParticipantListService:
         # Should contain all participant information
         assert "Иванов Иван Иванович" in formatted_list
         assert "Петров Петр Петрович" in formatted_list
-        assert "15\\.06\\.1985" in formatted_list  # DD.MM.YYYY format with MarkdownV2 escaping
+        assert (
+            "15\\.06\\.1985" in formatted_list
+        )  # DD.MM.YYYY format with MarkdownV2 escaping
         assert "03\\.12\\.1990" in formatted_list
         assert "M" in formatted_list  # Size
         assert "L" in formatted_list

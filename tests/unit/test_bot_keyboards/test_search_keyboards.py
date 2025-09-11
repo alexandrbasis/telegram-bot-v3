@@ -9,18 +9,18 @@ import pytest
 from telegram import ReplyKeyboardMarkup
 
 from src.bot.keyboards.search_keyboards import (
-    get_main_menu_keyboard,
-    get_search_mode_selection_keyboard,
-    get_waiting_for_name_keyboard,
-    get_waiting_for_room_keyboard,
-    get_waiting_for_floor_keyboard,
-    get_results_navigation_keyboard,
+    NAV_BACK_TO_SEARCH_MODES,
+    NAV_CANCEL,
+    NAV_MAIN_MENU,
+    NAV_SEARCH_FLOOR,
     NAV_SEARCH_NAME,
     NAV_SEARCH_ROOM,
-    NAV_SEARCH_FLOOR,
-    NAV_MAIN_MENU,
-    NAV_CANCEL,
-    NAV_BACK_TO_SEARCH_MODES,
+    get_main_menu_keyboard,
+    get_results_navigation_keyboard,
+    get_search_mode_selection_keyboard,
+    get_waiting_for_floor_keyboard,
+    get_waiting_for_name_keyboard,
+    get_waiting_for_room_keyboard,
 )
 
 

@@ -8,12 +8,12 @@ Get List → Role Selection → List Display
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from src.bot.handlers.search_handlers import SearchStates, main_menu_button
 from src.bot.keyboards.list_keyboards import (
-    get_role_selection_keyboard,
     get_list_pagination_keyboard,
+    get_role_selection_keyboard,
 )
 from src.services import service_factory
-from src.bot.handlers.search_handlers import main_menu_button, SearchStates
 
 
 async def handle_get_list_request(
@@ -73,8 +73,8 @@ async def handle_role_selection(
             return
 
         # Format message with title and participant data
-        start_pos = data['current_offset'] + 1
-        end_pos = data['current_offset'] + data['actual_displayed']
+        start_pos = data["current_offset"] + 1
+        end_pos = data["current_offset"] + data["actual_displayed"]
         page_info = f" (элементы {start_pos}-{end_pos} из {data['total_count']})"
         message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
@@ -127,7 +127,7 @@ async def handle_list_navigation(
             # Fallback if state is lost
             await query.edit_message_text(
                 text="Произошла ошибка\\. Пожалуйста, выберите список заново\\.",
-                parse_mode="MarkdownV2"
+                parse_mode="MarkdownV2",
             )
             return SearchStates.MAIN_MENU
 
@@ -189,8 +189,8 @@ async def handle_list_navigation(
                 return SearchStates.MAIN_MENU
 
             # Format message with title and participant data
-            start_pos = data['current_offset'] + 1
-            end_pos = data['current_offset'] + data['actual_displayed']
+            start_pos = data["current_offset"] + 1
+            end_pos = data["current_offset"] + data["actual_displayed"]
             page_info = f" (элементы {start_pos}-{end_pos} из {data['total_count']})"
             message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 

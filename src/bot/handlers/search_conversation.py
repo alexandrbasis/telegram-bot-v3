@@ -29,6 +29,11 @@ from src.bot.handlers.floor_search_handlers import (
     handle_floor_search_command,
     process_floor_search,
 )
+from src.bot.handlers.list_handlers import (
+    handle_get_list_request,
+    handle_list_navigation,
+    handle_role_selection,
+)
 from src.bot.handlers.room_search_handlers import (
     RoomSearchStates,
     handle_room_search_command,
@@ -46,11 +51,6 @@ from src.bot.handlers.search_handlers import (
     process_name_search,
     search_button,
     start_command,
-)
-from src.bot.handlers.list_handlers import (
-    handle_get_list_request,
-    handle_role_selection,
-    handle_list_navigation,
 )
 from src.bot.handlers.timeout_handlers import (
     get_timeout_recovery_handlers,

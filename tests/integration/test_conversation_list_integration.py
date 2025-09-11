@@ -5,9 +5,10 @@ Tests that the participant list functionality integrates properly
 with the main search conversation handler.
 """
 
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
-from telegram import Update, Message, CallbackQuery
+
+import pytest
+from telegram import CallbackQuery, Message, Update
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.search_conversation import get_search_conversation_handler

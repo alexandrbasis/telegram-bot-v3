@@ -5,16 +5,17 @@ Tests conversation handlers for participant list access functionality,
 including role selection and main menu integration.
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock, patch
-from telegram import Update, CallbackQuery, Message
-from telegram.ext import ContextTypes
 from datetime import date
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+from telegram import CallbackQuery, Message, Update
+from telegram.ext import ContextTypes
 
 from src.bot.handlers.list_handlers import (
     handle_get_list_request,
-    handle_role_selection,
     handle_list_navigation,
+    handle_role_selection,
 )
 from src.bot.handlers.search_handlers import SearchStates
 from src.models.participant import Participant, Role
@@ -259,7 +260,9 @@ class TestRoleSelectionWithServiceIntegration:
         await handle_role_selection(mock_team_update, mock_context)
 
         # Verify service was called
-        mock_service.get_team_members_list.assert_called_once_with(offset=0, page_size=20)
+        mock_service.get_team_members_list.assert_called_once_with(
+            offset=0, page_size=20
+        )
 
         # Verify response contains formatted data
         mock_team_update.callback_query.edit_message_text.assert_called_once()
@@ -359,10 +362,7 @@ class TestPaginationNavigationHandler:
     def mock_context_with_state(self):
         """Create mock context with pagination state."""
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context.user_data = {
-            "current_role": "TEAM",
-            "current_offset": 20
-        }
+        context.user_data = {"current_role": "TEAM", "current_offset": 20}
         return context
 
     @pytest.fixture
@@ -396,16 +396,24 @@ class TestPaginationNavigationHandler:
             "current_offset": 20,
             "next_offset": 40,
             "prev_offset": 0,
-            "actual_displayed": 1
+            "actual_displayed": 1,
         }
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
-    async def test_next_navigation_updates_page_state(self, mock_get_service, mock_next_update, mock_context_with_state, mock_service_data_page2):
+    async def test_next_navigation_updates_page_state(
+        self,
+        mock_get_service,
+        mock_next_update,
+        mock_context_with_state,
+        mock_service_data_page2,
+    ):
         """Test that NEXT navigation updates page state correctly."""
         # Setup
         mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data_page2)
+        mock_service.get_team_members_list = AsyncMock(
+            return_value=mock_service_data_page2
+        )
         mock_get_service.return_value = mock_service
 
         # Execute
@@ -413,14 +421,14 @@ class TestPaginationNavigationHandler:
 
         # Verify offset state updated
         assert mock_context_with_state.user_data["current_offset"] == 40
-        
+
         # Verify service called twice: first with current offset, then with new offset
         assert mock_service.get_team_members_list.call_count == 2
         # First call gets pagination info from current offset
         mock_service.get_team_members_list.assert_any_call(offset=20, page_size=20)
         # Second call gets data for new offset
         mock_service.get_team_members_list.assert_any_call(offset=40, page_size=20)
-        
+
         # Verify response includes range info (shows current data from service)
         call_args = mock_next_update.callback_query.edit_message_text.call_args
         message_text = call_args[1]["text"]
@@ -428,14 +436,21 @@ class TestPaginationNavigationHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
-    async def test_prev_navigation_respects_page_bounds(self, mock_get_service, mock_prev_update, mock_service_data_page2):
+    async def test_prev_navigation_respects_page_bounds(
+        self, mock_get_service, mock_prev_update, mock_service_data_page2
+    ):
         """Test that PREV navigation respects page boundaries."""
         # Setup context at offset 0
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {"current_role": "TEAM", "current_offset": 0}
-        
+
         mock_service = Mock()
-        offset0_data = {**mock_service_data_page2, "current_offset": 0, "prev_offset": None, "has_prev": False}
+        offset0_data = {
+            **mock_service_data_page2,
+            "current_offset": 0,
+            "prev_offset": None,
+            "has_prev": False,
+        }
         mock_service.get_team_members_list = AsyncMock(return_value=offset0_data)
         mock_get_service.return_value = mock_service
 
@@ -444,7 +459,9 @@ class TestPaginationNavigationHandler:
 
         # Should stay at offset 0 (no prev_offset available)
         assert context.user_data["current_offset"] == 0
-        mock_service.get_team_members_list.assert_called_once_with(offset=0, page_size=20)
+        mock_service.get_team_members_list.assert_called_once_with(
+            offset=0, page_size=20
+        )
 
     @pytest.mark.asyncio
     async def test_navigation_without_state_shows_error(self, mock_next_update):
@@ -465,14 +482,18 @@ class TestPaginationNavigationHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
-    async def test_navigation_handles_candidates_role(self, mock_get_service, mock_next_update, mock_service_data_page2):
+    async def test_navigation_handles_candidates_role(
+        self, mock_get_service, mock_next_update, mock_service_data_page2
+    ):
         """Test navigation works with CANDIDATE role."""
         # Setup context with candidate role
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {"current_role": "CANDIDATE", "current_offset": 0}
-        
+
         mock_service = Mock()
-        mock_service.get_candidates_list = AsyncMock(return_value=mock_service_data_page2)
+        mock_service.get_candidates_list = AsyncMock(
+            return_value=mock_service_data_page2
+        )
         mock_get_service.return_value = mock_service
 
         # Execute
@@ -484,10 +505,10 @@ class TestPaginationNavigationHandler:
         mock_service.get_candidates_list.assert_any_call(offset=0, page_size=20)
         # Second call gets data for new offset
         mock_service.get_candidates_list.assert_any_call(offset=40, page_size=20)
-        
+
         # Should update offset to next_offset from mock data
         assert context.user_data["current_offset"] == 40
-        
+
         # Should show candidate title
         call_args = mock_next_update.callback_query.edit_message_text.call_args
         message_text = call_args[1]["text"]
@@ -495,11 +516,19 @@ class TestPaginationNavigationHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
-    async def test_navigation_shows_pagination_controls(self, mock_get_service, mock_next_update, mock_context_with_state, mock_service_data_page2):
+    async def test_navigation_shows_pagination_controls(
+        self,
+        mock_get_service,
+        mock_next_update,
+        mock_context_with_state,
+        mock_service_data_page2,
+    ):
         """Test that navigation displays proper pagination controls."""
         # Setup
         mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data_page2)
+        mock_service.get_team_members_list = AsyncMock(
+            return_value=mock_service_data_page2
+        )
         mock_get_service.return_value = mock_service
 
         # Execute
@@ -508,22 +537,26 @@ class TestPaginationNavigationHandler:
         # Verify pagination keyboard included
         call_args = mock_next_update.callback_query.edit_message_text.call_args
         assert "reply_markup" in call_args[1]
-        
+
         keyboard = call_args[1]["reply_markup"]
         buttons = [btn for row in keyboard.inline_keyboard for btn in row]
-        
+
         # Should have PREV, NEXT, and MAIN_MENU buttons
         prev_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:PREV"]
         next_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:NEXT"]
-        main_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:MAIN_MENU"]
-        
+        main_buttons = [
+            btn for btn in buttons if btn.callback_data == "list_nav:MAIN_MENU"
+        ]
+
         assert len(prev_buttons) == 1
         assert len(next_buttons) == 1
         assert len(main_buttons) == 1
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.list_handlers.main_menu_button")
-    async def test_main_menu_navigation_calls_proper_handler(self, mock_main_menu_button):
+    async def test_main_menu_navigation_calls_proper_handler(
+        self, mock_main_menu_button
+    ):
         """Test that MAIN_MENU navigation calls the proper handler."""
         # Setup
         update = Mock(spec=Update)
@@ -537,14 +570,14 @@ class TestPaginationNavigationHandler:
         update.callback_query.from_user.id = 12345
         update.callback_query.from_user.username = "testuser"
         update.effective_user = update.callback_query.from_user
-        
+
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {}  # Real dict needed for main_menu_button
         mock_main_menu_button.return_value = 10  # SearchStates.MAIN_MENU
-        
+
         # Execute
         result = await handle_list_navigation(update, context)
-        
+
         # Should call main_menu_button handler
         mock_main_menu_button.assert_called_once_with(update, context)
         assert result == 10
@@ -558,16 +591,16 @@ class TestPaginationNavigationHandler:
         update.callback_query.data = "list_role:TEAM"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
-        
+
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {}
-        
+
         # Execute (note: this will fail because service isn't mocked, but we want to check state storage)
         try:
             await handle_role_selection(update, context)
         except Exception:
             pass  # Ignore service errors, we're testing state storage
-        
+
         # Verify state stored
         assert context.user_data["current_role"] == "TEAM"
         assert context.user_data["current_offset"] == 0
@@ -575,7 +608,7 @@ class TestPaginationNavigationHandler:
 
 class TestTrimmingLogicAndPagination:
     """Test message trimming logic and pagination continuity."""
-    
+
     @pytest.fixture
     def mock_service_data_with_trimming(self):
         """Create mock service response that would be trimmed."""
@@ -587,12 +620,14 @@ class TestTrimmingLogicAndPagination:
             "current_offset": 0,
             "next_offset": 18,  # Next offset based on actual displayed count
             "prev_offset": None,
-            "actual_displayed": 18  # Less than page_size=20 due to trimming
+            "actual_displayed": 18,  # Less than page_size=20 due to trimming
         }
-    
+
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
-    async def test_trimmed_results_maintain_pagination_continuity(self, mock_get_service, mock_service_data_with_trimming):
+    async def test_trimmed_results_maintain_pagination_continuity(
+        self, mock_get_service, mock_service_data_with_trimming
+    ):
         """Test that trimmed results don't break pagination continuity."""
         # Setup
         update = Mock(spec=Update)
@@ -600,21 +635,25 @@ class TestTrimmingLogicAndPagination:
         update.callback_query.data = "list_role:TEAM"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
-        
+
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {}
-        
+
         mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data_with_trimming)
+        mock_service.get_team_members_list = AsyncMock(
+            return_value=mock_service_data_with_trimming
+        )
         mock_get_service.return_value = mock_service
-        
+
         # Execute
         await handle_role_selection(update, context)
-        
+
         # Should still show has_next=True even with trimmed content
         call_args = update.callback_query.edit_message_text.call_args
         keyboard = call_args[1]["reply_markup"]
         buttons = [btn for row in keyboard.inline_keyboard for btn in row]
         next_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:NEXT"]
-        
-        assert len(next_buttons) == 1, "Should show NEXT button when has_next=True despite trimming"
+
+        assert (
+            len(next_buttons) == 1
+        ), "Should show NEXT button when has_next=True despite trimming"
