@@ -529,14 +529,17 @@ class TestFloorSearchCallbackIntegration:
 
         return update, context
 
-    @pytest.fixture 
+    @pytest.fixture
     def available_floors(self):
         """Sample floors for testing."""
         return [1, 2, 3, 4, 5]
 
     @pytest.mark.asyncio
     async def test_complete_floor_discovery_journey_success(
-        self, mock_callback_update_and_context, multi_room_floor_participants, available_floors
+        self,
+        mock_callback_update_and_context,
+        multi_room_floor_participants,
+        available_floors,
     ):
         """Test complete user journey: floor search → discovery button → floors list → floor selection → results."""
         update, context = mock_callback_update_and_context
@@ -544,10 +547,14 @@ class TestFloorSearchCallbackIntegration:
         # === Step 1: Floor discovery callback ===
         update.callback_query.data = "floor_discovery"
 
-        with patch("src.bot.handlers.floor_search_handlers.get_search_service") as mock_get_service:
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_get_service:
             mock_service = Mock()
             mock_service.get_available_floors = AsyncMock(return_value=available_floors)
-            mock_service.search_by_floor = AsyncMock(return_value=multi_room_floor_participants)
+            mock_service.search_by_floor = AsyncMock(
+                return_value=multi_room_floor_participants
+            )
             mock_get_service.return_value = mock_service
 
             # Execute floor discovery
@@ -563,7 +570,7 @@ class TestFloorSearchCallbackIntegration:
             update.callback_query.message.edit_text.assert_called_once()
             edit_call_args = update.callback_query.message.edit_text.call_args
             assert "📍 Доступные этажи:" in edit_call_args[1]["text"]
-            
+
             # Verify floor selection keyboard was provided
             assert edit_call_args[1]["reply_markup"] is not None
 
@@ -573,9 +580,13 @@ class TestFloorSearchCallbackIntegration:
         update.callback_query.message.edit_text.reset_mock()
         update.callback_query.data = "floor_select_2"
 
-        with patch("src.bot.handlers.floor_search_handlers.get_search_service") as mock_get_service:
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_get_service:
             mock_service = Mock()
-            mock_service.search_by_floor = AsyncMock(return_value=multi_room_floor_participants)
+            mock_service.search_by_floor = AsyncMock(
+                return_value=multi_room_floor_participants
+            )
             mock_get_service.return_value = mock_service
 
             # Create a temporary message for the handler (mimics line 338 in floor_search_handlers)
@@ -599,7 +610,10 @@ class TestFloorSearchCallbackIntegration:
             mock_service.search_by_floor.assert_called_once_with(2)
 
             # Verify results stored in context
-            assert context.user_data["floor_search_results"] == multi_room_floor_participants
+            assert (
+                context.user_data["floor_search_results"]
+                == multi_room_floor_participants
+            )
 
             # Verify correct state returned
             assert result_state == FloorSearchStates.SHOWING_FLOOR_RESULTS
@@ -613,9 +627,13 @@ class TestFloorSearchCallbackIntegration:
         update.callback_query.data = "floor_discovery"
 
         # Mock search service to raise exception
-        with patch("src.bot.handlers.floor_search_handlers.get_search_service") as mock_get_service:
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_get_service:
             mock_service = Mock()
-            mock_service.get_available_floors = AsyncMock(side_effect=Exception("API Error"))
+            mock_service.get_available_floors = AsyncMock(
+                side_effect=Exception("API Error")
+            )
             mock_get_service.return_value = mock_service
 
             # Execute floor discovery
@@ -627,7 +645,10 @@ class TestFloorSearchCallbackIntegration:
             # Verify error message sent
             update.callback_query.message.edit_text.assert_called_once()
             error_call_args = update.callback_query.message.edit_text.call_args
-            assert "Произошла ошибка. Пришлите номер этажа цифрой." in error_call_args[1]["text"]
+            assert (
+                "Произошла ошибка. Пришлите номер этажа цифрой."
+                in error_call_args[1]["text"]
+            )
 
     @pytest.mark.asyncio
     async def test_floor_discovery_no_floors_available(
@@ -638,7 +659,9 @@ class TestFloorSearchCallbackIntegration:
         update.callback_query.data = "floor_discovery"
 
         # Mock search service to return empty floors list
-        with patch("src.bot.handlers.floor_search_handlers.get_search_service") as mock_get_service:
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_get_service:
             mock_service = Mock()
             mock_service.get_available_floors = AsyncMock(return_value=[])
             mock_get_service.return_value = mock_service
@@ -652,7 +675,10 @@ class TestFloorSearchCallbackIntegration:
             # Verify appropriate message sent for no floors
             update.callback_query.message.edit_text.assert_called_once()
             no_floors_call_args = update.callback_query.message.edit_text.call_args
-            assert "В данный момент участники не размещены ни на одном этаже" in no_floors_call_args[1]["text"]
+            assert (
+                "В данный момент участники не размещены ни на одном этаже"
+                in no_floors_call_args[1]["text"]
+            )
 
     @pytest.mark.asyncio
     async def test_floor_selection_invalid_callback_data(
@@ -685,7 +711,9 @@ class TestFloorSearchCallbackIntegration:
         update.callback_query.data = "floor_select_99"
 
         # Mock search service to return empty results
-        with patch("src.bot.handlers.floor_search_handlers.get_search_service") as mock_get_service:
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_get_service:
             mock_service = Mock()
             mock_service.search_by_floor = AsyncMock(return_value=[])
             mock_get_service.return_value = mock_service
@@ -716,7 +744,9 @@ class TestFloorSearchCallbackIntegration:
         """Test that all callback handlers properly acknowledge callback queries to stop loading spinner."""
         update, context = mock_callback_update_and_context
 
-        with patch("src.bot.handlers.floor_search_handlers.get_search_service") as mock_get_service:
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_get_service:
             mock_service = Mock()
             mock_service.get_available_floors = AsyncMock(return_value=available_floors)
             mock_service.search_by_floor = AsyncMock(return_value=[])
@@ -738,7 +768,10 @@ class TestFloorSearchCallbackIntegration:
 
     @pytest.mark.asyncio
     async def test_backward_compatibility_traditional_and_interactive_coexist(
-        self, mock_update_and_context, mock_callback_update_and_context, multi_room_floor_participants
+        self,
+        mock_update_and_context,
+        mock_callback_update_and_context,
+        multi_room_floor_participants,
     ):
         """Test that traditional floor input and interactive callbacks can work simultaneously."""
         # Test traditional text input
@@ -750,16 +783,22 @@ class TestFloorSearchCallbackIntegration:
         callback_update.callback_query.data = "floor_select_2"
         callback_update.message = callback_update.callback_query.message
 
-        with patch("src.bot.handlers.floor_search_handlers.get_search_service") as mock_get_service:
+        with patch(
+            "src.bot.handlers.floor_search_handlers.get_search_service"
+        ) as mock_get_service:
             mock_service = Mock()
-            mock_service.search_by_floor = AsyncMock(return_value=multi_room_floor_participants)
+            mock_service.search_by_floor = AsyncMock(
+                return_value=multi_room_floor_participants
+            )
             mock_get_service.return_value = mock_service
 
             # Execute traditional search
             traditional_state = await process_floor_search(text_update, text_context)
 
-            # Execute callback search  
-            callback_state = await handle_floor_selection_callback(callback_update, callback_context)
+            # Execute callback search
+            callback_state = await handle_floor_selection_callback(
+                callback_update, callback_context
+            )
 
             # Both should reach the same final state
             assert traditional_state == FloorSearchStates.SHOWING_FLOOR_RESULTS
@@ -772,5 +811,11 @@ class TestFloorSearchCallbackIntegration:
             # Both should store results in context
             assert text_context.user_data["current_floor"] == "2"
             assert callback_context.user_data["current_floor"] == "2"
-            assert text_context.user_data["floor_search_results"] == multi_room_floor_participants
-            assert callback_context.user_data["floor_search_results"] == multi_room_floor_participants
+            assert (
+                text_context.user_data["floor_search_results"]
+                == multi_room_floor_participants
+            )
+            assert (
+                callback_context.user_data["floor_search_results"]
+                == multi_room_floor_participants
+            )
