@@ -23,6 +23,30 @@ FIELD_MAPPINGS = {
 }
 ```
 
+### Critical Bug Fixes (2025-09-11)
+
+#### Date of Birth and Age Field Issues Resolution
+Resolved critical bugs affecting participant editing interface:
+
+**Issue**: Date of birth and age fields not displaying correctly in edit interface and causing JSON serialization errors during save operations.
+
+**Root Causes**:
+1. Participant reconstruction missing `date_of_birth` and `age` fields in `display_updated_participant()` function
+2. Airtable repository missing date serialization for `date_of_birth` field (only had `payment_date`)
+3. Missing UI labels and formatting in edit menu and confirmation screens
+
+**Solutions Implemented**:
+- **Participant Reconstruction**: Added date_of_birth and age to all participant display functions
+- **Date Serialization**: Extended `_convert_field_updates_to_airtable()` to serialize date_of_birth to ISO format
+- **UI Enhancement**: Added proper Russian labels (🎂 Дата рождения, 🔢 Возраст) in edit menu and confirmation
+- **Clearing Support**: Implemented robust clearing behavior for both fields via whitespace detection
+- **Error Messaging**: Enhanced validation with InfoMessages for consistent user guidance
+
+**Files Modified**:
+- `src/bot/handlers/edit_participant_handlers.py`: Added field reconstruction and UI labels
+- `src/data/airtable/airtable_participant_repo.py`: Extended date serialization
+- `src/services/participant_update_service.py`: Added clearing behavior and enhanced error messaging
+
 ### Field Usage Guidelines
 
 #### RoomNumber Field (fldJTPjo8AHQaADVu)
@@ -39,21 +63,27 @@ FIELD_MAPPINGS = {
 - **Validation**: Accepts numeric floors (1, 2, 3) or named floors ("Ground", "Basement")
 - **Search Usage**: `find_by_floor(floor: Union[int, str])` method in repository
 
-#### DateOfBirth Field (fld1rN2cffxKuZh4i) - Added 2025-09-10
+#### DateOfBirth Field (fld1rN2cffxKuZh4i) - Updated 2025-09-11
 - **Internal Model**: `date_of_birth: Optional[date]`
 - **Airtable Field**: "DateOfBirth"
 - **Data Type**: Date
 - **Validation**: ISO date format (YYYY-MM-DD), Python date object
 - **Constraints**: Valid date values, application-side validation
 - **Conversion**: to_airtable_fields() serializes as ISO string, from_airtable_record() deserializes to date object
+- **Clearing Behavior**: Whitespace-only input clears field (sets to None)
+- **UI Integration**: Full edit menu and confirmation screen support with Russian labels
+- **Serialization Fix**: Proper date serialization for Airtable API (resolves JSON serialization errors)
 
-#### Age Field (fldZPh65PIekEbgvs) - Added 2025-09-10
+#### Age Field (fldZPh65PIekEbgvs) - Updated 2025-09-11
 - **Internal Model**: `age: Optional[int]`
 - **Airtable Field**: "Age"
 - **Data Type**: Number
 - **Validation**: Integer values with application-side constraints (0-120 range)
 - **Constraints**: Minimum 0, Maximum 120 (application-enforced, not Airtable-enforced)
 - **Conversion**: Bidirectional integer handling in conversion methods
+- **Clearing Behavior**: Whitespace-only input clears field (sets to None)
+- **UI Integration**: Full edit menu and confirmation screen support with Russian labels
+- **Display Fix**: Proper participant reconstruction includes age field in all display contexts
 
 ### Security Enhancements
 

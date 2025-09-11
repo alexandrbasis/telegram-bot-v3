@@ -168,10 +168,11 @@ class ParticipantUpdateService:
             return ""
         return value
 
-    def _validate_date_of_birth(self, user_input: str) -> date:
+    def _validate_date_of_birth(self, user_input: str) -> date | None:
         """Validate date of birth field in YYYY-MM-DD format."""
-        if not user_input:
-            raise ValidationError("Дата рождения не может быть пустой")
+        # Handle clearing behavior: whitespace-only input clears the field
+        if not user_input or user_input.strip() == "":
+            return None
 
         try:
             # Expected format: YYYY-MM-DD
@@ -186,28 +187,47 @@ class ParticipantUpdateService:
                 or len(user_input.split("-")) != 3
                 or "Wrong format" in str(e)
             ):
+                from src.bot.messages import InfoMessages
+
                 raise ValidationError(
-                    "Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)"
+                    f"❌ Неверный формат даты. {InfoMessages.ENTER_DATE_OF_BIRTH}"
                 )
             else:
-                raise ValidationError("Некорректная дата. Проверьте день и месяц.")
-        except Exception:
-            raise ValidationError("Неверный формат даты. Используйте ГГГГ-ММ-ДД")
+                from src.bot.messages import InfoMessages
 
-    def _validate_age(self, user_input: str) -> int:
+                raise ValidationError(
+                    f"❌ Некорректная дата. {InfoMessages.ENTER_DATE_OF_BIRTH}"
+                )
+        except Exception:
+            from src.bot.messages import InfoMessages
+
+            raise ValidationError(
+                f"❌ Неверный формат даты. {InfoMessages.ENTER_DATE_OF_BIRTH}"
+            )
+
+    def _validate_age(self, user_input: str) -> int | None:
         """Validate age field as integer in 0-120 range."""
-        if not user_input:
-            raise ValidationError("Возраст не может быть пустым")
+        # Handle clearing behavior: whitespace-only input clears the field
+        if not user_input or user_input.strip() == "":
+            return None
 
         try:
             age = int(user_input)
             if age < 0 or age > 120:
-                raise ValidationError("Возраст должен быть от 0 до 120")
+                from src.bot.messages import InfoMessages
+
+                raise ValidationError(
+                    f"❌ Возраст должен быть от 0 до 120. {InfoMessages.ENTER_AGE}"
+                )
 
             logger.info(f"Age validated: {age}")
             return age
         except ValueError:
-            raise ValidationError("Возраст должен быть числом")
+            from src.bot.messages import InfoMessages
+
+            raise ValidationError(
+                f"❌ Возраст должен быть числом. {InfoMessages.ENTER_AGE}"
+            )
 
     def convert_button_value(
         self, field_name: str, selected_value: str
@@ -343,6 +363,8 @@ class ParticipantUpdateService:
             "payment_date": "Дата платежа",
             "floor": "Этаж",
             "room_number": "Номер комнаты",
+            "date_of_birth": "Дата рождения",
+            "age": "Возраст",
         }
         return field_labels.get(field_name, field_name)
 

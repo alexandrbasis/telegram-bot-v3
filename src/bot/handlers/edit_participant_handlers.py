@@ -150,6 +150,8 @@ def display_updated_participant(
             "payment_status", participant.payment_status
         ),
         payment_date=editing_changes.get("payment_date", participant.payment_date),
+        date_of_birth=editing_changes.get("date_of_birth", participant.date_of_birth),
+        age=editing_changes.get("age", participant.age),
         floor=editing_changes.get("floor", getattr(participant, "floor", None)),
         room_number=editing_changes.get(
             "room_number", getattr(participant, "room_number", None)
@@ -201,11 +203,18 @@ def reconstruct_participant_from_changes(
         "department": "🏢 Департамент",
         "floor": "🏢 Этаж",
         "room_number": "🚪 Номер комнаты",
+        "date_of_birth": "🎂 Дата рождения",
+        "age": "🔢 Возраст",
     }
 
     for field, value in editing_changes.items():
         if field in field_labels:
-            display_parts.append(f"{field_labels[field]}: **{value}**")
+            # Format date_of_birth if it's a date object
+            if field == "date_of_birth" and hasattr(value, "isoformat"):
+                formatted_value = value.isoformat()
+            else:
+                formatted_value = value
+            display_parts.append(f"{field_labels[field]}: **{formatted_value}**")
 
     display_parts.extend(
         [
@@ -313,6 +322,16 @@ async def show_participant_edit_menu(
     room_display = getattr(participant, "room_number", None)
     message_text += f"🏢 Этаж: {floor_display if floor_display not in (None, '') else 'Не указано'}\n"
     message_text += f"🚪 Номер комнаты: {room_display if room_display not in (None, '') else 'Не указано'}\n"
+
+    # Date of birth and age fields
+    date_of_birth_display = (
+        participant.date_of_birth.isoformat()
+        if participant.date_of_birth
+        else "Не указано"
+    )
+    message_text += f"🎂 Дата рождения: {date_of_birth_display}\n"
+    age_display = participant.age if participant.age is not None else "Не указано"
+    message_text += f"🔢 Возраст: {age_display}\n"
 
     # Show pending changes if any
     pending_changes = context.user_data.get("editing_changes", {})
@@ -557,6 +576,8 @@ async def handle_text_field_input(
                     "payment_amount": "Сумма платежа",
                     "floor": "Этаж",
                     "room_number": "Номер комнаты",
+                    "date_of_birth": "Дата рождения",
+                    "age": "Возраст",
                 }
 
                 field_label = field_labels.get(field_name, field_name)
@@ -580,6 +601,8 @@ async def handle_text_field_input(
                 "contact_information": "Контакты",
                 "submitted_by": "Кто подал",
                 "payment_amount": "Сумма платежа",
+                "date_of_birth": "Дата рождения",
+                "age": "Возраст",
             }
             field_label = field_labels.get(field_name, field_name)
             field_icon = get_field_icon(field_name)
@@ -1180,6 +1203,8 @@ async def show_save_confirmation(
         "submitted_by": "Кто подал",
         "floor": "Этаж",
         "room_number": "Номер комнаты",
+        "date_of_birth": "Дата рождения",
+        "age": "Возраст",
     }
 
     for field, new_value in changes.items():
@@ -1195,6 +1220,8 @@ async def show_save_confirmation(
             display_value = new_value
         elif hasattr(new_value, "value"):  # Enum values
             display_value = new_value.value
+        elif field == "date_of_birth" and hasattr(new_value, "isoformat"):
+            display_value = new_value.isoformat()
         else:
             display_value = str(new_value)
 

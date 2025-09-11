@@ -179,18 +179,22 @@ Validation: YYYY-MM-DD format
 Error: "Ошибка: Дата должна быть в формате ГГГГ-ММ-ДД"
 ```
 
-**Date of Birth API** (Added 2025-09-10):
+**Date of Birth API** (Fixed 2025-09-11):
 ```
 Prompt: "📅 Введите дату рождения в формате ГГГГ-ММ-ДД (например: 1990-05-15):"
 Validation: YYYY-MM-DD format with date parsing
-Error: "Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)"
+Clearing: Whitespace-only input clears field (sets to None)
+Error: "❌ Неверный формат даты. Используйте ГГГГ-ММ-ДД (например: 1990-05-15)" + InfoMessages guidance
+Serialization: Fixed JSON serialization error for Airtable API
 ```
 
-**Age API** (Added 2025-09-10):
+**Age API** (Fixed 2025-09-11):
 ```
 Prompt: "🔢 Введите возраст (от 0 до 120):"
 Validation: Integer range 0-120
-Errors: "Возраст должен быть от 0 до 120" or "Возраст должен быть числом"
+Clearing: Whitespace-only input clears field (sets to None)
+Errors: "❌ Возраст должен быть от 0 до 120" or "❌ Возраст должен быть числом" + InfoMessages guidance
+Display: Fixed participant reconstruction to include age field in all contexts
 ```
 
 ### Save/Cancel APIs
@@ -365,8 +369,8 @@ class Participant(BaseModel):
     submitted_by: Optional[str] = None
     room_number: Optional[str] = None   # Room assignment (alphanumeric)
     floor: Optional[Union[int, str]] = None  # Floor number or name
-    date_of_birth: Optional[date] = None    # Date of birth (ISO date format) - Added 2025-09-10
-    age: Optional[int] = None               # Age in years (0-120 range) - Added 2025-09-10
+    date_of_birth: Optional[date] = None    # Date of birth (ISO date format) - Fixed 2025-09-11
+    age: Optional[int] = None               # Age in years (0-120 range) - Fixed 2025-09-11
 ```
 
 ### Field Mapping (Airtable) - Updated 2025-09-10
