@@ -170,10 +170,16 @@ class TestFloorSearchIntegration:
         # Execute floor search
         result_state = await handle_floor_search_command(update, context)
 
-        # Verify prompt message sent
-        update.message.reply_text.assert_called_once()
-        call_args = update.message.reply_text.call_args
-        assert "Пришлите номер этажа цифрой:" in call_args[1]["text"]
+        # Verify prompt messages sent (now sends two messages)
+        assert update.message.reply_text.call_count == 2
+
+        # First call should have the discovery message with inline keyboard
+        first_call = update.message.reply_text.call_args_list[0]
+        assert "Выберите этаж из списка" in first_call[1]["text"]
+
+        # Second call should have navigation reply keyboard
+        second_call = update.message.reply_text.call_args_list[1]
+        assert "Используйте кнопку выше" in second_call[1]["text"]
 
         # Verify correct state returned
         assert result_state == FloorSearchStates.WAITING_FOR_FLOOR
