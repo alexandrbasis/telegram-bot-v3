@@ -18,14 +18,15 @@ NAV_BACK_TO_SEARCH_MODES = "🔙 Назад к поиску"
 
 def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
     """
-    Get main menu reply keyboard with search mode selection button.
+    Get main menu reply keyboard with search and list access buttons.
 
-    Provides the primary navigation entry point that leads to search mode selection.
+    Provides the primary navigation entry point that leads to search mode selection
+    and participant list access functionality.
 
     Returns:
-        ReplyKeyboardMarkup with search mode selection button
+        ReplyKeyboardMarkup with search and get list buttons
     """
-    keyboard = [["🔍 Поиск участников"]]
+    keyboard = [["🔍 Поиск участников", "📋 Получить список"]]
     return ReplyKeyboardMarkup(
         keyboard, resize_keyboard=True, one_time_keyboard=False, selective=False
     )
