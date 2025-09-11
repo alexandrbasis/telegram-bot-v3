@@ -1085,6 +1085,42 @@ class TestDisplayUpdatedParticipant:
         assert "Старая церковь" not in result  # Original church should not appear
         # Role and gender changes should be reflected in formatting
 
+    def test_display_updated_participant_includes_date_of_birth_and_age(self):
+        """Test that participant reconstruction includes date_of_birth and age fields."""
+        from src.bot.handlers.edit_participant_handlers import (
+            display_updated_participant,
+        )
+
+        # Create original participant with date_of_birth and age
+        participant = Participant(
+            record_id="rec123",
+            full_name_ru="Иван Иванов",
+            full_name_en="Ivan Ivanov",
+            role=Role.CANDIDATE,
+            gender=Gender.MALE,
+            date_of_birth=date(1990, 5, 15),
+            age=33,
+        )
+
+        # Create context with date_of_birth and age changes
+        context = Mock()
+        context.user_data = {
+            "editing_changes": {
+                "date_of_birth": date(1995, 8, 20),
+                "age": 28,
+            }
+        }
+
+        # Call the function
+        result = display_updated_participant(participant, context)
+
+        # Should display updated date_of_birth and age values
+        assert "1995-08-20" in result  # Updated date_of_birth
+        assert "28" in result  # Updated age
+        # Original values should not appear
+        assert "1990-05-15" not in result
+        assert "33" not in result
+
 
 class TestDisplayRegressionIssue:
     """Test for critical regression where participant display fails during editing."""

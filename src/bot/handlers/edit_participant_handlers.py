@@ -150,6 +150,8 @@ def display_updated_participant(
             "payment_status", participant.payment_status
         ),
         payment_date=editing_changes.get("payment_date", participant.payment_date),
+        date_of_birth=editing_changes.get("date_of_birth", participant.date_of_birth),
+        age=editing_changes.get("age", participant.age),
         floor=editing_changes.get("floor", getattr(participant, "floor", None)),
         room_number=editing_changes.get(
             "room_number", getattr(participant, "room_number", None)
