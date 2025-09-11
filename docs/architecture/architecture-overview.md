@@ -75,8 +75,9 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Room/Floor search methods** (2025-09-04):
   - `find_by_room_number(room: str)` - Filter participants by room assignment
   - `find_by_floor(floor: Union[int, str])` - Filter participants by floor
-- **Floor discovery method** (2025-01-20):
+- **Floor discovery method** (Enhanced 2025-01-21):
   - `get_available_floors()` - Return floors containing participants with 5-minute caching
+  - **Interactive Floor Discovery Support**: Powers inline keyboard generation for seamless user experience
 - Field mapping between internal models and Airtable schema
 - Rate limiting and error recovery for update operations
 - **Security enhancements** with formula injection prevention
@@ -90,10 +91,11 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
 
-**Search Service Extensions** (2025-09-04, Enhanced 2025-01-20):
+**Search Service Extensions** (Enhanced 2025-01-21):
 - **Room-based search**: `search_by_room(room: str)` with input validation
 - **Floor-based search**: `search_by_floor(floor: Union[int, str])` with type conversion
-- **Floor discovery service**: `get_available_floors()` with 5-minute caching and error resilience
+- **Interactive Floor discovery service**: `get_available_floors()` with 5-minute caching and error resilience
+- **UI Integration Support**: Service methods designed to power interactive keyboard components
 - **Formatted results**: `search_by_room_formatted(room: str)` for UI consumption
 - **Validation utilities**: Comprehensive input validation with `ValidationResult` objects
 
@@ -122,6 +124,10 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Consistent layout patterns (2-3 columns, cancel buttons)
 - Dynamic option loading from enum definitions
 - **Search mode keyboards** (2025-09-04): Centralized search type selection with name/room/floor options
+- **Interactive Floor Discovery Keyboards** (2025-01-21):
+  - `get_floor_discovery_keyboard()`: Single button for floor discovery
+  - `get_floor_selection_keyboard()`: Dynamic buttons for available floors (3 per row)
+  - **Callback Data Patterns**: `floor_discovery` and `floor_select_{number}` for proper routing
 
 **Localization Strategy**:
 - Russian field names and labels
@@ -129,6 +135,10 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Russian navigation buttons and prompts
 - Enum value translation (M/F → Мужской/Женский)
 - **Complete Russian interface** for room/floor search functionality with mobile-optimized reply keyboards
+- **Interactive Floor Discovery Messages** (2025-01-21):
+  - Enhanced guidance: "Выберите этаж из списка или пришлите номер этажа цифрой:"
+  - Floor display headers and error messages in Russian
+  - Graceful fallback messages: "Произошла ошибка. Пришлите номер этажа цифрой."
 
 **Navigation Architecture** (Enhanced 2025-09-04):
 - **Multi-mode Search Interface**: Unified entry point with mode selection
@@ -186,11 +196,18 @@ User Input → Handler → Service (validation) → Repository → Airtable API
 UI Response ← Keyboard ← Error/Success ← Update Result ← API Response
 ```
 
-**Room/Floor Search Flow** (2025-09-04):
+**Room/Floor Search Flow** (Enhanced 2025-01-21):
 ```
-Search Mode Selection → Room/Floor Input → Validation → Repository Query → Formatted Results
-        ↓                                                                          ↓
-Reply Keyboard ← Russian Messages ← Error Handling ← Service Layer ← Result Formatting
+Search Mode Selection → Enhanced Floor Input → Interactive Discovery OR Manual Input → Validation → Repository Query → Formatted Results
+        ↓                         ↓                           ↓                                                     ↓
+Reply Keyboard ← Enhanced Russian Messages ← Callback Handling ← Service Layer ← Interactive Keyboard Generation ← Result Formatting
+```
+
+**Interactive Floor Discovery Flow** (New 2025-01-21):
+```
+Floor Discovery Button Click → Callback Handler → get_available_floors() → Floor Selection Keyboard → User Floor Click → Floor Search
+              ↓                        ↓                      ↓                         ↓                       ↓
+      Callback Acknowledgment ← Error Recovery ← Cached Results ← Dynamic Button Gen ← Message Edit ← Search Execution
 ```
 
 ## Scalability Considerations

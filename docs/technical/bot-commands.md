@@ -44,14 +44,21 @@ Search for participants assigned to a specific room number with enhanced structu
 ```
 
 ### /search_floor [floor_number]
-Search for participants on a specific floor with room-by-room breakdown.
+Search for participants on a specific floor with room-by-room breakdown. Features interactive floor discovery for enhanced user experience.
 
 **Usage Examples:**
 - `/search_floor 2` - Find all participants on floor 2
 - `/search_floor 1` - Find all participants on floor 1
 - `/search_floor Ground` - Find participants on ground floor
 
-**Features:**
+**Enhanced Interactive Features (2025-01-21):**
+- **Interactive Floor Discovery**: "Показать доступные этажи" button reveals available floors without guessing
+- **Floor Selection Buttons**: Available floors display as clickable "Этаж 1", "Этаж 2" buttons for direct selection
+- **Dual Input Methods**: Users can discover floors via button or manually enter floor numbers
+- **Enhanced Guidance**: Clear instructions show both button interaction and manual input options in Russian
+- **Error Fallback**: If discovery fails, users get manual input guidance: "Произошла ошибка. Пришлите номер этажа цифрой."
+
+**Core Features:**
 - **Room Grouping**: Results organized by room with participant counts
 - **Smart Sorting**: Numeric rooms sorted numerically, then alphabetically
 - **Floor Overview**: Shows total participant count and room distribution
@@ -60,6 +67,14 @@ Search for participants on a specific floor with room-by-room breakdown.
 - **Navigation**: Reply keyboard for search mode selection
 
 **Button Functionality**: The search button uses ConversationHandler with proper state management (SearchStates: 10-12) and per_message configuration to ensure reliable button response.
+
+**Interactive Floor Discovery Workflow (2025-01-21):**
+1. User clicks "🏢 По этажу" from search mode selection
+2. Bot displays enhanced prompt: "Выберите этаж из списка или пришлите номер этажа цифрой:" with "Показать доступные этажи" button
+3. **Interactive Discovery Path**: User clicks discovery button → Bot shows available floors as "Этаж 1", "Этаж 2" buttons (3 per row)
+4. **Direct Selection**: User clicks floor button → Bot triggers floor search automatically
+5. **Manual Input Path**: User types floor number → Bot processes search as before
+6. **Error Recovery**: API failures show helpful fallback message with manual input guidance
 
 ## Get List Commands
 

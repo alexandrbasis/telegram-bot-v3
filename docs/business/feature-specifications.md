@@ -205,11 +205,11 @@ Fields:
 ## Room and Floor Search Functionality
 
 ### Overview
-Complete location-based participant search functionality enabling users to find participants by room number or floor assignment. Includes both backend data layer and full frontend user interface implementation with enhanced Russian language support.
+Complete location-based participant search functionality enabling users to find participants by room number or floor assignment. Includes both backend data layer and full frontend user interface implementation with enhanced Russian language support and interactive floor discovery.
 
-**Status**: ✅ Enhanced Implementation (2025-01-09)
-**Implementation**: Backend services + Frontend handlers with structured Russian UI and translation utilities
-**Test Coverage**: Enhanced test suite with comprehensive translation and formatting coverage
+**Status**: ✅ Enhanced Implementation with Interactive UI (2025-01-21)
+**Implementation**: Backend services + Frontend handlers with structured Russian UI, translation utilities, and interactive floor discovery
+**Test Coverage**: Enhanced test suite with comprehensive translation, formatting, and interactive UI component coverage
 
 ### Core Features
 
@@ -240,11 +240,20 @@ def format_room_results_russian(participants: List[Participant], room: str) -> s
     # Formats results with Russian labels, role/department translations, and floor info
 ```
 
-#### 2. Floor-Based Search
+#### 2. Floor-Based Search with Interactive Discovery
 - **Purpose**: Find all participants on a specific floor, optionally grouped by room
-- **Input**: Floor number or name (Union[int, str]: 1, "2", "Ground")
+- **Input Methods**: 
+  - **Interactive Discovery**: "Показать доступные этажи" button reveals clickable floor options
+  - **Manual Input**: Floor number or name (Union[int, str]: 1, "2", "Ground")
 - **Validation**: Accepts both numeric and string floor identifiers
 - **Output**: List of participants filtered by floor assignment
+
+**Interactive Floor Discovery Features (2025-01-21):**
+- **Floor Discovery Button**: Single inline button "Показать доступные этажи" with callback_data `floor_discovery`
+- **Floor Selection Interface**: Available floors display as clickable "Этаж 1", "Этаж 2" buttons (3 per row layout)
+- **Enhanced User Guidance**: Messages include both button interaction and manual input options in Russian
+- **Error Handling**: API failures gracefully fall back to manual input with clear guidance
+- **Message Editing**: Discovery callback edits original message to show floors list for seamless UX
 
 **Technical Implementation**:
 ```python
@@ -318,12 +327,14 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult
 #### Repository Layer Extensions
 - **File**: `src/data/airtable/airtable_participant_repo.py`
 - **Methods**: `find_by_room_number()`, `find_by_floor()` (lines 983-1055)
+- **New Method**: `get_available_floors()` - Returns floors containing participants with 5-minute caching
 - **Features**: Async/await support, comprehensive error handling, participant conversion
 
 #### Service Layer Extensions
 - **File**: `src/services/search_service.py`
 - **Methods**: `search_by_room()`, `search_by_floor()`, `search_by_room_formatted()` (lines 435-503)
-- **Features**: Input validation, error handling, result formatting
+- **New Method**: `get_available_floors()` - Interactive floor discovery with caching and error resilience
+- **Features**: Input validation, error handling, result formatting, interactive floor discovery support
 
 #### Validation Utilities
 - **File**: `src/utils/validation.py` (NEW FILE)
@@ -354,14 +365,16 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult
 
 ### Integration Points
 
-#### Frontend Implementation (Completed 2025-09-04)
+#### Frontend Implementation (Enhanced 2025-01-21)
 - **Command Handlers**: `/search_room` and `/search_floor` commands fully implemented
-- **Conversation Flow**: Complete ConversationHandler integration with state management
+- **Interactive UI Components**: Floor discovery inline keyboards with Russian messages and callback handlers
+- **Conversation Flow**: Complete ConversationHandler integration with state management and callback processing
 - **Russian Interface**: Full Russian language support with localized messages and keyboards
 - **Search Mode Selection**: Reply keyboard navigation between name/room/floor search modes
 - **Result Formatting**: Room-by-room breakdown for floor searches, formatted participant lists for room searches
 - **Input Validation**: User-friendly Russian error messages for invalid room/floor inputs
 - **Mobile Optimization**: Reply keyboards designed for mobile device constraints
+- **Enhanced User Experience**: Dual-input support (interactive buttons + manual input) with graceful error fallback
 
 #### Existing System Integration
 - **Search Service**: Extends existing SearchService without breaking changes
@@ -381,6 +394,11 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult
 - [✓] ✅ No regressions in existing search functionality
 - [✓] ✅ Proper field mapping alignment with Airtable schema
 - [✓] ✅ Code quality meets project standards (linting, type checking)
+- [✓] ✅ Interactive floor discovery eliminates user guesswork for available floors
+- [✓] ✅ Floor selection buttons provide intuitive click-to-search experience
+- [✓] ✅ Dual input methods (interactive + manual) accommodate all user preferences
+- [✓] ✅ Russian language consistency maintained across all interactive UI elements
+- [✓] ✅ Graceful error handling with fallback to manual input when discovery fails
 
 ### Technical Implementation Details
 
