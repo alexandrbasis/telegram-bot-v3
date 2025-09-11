@@ -148,9 +148,7 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
     # Append demographic info: Date of Birth and Age
     date_of_birth_val = getattr(participant, "date_of_birth", None)
     date_of_birth_display = (
-        date_of_birth_val.isoformat()
-        if date_of_birth_val is not None
-        else "N/A"
+        date_of_birth_val.isoformat() if date_of_birth_val is not None else "N/A"
     )
     age_display = (
         f"{participant.age} years"
