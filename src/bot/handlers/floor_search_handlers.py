@@ -359,8 +359,9 @@ async def handle_floor_selection_callback(
             query.message, context, floor_number, user.id
         )
 
-        # Send results by editing the message again
-        await query.message.edit_text(
+        # Important: can't attach ReplyKeyboardMarkup via edit_text (inline only)
+        # Send results as a new message to include reply keyboard
+        await query.message.reply_text(
             text=results_message, reply_markup=get_results_navigation_keyboard()
         )
 
