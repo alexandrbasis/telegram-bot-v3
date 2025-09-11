@@ -135,16 +135,17 @@ class TestTimeoutRecoveryIntegration:
         conversation_handler = get_search_conversation_handler()
         entry_points = conversation_handler.entry_points
 
-        # Should have at least 6 entry points:
+        # Should have at least 7 entry points:
         # - /start command
         # - /search_room command
         # - /search_floor command
         # - Main Menu text button
         # - Search text button
+        # - Get List text button
         # - Search callback query (for stale inline buttons)
         assert (
-            len(entry_points) >= 6
-        ), f"Expected at least 6 entry points, got {len(entry_points)}"
+            len(entry_points) >= 7
+        ), f"Expected at least 7 entry points, got {len(entry_points)}"
 
         # Check that we have the expected types of entry points
         command_handlers = [ep for ep in entry_points if hasattr(ep, "commands")]
@@ -164,10 +165,10 @@ class TestTimeoutRecoveryIntegration:
             len(command_handlers) == 3
         ), f"Expected 3 command handlers, got {len(command_handlers)}"
 
-        # Should have 2 message handlers (Main Menu, Search)
+        # Should have 3 message handlers (Main Menu, Search, Get List)
         assert (
-            len(message_handlers) == 2
-        ), f"Expected 2 message handlers, got {len(message_handlers)}"
+            len(message_handlers) == 3
+        ), f"Expected 3 message handlers, got {len(message_handlers)}"
 
         # Should have 1 callback query handler (search)
         assert (

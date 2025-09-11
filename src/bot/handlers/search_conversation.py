@@ -29,6 +29,11 @@ from src.bot.handlers.floor_search_handlers import (
     handle_floor_search_command,
     process_floor_search,
 )
+from src.bot.handlers.list_handlers import (
+    handle_get_list_request,
+    handle_list_navigation,
+    handle_role_selection,
+)
 from src.bot.handlers.room_search_handlers import (
     RoomSearchStates,
     handle_room_search_command,
@@ -93,6 +98,9 @@ def get_search_conversation_handler() -> ConversationHandler:
             # Entry points for text buttons to allow re-entry after timeout
             MessageHandler(filters.Regex("^🔍 Поиск участников$"), search_button),
             MessageHandler(
+                filters.Regex("^📋 Получить список$"), handle_get_list_request
+            ),
+            MessageHandler(
                 filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
             ),
             # Keep inline button support for stale buttons
@@ -101,10 +109,16 @@ def get_search_conversation_handler() -> ConversationHandler:
         states={
             # === SEARCH STATES ===
             SearchStates.MAIN_MENU: [
-                # New: text-based navigation from reply keyboard
+                # Text-based navigation from reply keyboard
                 MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
+                MessageHandler(
+                    filters.Regex(r"^📋 Получить список$"), handle_get_list_request
+                ),
                 # Backward compat (if any inline button remains)
                 CallbackQueryHandler(search_button, pattern="^search$"),
+                # List callback handlers for role selection and navigation
+                CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
+                CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
             ],
             SearchStates.SEARCH_MODE_SELECTION: [
                 # Search mode selection handlers
@@ -123,6 +137,9 @@ def get_search_conversation_handler() -> ConversationHandler:
                 MessageHandler(
                     filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
                 ),
+                # List handlers for role selection and navigation
+                CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
+                CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
             ],
             SearchStates.WAITING_FOR_NAME: [
                 # Name input

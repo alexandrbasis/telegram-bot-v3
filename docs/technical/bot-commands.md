@@ -61,6 +61,123 @@ Search for participants on a specific floor with room-by-room breakdown.
 
 **Button Functionality**: The search button uses ConversationHandler with proper state management (SearchStates: 10-12) and per_message configuration to ensure reliable button response.
 
+## Get List Commands
+
+### Get List Button and Bulk Access
+Access pre-filtered participant lists by role for quick bulk viewing. Available via main menu "📋 Получить список" button alongside the search functionality.
+
+**Main Menu Integration**: The Get List button provides instant access to categorized participant lists without requiring search queries, ideal for administrative tasks and logistics planning.
+
+**Usage Flow:**
+1. User clicks "📋 Получить список" from main menu
+2. Bot displays role selection: "👥 Команда" (Team) or "🎯 Кандидаты" (Candidates)
+3. User selects desired role
+4. Bot displays paginated numbered list with all participants in that role
+5. Navigation with "◀️ Назад", "▶️ Далее", and "🏠 Главное меню" buttons
+
+### Team Members List
+View complete list of all team members with comprehensive details for logistics and organization planning.
+
+**Features:**
+- **Server-side Role Filtering**: Efficient Airtable filtering by role="TEAM"
+- **Numbered List Format**: Sequential numbering (1., 2., 3.) for easy reference
+- **Complete Information**: Full name (Russian), clothing size, church, date of birth (DD.MM.YYYY)
+- **Pagination**: Dynamic page size with Telegram 4096-character message limit handling
+- **Offset-based Navigation**: Ensures no participants are skipped during pagination
+
+**Display Example:**
+```
+**Список участников команды** (элементы 1-20 из 45)
+
+1. **Иван Петров**
+   👕 Размер: M
+   ⛪ Церковь: Храм Христа Спасителя
+   📅 Дата рождения: 15.06.1985
+
+2. **Мария Иванова**
+   👕 Размер: S
+   ⛪ Церковь: Церковь Святого Николая
+   📅 Дата рождения: 22.03.1990
+
+... (continues with remaining participants)
+```
+
+### Candidates List
+View complete list of all candidates with the same comprehensive formatting as team members.
+
+**Features:**
+- **Server-side Role Filtering**: Efficient Airtable filtering by role="CANDIDATE"
+- **Identical Format**: Same numbered list format and information display as team list
+- **Consistent Navigation**: Same pagination and navigation controls
+- **Administrative Focus**: Designed for candidate management and review processes
+
+**Display Example:**
+```
+**Список кандидатов** (элементы 1-18 из 32)
+
+1. **Анна Козлова**
+   👕 Размер: L
+   ⛪ Церковь: Церковь Покрова
+   📅 Дата рождения: 08.12.1988
+
+2. **Петр Смирнов**
+   👕 Размер: XL
+   ⛪ Церковь: Собор Александра Невского
+   📅 Дата рождения: Не указано
+
+... (continues with remaining participants)
+```
+
+### Pagination and Navigation
+Lists support robust pagination designed to handle large datasets without losing participants.
+
+**Navigation Controls:**
+- **"◀️ Назад" (Previous)**: Navigate to previous page of results
+- **"▶️ Далее" (Next)**: Navigate to next page of results  
+- **"🏠 Главное меню" (Main Menu)**: Return to main menu and exit list view
+
+**Technical Features:**
+- **Offset-based Pagination**: Prevents participant skipping when content is trimmed for message length limits
+- **Dynamic Page Sizing**: Automatically adjusts number of participants per page to stay under 4096 character limit
+- **Continuity Guarantee**: Ensures all participants are accessible across pages without gaps or duplicates
+- **State Management**: Maintains current position and role context during navigation
+
+### Empty Result Handling
+Graceful handling when no participants exist for selected role.
+
+**Empty Team List:**
+```
+Участники не найдены.
+```
+
+**Empty Candidate List:**
+```
+Участники не найдены.
+```
+
+### Use Case Examples
+
+#### Event Logistics Planning
+**Scenario**: Event organizer needs clothing sizes for all team members
+1. Click "📋 Получить список" → "👥 Команда"
+2. Review complete team list with sizes displayed for each participant
+3. Navigate through pages to access all 45+ team members
+4. Export or reference information for logistics planning
+
+#### Candidate Review Process  
+**Scenario**: Review committee needs complete candidate roster
+1. Click "📋 Получить список" → "🎯 Кандидаты"
+2. View numbered list of all candidates with church affiliations
+3. Use pagination to systematically review all candidates
+4. Reference participant numbers for committee discussions
+
+#### Administrative Tasks
+**Scenario**: Quick access to specific participant categories without search queries
+1. Instant access via main menu button (2-click workflow)
+2. No search terms or filters required - complete category view
+3. Efficient server-side filtering prevents loading unnecessary data
+4. Consistent formatting for easy scanning and reference
+
 **Usage Examples:**
 - `/search Иван` - Find participants with "Иван" in their name
 - `/search John` - Find participants with "John" in their name  

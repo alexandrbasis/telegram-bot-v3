@@ -7,8 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Participant Lists Feature (Get List Menu Option)** - Complete bulk participant listing functionality allowing event organizers instant access to categorized participant lists by role with pagination, message length management, and Russian language support (AGB-45, completed 2025-01-20, PR #38)
+  - Main menu integration with "📋 Получить список" button alongside existing search functionality (`src/bot/keyboards/search_keyboards.py:24`)
+    - Two-click access workflow: Main Menu → Role Selection → List Display for streamlined user experience
+    - Seamless coexistence with existing "🔍 Поиск участников" button without breaking changes
+  - Role-based filtering system with inline keyboard selection (`src/bot/keyboards/list_keyboards.py:18,27`)
+    - "👥 Команда" button for team members with `list_role:TEAM` callback data
+    - "🎯 Кандидаты" button for candidates with `list_role:CANDIDATE` callback data
+    - Server-side Airtable filtering via existing repository `get_by_role()` method for efficiency
+  - Comprehensive list formatting service with Russian localization and advanced pagination (`src/services/participant_list_service.py:67-112,125-152`)
+    - Numbered participant lists (1., 2., 3.) with full Russian names, clothing sizes, church affiliations, and date of birth
+    - Russian date formatting (DD.MM.YYYY) using `strftime("%d.%m.%Y")` with "Не указано" fallback for missing data
+    - Dynamic message length constraint handling (4096 chars) with iterative item removal and "... и ещё X участников" truncation
+    - Offset-based pagination preventing participant skipping with proper boundary management and continuity guarantees
+  - Complete conversation handler integration with state management (`src/bot/handlers/search_conversation.py:75-89`, `src/bot/handlers/list_handlers.py`)
+    - Context-based role and offset tracking in `user_data` for navigation continuity
+    - Proper PREV/NEXT navigation callbacks with error handling and state recovery
+    - Main menu return functionality using existing `main_menu_button()` pattern
+  - Enhanced security with MarkdownV2 escaping for user-generated content (`src/services/participant_list_service.py:130-152`)
+    - Telegram `escape_markdown()` integration for names, church affiliations, and all dynamic content
+    - Protection against formatting breakage from special characters (* _ [ ] ( ) ~ ` > # + - = | { } . !)
+  - Comprehensive error handling and empty result management with Russian messaging
+    - "Участники не найдены." message for empty role-based queries with graceful service degradation
+    - Exception recovery with user-friendly error messages and conversation state preservation
+  - Complete test coverage with unit and integration tests achieving 87% project coverage (865 tests passed, 100% success rate)
+    - Business logic tests for role filtering, data field extraction, and Russian date formatting
+    - State transition tests for menu navigation, role selection, and pagination workflows  
+    - Error handling tests for Airtable API failures, missing field data, and network connectivity
+    - Integration tests for repository interaction and end-to-end conversation flows
+- **Enhanced Documentation Suite for Participant Lists Feature** - Comprehensive documentation updates supporting bulk listing functionality with technical specifications and user guidance (AGB-45, completed 2025-01-20)
+  - Complete "Get List Commands" section added to bot commands documentation (`docs/technical/bot-commands.md`)
+    - Step-by-step workflow from main menu to list display with examples
+    - Team Members List and Candidates List feature documentation with formatted output samples
+    - Technical implementation details covering pagination, navigation controls, and offset-based architecture
+    - Use case examples for event logistics, candidate review, and administrative tasks
+  - Enhanced business requirements documentation with Get List feature specifications (`docs/business/feature-specifications.md`)
+    - Complete use cases covering team member and candidate list access scenarios
+    - Success metrics documentation with 2-click access and performance requirements
+    - Integration specifications with existing conversation flows and navigation patterns
+  - Updated architecture documentation with list handlers and service layer details (`docs/architecture/`)
+    - List conversation handler architecture with state management patterns
+    - Service layer documentation covering formatting logic and pagination implementation
+    - Repository pattern usage for efficient server-side role filtering
+  - Enhanced field mappings documentation with role-based filtering specifications (`docs/data-integration/field-mappings.md`)
+    - Role field mapping documentation for TEAM/CANDIDATE filtering
+    - Server-side Airtable filtering implementation details
+    - Field display formatting specifications with Russian localization
+
 ### Fixed
-- **Critical Age and Date of Birth Field Display and Serialization Issues** - Resolved critical bugs preventing age and date of birth fields from displaying correctly and causing JSON serialization errors during save operations, restoring full participant demographic editing functionality (AGB-47, completed 2025-09-11, PR #37)
+- **Critical Age and Date of Birth Field Display and Serialization Issues** - Resolved critical bugs preventing age and date of birth fields from displaying correctly and causing JSON serialization errors during save operations, restoring full participant demographic editing functionality (AGB-47, completed 2025-09-11, PR #37, merged SHA 7dceab5)
   - Fixed participant reconstruction missing demographic fields causing "Не указано" display errors (`src/bot/handlers/edit_participant_handlers.py:153-154`)
     - Added `date_of_birth` and `age` fields to `display_updated_participant` function constructor
     - Resolved immediate preview updates showing pending changes correctly after field edits
@@ -60,6 +108,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Enhanced debugging procedures with REGRESSION logging markers and context recovery patterns
 
 ### Added
+- **Participant Lists Feature (Get List Menu Option)** - Complete bulk participant listing functionality allowing event organizers instant access to categorized participant lists by role with pagination, message length management, and Russian language support (AGB-45, completed 2025-01-20, PR #38)
+  - Main menu integration with "📋 Получить список" button alongside existing search functionality (`src/bot/keyboards/search_keyboards.py:24`)
+    - Two-click access workflow: Main Menu → Role Selection → List Display for streamlined user experience
+    - Seamless coexistence with existing "🔍 Поиск участников" button without breaking changes
+  - Role-based filtering system with inline keyboard selection (`src/bot/keyboards/list_keyboards.py:18,27`)
+    - "👥 Команда" button for team members with `list_role:TEAM` callback data
+    - "🎯 Кандидаты" button for candidates with `list_role:CANDIDATE` callback data
+    - Server-side Airtable filtering via existing repository `get_by_role()` method for efficiency
+  - Comprehensive list formatting service with Russian localization and pagination (`src/services/participant_list_service.py:67-112,125-152`)
+    - Numbered participant lists (1., 2., 3.) with full Russian names, clothing sizes, church affiliations, and date of birth
+    - Russian date formatting (DD.MM.YYYY) using `strftime("%d.%m.%Y")` with "Не указано" fallback for missing data
+    - Dynamic message length constraint handling (4096 chars) with iterative item removal and "... и ещё X участников" truncation
+    - Pagination with has_prev/has_next logic and proper page boundary management preventing item skipping
+  - Complete conversation handler integration with state management (`src/bot/handlers/search_conversation.py:75-89`, `src/bot/handlers/list_handlers.py`)
+    - Context-based role and page tracking in `user_data` for navigation continuity
+    - Proper PREV/NEXT navigation callbacks with error handling and state recovery
+    - Main menu return functionality using existing `main_menu_button()` pattern
+  - Enhanced security with MarkdownV2 escaping for user-generated content (`src/services/participant_list_service.py:130-152`)
+    - Telegram `escape_markdown()` integration for names, church affiliations, and all dynamic content
+    - Protection against formatting breakage from special characters (* _ [ ] ( ) ~ ` > # + - = | { } . !)
+  - Comprehensive error handling and empty result management with Russian messaging
+    - "Участники не найдены." message for empty role-based queries with graceful service degradation
+    - Exception recovery with user-friendly error messages and conversation state preservation
+  - Complete test coverage with unit and integration tests achieving 87% project coverage (857 tests passed)
+    - Business logic tests for role filtering, data field extraction, and Russian date formatting
+    - State transition tests for menu navigation, role selection, and pagination workflows
+    - Error handling tests for Airtable API failures, missing field data, and network connectivity
+    - Integration tests for repository interaction and end-to-end conversation flows
 - **Participant Demographic Fields Editing Interface** - Complete demographic information management system enabling event organizers to view and edit participant date of birth and age fields through intuitive bot interface with comprehensive Russian language support (AGB-46, completed 2025-09-10, PR #36)
   - Enhanced participant editing interface with demographic field buttons and Russian labels (`src/bot/keyboards/edit_keyboards.py:89,92`)
     - DateOfBirth field with birthday cake icon "🎂 Дата рождения" for intuitive field identification

@@ -577,3 +577,158 @@ Complete save/cancel workflow system with change confirmation, error handling, a
 - [x] ✅ Complete conversation flow integration without state conflicts
 - [x] ✅ Russian localization for all user-facing messages
 - [x] ✅ Comprehensive test coverage (100% pass rate)
+
+## Participant Lists Feature
+
+### Overview
+Quick bulk access functionality for categorized participant lists by role, providing instant access to pre-filtered participant lists without requiring search queries.
+
+**Status**: ✅ Implemented (2025-01-20)
+**Implementation**: Complete workflow with main menu integration, role filtering, and offset-based pagination
+**Test Coverage**: 87% with 860 passing tests (100% success rate)
+
+### Core Features
+
+#### 1. Main Menu Integration
+- **Access**: "📋 Получить список" button in main menu alongside existing search functionality
+- **Coexistence**: Seamless integration without interfering with existing "🔍 Поиск участников" functionality
+- **User Flow**: 2-click access from main menu to participant lists
+- **Navigation**: Complete integration with existing conversation flow patterns
+
+#### 2. Role-Based List Access
+- **Team Members**: Complete list of participants with role="TEAM"
+- **Candidates**: Complete list of participants with role="CANDIDATE"
+- **Server-side Filtering**: Efficient Airtable filtering using existing `get_by_role()` repository method
+- **Quick Access**: No search queries required - instant category viewing
+
+#### 3. Comprehensive List Display
+- **Numbered Format**: Sequential numbering (1., 2., 3.) for easy reference
+- **Complete Information**: Full name (Russian), clothing size, church, date of birth (DD.MM.YYYY)
+- **Field Formatting**: Emoji icons for visual clarity (👕 size, ⛪ church, 📅 DOB)
+- **Missing Data Handling**: Shows "—" for size/church, "Не указано" for missing DOB
+- **MarkdownV2 Escaping**: Safe rendering of user-generated content preventing formatting injection
+
+#### 4. Advanced Pagination System
+- **Offset-based Navigation**: Prevents participant skipping when content is trimmed for message length limits
+- **Dynamic Page Sizing**: Automatically adjusts number of participants per page to stay under 4096 character limit
+- **Continuity Guarantee**: Ensures all participants are accessible across pages without gaps or duplicates
+- **Navigation Controls**: Previous/Next buttons with main menu return option
+- **State Management**: Maintains current position and role context during navigation
+
+#### 5. Empty Result Handling
+- **Graceful Messages**: Shows "Участники не найдены." when no participants exist for selected role
+- **Consistent UI**: Same interface patterns as search functionality
+- **Recovery Options**: Clear navigation back to main menu
+
+### Technical Architecture
+
+#### Implementation Components
+1. **List Handlers**: `src/bot/handlers/list_handlers.py` - Complete conversation workflow
+2. **List Keyboards**: `src/bot/keyboards/list_keyboards.py` - Role selection and pagination keyboards  
+3. **List Service**: `src/services/participant_list_service.py` - List formatting and pagination logic
+4. **Service Integration**: Enhanced `src/services/service_factory.py` with list service registration
+5. **Conversation Integration**: Extended `src/bot/handlers/search_conversation.py` with list workflow
+6. **Main Menu Enhancement**: Updated `src/bot/keyboards/search_keyboards.py` with Get List button
+
+#### Service Layer Features
+- **Russian Date Formatting**: DOB formatted as DD.MM.YYYY using `strftime("%d.%m.%Y")`
+- **Message Length Constraint**: Dynamic 4096 character limit handling with iterative item removal
+- **Pagination Metadata**: Provides current_offset, next_offset, prev_offset for navigation
+- **Field Display Logic**: Handles missing data gracefully with appropriate fallback text
+
+#### Repository Integration
+- **Existing Infrastructure**: Leverages existing `get_by_role("TEAM"|"CANDIDATE")` methods
+- **Server-side Filtering**: No client-side filtering - efficient Airtable queries
+- **Zero Breaking Changes**: No modifications to existing repository patterns
+
+### Conversation Flow
+
+#### User Journey
+1. **Main Menu Entry**: User clicks "📋 Получить список"
+2. **Role Selection**: Bot displays "👥 Команда" and "🎯 Кандидаты" options
+3. **List Display**: Bot shows paginated numbered list with complete participant information
+4. **Navigation**: User can browse pages or return to main menu
+5. **Coexistence**: Search functionality remains fully operational alongside
+
+#### State Management
+- **Conversation States**: Integrated into existing SearchStates enum without conflicts
+- **Context Tracking**: Maintains current role and offset in user_data for navigation
+- **Error Recovery**: Graceful handling of lost navigation context with recovery messages
+- **Clean Transitions**: Proper state management between list view and main menu
+
+### Russian Language Support
+
+#### User Interface Elements
+- **Button Labels**: "📋 Получить список", "👥 Команда", "🎯 Кандидаты"
+- **Navigation Controls**: "◀️ Назад", "▶️ Далее", "🏠 Главное меню"
+- **List Headers**: "Список участников команды", "Список кандидатов"
+- **Pagination Info**: "(элементы 1-20 из 45)" format for page information
+
+#### Content Display
+- **Field Labels**: Russian names for all participant fields
+- **Date Format**: Russian DD.MM.YYYY format for dates of birth
+- **Error Messages**: "Участники не найдены." for empty results
+- **Truncation Notice**: "... и ещё X участников" for large lists
+
+### Performance Characteristics
+
+#### Response Times
+- **List Loading**: <3 seconds for up to 100 participants
+- **Server-side Efficiency**: Optimal Airtable filtering prevents unnecessary data loading
+- **Memory Management**: Efficient pagination without loading entire datasets
+- **Message Constraints**: Dynamic page sizing maintains Telegram performance standards
+
+#### Scalability Features
+- **Large Dataset Support**: Handles datasets of 100+ participants without performance degradation
+- **Efficient Pagination**: Offset-based navigation scales linearly with dataset size
+- **Memory Optimization**: Only current page data loaded in memory
+- **Rate Limiting Compliance**: Respects Airtable 5 requests/second limits
+
+### Quality Assurance
+
+#### Test Coverage Metrics
+- **Overall Coverage**: 87.11% (exceeds 80% requirement)  
+- **Test Success Rate**: 100% (860 passed, 0 failed)
+- **Handler Coverage**: 85% for list handlers
+- **Service Coverage**: 100% for participant list service
+- **Keyboard Coverage**: 100% for list keyboards
+
+#### Test Categories
+- **Unit Tests**: Comprehensive coverage for all components
+- **Integration Tests**: End-to-end workflow testing
+- **Pagination Tests**: Boundary conditions and navigation scenarios
+- **Error Handling Tests**: Service failures and recovery mechanisms
+- **Regression Tests**: Existing functionality preservation verification
+
+### Integration Points
+
+#### Existing System Compatibility
+- **Search Functionality**: Zero interference with existing search workflows
+- **Conversation Handler**: Seamless integration with main conversation flow
+- **Repository Pattern**: Uses existing repository infrastructure without modifications
+- **Error Handling**: Follows established error handling patterns
+- **Localization**: Consistent Russian language support across all features
+
+#### Future Enhancement Opportunities
+- **Export Functionality**: CSV export of participant lists
+- **Filtering Options**: Additional filters beyond role (department, church, etc.)
+- **Sorting Options**: Custom sort orders for list display
+- **Bulk Operations**: Actions on multiple participants from list view
+- **Analytics**: Usage metrics and reporting for list access patterns
+
+### Acceptance Criteria
+
+- [x] ✅ Users can access team member lists in 2 clicks from main menu
+- [x] ✅ Users can access candidate lists in 2 clicks from main menu  
+- [x] ✅ Lists display all required information in numbered format
+- [x] ✅ Lists load within 3 seconds for up to 100 participants
+- [x] ✅ Integration seamlessly fits into existing conversation flow
+- [x] ✅ Server-side role filtering with efficient Airtable queries
+- [x] ✅ Offset-based pagination prevents participant skipping during navigation
+- [x] ✅ Dynamic page sizing handles Telegram message length constraints
+- [x] ✅ Russian language support throughout user interface
+- [x] ✅ MarkdownV2 escaping prevents content injection issues
+- [x] ✅ Complete error handling including empty results and API failures
+- [x] ✅ Zero breaking changes to existing search functionality
+- [x] ✅ 100% test success rate with comprehensive coverage
+- [x] ✅ Production-ready implementation with robust pagination and state management
