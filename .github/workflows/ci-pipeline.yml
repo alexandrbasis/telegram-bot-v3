@@ -151,4 +151,7 @@ jobs:
           docker run --rm --entrypoint python
           -e TELEGRAM_BOT_TOKEN=dummy
           -e AIRTABLE_API_KEY=dummy
+          -e AIRTABLE_BASE_ID=appTestBase
+          -e AIRTABLE_TABLE_NAME=Participants
+          -e AIRTABLE_TABLE_ID=tblTestTable
           app:ci -c "from src.main import create_application; create_application(); print('ok')"
