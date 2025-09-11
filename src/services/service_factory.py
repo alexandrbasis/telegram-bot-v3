@@ -10,6 +10,7 @@ from src.config.settings import get_settings
 from src.data.airtable.airtable_client import AirtableClient
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.services.search_service import SearchService
+from src.services.participant_list_service import ParticipantListService
 
 
 def get_participant_repository() -> AirtableParticipantRepository:
@@ -38,3 +39,16 @@ def get_search_service() -> SearchService:
     repository = get_participant_repository()
     # Pass repository via keyword to match SearchService signature
     return SearchService(repository=repository)
+
+
+def get_participant_list_service() -> ParticipantListService:
+    """
+    Get participant list service instance.
+
+    Centralized factory method for participant list service creation with repository.
+
+    Returns:
+        ParticipantListService: Configured participant list service instance
+    """
+    repository = get_participant_repository()
+    return ParticipantListService(repository)

@@ -12,6 +12,7 @@ from src.bot.keyboards.list_keyboards import (
     get_role_selection_keyboard,
     get_list_pagination_keyboard,
 )
+from src.services import service_factory
 
 
 async def handle_get_list_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -47,21 +48,45 @@ async def handle_role_selection(update: Update, context: ContextTypes.DEFAULT_TY
     # Extract role from callback data
     role = query.data.split(":")[1]
     
-    if role == "TEAM":
-        message_text = "**Список участников команды**\n\n[Список будет отображен здесь]"
-    elif role == "CANDIDATE":
-        message_text = "**Список кандидатов**\n\n[Список будет отображен здесь]"
-    else:
-        message_text = "Неизвестный тип списка"
+    # Get participant list service
+    list_service = service_factory.get_participant_list_service()
     
-    # Add pagination keyboard (no prev/next for now)
-    keyboard = get_list_pagination_keyboard(has_prev=False, has_next=False)
-    
-    await query.edit_message_text(
-        text=message_text,
-        reply_markup=keyboard,
-        parse_mode='Markdown'
-    )
+    try:
+        # Get participant data based on role
+        if role == "TEAM":
+            data = await list_service.get_team_members_list(page=1, page_size=20)
+            title = "**Список участников команды**"
+        elif role == "CANDIDATE":
+            data = await list_service.get_candidates_list(page=1, page_size=20)
+            title = "**Список кандидатов**"
+        else:
+            await query.edit_message_text(
+                text="Неизвестный тип списка",
+                parse_mode='Markdown'
+            )
+            return
+        
+        # Format message with title and participant data
+        message_text = f"{title}\n\n{data['formatted_list']}"
+        
+        # Add pagination keyboard based on data
+        keyboard = get_list_pagination_keyboard(
+            has_prev=data['has_prev'], 
+            has_next=data['has_next']
+        )
+        
+        await query.edit_message_text(
+            text=message_text,
+            reply_markup=keyboard,
+            parse_mode='Markdown'
+        )
+        
+    except Exception as e:
+        # Handle errors gracefully
+        await query.edit_message_text(
+            text=f"Произошла ошибка при получении списка участников: {str(e)}",
+            parse_mode='Markdown'
+        )
 
 
 async def handle_list_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

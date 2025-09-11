@@ -6,15 +6,17 @@ including role selection and main menu integration.
 """
 
 import pytest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 from telegram import Update, CallbackQuery, Message
 from telegram.ext import ContextTypes
+from datetime import date
 
 from src.bot.handlers.list_handlers import (
     handle_get_list_request,
     handle_role_selection,
     handle_list_navigation,
 )
+from src.models.participant import Participant, Role
 
 
 class TestGetListRequestHandler:
@@ -189,3 +191,128 @@ class TestListNavigationHandler:
         
         action = callback_data.split(":")[1]
         assert action == "MAIN_MENU"
+
+
+class TestRoleSelectionWithServiceIntegration:
+    """Test role selection handler with service integration."""
+
+    @pytest.fixture
+    def mock_team_update(self):
+        """Create mock update for team selection."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_role:TEAM"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_context(self):
+        """Create mock context."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        return context
+
+    @pytest.fixture
+    def mock_service_data(self):
+        """Create mock service response data."""
+        return {
+            "formatted_list": "1. **Тестов Тест Тестович**\n   👕 Размер: M\n   ⛪ Церковь: Тестовая церковь\n   📅 Дата рождения: 01.01.1990",
+            "has_prev": False,
+            "has_next": True,
+            "total_count": 10,
+            "page": 1,
+        }
+
+    @pytest.mark.asyncio
+    @patch('src.bot.handlers.list_handlers.service_factory')
+    async def test_team_role_selection_calls_service(self, mock_service_factory, mock_team_update, mock_context, mock_service_data):
+        """Test that team role selection calls the participant list service."""
+        # Setup
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
+        mock_service_factory.get_participant_list_service.return_value = mock_service
+        
+        # Execute
+        await handle_role_selection(mock_team_update, mock_context)
+        
+        # Verify service was called
+        mock_service.get_team_members_list.assert_called_once_with(page=1, page_size=20)
+        
+        # Verify response contains formatted data
+        mock_team_update.callback_query.edit_message_text.assert_called_once()
+        call_args = mock_team_update.callback_query.edit_message_text.call_args
+        message_text = call_args[1]["text"]
+        
+        assert "Тестов Тест Тестович" in message_text
+
+    @pytest.mark.asyncio 
+    @patch('src.bot.handlers.list_handlers.service_factory')
+    async def test_candidate_role_selection_calls_service(self, mock_service_factory, mock_context, mock_service_data):
+        """Test that candidate role selection calls the participant list service."""
+        # Setup
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_role:CANDIDATE"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        
+        mock_service = Mock()
+        mock_service.get_candidates_list = AsyncMock(return_value=mock_service_data)
+        mock_service_factory.get_participant_list_service.return_value = mock_service
+        
+        # Execute
+        await handle_role_selection(update, mock_context)
+        
+        # Verify service was called
+        mock_service.get_candidates_list.assert_called_once_with(page=1, page_size=20)
+
+    @pytest.mark.asyncio
+    @patch('src.bot.handlers.list_handlers.service_factory')
+    async def test_role_selection_includes_pagination_controls(self, mock_service_factory, mock_team_update, mock_context, mock_service_data):
+        """Test that role selection includes appropriate pagination controls."""
+        # Setup
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
+        mock_service_factory.get_participant_list_service.return_value = mock_service
+        
+        # Execute
+        await handle_role_selection(mock_team_update, mock_context)
+        
+        # Verify pagination keyboard is included
+        call_args = mock_team_update.callback_query.edit_message_text.call_args
+        assert "reply_markup" in call_args[1]
+        
+        keyboard = call_args[1]["reply_markup"]
+        # Should have Next button (has_next=True) and Main Menu button
+        buttons = [btn for row in keyboard.inline_keyboard for btn in row]
+        next_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:NEXT"]
+        main_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:MAIN_MENU"]
+        
+        assert len(next_buttons) == 1
+        assert len(main_buttons) == 1
+
+    @pytest.mark.asyncio
+    @patch('src.bot.handlers.list_handlers.service_factory')
+    async def test_role_selection_handles_empty_results(self, mock_service_factory, mock_team_update, mock_context):
+        """Test role selection handles empty results gracefully."""
+        # Setup
+        empty_data = {
+            "formatted_list": "Участники не найдены.",
+            "has_prev": False,
+            "has_next": False,
+            "total_count": 0,
+            "page": 1,
+        }
+        
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(return_value=empty_data)
+        mock_service_factory.get_participant_list_service.return_value = mock_service
+        
+        # Execute
+        await handle_role_selection(mock_team_update, mock_context)
+        
+        # Verify response shows empty message
+        call_args = mock_team_update.callback_query.edit_message_text.call_args
+        message_text = call_args[1]["text"]
+        
+        assert "Участники не найдены" in message_text
