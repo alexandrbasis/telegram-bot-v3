@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Participant Lists Feature (Get List Menu Option)** - Complete bulk participant listing functionality allowing event organizers instant access to categorized participant lists by role with pagination, message length management, and Russian language support (AGB-45, completed 2025-01-20, PR #38)
+- **Participant Lists Feature (Get List Menu Option)** - Complete bulk participant listing functionality allowing event organizers instant access to categorized participant lists by role with pagination, message length management, and Russian language support (AGB-45, completed 2025-09-11, PR #38, SHA e4d9042f, merged 2025-09-11T10:35:31Z)
   - Main menu integration with "📋 Получить список" button alongside existing search functionality (`src/bot/keyboards/search_keyboards.py:24`)
     - Two-click access workflow: Main Menu → Role Selection → List Display for streamlined user experience
     - Seamless coexistence with existing "🔍 Поиск участников" button without breaking changes
