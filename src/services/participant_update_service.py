@@ -350,6 +350,8 @@ class ParticipantUpdateService:
             "payment_date": "Дата платежа",
             "floor": "Этаж",
             "room_number": "Номер комнаты",
+            "date_of_birth": "Дата рождения",
+            "age": "Возраст",
         }
         return field_labels.get(field_name, field_name)
 

@@ -722,8 +722,8 @@ class TestSaveConfirmation:
     ):
         """Test that save confirmation shows date_of_birth and age fields with proper formatting."""
         participant = Participant(
-            record_id="rec123", 
-            full_name_ru="Тест Участник", 
+            record_id="rec123",
+            full_name_ru="Тест Участник",
             date_of_birth=date(1990, 5, 15),
             age=33
         )

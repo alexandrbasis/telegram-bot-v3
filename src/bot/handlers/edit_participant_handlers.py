@@ -328,7 +328,8 @@ async def show_participant_edit_menu(
         participant.date_of_birth.isoformat() if participant.date_of_birth else "Не указано"
     )
     message_text += f"🎂 Дата рождения: {date_of_birth_display}\n"
-    message_text += f"🔢 Возраст: {participant.age or 'Не указано'}\n"
+    age_display = participant.age if participant.age is not None else 'Не указано'
+    message_text += f"🔢 Возраст: {age_display}\n"
 
     # Show pending changes if any
     pending_changes = context.user_data.get("editing_changes", {})
@@ -573,6 +574,8 @@ async def handle_text_field_input(
                     "payment_amount": "Сумма платежа",
                     "floor": "Этаж",
                     "room_number": "Номер комнаты",
+                    "date_of_birth": "Дата рождения",
+                    "age": "Возраст",
                 }
 
                 field_label = field_labels.get(field_name, field_name)
@@ -596,6 +599,8 @@ async def handle_text_field_input(
                 "contact_information": "Контакты",
                 "submitted_by": "Кто подал",
                 "payment_amount": "Сумма платежа",
+                "date_of_birth": "Дата рождения",
+                "age": "Возраст",
             }
             field_label = field_labels.get(field_name, field_name)
             field_icon = get_field_icon(field_name)
