@@ -120,7 +120,7 @@ async def handle_floor_search_command(
         context.user_data["current_floor"] = floor_input
 
         await update.message.reply_text(
-            text=InfoMessages.searching_floor(floor_input),
+            text=InfoMessages.searching_floor(int(floor_input)),
             reply_markup=get_results_navigation_keyboard(),
         )
 
@@ -333,7 +333,8 @@ async def handle_floor_selection_callback(
     await query.message.edit_text(text=InfoMessages.searching_floor(int(floor_number)))
 
     # Create a temporary message object for process_floor_search_with_input
-    # This allows us to reuse the existing search logic
+    # This allows us to reuse the existing search logic without duplicating code
+    # TODO: Consider extracting a helper function to avoid mutating update object
     update.message = query.message
 
     # Process the floor search with the selected floor
