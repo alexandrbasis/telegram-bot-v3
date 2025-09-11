@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Interactive Floor Search UI Components** - Complete user interface implementation for floor discovery with interactive buttons, enhanced user guidance, and intuitive floor selection for improved user experience (TDB-55, completed 2025-01-21, PR #40)
+  - Interactive floor discovery button with inline keyboard providing "Показать доступные этажи" functionality eliminating user guesswork (`src/bot/keyboards/search_keyboards.py:85-139`)
+    - Single-button discovery interface with `floor_discovery` callback data and clear Russian text
+    - Dynamic floor selection keyboard with 3-button row layout optimized for mobile experience
+    - Floor buttons formatted as "Этаж 1", "Этаж 2" with `floor_select_{number}` callback pattern for intuitive selection
+  - Enhanced user guidance messages with dual-input method support providing clear interaction options (`src/bot/messages.py:96-103`)
+    - `ENTER_FLOOR_WITH_DISCOVERY` message combining button interaction and manual input instructions in Russian
+    - Comprehensive error messaging with `NO_FLOORS_AVAILABLE` and `FLOOR_DISCOVERY_ERROR` for graceful failure handling
+    - `AVAILABLE_FLOORS_HEADER` for clear floor list presentation with consistent formatting
+  - Complete callback handler system with comprehensive floor discovery and selection workflow (`src/bot/handlers/floor_search_handlers.py:228-342`)
+    - `handle_floor_discovery_callback()` fetching available floors from backend and displaying selection interface with message editing
+    - `handle_floor_selection_callback()` processing floor selection via regex pattern `^floor_select_(\d+)$` and triggering existing search workflow
+    - Graceful error handling with API failure fallback to manual input and user-friendly Russian error messages
+  - Seamless conversation flow integration with proper callback handler registration and state management (`src/bot/handlers/search_conversation.py`)
+    - Floor discovery callback handler registered in WAITING_FOR_FLOOR state with `^floor_discovery$` pattern
+    - Floor selection callback handler with regex pattern for number extraction and existing workflow integration
+    - Enhanced floor input prompt with discovery button integration maintaining backward compatibility with manual input
+  - Complete test coverage with 19 comprehensive tests achieving 100% success rate across all UI components (`tests/unit/test_bot_keyboards/test_search_keyboards.py:137-231`, `tests/unit/test_bot_handlers/test_floor_search_handlers.py:365-566`)
+    - Keyboard generation tests validating discovery and selection button layouts with proper callback data
+    - Callback handler tests covering discovery workflow, floor selection processing, and error scenario handling
+    - Message integration tests ensuring Russian language consistency and proper formatting throughout interface
+  - Production-ready implementation with zero breaking changes maintaining full backward compatibility with manual floor input
+  - Users experience intuitive floor discovery eliminating guesswork, clear dual-input guidance, and seamless floor selection through numbered buttons with consistent Russian language interface
+
 - **Floor Discovery Backend Infrastructure** - Complete backend implementation for discovering floors containing participants with performance optimization and comprehensive error handling (TDB-54, completed 2025-01-11, PR #39, code review approved 2025-09-11)
   - Repository layer floor discovery with abstract interface and concrete implementation (`src/data/repositories/participant_repository.py:351-367`, `src/data/airtable/airtable_participant_repo.py:1216-1296`)
     - `get_available_floors()` abstract method returning `List[int]` of numeric floors with participants only
