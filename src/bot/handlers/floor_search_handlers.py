@@ -127,9 +127,15 @@ async def handle_floor_search_command(
         # Process the search immediately
         return await process_floor_search_with_input(update, context, floor_input)
     else:
-        # Ask for floor number
+        # Ask for floor number with discovery button
         await update.message.reply_text(
-            text=InfoMessages.ENTER_FLOOR_NUMBER,
+            text=InfoMessages.ENTER_FLOOR_WITH_DISCOVERY,
+            reply_markup=get_floor_discovery_keyboard(),
+        )
+        
+        # Also show the reply keyboard for navigation
+        await update.message.reply_text(
+            text="Используйте кнопку выше или введите номер:",
             reply_markup=get_waiting_for_floor_keyboard(),
         )
 

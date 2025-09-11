@@ -133,13 +133,20 @@ class TestHandleFloorSearchCommand:
 
         result = await handle_floor_search_command(update, mock_context)
 
-        # Should ask for floor number
+        # Should ask for floor number with enhanced UI
         assert result == FloorSearchStates.WAITING_FOR_FLOOR
 
-        # Should reply with prompt for floor number
-        message.reply_text.assert_called()
-        call_args = message.reply_text.call_args[1]
-        assert "номер этажа" in call_args["text"].lower()
+        # Should send two messages - one with inline keyboard, one with reply keyboard
+        assert message.reply_text.call_count == 2
+        
+        # First call should have the discovery message with inline keyboard
+        first_call = message.reply_text.call_args_list[0]
+        assert "Выберите этаж из списка" in first_call.kwargs["text"]
+        assert isinstance(first_call.kwargs["reply_markup"], InlineKeyboardMarkup)
+        
+        # Second call should have navigation reply keyboard
+        second_call = message.reply_text.call_args_list[1]
+        assert isinstance(second_call.kwargs["reply_markup"], ReplyKeyboardMarkup)
 
 
 class TestProcessFloorSearch:
