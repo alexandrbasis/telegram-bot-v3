@@ -26,7 +26,9 @@ from src.bot.handlers.edit_participant_handlers import (
 )
 from src.bot.handlers.floor_search_handlers import (
     FloorSearchStates,
+    handle_floor_discovery_callback,
     handle_floor_search_command,
+    handle_floor_selection_callback,
     process_floor_search,
 )
 from src.bot.handlers.list_handlers import (
@@ -214,6 +216,13 @@ def get_search_conversation_handler() -> ConversationHandler:
             ],
             # === FLOOR SEARCH STATES ===
             FloorSearchStates.WAITING_FOR_FLOOR: [
+                # Floor discovery and selection callbacks
+                CallbackQueryHandler(
+                    handle_floor_discovery_callback, pattern="^floor_discovery$"
+                ),
+                CallbackQueryHandler(
+                    handle_floor_selection_callback, pattern=r"^floor_select_(\d+)$"
+                ),
                 # Floor number input
                 MessageHandler(
                     filters.TEXT
