@@ -240,15 +240,15 @@ class TestRoleSelectionWithServiceIntegration:
         }
 
     @pytest.mark.asyncio
-    @patch("src.bot.handlers.list_handlers.service_factory")
+    @patch("src.services.service_factory.get_participant_list_service")
     async def test_team_role_selection_calls_service(
-        self, mock_service_factory, mock_team_update, mock_context, mock_service_data
+        self, mock_get_service, mock_team_update, mock_context, mock_service_data
     ):
         """Test that team role selection calls the participant list service."""
         # Setup
         mock_service = Mock()
         mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
-        mock_service_factory.get_participant_list_service.return_value = mock_service
+        mock_get_service.return_value = mock_service
 
         # Execute
         await handle_role_selection(mock_team_update, mock_context)
@@ -264,9 +264,9 @@ class TestRoleSelectionWithServiceIntegration:
         assert "Тестов Тест Тестович" in message_text
 
     @pytest.mark.asyncio
-    @patch("src.bot.handlers.list_handlers.service_factory")
+    @patch("src.services.service_factory.get_participant_list_service")
     async def test_candidate_role_selection_calls_service(
-        self, mock_service_factory, mock_context, mock_service_data
+        self, mock_get_service, mock_context, mock_service_data
     ):
         """Test that candidate role selection calls the participant list service."""
         # Setup
@@ -278,7 +278,7 @@ class TestRoleSelectionWithServiceIntegration:
 
         mock_service = Mock()
         mock_service.get_candidates_list = AsyncMock(return_value=mock_service_data)
-        mock_service_factory.get_participant_list_service.return_value = mock_service
+        mock_get_service.return_value = mock_service
 
         # Execute
         await handle_role_selection(update, mock_context)
@@ -287,15 +287,15 @@ class TestRoleSelectionWithServiceIntegration:
         mock_service.get_candidates_list.assert_called_once_with(page=1, page_size=20)
 
     @pytest.mark.asyncio
-    @patch("src.bot.handlers.list_handlers.service_factory")
+    @patch("src.services.service_factory.get_participant_list_service")
     async def test_role_selection_includes_pagination_controls(
-        self, mock_service_factory, mock_team_update, mock_context, mock_service_data
+        self, mock_get_service, mock_team_update, mock_context, mock_service_data
     ):
         """Test that role selection includes appropriate pagination controls."""
         # Setup
         mock_service = Mock()
         mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
-        mock_service_factory.get_participant_list_service.return_value = mock_service
+        mock_get_service.return_value = mock_service
 
         # Execute
         await handle_role_selection(mock_team_update, mock_context)
@@ -316,9 +316,9 @@ class TestRoleSelectionWithServiceIntegration:
         assert len(main_buttons) == 1
 
     @pytest.mark.asyncio
-    @patch("src.bot.handlers.list_handlers.service_factory")
+    @patch("src.services.service_factory.get_participant_list_service")
     async def test_role_selection_handles_empty_results(
-        self, mock_service_factory, mock_team_update, mock_context
+        self, mock_get_service, mock_team_update, mock_context
     ):
         """Test role selection handles empty results gracefully."""
         # Setup
@@ -332,7 +332,7 @@ class TestRoleSelectionWithServiceIntegration:
 
         mock_service = Mock()
         mock_service.get_team_members_list = AsyncMock(return_value=empty_data)
-        mock_service_factory.get_participant_list_service.return_value = mock_service
+        mock_get_service.return_value = mock_service
 
         # Execute
         await handle_role_selection(mock_team_update, mock_context)
