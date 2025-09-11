@@ -188,15 +188,22 @@ class ParticipantUpdateService:
                 or "Wrong format" in str(e)
             ):
                 from src.bot.messages import InfoMessages
+
                 raise ValidationError(
                     f"❌ Неверный формат даты. {InfoMessages.ENTER_DATE_OF_BIRTH}"
                 )
             else:
                 from src.bot.messages import InfoMessages
-                raise ValidationError(f"❌ Некорректная дата. {InfoMessages.ENTER_DATE_OF_BIRTH}")
+
+                raise ValidationError(
+                    f"❌ Некорректная дата. {InfoMessages.ENTER_DATE_OF_BIRTH}"
+                )
         except Exception:
             from src.bot.messages import InfoMessages
-            raise ValidationError(f"❌ Неверный формат даты. {InfoMessages.ENTER_DATE_OF_BIRTH}")
+
+            raise ValidationError(
+                f"❌ Неверный формат даты. {InfoMessages.ENTER_DATE_OF_BIRTH}"
+            )
 
     def _validate_age(self, user_input: str) -> int | None:
         """Validate age field as integer in 0-120 range."""
@@ -208,13 +215,19 @@ class ParticipantUpdateService:
             age = int(user_input)
             if age < 0 or age > 120:
                 from src.bot.messages import InfoMessages
-                raise ValidationError(f"❌ Возраст должен быть от 0 до 120. {InfoMessages.ENTER_AGE}")
+
+                raise ValidationError(
+                    f"❌ Возраст должен быть от 0 до 120. {InfoMessages.ENTER_AGE}"
+                )
 
             logger.info(f"Age validated: {age}")
             return age
         except ValueError:
             from src.bot.messages import InfoMessages
-            raise ValidationError(f"❌ Возраст должен быть числом. {InfoMessages.ENTER_AGE}")
+
+            raise ValidationError(
+                f"❌ Возраст должен быть числом. {InfoMessages.ENTER_AGE}"
+            )
 
     def convert_button_value(
         self, field_name: str, selected_value: str

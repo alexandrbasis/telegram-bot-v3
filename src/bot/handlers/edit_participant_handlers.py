@@ -325,10 +325,12 @@ async def show_participant_edit_menu(
 
     # Date of birth and age fields
     date_of_birth_display = (
-        participant.date_of_birth.isoformat() if participant.date_of_birth else "Не указано"
+        participant.date_of_birth.isoformat()
+        if participant.date_of_birth
+        else "Не указано"
     )
     message_text += f"🎂 Дата рождения: {date_of_birth_display}\n"
-    age_display = participant.age if participant.age is not None else 'Не указано'
+    age_display = participant.age if participant.age is not None else "Не указано"
     message_text += f"🔢 Возраст: {age_display}\n"
 
     # Show pending changes if any

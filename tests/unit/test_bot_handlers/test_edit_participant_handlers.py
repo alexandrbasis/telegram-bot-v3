@@ -725,7 +725,7 @@ class TestSaveConfirmation:
             record_id="rec123",
             full_name_ru="Тест Участник",
             date_of_birth=date(1990, 5, 15),
-            age=33
+            age=33,
         )
         changes = {
             "date_of_birth": date(1995, 8, 20),
