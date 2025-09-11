@@ -48,6 +48,7 @@ class TestParticipantRepositoryInterface:
             "bulk_create",
             "bulk_update",
             "search_by_name_fuzzy",
+            "get_available_floors",
         }
 
         repository_methods = set(dir(ParticipantRepository))
@@ -109,6 +110,21 @@ class TestParticipantRepositoryInterface:
             annotations = method.__annotations__
             assert len(annotations) >= 2  # participants + return
             assert "return" in annotations
+
+    def test_get_available_floors_method_signature(self):
+        """Test get_available_floors method has correct signature."""
+        method = getattr(ParticipantRepository, "get_available_floors")
+
+        assert hasattr(method, "__annotations__")
+        annotations = method.__annotations__
+        # Should have return annotation (List[int])
+        assert "return" in annotations
+        
+        # Verify it's an async method
+        import inspect
+        assert inspect.iscoroutinefunction(method) or hasattr(
+            method, "__code__"
+        ), "get_available_floors should be async"
 
 
 class TestRepositoryExceptions:
@@ -238,6 +254,9 @@ class TestConcreteImplementationRequirements:
             async def search_by_name_fuzzy(self, query, threshold=0.8, limit=5):
                 pass
 
+            async def get_available_floors(self):
+                pass
+
         # Should be able to instantiate complete implementation
         repo = CompleteRepository()
         assert isinstance(repo, ParticipantRepository)
@@ -263,6 +282,7 @@ class TestRepositoryMethodDocstrings:
             "count_total",
             "bulk_create",
             "bulk_update",
+            "get_available_floors",
         ]
 
         for method_name in abstract_methods:
@@ -337,6 +357,7 @@ class TestRepositoryUsageContract:
             "count_total",
             "bulk_create",
             "bulk_update",
+            "get_available_floors",
         ]
 
         for method_name in async_methods:

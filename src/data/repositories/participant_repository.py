@@ -348,6 +348,24 @@ class ParticipantRepository(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    async def get_available_floors(self) -> List[int]:
+        """
+        Return unique numeric floors that have at least one participant.
+
+        Retrieves all floors from the database that contain participants,
+        filtering out empty floors and returning them sorted in ascending order.
+
+        Returns:
+            List of unique floor numbers (as integers) that contain participants,
+            sorted in ascending order. Returns empty list if no floors found
+            or if an error occurs.
+
+        Raises:
+            RepositoryError: If floor discovery fails
+        """
+        pass
+
 
 class RepositoryError(Exception):
     """Base exception for repository operations."""
