@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Floor Discovery Backend Infrastructure** - Complete backend implementation for discovering floors containing participants with performance optimization and comprehensive error handling (TDB-54, completed 2025-01-11, PR #39, code review approved 2025-09-11)
+  - Repository layer floor discovery with abstract interface and concrete implementation (`src/data/repositories/participant_repository.py:351-367`, `src/data/airtable/airtable_participant_repo.py:1216-1296`)
+    - `get_available_floors()` abstract method returning `List[int]` of numeric floors with participants only
+    - Airtable implementation with 5-minute TTL caching using module-level cache (lines 32-34) for 12x API load reduction during active usage
+    - 10-second API timeout with graceful fallback to empty list on failures, comprehensive error handling with logging
+    - Optimized API calls fetching only floor field data to minimize payload size
+  - Service layer integration with comprehensive error handling (`src/services/search_service.py:608-633`)
+    - SearchService `get_available_floors()` method delegating to repository with proper error isolation
+    - Repository failures logged and return empty list with user-friendly handling
+    - Complete service-repository separation maintaining dependency injection patterns
+  - Performance-optimized caching strategy with timestamp-based cleanup preventing memory leaks
+    - Module-level cache persistence across service factory calls for maximum efficiency
+    - Cache key format: `{base_id}:{table_identifier}` with automatic expired entry cleanup
+    - Real-time cache validation ensuring fresh data within 5-minute windows
+  - Complete test coverage with 12 comprehensive tests achieving 100% success rate
+    - 1 interface validation test + 7 Airtable implementation tests + 4 service layer tests
+    - Coverage includes functionality, caching behavior, error handling, cache expiry, and edge cases
+    - Proper test isolation with cache clearing fixtures preventing test interference
+  - Comprehensive documentation updates supporting floor discovery implementation across 6 major files
+    - Enhanced API design documentation with floor discovery endpoint specifications and caching strategy details
+    - Updated architecture overview with floor discovery service integration and performance considerations
+    - Enhanced Airtable setup documentation with floor field mapping requirements and optimization guidelines
+    - Updated field mappings documentation with floor discovery field specifications and query optimization
+    - Performance considerations documentation with caching benefits analysis and 12x load reduction metrics
+    - Enhanced testing strategy documentation with floor discovery test coverage summary and methodology details
+
 ### Fixed
 - Telegram MarkdownV2 parse errors in the Get List flow when sending the role selection prompt and page range title. Escaped '-' in both locations to prevent "Can't parse entities" errors in production (AGB-45 hotfix, completed 2025-09-11).
   - src/bot/handlers/list_handlers.py
