@@ -266,7 +266,7 @@ class AirtableParticipantRepository(ParticipantRepository):
                 raise ValidationError(f"Unknown field name: {field_name}")
 
             # Convert value to appropriate format for Airtable
-            if field_name == "payment_date" and value is not None:
+            if field_name in ["payment_date", "date_of_birth"] and value is not None:
                 # Convert date to ISO format string
                 airtable_fields[airtable_field_name] = (
                     value.isoformat() if hasattr(value, "isoformat") else str(value)
