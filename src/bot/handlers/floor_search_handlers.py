@@ -202,7 +202,9 @@ async def execute_floor_search(
             f"{floor_number} for user {user_id}"
         )
     else:
-        logger.info(f"No participants found on floor {floor_number} for user {user_id}")
+        logger.info(
+            f"No participants found on floor {floor_number} for user {user_id}"
+        )
 
     return participants, results_message
 
