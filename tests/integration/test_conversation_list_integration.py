@@ -102,21 +102,31 @@ class TestConversationListIntegration:
         mock_get_list_message_update,
         mock_context,
     ):
-        """Test that get list message triggers role selection."""
-        # Process the get list message through conversation handler
-        result = await conversation_handler.check_update(mock_get_list_message_update)
-
-        if result:
-            handler = result[0]
-            await handler.callback(mock_get_list_message_update, mock_context)
-
-            # Verify role selection keyboard was shown
-            mock_get_list_message_update.message.reply_text.assert_called_once()
-            call_args = mock_get_list_message_update.message.reply_text.call_args
-
-            # Check message contains role selection
-            message_text = call_args[1]["text"]
-            assert "Выберите тип списка участников:" in message_text
+        """Test that get list message handler exists and is callable."""
+        # Find the get list message handler from entry points
+        get_list_handler = None
+        for handler in conversation_handler.entry_points:
+            if hasattr(handler, "filters") and hasattr(handler.filters, "pattern"):
+                pattern_str = str(handler.filters.pattern)
+                if "Получить список" in pattern_str:
+                    get_list_handler = handler
+                    break
+        
+        assert get_list_handler is not None, "Get list handler should be found in entry points"
+        
+        # Test that the handler is callable (integration verification)
+        assert hasattr(get_list_handler, "callback"), "Handler should have callback method"
+        
+        # Call the handler directly to test integration
+        await get_list_handler.callback(mock_get_list_message_update, mock_context)
+        
+        # Verify role selection keyboard was shown
+        mock_get_list_message_update.message.reply_text.assert_called_once()
+        call_args = mock_get_list_message_update.message.reply_text.call_args
+        
+        # Check message contains role selection
+        message_text = call_args[1]["text"]
+        assert "Выберите тип списка участников:" in message_text
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.list_handlers.service_factory")
@@ -127,7 +137,7 @@ class TestConversationListIntegration:
         mock_role_callback_update,
         mock_context,
     ):
-        """Test that role selection callback is processed correctly."""
+        """Test that role selection callback handler exists and is callable."""
         # Setup mock service
         mock_service = Mock()
         mock_service_data = {
@@ -140,16 +150,27 @@ class TestConversationListIntegration:
         mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
         mock_service_factory.get_participant_list_service.return_value = mock_service
 
-        # Process the callback through conversation handler
-        result = await conversation_handler.check_update(mock_role_callback_update)
-
-        if result:
-            handler = result[0]
-            await handler.callback(mock_role_callback_update, mock_context)
-
-            # Verify service was called and response was sent
-            mock_service.get_team_members_list.assert_called_once()
-            mock_role_callback_update.callback_query.edit_message_text.assert_called_once()
+        # Find the callback handler in conversation states
+        role_callback_handler = None
+        for state_handlers in conversation_handler.states.values():
+            for handler in state_handlers:
+                if hasattr(handler, "pattern") and "list_role:" in str(handler.pattern):
+                    role_callback_handler = handler
+                    break
+            if role_callback_handler:
+                break
+        
+        assert role_callback_handler is not None, "Role callback handler should be found in states"
+        
+        # Test that the handler is callable (integration verification)
+        assert hasattr(role_callback_handler, "callback"), "Handler should have callback method"
+        
+        # Call the handler directly to test integration
+        await role_callback_handler.callback(mock_role_callback_update, mock_context)
+        
+        # Verify service was called and response was sent
+        mock_service.get_team_members_list.assert_called_once()
+        mock_role_callback_update.callback_query.edit_message_text.assert_called_once()
 
     def test_list_handlers_maintain_conversation_state_flow(self, conversation_handler):
         """Test that list handlers maintain proper conversation state flow."""
