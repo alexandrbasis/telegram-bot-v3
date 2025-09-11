@@ -25,50 +25,50 @@ class ParticipantListService:
         self.repository = repository
 
     async def get_team_members_list(
-        self, page: int = 1, page_size: int = 20
+        self, offset: int = 0, page_size: int = 20
     ) -> Dict[str, Any]:
         """
-        Get formatted team members list with pagination.
+        Get formatted team members list with offset-based pagination.
 
         Args:
-            page: Page number (1-indexed)
+            offset: Starting offset in the participants list (0-indexed)
             page_size: Number of participants per page
 
         Returns:
-            Dict with formatted_list, pagination info, and counts
+            Dict with formatted_list, pagination info, offsets, and counts
         """
         participants = await self.repository.get_by_role("TEAM")
-        return self._format_participant_list(participants, page, page_size)
+        return self._format_participant_list(participants, offset, page_size)
 
     async def get_candidates_list(
-        self, page: int = 1, page_size: int = 20
+        self, offset: int = 0, page_size: int = 20
     ) -> Dict[str, Any]:
         """
-        Get formatted candidates list with pagination.
+        Get formatted candidates list with offset-based pagination.
 
         Args:
-            page: Page number (1-indexed)
+            offset: Starting offset in the participants list (0-indexed)
             page_size: Number of participants per page
 
         Returns:
-            Dict with formatted_list, pagination info, and counts
+            Dict with formatted_list, pagination info, offsets, and counts
         """
         participants = await self.repository.get_by_role("CANDIDATE")
-        return self._format_participant_list(participants, page, page_size)
+        return self._format_participant_list(participants, offset, page_size)
 
     def _format_participant_list(
-        self, participants: List[Participant], page: int, page_size: int
+        self, participants: List[Participant], offset: int, page_size: int
     ) -> Dict[str, Any]:
         """
-        Format participant list with pagination.
+        Format participant list with offset-based pagination.
 
         Args:
             participants: List of participants to format
-            page: Current page number (1-indexed)
+            offset: Starting offset in the participants list (0-indexed)
             page_size: Number of participants per page
 
         Returns:
-            Dict with formatted list and pagination information
+            Dict with formatted list and pagination information including offsets
         """
         total_count = len(participants)
 
@@ -78,22 +78,26 @@ class ParticipantListService:
                 "has_prev": False,
                 "has_next": False,
                 "total_count": 0,
-                "page": page,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
             }
 
-        # Calculate pagination
-        start_idx = (page - 1) * page_size
-        end_idx = min(start_idx + page_size, total_count)
-        page_participants = participants[start_idx:end_idx]
+        # Ensure offset is within bounds
+        offset = max(0, min(offset, total_count - 1))
+
+        # Calculate pagination using offset
+        end_idx = min(offset + page_size, total_count)
+        page_participants = participants[offset:end_idx]
 
         # Format the list
         formatted_lines = []
-        for i, participant in enumerate(page_participants, start=start_idx + 1):
+        for i, participant in enumerate(page_participants, start=offset + 1):
             line = self._format_participant_line(i, participant)
             formatted_lines.append(line)
 
         formatted_list = "\n\n".join(formatted_lines)
-        
+
         # Track actual displayed count for pagination continuity
         actual_displayed_count = len(formatted_lines)
 
@@ -106,20 +110,25 @@ class ParticipantListService:
             formatted_list = "\n\n".join(formatted_lines)
             if remaining_count > 0:
                 formatted_list += f"\n\n... и ещё {remaining_count} участников"
-        
-        # Adjust pagination logic to account for trimmed items
-        # If we trimmed items, the effective end index is smaller
-        effective_end_idx = start_idx + actual_displayed_count
-        
-        # Has next page if there are more participants beyond what we actually displayed
-        has_next_page = effective_end_idx < total_count
+
+        # Calculate next and previous offsets based on actual displayed count
+        current_end_offset = offset + actual_displayed_count
+
+        # Calculate navigation offsets
+        next_offset = current_end_offset if current_end_offset < total_count else None
+        prev_offset = max(0, offset - page_size) if offset > 0 else None
+        # Has navigation options
+        has_next = next_offset is not None
+        has_prev = prev_offset is not None
 
         return {
             "formatted_list": formatted_list,
-            "has_prev": page > 1,
-            "has_next": has_next_page,
+            "has_prev": has_prev,
+            "has_next": has_next,
             "total_count": total_count,
-            "page": page,
+            "current_offset": offset,
+            "next_offset": next_offset,
+            "prev_offset": prev_offset,
             "actual_displayed": actual_displayed_count,  # For debugging/testing
         }
 
@@ -141,9 +150,18 @@ class ParticipantListService:
             dob_str = "Не указано"
 
         # Handle optional fields with Markdown escaping
-        size_str = escape_markdown(participant.size, version=2) if participant.size else "—"
-        church_str = escape_markdown(participant.church, version=2) if participant.church else "—"
-        name_str = escape_markdown(participant.full_name_ru, version=2) if participant.full_name_ru else "Неизвестно"
+        size_str = (
+            escape_markdown(participant.size, version=2)
+            if participant.size else "—"
+        )
+        church_str = (
+            escape_markdown(participant.church, version=2)
+            if participant.church else "—"
+        )
+        name_str = (
+            escape_markdown(participant.full_name_ru, version=2)
+            if participant.full_name_ru else "Неизвестно"
+        )
         dob_escaped = escape_markdown(dob_str, version=2)
 
         # Format the line with proper Markdown V2 escaping

@@ -52,6 +52,7 @@ class TestConversationListIntegration:
     def mock_context(self):
         """Create mock context."""
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
         return context
 
     def test_conversation_handler_includes_get_list_entry_point(
@@ -149,7 +150,10 @@ class TestConversationListIntegration:
             "has_prev": False,
             "has_next": False,
             "total_count": 1,
-            "page": 1,
+            "current_offset": 0,
+            "next_offset": None,
+            "prev_offset": None,
+            "actual_displayed": 1,
         }
         mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
         mock_service_factory.get_participant_list_service.return_value = mock_service

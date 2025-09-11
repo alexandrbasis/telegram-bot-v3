@@ -68,7 +68,7 @@ class TestParticipantListService:
         """Test getting team members list."""
         mock_repository.get_by_role.return_value = sample_team_participants
 
-        result = await service.get_team_members_list(page=1, page_size=20)
+        result = await service.get_team_members_list(offset=0, page_size=20)
 
         # Should call repository with TEAM role
         mock_repository.get_by_role.assert_called_once_with("TEAM")
@@ -78,7 +78,10 @@ class TestParticipantListService:
         assert "has_prev" in result
         assert "has_next" in result
         assert "total_count" in result
-        assert "page" in result
+        assert "current_offset" in result
+        assert "next_offset" in result
+        assert "prev_offset" in result
+        assert "actual_displayed" in result
 
     @pytest.mark.asyncio
     async def test_get_candidates_list(
@@ -87,7 +90,7 @@ class TestParticipantListService:
         """Test getting candidates list."""
         mock_repository.get_by_role.return_value = sample_candidate_participants
 
-        result = await service.get_candidates_list(page=1, page_size=20)
+        result = await service.get_candidates_list(offset=0, page_size=20)
 
         # Should call repository with CANDIDATE role
         mock_repository.get_by_role.assert_called_once_with("CANDIDATE")
@@ -97,7 +100,10 @@ class TestParticipantListService:
         assert "has_prev" in result
         assert "has_next" in result
         assert "total_count" in result
-        assert "page" in result
+        assert "current_offset" in result
+        assert "next_offset" in result
+        assert "prev_offset" in result
+        assert "actual_displayed" in result
 
     @pytest.mark.asyncio
     async def test_list_formatting_with_all_fields(
@@ -106,7 +112,7 @@ class TestParticipantListService:
         """Test list formatting includes all required fields."""
         mock_repository.get_by_role.return_value = sample_team_participants
 
-        result = await service.get_team_members_list(page=1, page_size=20)
+        result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
 
         # Should be numbered list format (with MarkdownV2 escaping)
@@ -135,7 +141,7 @@ class TestParticipantListService:
         ]
         mock_repository.get_by_role.return_value = participants
 
-        result = await service.get_team_members_list(page=1, page_size=20)
+        result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
 
         # Should format single digit day/month with leading zeros
@@ -153,7 +159,7 @@ class TestParticipantListService:
         ]
         mock_repository.get_by_role.return_value = participants
 
-        result = await service.get_team_members_list(page=1, page_size=20)
+        result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
 
         # Should show "Не указано" for missing date
@@ -166,11 +172,11 @@ class TestParticipantListService:
         """Test pagination for first page."""
         mock_repository.get_by_role.return_value = sample_team_participants
 
-        result = await service.get_team_members_list(page=1, page_size=1)
+        result = await service.get_team_members_list(offset=0, page_size=1)
 
         assert result["has_prev"] is False
         assert result["has_next"] is True  # Has more participants
-        assert result["page"] == 1
+        assert result["current_offset"] == 0
         assert result["total_count"] == 2
 
     @pytest.mark.asyncio
@@ -180,18 +186,18 @@ class TestParticipantListService:
         """Test pagination for last page."""
         mock_repository.get_by_role.return_value = sample_team_participants
 
-        result = await service.get_team_members_list(page=2, page_size=1)
+        result = await service.get_team_members_list(offset=1, page_size=1)
 
         assert result["has_prev"] is True
         assert result["has_next"] is False  # No more participants
-        assert result["page"] == 2
+        assert result["current_offset"] == 1
 
     @pytest.mark.asyncio
     async def test_empty_participant_list(self, service, mock_repository):
         """Test handling of empty participant list."""
         mock_repository.get_by_role.return_value = []
 
-        result = await service.get_team_members_list(page=1, page_size=20)
+        result = await service.get_team_members_list(offset=0, page_size=20)
 
         assert result["formatted_list"] == "Участники не найдены."
         assert result["has_prev"] is False
@@ -215,7 +221,7 @@ class TestParticipantListService:
             )
         mock_repository.get_by_role.return_value = many_participants
 
-        result = await service.get_team_members_list(page=1, page_size=100)
+        result = await service.get_team_members_list(offset=0, page_size=100)
         formatted_list = result["formatted_list"]
 
         # Should stay under Telegram message limit
@@ -235,7 +241,7 @@ class TestParticipantListService:
         ]
         mock_repository.get_by_role.return_value = participants
 
-        result = await service.get_team_members_list(page=1, page_size=20)
+        result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
 
         # Should handle missing fields gracefully
