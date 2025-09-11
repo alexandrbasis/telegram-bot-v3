@@ -1,5 +1,5 @@
 # Task: Participant Lists Feature
-**Created**: 2025-01-20 | **Status**: In Progress | **Started**: 2025-01-20
+**Created**: 2025-01-20 | **Status**: Ready for Review | **Started**: 2025-01-20 | **Completed**: 2025-01-20
 
 ## Tracking & Progress
 ### Linear Issue
