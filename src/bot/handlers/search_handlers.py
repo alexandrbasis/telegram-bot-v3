@@ -18,7 +18,6 @@ from src.bot.keyboards.search_keyboards import (
     get_main_menu_keyboard,
     get_results_navigation_keyboard,
     get_search_mode_selection_keyboard,
-    get_waiting_for_floor_keyboard,
     get_waiting_for_name_keyboard,
 )
 from src.bot.messages import InfoMessages
