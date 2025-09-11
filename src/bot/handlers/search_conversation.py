@@ -97,7 +97,9 @@ def get_search_conversation_handler() -> ConversationHandler:
             CommandHandler("search_floor", handle_floor_search_command),
             # Entry points for text buttons to allow re-entry after timeout
             MessageHandler(filters.Regex("^🔍 Поиск участников$"), search_button),
-            MessageHandler(filters.Regex("^📋 Получить список$"), handle_get_list_request),
+            MessageHandler(
+                filters.Regex("^📋 Получить список$"), handle_get_list_request
+            ),
             MessageHandler(
                 filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
             ),
@@ -109,7 +111,9 @@ def get_search_conversation_handler() -> ConversationHandler:
             SearchStates.MAIN_MENU: [
                 # Text-based navigation from reply keyboard
                 MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
-                MessageHandler(filters.Regex(r"^📋 Получить список$"), handle_get_list_request),
+                MessageHandler(
+                    filters.Regex(r"^📋 Получить список$"), handle_get_list_request
+                ),
                 # Backward compat (if any inline button remains)
                 CallbackQueryHandler(search_button, pattern="^search$"),
                 # List callback handlers for role selection and navigation

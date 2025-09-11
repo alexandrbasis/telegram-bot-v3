@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- **Critical Age and Date of Birth Field Display and Serialization Issues** - Resolved critical bugs preventing age and date of birth fields from displaying correctly and causing JSON serialization errors during save operations, restoring full participant demographic editing functionality (AGB-47, completed 2025-09-11, PR #37)
+- **Critical Age and Date of Birth Field Display and Serialization Issues** - Resolved critical bugs preventing age and date of birth fields from displaying correctly and causing JSON serialization errors during save operations, restoring full participant demographic editing functionality (AGB-47, completed 2025-09-11, PR #37, merged SHA 7dceab5)
   - Fixed participant reconstruction missing demographic fields causing "Не указано" display errors (`src/bot/handlers/edit_participant_handlers.py:153-154`)
     - Added `date_of_birth` and `age` fields to `display_updated_participant` function constructor
     - Resolved immediate preview updates showing pending changes correctly after field edits

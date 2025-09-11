@@ -54,27 +54,33 @@ class TestConversationListIntegration:
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         return context
 
-    def test_conversation_handler_includes_get_list_entry_point(self, conversation_handler):
+    def test_conversation_handler_includes_get_list_entry_point(
+        self, conversation_handler
+    ):
         """Test that conversation handler includes get list message as entry point."""
         # Check that get list message is recognized as an entry point
         entry_point_patterns = []
         for handler in conversation_handler.entry_points:
-            if hasattr(handler, 'filters') and hasattr(handler.filters, 'pattern'):
+            if hasattr(handler, "filters") and hasattr(handler.filters, "pattern"):
                 entry_point_patterns.append(handler.filters.pattern)
-        
-        # Should include pattern for get list button
-        assert any("Получить список" in str(pattern) for pattern in entry_point_patterns)
 
-    def test_conversation_handler_includes_list_callback_handlers(self, conversation_handler):
+        # Should include pattern for get list button
+        assert any(
+            "Получить список" in str(pattern) for pattern in entry_point_patterns
+        )
+
+    def test_conversation_handler_includes_list_callback_handlers(
+        self, conversation_handler
+    ):
         """Test that conversation handler includes list callback handlers in states."""
         # Check that list callback handlers are included in conversation states
         callback_patterns = []
-        
+
         for state_handlers in conversation_handler.states.values():
             for handler in state_handlers:
-                if hasattr(handler, 'pattern'):
+                if hasattr(handler, "pattern"):
                     callback_patterns.append(handler.pattern)
-        
+
         # Should include patterns for list role selection and navigation
         patterns_found = []
         for pattern in callback_patterns:
@@ -83,32 +89,44 @@ class TestConversationListIntegration:
                 patterns_found.append("list_role")
             if "list_nav:" in pattern_str:
                 patterns_found.append("list_nav")
-        
+
         assert "list_role" in patterns_found
         assert "list_nav" in patterns_found
 
     @pytest.mark.asyncio
-    @patch('src.bot.handlers.list_handlers.service_factory')
-    async def test_get_list_message_triggers_role_selection(self, mock_service_factory, conversation_handler, mock_get_list_message_update, mock_context):
+    @patch("src.bot.handlers.list_handlers.service_factory")
+    async def test_get_list_message_triggers_role_selection(
+        self,
+        mock_service_factory,
+        conversation_handler,
+        mock_get_list_message_update,
+        mock_context,
+    ):
         """Test that get list message triggers role selection."""
         # Process the get list message through conversation handler
         result = await conversation_handler.check_update(mock_get_list_message_update)
-        
+
         if result:
             handler = result[0]
             await handler.callback(mock_get_list_message_update, mock_context)
-            
+
             # Verify role selection keyboard was shown
             mock_get_list_message_update.message.reply_text.assert_called_once()
             call_args = mock_get_list_message_update.message.reply_text.call_args
-            
+
             # Check message contains role selection
             message_text = call_args[1]["text"]
             assert "Выберите тип списка участников:" in message_text
 
     @pytest.mark.asyncio
-    @patch('src.bot.handlers.list_handlers.service_factory')
-    async def test_role_callback_processes_correctly(self, mock_service_factory, conversation_handler, mock_role_callback_update, mock_context):
+    @patch("src.bot.handlers.list_handlers.service_factory")
+    async def test_role_callback_processes_correctly(
+        self,
+        mock_service_factory,
+        conversation_handler,
+        mock_role_callback_update,
+        mock_context,
+    ):
         """Test that role selection callback is processed correctly."""
         # Setup mock service
         mock_service = Mock()
@@ -121,14 +139,14 @@ class TestConversationListIntegration:
         }
         mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
         mock_service_factory.get_participant_list_service.return_value = mock_service
-        
+
         # Process the callback through conversation handler
         result = await conversation_handler.check_update(mock_role_callback_update)
-        
+
         if result:
             handler = result[0]
             await handler.callback(mock_role_callback_update, mock_context)
-            
+
             # Verify service was called and response was sent
             mock_service.get_team_members_list.assert_called_once()
             mock_role_callback_update.callback_query.edit_message_text.assert_called_once()
@@ -137,36 +155,40 @@ class TestConversationListIntegration:
         """Test that list handlers maintain proper conversation state flow."""
         # Verify that list handlers can return to main menu
         main_menu_patterns = []
-        
+
         for state_handlers in conversation_handler.states.values():
             for handler in state_handlers:
-                if hasattr(handler, 'pattern') and "main_menu" in str(handler.pattern):
+                if hasattr(handler, "pattern") and "main_menu" in str(handler.pattern):
                     main_menu_patterns.append(handler.pattern)
-                elif hasattr(handler, 'filters') and hasattr(handler.filters, 'pattern'):
+                elif hasattr(handler, "filters") and hasattr(
+                    handler.filters, "pattern"
+                ):
                     pattern_str = str(handler.filters.pattern)
                     if "Главное меню" in pattern_str:
                         main_menu_patterns.append(pattern_str)
-        
+
         # Should have main menu navigation available
         assert len(main_menu_patterns) > 0
 
-    def test_conversation_entry_points_include_list_functionality(self, conversation_handler):
+    def test_conversation_entry_points_include_list_functionality(
+        self, conversation_handler
+    ):
         """Test that conversation entry points properly include list functionality."""
         # Check that entry points can handle list functionality
         entry_handlers = conversation_handler.entry_points
-        
+
         # Should have handlers that can process both search and list requests
         search_handlers = []
         list_handlers = []
-        
+
         for handler in entry_handlers:
-            if hasattr(handler, 'filters') and hasattr(handler.filters, 'pattern'):
+            if hasattr(handler, "filters") and hasattr(handler.filters, "pattern"):
                 pattern = str(handler.filters.pattern)
                 if "Поиск участников" in pattern:
                     search_handlers.append(handler)
                 if "Получить список" in pattern:
                     list_handlers.append(handler)
-        
+
         # Should have both search and list entry points
         assert len(search_handlers) > 0
         assert len(list_handlers) > 0

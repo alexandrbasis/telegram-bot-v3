@@ -6,7 +6,6 @@ and Russian date formatting for list display.
 """
 
 from typing import Dict, List, Any
-from datetime import date
 
 from src.models.participant import Participant
 from src.data.repositories.participant_repository import ParticipantRepository
@@ -24,7 +23,9 @@ class ParticipantListService:
         """
         self.repository = repository
 
-    async def get_team_members_list(self, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
+    async def get_team_members_list(
+        self, page: int = 1, page_size: int = 20
+    ) -> Dict[str, Any]:
         """
         Get formatted team members list with pagination.
 
@@ -38,7 +39,9 @@ class ParticipantListService:
         participants = await self.repository.get_by_role("TEAM")
         return self._format_participant_list(participants, page, page_size)
 
-    async def get_candidates_list(self, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
+    async def get_candidates_list(
+        self, page: int = 1, page_size: int = 20
+    ) -> Dict[str, Any]:
         """
         Get formatted candidates list with pagination.
 
@@ -67,7 +70,7 @@ class ParticipantListService:
             Dict with formatted list and pagination information
         """
         total_count = len(participants)
-        
+
         if total_count == 0:
             return {
                 "formatted_list": "Участники не найдены.",
@@ -89,7 +92,7 @@ class ParticipantListService:
             formatted_lines.append(line)
 
         formatted_list = "\n\n".join(formatted_lines)
-        
+
         # Apply message length constraint
         while len(formatted_list) >= 4096 and len(formatted_lines) > 1:
             # Remove last item and add truncation notice

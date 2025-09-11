@@ -20,13 +20,15 @@ def get_role_selection_keyboard() -> InlineKeyboardMarkup:
     """
     keyboard = [
         [InlineKeyboardButton("👥 Команда", callback_data="list_role:TEAM")],
-        [InlineKeyboardButton("🎯 Кандидаты", callback_data="list_role:CANDIDATE")]
+        [InlineKeyboardButton("🎯 Кандидаты", callback_data="list_role:CANDIDATE")],
     ]
-    
+
     return InlineKeyboardMarkup(keyboard)
 
 
-def get_list_pagination_keyboard(has_prev: bool = False, has_next: bool = False) -> InlineKeyboardMarkup:
+def get_list_pagination_keyboard(
+    has_prev: bool = False, has_next: bool = False
+) -> InlineKeyboardMarkup:
     """
     Get pagination keyboard for participant list navigation.
 
@@ -41,18 +43,20 @@ def get_list_pagination_keyboard(has_prev: bool = False, has_next: bool = False)
         InlineKeyboardMarkup with pagination controls
     """
     keyboard = []
-    
+
     # Add navigation row if any navigation buttons are needed
     nav_row = []
     if has_prev:
         nav_row.append(InlineKeyboardButton("⬅️ Назад", callback_data="list_nav:PREV"))
     if has_next:
         nav_row.append(InlineKeyboardButton("➡️ Далее", callback_data="list_nav:NEXT"))
-    
+
     if nav_row:
         keyboard.append(nav_row)
-    
+
     # Always add main menu button
-    keyboard.append([InlineKeyboardButton("🏠 Главное меню", callback_data="list_nav:MAIN_MENU")])
-    
+    keyboard.append(
+        [InlineKeyboardButton("🏠 Главное меню", callback_data="list_nav:MAIN_MENU")]
+    )
+
     return InlineKeyboardMarkup(keyboard)

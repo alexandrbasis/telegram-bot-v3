@@ -62,15 +62,17 @@ class TestParticipantListService:
         ]
 
     @pytest.mark.asyncio
-    async def test_get_team_members_list(self, service, mock_repository, sample_team_participants):
+    async def test_get_team_members_list(
+        self, service, mock_repository, sample_team_participants
+    ):
         """Test getting team members list."""
         mock_repository.get_by_role.return_value = sample_team_participants
-        
+
         result = await service.get_team_members_list(page=1, page_size=20)
-        
+
         # Should call repository with TEAM role
         mock_repository.get_by_role.assert_called_once_with("TEAM")
-        
+
         # Should return formatted list data
         assert "formatted_list" in result
         assert "has_prev" in result
@@ -79,15 +81,17 @@ class TestParticipantListService:
         assert "page" in result
 
     @pytest.mark.asyncio
-    async def test_get_candidates_list(self, service, mock_repository, sample_candidate_participants):
+    async def test_get_candidates_list(
+        self, service, mock_repository, sample_candidate_participants
+    ):
         """Test getting candidates list."""
         mock_repository.get_by_role.return_value = sample_candidate_participants
-        
+
         result = await service.get_candidates_list(page=1, page_size=20)
-        
+
         # Should call repository with CANDIDATE role
         mock_repository.get_by_role.assert_called_once_with("CANDIDATE")
-        
+
         # Should return formatted list data
         assert "formatted_list" in result
         assert "has_prev" in result
@@ -96,17 +100,19 @@ class TestParticipantListService:
         assert "page" in result
 
     @pytest.mark.asyncio
-    async def test_list_formatting_with_all_fields(self, service, mock_repository, sample_team_participants):
+    async def test_list_formatting_with_all_fields(
+        self, service, mock_repository, sample_team_participants
+    ):
         """Test list formatting includes all required fields."""
         mock_repository.get_by_role.return_value = sample_team_participants
-        
+
         result = await service.get_team_members_list(page=1, page_size=20)
         formatted_list = result["formatted_list"]
-        
+
         # Should be numbered list format
         assert "1." in formatted_list
         assert "2." in formatted_list
-        
+
         # Should contain all participant information
         assert "Иванов Иван Иванович" in formatted_list
         assert "Петров Петр Петрович" in formatted_list
@@ -128,10 +134,10 @@ class TestParticipantListService:
             ),
         ]
         mock_repository.get_by_role.return_value = participants
-        
+
         result = await service.get_team_members_list(page=1, page_size=20)
         formatted_list = result["formatted_list"]
-        
+
         # Should format single digit day/month with leading zeros
         assert "07.01.1995" in formatted_list
 
@@ -146,32 +152,36 @@ class TestParticipantListService:
             ),
         ]
         mock_repository.get_by_role.return_value = participants
-        
+
         result = await service.get_team_members_list(page=1, page_size=20)
         formatted_list = result["formatted_list"]
-        
+
         # Should show "Не указано" for missing date
         assert "Не указано" in formatted_list
 
     @pytest.mark.asyncio
-    async def test_pagination_first_page(self, service, mock_repository, sample_team_participants):
+    async def test_pagination_first_page(
+        self, service, mock_repository, sample_team_participants
+    ):
         """Test pagination for first page."""
         mock_repository.get_by_role.return_value = sample_team_participants
-        
+
         result = await service.get_team_members_list(page=1, page_size=1)
-        
+
         assert result["has_prev"] is False
         assert result["has_next"] is True  # Has more participants
         assert result["page"] == 1
         assert result["total_count"] == 2
 
     @pytest.mark.asyncio
-    async def test_pagination_last_page(self, service, mock_repository, sample_team_participants):
+    async def test_pagination_last_page(
+        self, service, mock_repository, sample_team_participants
+    ):
         """Test pagination for last page."""
         mock_repository.get_by_role.return_value = sample_team_participants
-        
+
         result = await service.get_team_members_list(page=2, page_size=1)
-        
+
         assert result["has_prev"] is True
         assert result["has_next"] is False  # No more participants
         assert result["page"] == 2
@@ -180,9 +190,9 @@ class TestParticipantListService:
     async def test_empty_participant_list(self, service, mock_repository):
         """Test handling of empty participant list."""
         mock_repository.get_by_role.return_value = []
-        
+
         result = await service.get_team_members_list(page=1, page_size=20)
-        
+
         assert result["formatted_list"] == "Участники не найдены."
         assert result["has_prev"] is False
         assert result["has_next"] is False
@@ -204,10 +214,10 @@ class TestParticipantListService:
                 )
             )
         mock_repository.get_by_role.return_value = many_participants
-        
+
         result = await service.get_team_members_list(page=1, page_size=100)
         formatted_list = result["formatted_list"]
-        
+
         # Should stay under Telegram message limit
         assert len(formatted_list) < 4096
 
@@ -224,10 +234,10 @@ class TestParticipantListService:
             ),
         ]
         mock_repository.get_by_role.return_value = participants
-        
+
         result = await service.get_team_members_list(page=1, page_size=20)
         formatted_list = result["formatted_list"]
-        
+
         # Should handle missing fields gracefully
         assert "Минималист Мин Минович" in formatted_list
         assert "10.05.1985" in formatted_list
