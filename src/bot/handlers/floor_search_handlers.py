@@ -60,12 +60,14 @@ def format_floor_results(participants: List[Participant], floor: int) -> str:
         room = participant.room_number or "Неизвестно"
         rooms[room].append(participant)
 
-    # Sort rooms by number (handle both string and numeric rooms)
+    # Sort rooms: numeric rooms first (by number), then alphanumeric (alphabetically)
     def room_sort_key(room):
         try:
-            return int(room)
+            # Numeric rooms get priority 0 and sort by numeric value
+            return (0, int(room))
         except (ValueError, TypeError):
-            return float("inf")  # Put non-numeric rooms at the end
+            # Alphanumeric rooms get priority 1 and sort alphabetically
+            return (1, str(room))
 
     sorted_rooms = sorted(rooms.keys(), key=room_sort_key)
 
@@ -159,6 +161,52 @@ async def process_floor_search(
     return await process_floor_search_with_input(update, context, floor_input)
 
 
+async def execute_floor_search(
+    message, context: ContextTypes.DEFAULT_TYPE, floor_input: str, user_id: int
+) -> tuple[list, str]:
+    """
+    Execute floor search logic without UI dependencies.
+
+    Args:
+        message: Message object for responses (update.message or callback_query.message)
+        context: Bot context
+        floor_input: Floor number/input to search
+        user_id: User ID for logging
+
+    Returns:
+        Tuple of (participants_list, results_message)
+
+    Raises:
+        ValueError: If floor input is invalid
+        Exception: If search service fails
+    """
+    logger.info(f"User {user_id} searching floor: '{floor_input}'")
+
+    # Validate floor input (should be numeric)
+    floor_number = int(floor_input)  # Let ValueError propagate
+
+    # Get search service and search participants
+    search_service = get_search_service()
+    participants = await search_service.search_by_floor(floor_number)
+
+    # Store results in user data
+    context.user_data["floor_search_results"] = participants
+    context.user_data["current_floor"] = floor_input
+
+    # Format results message
+    results_message = format_floor_results(participants, floor_number)
+
+    if participants:
+        logger.info(
+            f"Found {len(participants)} participants on floor "
+            f"{floor_number} for user {user_id}"
+        )
+    else:
+        logger.info(f"No participants found on floor {floor_number} for user {user_id}")
+
+    return participants, results_message
+
+
 async def process_floor_search_with_input(
     update: Update, context: ContextTypes.DEFAULT_TYPE, floor_input: str
 ) -> int:
@@ -175,11 +223,15 @@ async def process_floor_search_with_input(
     """
     user = update.effective_user
 
-    logger.info(f"User {user.id} searching floor: '{floor_input}'")
-
-    # Validate floor input (should be numeric)
     try:
-        floor_number = int(floor_input)
+        participants, results_message = await execute_floor_search(
+            update.message, context, floor_input, user.id
+        )
+
+        await update.message.reply_text(
+            text=results_message, reply_markup=get_results_navigation_keyboard()
+        )
+
     except ValueError:
         await update.message.reply_text(
             text=RetryMessages.with_help(
@@ -188,34 +240,6 @@ async def process_floor_search_with_input(
             reply_markup=get_waiting_for_floor_keyboard(),
         )
         return FloorSearchStates.WAITING_FOR_FLOOR
-
-    try:
-        # Get search service
-        search_service = get_search_service()
-
-        # Search participants by floor
-        participants = await search_service.search_by_floor(floor_number)
-
-        # Store results in user data
-        context.user_data["floor_search_results"] = participants
-        context.user_data["current_floor"] = floor_input
-
-        # Format and send results
-        results_message = format_floor_results(participants, floor_number)
-
-        await update.message.reply_text(
-            text=results_message, reply_markup=get_results_navigation_keyboard()
-        )
-
-        if participants:
-            logger.info(
-                f"Found {len(participants)} participants on floor "
-                f"{floor_number} for user {user.id}"
-            )
-        else:
-            logger.info(
-                f"No participants found on floor {floor_number} " f"for user {user.id}"
-            )
 
     except Exception as e:
         logger.error(f"Error during floor search for user {user.id}: {e}")
@@ -326,16 +350,35 @@ async def handle_floor_selection_callback(
     floor_number = match.group(1)
     logger.info(f"User {user.id} selected floor {floor_number}")
 
-    # Store the floor selection
-    context.user_data["current_floor"] = floor_number
-
     # Send searching message
     await query.message.edit_text(text=InfoMessages.searching_floor(int(floor_number)))
 
-    # Create a temporary message object for process_floor_search_with_input
-    # This allows us to reuse the existing search logic without duplicating code
-    # TODO: Consider extracting a helper function to avoid mutating update object
-    update.message = query.message
+    try:
+        # Execute floor search using the helper function (no update mutation needed)
+        participants, results_message = await execute_floor_search(
+            query.message, context, floor_number, user.id
+        )
 
-    # Process the floor search with the selected floor
-    return await process_floor_search_with_input(update, context, floor_number)
+        # Send results by editing the message again
+        await query.message.edit_text(
+            text=results_message, reply_markup=get_results_navigation_keyboard()
+        )
+
+    except ValueError:
+        # This shouldn't happen since callback data is validated, but handle gracefully
+        logger.error(f"Invalid floor number from validated callback: {floor_number}")
+        await query.message.edit_text(text=ErrorMessages.SYSTEM_ERROR_GENERIC)
+        return FloorSearchStates.WAITING_FOR_FLOOR
+
+    except Exception as e:
+        logger.error(f"Error during floor search for user {user.id}: {e}")
+
+        # Send error message
+        await query.message.edit_text(
+            text=RetryMessages.with_help(
+                ErrorMessages.SEARCH_ERROR_GENERIC, RetryMessages.RETRY_CONNECTION
+            ),
+            reply_markup=get_results_navigation_keyboard(),
+        )
+
+    return FloorSearchStates.SHOWING_FLOOR_RESULTS

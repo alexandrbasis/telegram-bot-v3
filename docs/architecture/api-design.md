@@ -272,19 +272,31 @@ BUTTON_SELECTION:
 CONFIRMATION:
   → END (after save/cancel)
 
-SearchStates (Fixed 2025-09-10):
+SearchStates (Fixed 2025-09-10, Enhanced 2025-01-21):
 SEARCH_MODE_SELECTION:
   → WAITING_FOR_NAME ("👤 По имени" button - NAV_SEARCH_NAME handler)
   → WAITING_FOR_ROOM ("🚪 По комнате" button - NAV_SEARCH_ROOM handler)
   → WAITING_FOR_FLOOR ("🏢 По этажу" button - NAV_SEARCH_FLOOR handler)
   → END (cancel/main menu buttons)
 
-WAITING_FOR_NAME/ROOM/FLOOR (Critical Fix):
+WAITING_FOR_NAME/ROOM (Critical Fix):
   → SHOWING_RESULTS (valid user input)
   → WAITING_FOR_* (validation error retry)
   → END (cancel button - NAV_CANCEL handler)
   → MAIN_MENU (main menu button - NAV_MAIN_MENU handler)
   → SEARCH_MODE_SELECTION (back to search modes - NAV_BACK_TO_SEARCH_MODES handler)
+
+WAITING_FOR_FLOOR (Enhanced with Callback Integration 2025-01-21):
+  → SHOWING_RESULTS (valid user input OR floor selection callback)
+  → WAITING_FOR_FLOOR (validation error retry)
+  → FLOOR_DISCOVERY_DISPLAY (floor_discovery callback)
+  → END (cancel button - NAV_CANCEL handler)
+  → MAIN_MENU (main menu button - NAV_MAIN_MENU handler)
+  → SEARCH_MODE_SELECTION (back to search modes - NAV_BACK_TO_SEARCH_MODES handler)
+  
+  Callback Handlers in WAITING_FOR_FLOOR state:
+  - CallbackQueryHandler("^floor_discovery$") → Floor discovery button processing
+  - CallbackQueryHandler("^floor_select_(\\d+)$") → Floor selection button processing
   
   Note: Navigation button text (NAV_SEARCH_*) now properly excluded from input processing
         via MessageHandler exclusion filters to prevent button text being treated as queries

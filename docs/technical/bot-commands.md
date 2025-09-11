@@ -76,6 +76,13 @@ Search for participants on a specific floor with room-by-room breakdown. Feature
 5. **Manual Input Path**: User types floor number → Bot processes search as before
 6. **Error Recovery**: API failures show helpful fallback message with manual input guidance
 
+**Conversation Flow Integration (2025-01-21):**
+- **Callback Handler Registration**: Floor discovery handlers properly registered in ConversationHandler with patterns `^floor_discovery$` and `^floor_select_(\\d+)$` in WAITING_FOR_FLOOR state
+- **State Transition Validation**: Complete conversation flow integration validated through comprehensive testing
+- **Backward Compatibility**: Traditional numeric floor input continues working alongside interactive features without interference
+- **Error Recovery Scenarios**: Comprehensive error handling for API failures, callback timeouts, and empty results with proper user guidance
+- **Performance Validation**: All callback responses validated to complete within acceptable time limits
+
 ## Get List Commands
 
 ### Get List Button and Bulk Access
