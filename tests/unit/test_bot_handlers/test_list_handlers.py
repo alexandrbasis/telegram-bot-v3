@@ -110,8 +110,27 @@ class TestRoleSelectionHandler:
         return context
 
     @pytest.mark.asyncio
-    async def test_handle_team_role_selection(self, mock_team_update, mock_context):
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_handle_team_role_selection(
+        self, mock_get_service, mock_team_update, mock_context
+    ):
         """Test team role selection triggers team list display."""
+        # Setup mock service
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. **Тестов Тест**\n",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 1,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
+                "actual_displayed": 1,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
         await handle_role_selection(mock_team_update, mock_context)
 
         # Should answer the callback query
@@ -125,10 +144,27 @@ class TestRoleSelectionHandler:
         assert "Список участников команды" in message_text
 
     @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
     async def test_handle_candidate_role_selection(
-        self, mock_candidate_update, mock_context
+        self, mock_get_service, mock_candidate_update, mock_context
     ):
         """Test candidate role selection triggers candidate list display."""
+        # Setup mock service
+        mock_service = Mock()
+        mock_service.get_candidates_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. **Кандидат Тест**\n",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 1,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
+                "actual_displayed": 1,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
         await handle_role_selection(mock_candidate_update, mock_context)
 
         # Should answer the callback query
@@ -142,10 +178,27 @@ class TestRoleSelectionHandler:
         assert "Список кандидатов" in message_text
 
     @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
     async def test_role_selection_includes_pagination(
-        self, mock_team_update, mock_context
+        self, mock_get_service, mock_team_update, mock_context
     ):
         """Test that role selection includes pagination controls."""
+        # Setup mock service with pagination data
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. **Тестов Тест**\n",
+                "has_prev": False,
+                "has_next": True,
+                "total_count": 50,
+                "current_offset": 0,
+                "next_offset": 20,
+                "prev_offset": None,
+                "actual_displayed": 20,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
         await handle_role_selection(mock_team_update, mock_context)
 
         call_args = mock_team_update.callback_query.edit_message_text.call_args
