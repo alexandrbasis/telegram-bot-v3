@@ -42,9 +42,9 @@ class TestConversationTimeoutHandler:
         # Should return ConversationHandler.END
         assert result == ConversationHandler.END
 
-        # Should send message with Russian timeout text
-        mock_context.bot.send_message.assert_called_once()
-        call_args = mock_context.bot.send_message.call_args
+        # Should send at least one message (timeout notice)
+        assert mock_context.bot.send_message.call_count >= 1
+        call_args = mock_context.bot.send_message.call_args_list[0]
 
         # Check message content
         assert "Сессия истекла, начните заново" in call_args.kwargs["text"]
@@ -58,9 +58,9 @@ class TestConversationTimeoutHandler:
         # Should return ConversationHandler.END
         assert result == ConversationHandler.END
 
-        # Should send message with keyboard
-        mock_context.bot.send_message.assert_called_once()
-        call_args = mock_context.bot.send_message.call_args
+        # Should send message with keyboard (first message)
+        assert mock_context.bot.send_message.call_count >= 1
+        call_args = mock_context.bot.send_message.call_args_list[0]
 
         # Check that reply_markup is present
         assert "reply_markup" in call_args.kwargs
@@ -81,8 +81,8 @@ class TestConversationTimeoutHandler:
         """Test that timeout message is properly formatted."""
         result = await handle_conversation_timeout(mock_update, mock_context)
 
-        mock_context.bot.send_message.assert_called_once()
-        call_args = mock_context.bot.send_message.call_args
+        assert mock_context.bot.send_message.call_count >= 1
+        call_args = mock_context.bot.send_message.call_args_list[0]
 
         # Check that message is sent to correct chat
         assert call_args.kwargs["chat_id"] == 12345
@@ -108,8 +108,8 @@ class TestConversationTimeoutHandler:
         """Test the structure and content of timeout recovery keyboard."""
         result = await handle_conversation_timeout(mock_update, mock_context)
 
-        mock_context.bot.send_message.assert_called_once()
-        call_args = mock_context.bot.send_message.call_args
+        assert mock_context.bot.send_message.call_count >= 1
+        call_args = mock_context.bot.send_message.call_args_list[0]
 
         # Get the keyboard
         keyboard = call_args.kwargs["reply_markup"]
@@ -122,3 +122,18 @@ class TestConversationTimeoutHandler:
         # Should have proper settings
         assert keyboard.resize_keyboard is True
         assert keyboard.one_time_keyboard is False
+
+    async def test_timeout_sends_inline_restart_button(self, mock_update, mock_context):
+        """Ensure an inline /start restart button is sent as a second message."""
+        await handle_conversation_timeout(mock_update, mock_context)
+
+        # Expect at least two messages: main menu + inline restart
+        assert mock_context.bot.send_message.call_count >= 2
+
+        # Check the last call has InlineKeyboardMarkup with restart callback
+        from telegram import InlineKeyboardMarkup
+
+        last_call = mock_context.bot.send_message.call_args_list[-1]
+        assert isinstance(last_call.kwargs.get("reply_markup"), InlineKeyboardMarkup)
+        keyboard_str = str(last_call.kwargs["reply_markup"])
+        assert "restart_bot" in keyboard_str

@@ -8,7 +8,7 @@ messages and main menu recovery options.
 import logging
 from typing import Optional
 
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     CallbackContext,
     CallbackQueryHandler,
@@ -69,6 +69,22 @@ async def handle_conversation_timeout(
         logger.info(f"Sent timeout message to chat {chat_id}")
     except Exception as e:
         logger.error(f"Failed to send timeout message to chat {chat_id}: {e}")
+
+    # Additionally, provide an inline button to restart the bot (/start)
+    # Telegram doesn't allow both reply and inline keyboards on the same message,
+    # so we send a second message directly below with the inline restart button.
+    try:
+        restart_keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("▶️ /start", callback_data="restart_bot")]]
+        )
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="Быстрый перезапуск:",
+            reply_markup=restart_keyboard,
+        )
+        logger.info(f"Sent inline restart button to chat {chat_id}")
+    except Exception as e:
+        logger.error(f"Failed to send inline restart button to chat {chat_id}: {e}")
 
     # End the conversation regardless of message send success
     return ConversationHandler.END

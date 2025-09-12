@@ -107,6 +107,8 @@ def get_search_conversation_handler() -> ConversationHandler:
             ),
             # Keep inline button support for stale buttons
             CallbackQueryHandler(search_button, pattern="^search$"),
+            # Inline restart button entry point after timeout
+            CallbackQueryHandler(main_menu_button, pattern="^restart_bot$"),
         ],
         states={
             # === SEARCH STATES ===

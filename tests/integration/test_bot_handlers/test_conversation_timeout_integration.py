@@ -98,10 +98,10 @@ class TestConversationTimeoutIntegration:
 
         # Should end conversation and show timeout message
         assert result == conversation_handler.END
-        mock_context_with_job_queue.bot.send_message.assert_called_once()
+        assert mock_context_with_job_queue.bot.send_message.call_count >= 1
 
-        # Check Russian timeout message
-        call_args = mock_context_with_job_queue.bot.send_message.call_args
+        # Check Russian timeout message (first message)
+        call_args = mock_context_with_job_queue.bot.send_message.call_args_list[0]
         assert "Сессия истекла, начните заново" in call_args.kwargs["text"]
 
     async def test_timeout_from_search_mode_selection_state(
@@ -119,7 +119,7 @@ class TestConversationTimeoutIntegration:
 
         # Should properly handle timeout regardless of current state
         assert result == conversation_handler.END
-        mock_context_with_job_queue.bot.send_message.assert_called_once()
+        assert mock_context_with_job_queue.bot.send_message.call_count >= 1
 
     async def test_timeout_from_waiting_for_name_state(
         self, conversation_handler, mock_update, mock_context_with_job_queue
@@ -136,10 +136,10 @@ class TestConversationTimeoutIntegration:
         )
 
         assert result == conversation_handler.END
-        mock_context_with_job_queue.bot.send_message.assert_called_once()
+        assert mock_context_with_job_queue.bot.send_message.call_count >= 1
 
-        # Verify timeout message content
-        call_args = mock_context_with_job_queue.bot.send_message.call_args
+        # Verify timeout message content (first message)
+        call_args = mock_context_with_job_queue.bot.send_message.call_args_list[0]
         message_text = call_args.kwargs["text"]
         assert "⏰" in message_text
         assert "🔄" in message_text
@@ -159,7 +159,7 @@ class TestConversationTimeoutIntegration:
         )
 
         assert result == conversation_handler.END
-        mock_context_with_job_queue.bot.send_message.assert_called_once()
+        assert mock_context_with_job_queue.bot.send_message.call_count >= 1
 
     async def test_timeout_from_edit_states(
         self, conversation_handler, mock_update, mock_context_with_job_queue
@@ -176,10 +176,10 @@ class TestConversationTimeoutIntegration:
 
         # Should cleanly end conversation and return to main menu
         assert result == conversation_handler.END
-        mock_context_with_job_queue.bot.send_message.assert_called_once()
+        assert mock_context_with_job_queue.bot.send_message.call_count >= 1
 
-        # Should provide main menu keyboard for recovery
-        call_args = mock_context_with_job_queue.bot.send_message.call_args
+        # Should provide main menu keyboard for recovery (first message)
+        call_args = mock_context_with_job_queue.bot.send_message.call_args_list[0]
         assert "reply_markup" in call_args.kwargs
 
     async def test_timeout_state_cleanup(
@@ -218,8 +218,8 @@ class TestConversationTimeoutIntegration:
 
         assert result == conversation_handler.END
 
-        # Verify keyboard for recovery
-        call_args = mock_context_with_job_queue.bot.send_message.call_args
+        # Verify keyboard for recovery (first message)
+        call_args = mock_context_with_job_queue.bot.send_message.call_args_list[0]
         keyboard = call_args.kwargs["reply_markup"]
 
         # Should be a ReplyKeyboardMarkup with search functionality
@@ -305,8 +305,8 @@ class TestConversationTimeoutIntegration:
 
         assert result == conversation_handler.END
 
-        # Verify complete message structure
-        call_args = mock_context_with_job_queue.bot.send_message.call_args
+        # Verify complete message structure (first message)
+        call_args = mock_context_with_job_queue.bot.send_message.call_args_list[0]
 
         # Should send to correct chat
         assert call_args.kwargs["chat_id"] == 987654321

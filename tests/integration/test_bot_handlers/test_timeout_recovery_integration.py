@@ -170,10 +170,15 @@ class TestTimeoutRecoveryIntegration:
             len(message_handlers) == 3
         ), f"Expected 3 message handlers, got {len(message_handlers)}"
 
-        # Should have 1 callback query handler (search)
+        # Should have at least 1 callback query handler (e.g., search; may include restart)
         assert (
-            len(callback_query_handlers) == 1
-        ), f"Expected 1 callback query handler, got {len(callback_query_handlers)}"
+            len(callback_query_handlers) >= 1
+        ), f"Expected at least 1 callback query handler, got {len(callback_query_handlers)}"
+
+        # Validate that known patterns are present among callback query handlers
+        patterns = [getattr(ep, "pattern", None) for ep in callback_query_handlers]
+        pattern_strs = [getattr(p, "pattern", "") for p in patterns if p is not None]
+        assert any("^search$" in s for s in pattern_strs), "Missing 'search' callback entry point"
 
     @pytest.mark.asyncio
     async def test_main_menu_entry_point_leads_to_correct_state(

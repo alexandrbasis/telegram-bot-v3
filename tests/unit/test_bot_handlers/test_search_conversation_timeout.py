@@ -123,11 +123,11 @@ class TestSearchConversationTimeoutIntegration:
         # Should return ConversationHandler.END
         assert result == ConversationHandler.END
 
-        # Should send a message
-        mock_context_with_job_queue.bot.send_message.assert_called_once()
+        # Should send at least one message (timeout notice)
+        assert mock_context_with_job_queue.bot.send_message.call_count >= 1
 
-        # Check message content
-        call_args = mock_context_with_job_queue.bot.send_message.call_args
+        # Check message content of the first message
+        call_args = mock_context_with_job_queue.bot.send_message.call_args_list[0]
         assert "Сессия истекла, начните заново" in call_args.kwargs["text"]
 
     def test_default_timeout_configuration(self):
