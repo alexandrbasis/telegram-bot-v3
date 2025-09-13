@@ -1,5 +1,10 @@
 # Airtable Database Structure Documentation
 
+## Last Updated
+- **Date**: January 12, 2025
+- **Version**: 2.0.0
+- **Changes**: Added new fields (ChurchLeader, TableName, Notes, Floor, RoomNumber)
+
 ## Database Information
 - **Base ID**: `appRp7Vby2JMzN0mC`
 - **Base Type**: Airtable
@@ -54,6 +59,29 @@
 - **Field ID**: `fldSy0Hbwl49VtZvf`
 - **Type**: `singleLineText`
 - **Purpose**: Contact details
+- **Required**: No
+- **Example**: Not provided in sample data
+
+#### ChurchLeader
+- **Field ID**: `fldbQr0R6nEtg1nXM`
+- **Type**: `singleLineText`
+- **Purpose**: Church leader name or reference
+- **Required**: No
+- **Example**: Not provided in sample data
+
+#### TableName
+- **Field ID**: `fldwIopXniSHk94v9`
+- **Type**: `singleLineText`
+- **Purpose**: Table assignment for events
+- **Required**: No
+- **Example**: Not provided in sample data
+
+### Multi-line Text Fields
+
+#### Notes
+- **Field ID**: `fldL4wmlV9de1kKa1`
+- **Type**: `multilineText`
+- **Purpose**: Additional notes or comments about the participant
 - **Required**: No
 - **Example**: Not provided in sample data
 
@@ -139,6 +167,22 @@
 - **Constraints**: Must be >= 0 and <= 120
 - **Example**: 35
 
+#### Floor
+- **Field ID**: `fldlzG1sVg01hsy2g`
+- **Type**: `number`
+- **Purpose**: Floor number for accommodation assignment
+- **Required**: No
+- **Precision**: 0 (integers only)
+- **Example**: Not provided in sample data
+
+#### RoomNumber
+- **Field ID**: `fldJTPjo8AHQaADVu`
+- **Type**: `number`
+- **Purpose**: Room number for accommodation assignment
+- **Required**: No
+- **Precision**: 0 (integers only)
+- **Example**: Not provided in sample data
+
 ### Date Fields
 
 #### PaymentDate
@@ -185,6 +229,7 @@
     "Gender": "M|F",
     "Size": "XS|S|M|L|XL|XXL|3XL",
     "Church": "string (optional)",
+    "ChurchLeader": "string (optional)",
     "Role": "CANDIDATE|TEAM",
     "Department": "ROE|Chapel|Setup|...",
     "CountryAndCity": "string (optional)",
@@ -194,7 +239,11 @@
     "PaymentAmount": "number (integer)",
     "PaymentDate": "YYYY-MM-DD",
     "DateOfBirth": "YYYY-MM-DD (optional)",
-    "Age": "number (integer, optional, 0-120)"
+    "Age": "number (integer, optional, 0-120)",
+    "Floor": "number (integer, optional)",
+    "RoomNumber": "number (integer, optional)",
+    "TableName": "string (optional)",
+    "Notes": "string (multiline, optional)"
   }
 }
 ```
@@ -210,3 +259,16 @@
    - Age field should be validated to be within reasonable range (0-120)
    - DateOfBirth field uses ISO format for consistency with API standards
    - Both fields are optional and support backward compatibility with existing records
+7. **Accommodation Management**: Floor and RoomNumber fields enable room assignment tracking
+   - Both fields are numeric (integer) for sorting and filtering
+   - Can be used for generating accommodation reports and floor plans
+8. **Event Organization**: TableName field supports event seating arrangements
+   - Free-text field allowing flexible table naming conventions
+   - Can be used alongside Department for event logistics
+9. **Leadership Tracking**: ChurchLeader field links participants to church leadership
+   - Useful for group organization and communication channels
+   - Can be cross-referenced with Church field for hierarchical structure
+10. **Extended Information**: Notes field provides flexible multiline text storage
+    - Supports rich participant information that doesn't fit standard fields
+    - Useful for special requirements, dietary restrictions, or administrative notes
+    - Content should be sanitized for display in various formats

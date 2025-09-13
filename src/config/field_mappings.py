@@ -45,6 +45,9 @@ class AirtableFieldMapping:
         "Contact Information": "fldSy0Hbwl49VtZvf",  # Back-compat for display label in searches
         "TelegramID": "fldTELEGRAMIDv1a2",  # Placeholder-looking but valid format for tests
         "Telegram ID": "fldTELEGRAMIDv1a2",  # Back-compat for display label in searches
+        "ChurchLeader": "fldbQr0R6nEtg1nXM",  # Church leader name field
+        "TableName": "fldwIopXniSHk94v9",  # Event table assignment field
+        "Notes": "fldL4wmlV9de1kKa1",  # Multiline text notes field
         # Special record ID pseudo-field mapping for completeness checks in tests
         "id": "fldRECORDID000000",
         # Single select fields (5)
@@ -118,6 +121,9 @@ class AirtableFieldMapping:
         "submitted_by": "SubmittedBy",
         "contact_information": "ContactInformation",
         "telegram_id": "TelegramID",
+        "church_leader": "ChurchLeader",
+        "table_name": "TableName",
+        "notes": "Notes",
         # Single select fields
         "gender": "Gender",
         "size": "Size",
@@ -150,6 +156,9 @@ class AirtableFieldMapping:
         "SubmittedBy": FieldType.TEXT,
         "ContactInformation": FieldType.TEXT,
         "TelegramID": FieldType.TEXT,
+        "ChurchLeader": FieldType.TEXT,
+        "TableName": FieldType.TEXT,
+        "Notes": FieldType.LONG_TEXT,
         "Gender": FieldType.SINGLE_SELECT,
         "Size": FieldType.SINGLE_SELECT,
         "Role": FieldType.SINGLE_SELECT,
@@ -162,8 +171,7 @@ class AirtableFieldMapping:
         "Age": FieldType.NUMBER,
         # Accommodation fields
         "Floor": FieldType.NUMBER,
-        # RoomNumber supports alphanumeric values (e.g., "A201"), so treat as text
-        "RoomNumber": FieldType.TEXT,
+        "RoomNumber": FieldType.NUMBER,
     }
 
     # Formula field reference constants for consistent field naming in Airtable formulas
@@ -206,6 +214,18 @@ class AirtableFieldMapping:
             "max_length": 200,
             "description": "Email, phone, or other contact details",
         },
+        "ChurchLeader": {
+            "max_length": 100,
+            "description": "Church leader name or reference",
+        },
+        "TableName": {
+            "max_length": 50,
+            "description": "Event table assignment",
+        },
+        "Notes": {
+            "max_length": 5000,
+            "description": "Additional notes or comments about the participant",
+        },
         "PaymentAmount": {
             "min_value": 0,
             "max_value": 99999,
@@ -220,11 +240,15 @@ class AirtableFieldMapping:
             "description": "Participant's age in years (validated in application, not in Airtable)",
         },
         # Basic constraints for accommodation fields
-        "Floor": {"min_value": 0, "description": "Accommodation floor (numeric)"},
-        # Room number is text to allow alphanumeric values
+        "Floor": {
+            "min_value": 0,
+            "max_value": 20,
+            "description": "Accommodation floor number",
+        },
         "RoomNumber": {
-            "max_length": 20,
-            "description": "Accommodation room number (text, supports alphanumeric)",
+            "min_value": 0,
+            "max_value": 9999,
+            "description": "Accommodation room number",
         },
     }
 
