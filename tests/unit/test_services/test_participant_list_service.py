@@ -139,6 +139,7 @@ class TestParticipantListService:
     async def test_new_format_department_display(self, service, mock_repository):
         """Test new format displays department field correctly."""
         from src.models.participant import Department
+
         participants = [
             Participant(
                 full_name_ru="Тестов Тест Тестович",
@@ -392,9 +393,7 @@ class TestTeamListDisplayUpdate:
 
     # Error Handling Tests
     @pytest.mark.asyncio
-    async def test_missing_department_field_in_airtable(
-        self, service, mock_repository
-    ):
+    async def test_missing_department_field_in_airtable(self, service, mock_repository):
         """Test handling cases where department field doesn't exist in response."""
         participants_without_department = [
             Participant(
@@ -487,7 +486,12 @@ class TestTeamListDisplayUpdate:
         """Test that message doesn't exceed Telegram limits with department field."""
         # Create many participants with departments to test length constraint
         many_participants = []
-        departments = [Department.KITCHEN, Department.SETUP, Department.ADMINISTRATION, Department.BELL]
+        departments = [
+            Department.KITCHEN,
+            Department.SETUP,
+            Department.ADMINISTRATION,
+            Department.BELL,
+        ]
 
         for i in range(50):
             many_participants.append(
