@@ -98,12 +98,12 @@ Access pre-filtered participant lists by role for quick bulk viewing. Available 
 5. Navigation with "◀️ Назад", "▶️ Далее", and "🏠 Главное меню" buttons
 
 ### Team Members List
-View complete list of all team members with comprehensive details for logistics and organization planning.
+View complete list of all team members with organizational details for logistics and planning.
 
 **Features:**
 - **Server-side Role Filtering**: Efficient Airtable filtering by role="TEAM"
 - **Numbered List Format**: Sequential numbering (1., 2., 3.) for easy reference
-- **Complete Information**: Full name (Russian), clothing size, church, date of birth (DD.MM.YYYY)
+- **Organizational Information**: Full name (Russian), department, church affiliation
 - **Pagination**: Dynamic page size with Telegram 4096-character message limit handling
 - **Offset-based Navigation**: Ensures no participants are skipped during pagination
 
@@ -112,40 +112,36 @@ View complete list of all team members with comprehensive details for logistics 
 **Список участников команды** (элементы 1-20 из 45)
 
 1. **Иван Петров**
-   👕 Размер: M
+   🏢 Отдел: Setup
    ⛪ Церковь: Храм Христа Спасителя
-   📅 Дата рождения: 15.06.1985
 
 2. **Мария Иванова**
-   👕 Размер: S
+   🏢 Отдел: Kitchen
    ⛪ Церковь: Церковь Святого Николая
-   📅 Дата рождения: 22.03.1990
 
 ... (continues with remaining participants)
 ```
 
 ### Candidates List
-View complete list of all candidates with the same comprehensive formatting as team members.
+View complete list of all candidates with organizational context for administrative planning.
 
 **Features:**
 - **Server-side Role Filtering**: Efficient Airtable filtering by role="CANDIDATE"
 - **Identical Format**: Same numbered list format and information display as team list
 - **Consistent Navigation**: Same pagination and navigation controls
-- **Administrative Focus**: Designed for candidate management and review processes
+- **Administrative Focus**: Designed for candidate management and organizational planning
 
 **Display Example:**
 ```
 **Список кандидатов** (элементы 1-18 из 32)
 
 1. **Анна Козлова**
-   👕 Размер: L
+   🏢 Отдел: —
    ⛪ Церковь: Церковь Покрова
-   📅 Дата рождения: 08.12.1988
 
 2. **Петр Смирнов**
-   👕 Размер: XL
+   🏢 Отдел: —
    ⛪ Церковь: Собор Александра Невского
-   📅 Дата рождения: Не указано
 
 ... (continues with remaining participants)
 ```

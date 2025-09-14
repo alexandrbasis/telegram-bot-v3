@@ -143,7 +143,7 @@ def validate_floor(floor: Union[int, str]) -> ValidationResult:
 ### Russian Translation Utilities (Added 2025-01-09)
 
 #### Department and Role Translation Support
-Complete Russian translation mappings for all participant fields have been implemented to provide consistent localized user interface.
+Complete Russian translation mappings for all participant fields have been implemented to provide consistent localized user interface. The department field is now actively used in team list displays, showing organizational context instead of personal data.
 
 **Translation File**: `src/utils/translations.py`
 
@@ -151,15 +151,15 @@ Complete Russian translation mappings for all participant fields have been imple
 # Department translations (all 13 departments)
 DEPARTMENT_RUSSIAN = {
     Department.ROE: "ROE",
-    Department.CHAPEL: "Капелла", 
-    Department.SETUP: "Подготовка",
+    Department.CHAPEL: "Капелла",
+    Department.SETUP: "Setup",
     Department.PALANKA: "Паланка",
     Department.ADMINISTRATION: "Администрация",
-    Department.KITCHEN: "Кухня",
+    Department.KITCHEN: "Kitchen",
     Department.DECORATION: "Декорация",
     Department.BELL: "Колокол",
     Department.REFRESHMENT: "Освежение",
-    Department.WORSHIP: "Богослужение", 
+    Department.WORSHIP: "Богослужение",
     Department.MEDIA: "Медиа",
     Department.CLERGY: "Клир",
     Department.RECTORATE: "Ректорат"
@@ -177,8 +177,11 @@ def translate_to_russian(value, translation_dict):
     return translation_dict.get(value, str(value))
 ```
 
+#### Usage in Team List Display (Updated 2025-01-14)
+The department field is now prominently displayed in team list results, providing organizational context instead of personal information. This enhances team management by showing which department each team member belongs to, facilitating better coordination and organization.
+
 #### Usage in Room Search Results
-These translations are used by the `format_room_results_russian()` function to display all participant information in Russian, providing a consistent and user-friendly experience.
+These translations are also used by the `format_room_results_russian()` function to display all participant information in Russian, providing a consistent and user-friendly experience.
 
 ### Integration Testing and Validation (2025-01-09)
 

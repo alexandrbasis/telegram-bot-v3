@@ -621,9 +621,9 @@ Quick bulk access functionality for categorized participant lists by role, provi
 
 #### 3. Comprehensive List Display
 - **Numbered Format**: Sequential numbering (1., 2., 3.) for easy reference
-- **Complete Information**: Full name (Russian), clothing size, church, date of birth (DD.MM.YYYY)
-- **Field Formatting**: Emoji icons for visual clarity (👕 size, ⛪ church, 📅 DOB)
-- **Missing Data Handling**: Shows "—" for size/church, "Не указано" for missing DOB
+- **Organizational Information**: Full name (Russian), department, church affiliation
+- **Field Formatting**: Emoji icons for visual clarity (🏢 department, ⛪ church)
+- **Missing Data Handling**: Shows "—" for empty department/church fields
 - **MarkdownV2 Escaping**: Safe rendering of user-generated content preventing formatting injection
 
 #### 4. Advanced Pagination System
@@ -649,7 +649,7 @@ Quick bulk access functionality for categorized participant lists by role, provi
 6. **Main Menu Enhancement**: Updated `src/bot/keyboards/search_keyboards.py` with Get List button
 
 #### Service Layer Features
-- **Russian Date Formatting**: DOB formatted as DD.MM.YYYY using `strftime("%d.%m.%Y")`
+- **Department Display**: Department field with "—" fallback for empty values
 - **Message Length Constraint**: Dynamic 4096 character limit handling with iterative item removal
 - **Pagination Metadata**: Provides current_offset, next_offset, prev_offset for navigation
 - **Field Display Logic**: Handles missing data gracefully with appropriate fallback text
