@@ -249,6 +249,104 @@ class TestValidateFieldInput:
         result = self.service.validate_field_input("age", "")
         assert result is None
 
+    def test_validate_church_leader_field_valid_input(self):
+        """Test validation of church_leader field with valid input."""
+        result = self.service.validate_field_input("church_leader", "Пастор Иванов")
+        assert result == "Пастор Иванов"
+
+        result = self.service.validate_field_input("church_leader", "Архимандрит Георгий")
+        assert result == "Архимандрит Георгий"
+
+    def test_validate_church_leader_field_empty_optional(self):
+        """Test church_leader field handles empty values correctly."""
+        result = self.service.validate_field_input("church_leader", "")
+        assert result == ""
+
+        result = self.service.validate_field_input("church_leader", "   ")
+        assert result == ""
+
+    def test_validate_church_leader_field_length_limit(self):
+        """Test church_leader field length validation (max 100 characters)."""
+        # Valid length (exactly 100 characters)
+        valid_name = "А" * 100
+        result = self.service.validate_field_input("church_leader", valid_name)
+        assert result == valid_name
+
+        # Invalid length (over 100 characters)
+        invalid_name = "А" * 101
+        with pytest.raises(ValidationError, match="не может превышать 100 символов"):
+            self.service.validate_field_input("church_leader", invalid_name)
+
+    def test_validate_table_name_field_valid_input(self):
+        """Test validation of table_name field with valid input."""
+        result = self.service.validate_field_input("table_name", "Основной стол")
+        assert result == "Основной стол"
+
+        result = self.service.validate_field_input("table_name", "VIP стол")
+        assert result == "VIP стол"
+
+    def test_validate_table_name_field_empty_optional(self):
+        """Test table_name field handles empty values correctly."""
+        result = self.service.validate_field_input("table_name", "")
+        assert result == ""
+
+        result = self.service.validate_field_input("table_name", "   ")
+        assert result == ""
+
+    def test_validate_table_name_field_length_limit(self):
+        """Test table_name field length validation (max 50 characters)."""
+        # Valid length (exactly 50 characters)
+        valid_name = "Стол" * 12 + "Ст"  # 50 characters exactly
+        result = self.service.validate_field_input("table_name", valid_name)
+        assert result == valid_name
+
+        # Invalid length (over 50 characters)
+        invalid_name = "А" * 51
+        with pytest.raises(ValidationError, match="не может превышать 50 символов"):
+            self.service.validate_field_input("table_name", invalid_name)
+
+    def test_validate_notes_field_multiline_input(self):
+        """Test validation of notes field with multiline input."""
+        multiline_notes = "Строка 1\nСтрока 2\nСтрока 3"
+        result = self.service.validate_field_input("notes", multiline_notes)
+        assert result == multiline_notes
+
+        # Test with various line endings
+        mixed_endings = "Windows line\r\nUnix line\nMac line\r"
+        result = self.service.validate_field_input("notes", mixed_endings)
+        assert result == mixed_endings
+
+    def test_validate_notes_field_preserves_formatting(self):
+        """Test notes field preserves formatting and whitespace."""
+        formatted_notes = "  Отступ в начале\n    Больший отступ\n\nПустая строка выше  "
+        result = self.service.validate_field_input("notes", formatted_notes)
+        assert result == formatted_notes
+
+        # Test with special characters
+        special_notes = "Special chars: !@#$%^&*()\nEmoji: 🙏✝️\nUnicode: ñáéíóú"
+        result = self.service.validate_field_input("notes", special_notes)
+        assert result == special_notes
+
+    def test_validate_notes_field_empty_optional(self):
+        """Test notes field handles empty values correctly."""
+        result = self.service.validate_field_input("notes", "")
+        assert result == ""
+
+        result = self.service.validate_field_input("notes", "   ")
+        assert result == "   "  # Notes preserve whitespace
+
+    def test_validate_notes_field_length_limit(self):
+        """Test notes field length validation (max 5000 characters)."""
+        # Valid length (exactly 5000 characters)
+        valid_notes = "А" * 5000
+        result = self.service.validate_field_input("notes", valid_notes)
+        assert result == valid_notes
+
+        # Invalid length (over 5000 characters)
+        invalid_notes = "А" * 5001
+        with pytest.raises(ValidationError, match="не могут превышать 5000 символов"):
+            self.service.validate_field_input("notes", invalid_notes)
+
 
 class TestConvertButtonValue:
     """Test convert_button_value method."""
@@ -418,6 +516,9 @@ class TestFieldTypeValidation:
             "country_and_city",
             "contact_information",
             "submitted_by",
+            "church_leader",
+            "table_name",
+            "notes",
         ]
 
         for field in text_fields:
@@ -572,3 +673,72 @@ class TestRoleDepartmentLogic:
         prompt_msg = self.service.build_auto_action_message("prompt_department")
         assert "Департамент" in clear_msg
         assert "Команда" in prompt_msg
+
+
+class TestTableNameBusinessRule:
+    """Test TableName business rule validation."""
+
+    def setup_method(self):
+        """Set up test instance."""
+        self.service = ParticipantUpdateService()
+
+    def test_validate_table_name_business_rule_candidate_role_valid(self):
+        """Test TableName is allowed for CANDIDATE role."""
+        # Should not raise any exceptions
+        self.service.validate_table_name_business_rule(Role.CANDIDATE, "Main table")
+        self.service.validate_table_name_business_rule(Role.CANDIDATE, "VIP стол")
+
+    def test_validate_table_name_business_rule_candidate_role_empty_valid(self):
+        """Test empty/None TableName is allowed for CANDIDATE role."""
+        # Should not raise any exceptions
+        self.service.validate_table_name_business_rule(Role.CANDIDATE, None)
+        self.service.validate_table_name_business_rule(Role.CANDIDATE, "")
+
+    def test_validate_table_name_business_rule_team_role_with_table_name_invalid(self):
+        """Test TableName is not allowed for TEAM role."""
+        with pytest.raises(ValidationError, match="доступно только для роли «Кандидат»"):
+            self.service.validate_table_name_business_rule(Role.TEAM, "Some table")
+
+        with pytest.raises(ValidationError, match="доступно только для роли «Кандидат»"):
+            self.service.validate_table_name_business_rule(Role.TEAM, "Основной стол")
+
+    def test_validate_table_name_business_rule_team_role_empty_valid(self):
+        """Test empty/None TableName is allowed for TEAM role."""
+        # Should not raise any exceptions
+        self.service.validate_table_name_business_rule(Role.TEAM, None)
+        self.service.validate_table_name_business_rule(Role.TEAM, "")
+
+    def test_validate_table_name_business_rule_none_role_valid(self):
+        """Test TableName is allowed when role is None."""
+        # Should not raise any exceptions
+        self.service.validate_table_name_business_rule(None, "Some table")
+        self.service.validate_table_name_business_rule(None, None)
+
+
+class TestExtendedFieldClassification:
+    """Test field type classification includes new extended fields."""
+
+    def setup_method(self):
+        """Set up test instance."""
+        self.service = ParticipantUpdateService()
+
+    def test_extended_fields_are_text_fields(self):
+        """Test that extended fields are classified as text fields."""
+        extended_text_fields = ["church_leader", "table_name", "notes"]
+
+        for field in extended_text_fields:
+            assert self.service._is_text_field(field)
+
+    def test_extended_fields_are_not_button_fields(self):
+        """Test that extended fields are not classified as button fields."""
+        extended_text_fields = ["church_leader", "table_name", "notes"]
+
+        for field in extended_text_fields:
+            assert not self.service._is_button_field(field)
+
+    def test_extended_fields_are_not_special_fields(self):
+        """Test that extended fields are not classified as special fields."""
+        extended_text_fields = ["church_leader", "table_name", "notes"]
+
+        for field in extended_text_fields:
+            assert not self.service._is_special_field(field)

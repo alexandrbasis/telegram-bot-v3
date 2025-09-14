@@ -7,7 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Team List Display Enhancement with Department Information** - Updated team list display to show department information while removing unnecessary personal data fields for improved user experience and data relevance (AGB-51, completed 2025-01-14, PR #42, merged SHA c0d9c93)
+  - Enhanced team participant formatting with department field display replacing birth date and clothing size (`src/services/participant_list_service.py:136-173`)
+    - Added department field with organization icon "🏢 Отдел:" showing team member's department context
+    - Removed birth date field ("📅 Дата рождения:") and clothing size field ("👕 Размер:") from team list output
+    - Maintained church field ("⛪ Церковь:") and participant name for essential identification information
+    - Graceful handling of empty department values with "—" placeholder for data completeness
+  - Complete Test-Driven Development implementation with comprehensive validation (`tests/unit/test_services/test_participant_list_service.py`)
+    - 10 new comprehensive tests covering department inclusion, personal data exclusion, and empty value handling
+    - Updated 4 existing integration tests to verify new format across team and candidate list workflows
+    - 100% test coverage on modified service methods (47/47 lines) exceeding quality requirements
+  - Infrastructure optimization leveraging existing department field mappings with no model changes required
+    - Department field already configured with Airtable field ID `fldIh0eyPspgr1TWk` and 13 department enum options
+    - No additional API calls or processing overhead maintaining existing performance characteristics
+  - Enhanced user experience with organizational context display improving team management workflows
+    - Team lists now show relevant departmental information (Setup, Chapel, Kitchen, Administration, etc.)
+    - Removed personal data fields improving information relevance and data privacy alignment
+    - Consistent formatting with proper Markdown escaping for reliable Telegram message display
+
 ### Added
+- **Participant Fields Extension with Church Leadership and Event Management** - Extended participant model with three new fields (ChurchLeader, TableName, Notes) enabling comprehensive church leadership tracking, event seating management, and multiline notes capture with role-based business logic and enhanced documentation suite (AGB-52, completed 2025-01-14, branch basisalexandr/agb-52-participant-fields-extension)
+  - Complete participant model extension with backward-compatible field additions (`src/models/participant.py:93-99, 186-192, 268-270`)
+    - Added church_leader field (Optional[str]) for tracking associated church leadership with proper Airtable field mapping to ChurchLeader→fldbQr0R6nEtg1nXM
+    - Added table_name field (Optional[str]) for event seating assignment management with Airtable field mapping to TableName→fldwIopXniSHk94v9
+    - Added notes field (Optional[str]) for multiline administrative information capture with Airtable field mapping to Notes→fldL4wmlV9de1kKa1
+    - Enhanced to_airtable_fields() and from_airtable_record() methods for seamless data synchronization and round-trip integrity
+  - Enhanced search result display with role-based field visibility and formatting (`src/services/search_service.py:162-179, 220-222, 312-328`)
+    - Updated format_participant_result() to show ChurchLeader and truncated Notes for all participants with Markdown-safe escaping
+    - Added conditional TableName display exclusively for CANDIDATE role participants preventing data confusion
+    - Enhanced format_participant_full() with complete field display including multiline Notes preservation and Russian field labels
+    - Implemented proper role-based conditional logic with effective role calculation including unsaved changes
+  - Dynamic participant editing interface with role-aware field visibility (`src/bot/keyboards/edit_keyboards.py:44-46, 49-166; src/bot/handlers/edit_participant_handlers.py`)
+    - Enhanced edit keyboard with field-specific icons (🧑‍💼 church leader, 🪑 table name, 📝 notes) and Russian labels for intuitive user experience
+    - Implemented dynamic field visibility with TableName field displayed only when current participant role is CANDIDATE
+    - Complete field integration across all handler functions including display, prompting, validation, and save confirmation workflows
+    - Added comprehensive Russian field labels and prompts throughout all editing interfaces for consistent localization
+  - Advanced service layer validation with multiline support and business rules (`src/services/participant_update_service.py:39-41, 72-74, 103-117, 119-140, 368-370`)
+    - Extended TEXT_FIELDS classification to include church_leader, table_name, and notes with proper validation routing
+    - Implemented specialized Notes field validation preserving multiline formatting and line breaks without whitespace trimming
+    - Added field-specific length validation: ChurchLeader (100 chars), TableName (50 chars), Notes (5000 chars) with descriptive error messages
+    - Implemented TableName business rule validation preventing TEAM role participants from having table assignments with clear Russian error messaging
+  - Comprehensive test coverage achieving 90%+ coverage across all implementation layers (`tests/unit/test_models/test_participant.py:279-837, tests/unit/test_services/test_participant_update_service.py:252-643`)
+    - Added 15+ new test classes covering field serialization, deserialization, validation, business rules, and multiline content handling
+    - Complete round-trip testing ensuring data integrity from model to Airtable and back with field-specific edge cases
+    - Comprehensive validation testing including length limits, special characters, multiline formatting, and role-based business rules
+    - Integration testing covering search-to-edit workflow, role-based field visibility, and save/cancel operations with state management
+  - Enhanced documentation suite with comprehensive field specifications and business requirements (`docs/business/feature-specifications.md`, `docs/data-integration/field-mappings.md`, `docs/technical/bot-commands.md`, `docs/architecture/database-design.md`)
+    - Extended field count documentation from 15 to 18 participant fields with new field mappings and Airtable field IDs
+    - Added participant profile display and editing commands documentation for new fields with role-based visibility specifications
+    - Complete rewrite of database design documentation with extended participant schema and business logic patterns
+    - Enhanced field mappings documentation with validation rules and role-based access control specifications
 - **Comprehensive Floor Discovery Conversation Integration and Testing** - Complete integration testing suite for floor discovery callbacks with conversation flow validation, error recovery, and backward compatibility verification achieving 98% test coverage (TDB-56, completed 2025-01-21, PR #41)
   - Comprehensive callback integration test suite with complete user journey validation (`tests/integration/test_floor_search_integration.py:490-775`)
     - Added `TestFloorSearchCallbackIntegration` class with 7 new integration tests covering end-to-end floor discovery workflow
