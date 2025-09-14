@@ -97,4 +97,108 @@ Target: 90%+ coverage across all implementation areas
 
 ---
 
-**ACTION**: Do these tests adequately cover the business requirements before technical implementation begins? Type 'approve' to proceed or provide feedback.
+## TECHNICAL TASK
+**Status**: Awaiting Plan Review | **Created**: 2025-01-14
+
+### Technical Requirements
+- [ ] Extend Participant model with 3 new fields: ChurchLeader, TableName, Notes
+- [ ] Update Airtable field mappings in participant model methods
+- [ ] Modify search result display to show new fields in participant details
+- [ ] Update participant editing interface to include new fields with appropriate input types
+- [ ] Ensure multiline Notes field handles formatting correctly in Telegram interface
+- [ ] Update field configuration mappings for proper Airtable integration
+- [ ] Implement comprehensive test coverage for all new field functionality
+
+### Implementation Steps & Change Log
+
+- [ ] Step 1: Update Participant Model
+  - [ ] Sub-step 1.1: Add new fields to Participant class definition
+    - **Directory**: `src/models/`
+    - **Files to create/modify**: `participant.py`
+    - **Accept**: Participant model includes church_leader, table_name, and notes fields with proper typing
+    - **Tests**: `tests/unit/test_models/test_participant.py`
+    - **Done**: Model validation passes, new fields serialize/deserialize correctly
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+  - [ ] Sub-step 1.2: Update to_airtable_fields() method
+    - **Directory**: `src/models/`
+    - **Files to create/modify**: `participant.py`
+    - **Accept**: Method maps new fields to correct Airtable field IDs (fldbQr0R6nEtg1nXM, fldwIopXniSHk94v9, fldL4wmlV9de1kKa1)
+    - **Tests**: `tests/unit/test_models/test_participant.py`
+    - **Done**: Airtable field mapping includes all new fields with proper formatting
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+  - [ ] Sub-step 1.3: Update from_airtable_record() method
+    - **Directory**: `src/models/`
+    - **Files to create/modify**: `participant.py`
+    - **Accept**: Method properly parses new fields from Airtable records
+    - **Tests**: `tests/unit/test_models/test_participant.py`
+    - **Done**: Round-trip serialization works for all new fields
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 2: Update Field Configuration Mappings
+  - [ ] Sub-step 2.1: Add new field mappings to field configuration
+    - **Directory**: `src/config/`
+    - **Files to create/modify**: `field_mappings.py`
+    - **Accept**: Field mappings include ChurchLeader, TableName, Notes with correct Airtable field IDs
+    - **Tests**: `tests/unit/test_config/test_field_mappings.py`
+    - **Done**: Configuration correctly maps all new fields
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 3: Update Search Results Display
+  - [ ] Sub-step 3.1: Modify participant details formatting function
+    - **Directory**: `src/bot/handlers/`
+    - **Files to create/modify**: `search_handlers.py`
+    - **Accept**: Participant details show ChurchLeader, TableName, and Notes fields when present
+    - **Tests**: `tests/unit/test_bot_handlers/test_search_handlers.py`
+    - **Done**: Search results display includes all new fields with proper formatting
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 4: Update Participant Editing Interface
+  - [ ] Sub-step 4.1: Add new fields to editing keyboard and handlers
+    - **Directory**: `src/bot/keyboards/` and `src/bot/handlers/`
+    - **Files to create/modify**: `edit_keyboards.py`, `edit_handlers.py`
+    - **Accept**: Edit interface includes buttons/handlers for ChurchLeader, TableName, Notes fields
+    - **Tests**: `tests/unit/test_bot_keyboards/test_edit_keyboards.py`, `tests/unit/test_bot_handlers/test_edit_handlers.py`
+    - **Done**: All new fields are editable through bot interface
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+  - [ ] Sub-step 4.2: Implement multiline text input handling for Notes field
+    - **Directory**: `src/bot/handlers/`
+    - **Files to create/modify**: `edit_handlers.py`
+    - **Accept**: Notes field accepts multiline input and preserves formatting
+    - **Tests**: `tests/unit/test_bot_handlers/test_edit_handlers.py`
+    - **Done**: Notes field properly handles line breaks and special characters
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 5: Update Service Layer Integration
+  - [ ] Sub-step 5.1: Update participant update service to handle new fields
+    - **Directory**: `src/services/`
+    - **Files to create/modify**: `participant_update_service.py`
+    - **Accept**: Service correctly processes and validates new field updates
+    - **Tests**: `tests/unit/test_services/test_participant_update_service.py`
+    - **Done**: New fields are properly saved to Airtable through service layer
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+- [ ] Step 6: Integration Testing and Validation
+  - [ ] Sub-step 6.1: Create comprehensive integration tests
+    - **Directory**: `tests/integration/`
+    - **Files to create/modify**: `test_participant_field_extension_integration.py`
+    - **Accept**: End-to-end tests cover search → view → edit → save workflow for new fields
+    - **Tests**: Integration test file itself
+    - **Done**: All integration tests pass with 90%+ coverage
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+  - [ ] Sub-step 6.2: Update existing tests for backward compatibility
+    - **Directory**: `tests/unit/` and `tests/integration/`
+    - **Files to create/modify**: Various existing test files
+    - **Accept**: Existing tests still pass with new fields present (optional fields don't break existing functionality)
+    - **Tests**: Run full test suite
+    - **Done**: All tests pass, no regressions introduced
+    - **Changelog**: [Record changes made with file paths and line ranges]
+
+### Constraints
+- All new fields must be optional to maintain backward compatibility
+- Notes field must handle Telegram message length limits (up to 4096 characters)
+- Must follow existing code patterns and architecture
+- No breaking changes to existing API or data structures
