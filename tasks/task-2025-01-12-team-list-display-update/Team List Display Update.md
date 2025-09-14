@@ -1,5 +1,16 @@
 # Task: Team List Display Update
-**Created**: 2025-01-12 | **Status**: Business Review
+**Created**: 2025-01-12 | **Status**: In Progress
+**Started**: 2025-01-14 15:49:00
+
+## Tracking & Progress
+### Linear Issue
+- **ID**: AGB-51
+- **URL**: https://linear.app/alexandrbasis/issue/AGB-51/team-list-display-update-show-department-remove-personal-data
+- **Branch**: feature/agb-51-team-list-display-update
+
+### PR Details
+- **PR URL**: [Will be added during implementation]
+- **Status**: [Draft/Review/Merged]
 
 ## Business Requirements
 **Status**: ✅ Approved | **Approved by**: User | **Date**: 2025-01-12
@@ -36,7 +47,7 @@ Modify the team list display in the Telegram bot to include department informati
 - Must handle cases where department field may be empty
 
 ## Test Plan
-**Status**: Awaiting Test Plan Approval | **Created**: 2025-01-12
+**Status**: ✅ Approved | **Approved by**: User | **Date**: 2025-01-12
 
 ### Test Coverage Strategy
 Target: 90%+ coverage across all implementation areas for team list display modifications
@@ -87,3 +98,113 @@ Target: 90%+ coverage across all implementation areas for team list display modi
 - **Success Metric: No performance degradation** → Tests:
   - test_multiple_team_searches
   - test_team_list_pagination_with_department
+
+## Technical Requirements
+
+### Technical Decomposition
+**Status**: ✅ Plan Reviewed | **Reviewed by**: Plan Reviewer Agent | **Date**: 2025-01-12
+
+### Technical Requirements
+- [ ] Modify team list display to include department field from Airtable
+- [ ] Remove birth date and clothing size fields from team list output
+- [ ] Update field mappings to include department field ID
+- [ ] Ensure proper formatting and escaping of department text
+- [ ] Handle empty/missing department values gracefully
+- [ ] Maintain message length within Telegram limits
+
+### Implementation Steps & Change Log
+
+#### Step 1: Update Airtable Field Mappings
+- [ ] **Sub-step 1.1**: Add department field mapping to configuration
+  - **Directory**: `src/config/`
+  - **Files to create/modify**: `src/config/field_mappings.py`
+  - **Accept**: Department field ID is correctly mapped and accessible
+  - **Tests**: Write tests first in `tests/unit/test_config/test_field_mappings.py`
+  - **Done**: Field mapping includes department with correct Airtable field ID
+  - **Changelog**: [To be recorded during implementation]
+
+#### Step 2: Update Participant Model
+- [ ] **Sub-step 2.1**: Add department field to Participant model
+  - **Directory**: `src/models/`
+  - **Files to create/modify**: `src/models/participant.py`
+  - **Accept**: Participant model includes optional department field with proper validation
+  - **Tests**: Write tests first in `tests/unit/test_models/test_participant.py`
+  - **Done**: Model successfully handles department data from Airtable
+  - **Changelog**: [To be recorded during implementation]
+
+#### Step 3: Modify Team List Handler Display Logic
+- [ ] **Sub-step 3.1**: Update team list formatting in handler
+  - **Directory**: `src/bot/handlers/`
+  - **Files to create/modify**: `src/bot/handlers/team_handlers.py` or `src/bot/handlers/search_handlers.py`
+  - **Accept**: Team list displays name and department, no birth date or clothing size
+  - **Tests**: Write tests first in `tests/unit/test_bot_handlers/test_team_handlers.py`
+  - **Done**: Team list output format matches requirements
+  - **Changelog**: [To be recorded during implementation]
+
+- [ ] **Sub-step 3.2**: Update result formatting helper functions
+  - **Directory**: `src/utils/` or `src/bot/handlers/`
+  - **Files to create/modify**: Result formatting utility functions
+  - **Accept**: Formatting functions properly escape and truncate department text
+  - **Tests**: Write tests first in `tests/unit/test_utils/test_formatting.py`
+  - **Done**: Department text is safely formatted for Telegram
+  - **Changelog**: [To be recorded during implementation]
+
+#### Step 4: Update Airtable Repository
+- [ ] **Sub-step 4.1**: Ensure department field is fetched from Airtable
+  - **Directory**: `src/data/airtable/`
+  - **Files to create/modify**: `src/data/airtable/airtable_participant_repo.py`
+  - **Accept**: Repository includes department in field list for API requests
+  - **Tests**: Write tests first in `tests/unit/test_data/test_airtable/test_airtable_participant_repo.py`
+  - **Done**: Department data is successfully retrieved from Airtable
+  - **Changelog**: [To be recorded during implementation]
+
+#### Step 5: Integration Testing
+- [ ] **Sub-step 5.1**: Create comprehensive integration tests
+  - **Directory**: `tests/integration/`
+  - **Files to create/modify**: `tests/integration/test_bot_handlers/test_team_list_integration.py`
+  - **Accept**: End-to-end flow works with new display format
+  - **Tests**: Integration tests cover full team list flow
+  - **Done**: All integration tests pass
+  - **Changelog**: [To be recorded during implementation]
+
+#### Step 6: Update Documentation
+- [ ] **Sub-step 6.1**: Update relevant documentation
+  - **Directory**: `docs/`
+  - **Files to create/modify**: API documentation and user guides if they exist
+  - **Accept**: Documentation reflects new team list format
+  - **Tests**: N/A - documentation update
+  - **Done**: Documentation is current
+  - **Changelog**: [To be recorded during implementation]
+
+### Dependencies & Prerequisites
+- Airtable must have department field configured
+- Field ID for department must be identified from Airtable
+- Existing team list functionality must be understood
+
+### Risk Mitigation
+- Test with participants who have empty department fields
+- Verify Telegram message length limits with longest possible department names
+- Ensure backward compatibility if department field is missing
+
+### Task Splitting Evaluation
+**Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-01-12
+**Decision**: No Split Needed - Keep as single task
+**Reasoning**: The core change involves modifying approximately 10-15 lines in a single method. With infrastructure already in place and changes concentrated in one component, this represents a single atomic user story that fits perfectly in one PR.
+
+## Plan Review Summary
+**Review Date**: 2025-01-12 | **Quality Score**: 9/10
+
+### Key Findings from Technical Review:
+1. **Department infrastructure already exists** - Field is in Participant model with 13 department options
+2. **Field mapping configured** - Airtable field ID `fldIh0eyPspgr1TWk` already mapped
+3. **Simple implementation** - Primary change in `_format_participant_line()` method
+4. **File clarification** - Team functionality is in `participant_list_service.py`, not `team_handlers.py`
+
+### Implementation Readiness:
+✅ **APPROVED FOR IMPLEMENTATION** - Task is ready for immediate implementation with clear scope and existing infrastructure support.
+
+## Notes for Other Devs
+- The department field infrastructure is already in place - no model or mapping changes needed
+- Primary implementation is updating the display format in `participant_list_service.py`
+- Test coverage target is 90%+ with 17 tests across unit and integration levels
+- Handle empty department values gracefully with appropriate default text
