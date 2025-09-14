@@ -90,6 +90,12 @@ class Participant(BaseModel):
 
     contact_information: Optional[str] = Field(None, description="Contact details")
 
+    church_leader: Optional[str] = Field(None, description="Church leader name")
+
+    table_name: Optional[str] = Field(None, description="Event table assignment")
+
+    notes: Optional[str] = Field(None, description="Additional notes or comments")
+
     # Single select fields
     gender: Optional[Gender] = Field(None, description="Participant gender")
 
@@ -177,6 +183,12 @@ class Participant(BaseModel):
             fields["SubmittedBy"] = self.submitted_by
         if self.contact_information:
             fields["ContactInformation"] = self.contact_information
+        if self.church_leader:
+            fields["ChurchLeader"] = self.church_leader
+        if self.table_name:
+            fields["TableName"] = self.table_name
+        if self.notes:
+            fields["Notes"] = self.notes
 
         # Single select fields (use enum values)
         if self.gender:
@@ -252,6 +264,9 @@ class Participant(BaseModel):
             country_and_city=fields.get("CountryAndCity"),
             submitted_by=fields.get("SubmittedBy"),
             contact_information=fields.get("ContactInformation"),
+            church_leader=fields.get("ChurchLeader"),
+            table_name=fields.get("TableName"),
+            notes=fields.get("Notes"),
             gender=Gender(fields["Gender"]) if fields.get("Gender") else None,
             size=Size(fields["Size"]) if fields.get("Size") else None,
             role=Role(fields["Role"]) if fields.get("Role") else None,

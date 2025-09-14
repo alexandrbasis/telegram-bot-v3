@@ -156,6 +156,9 @@ def display_updated_participant(
         room_number=editing_changes.get(
             "room_number", getattr(participant, "room_number", None)
         ),
+        church_leader=editing_changes.get("church_leader", participant.church_leader),
+        table_name=editing_changes.get("table_name", participant.table_name),
+        notes=editing_changes.get("notes", participant.notes),
     )
 
     # Use full participant formatting for complete transparency
@@ -205,6 +208,9 @@ def reconstruct_participant_from_changes(
         "room_number": "🚪 Номер комнаты",
         "date_of_birth": "🎂 Дата рождения",
         "age": "🔢 Возраст",
+        "church_leader": "🧑‍💼 Лидер церкви",
+        "table_name": "🪑 Название стола",
+        "notes": "📝 Заметки",
     }
 
     for field, value in editing_changes.items():
@@ -333,6 +339,24 @@ async def show_participant_edit_menu(
     age_display = participant.age if participant.age is not None else "Не указано"
     message_text += f"🔢 Возраст: {age_display}\n"
 
+    # New fields
+    message_text += f"🧑‍💼 Лидер церкви: {participant.church_leader or 'Не указано'}\n"
+
+    # TableName only if role is CANDIDATE
+    participant_role = (
+        participant.role.value if hasattr(participant.role, "value") else str(participant.role)
+    ) if participant.role else None
+
+    if participant_role == "CANDIDATE":
+        message_text += f"🪑 Название стола: {participant.table_name or 'Не указано'}\n"
+
+    # Notes (truncated for display)
+    notes_display = "Не указано"
+    if participant.notes:
+        notes_truncated = participant.notes[:100].replace("\n", " ")
+        notes_display = notes_truncated + ("..." if len(participant.notes) > 100 else "")
+    message_text += f"📝 Заметки: {notes_display}\n"
+
     # Show pending changes if any
     pending_changes = context.user_data.get("editing_changes", {})
     if pending_changes:
@@ -340,8 +364,8 @@ async def show_participant_edit_menu(
 
     message_text += "\nВыберите поле для редактирования:"
 
-    # Create keyboard with field edit buttons
-    keyboard = create_participant_edit_keyboard()
+    # Create keyboard with field edit buttons (pass participant for role-based visibility)
+    keyboard = create_participant_edit_keyboard(participant)
 
     if query:
         await query.message.edit_text(text=message_text, reply_markup=keyboard)
@@ -402,6 +426,9 @@ async def handle_field_edit_selection(
         "room_number",
         "date_of_birth",
         "age",
+        "church_leader",
+        "table_name",
+        "notes",
     ]
 
     if field_name in BUTTON_FIELDS:
@@ -496,6 +523,9 @@ async def show_field_text_prompt(
         "room_number": "Отправьте номер комнаты (только цифры):",
         "date_of_birth": InfoMessages.ENTER_DATE_OF_BIRTH,
         "age": InfoMessages.ENTER_AGE,
+        "church_leader": "Отправьте имя лидера церкви:",
+        "table_name": "Отправьте название стола:",
+        "notes": "Отправьте заметки (можно несколько строк):",
     }
 
     prompt = field_prompts.get(
@@ -578,6 +608,9 @@ async def handle_text_field_input(
                     "room_number": "Номер комнаты",
                     "date_of_birth": "Дата рождения",
                     "age": "Возраст",
+                    "church_leader": "Лидер церкви",
+                    "table_name": "Название стола",
+                    "notes": "Заметки",
                 }
 
                 field_label = field_labels.get(field_name, field_name)
@@ -603,6 +636,9 @@ async def handle_text_field_input(
                 "payment_amount": "Сумма платежа",
                 "date_of_birth": "Дата рождения",
                 "age": "Возраст",
+                "church_leader": "Лидер церкви",
+                "table_name": "Название стола",
+                "notes": "Заметки",
             }
             field_label = field_labels.get(field_name, field_name)
             field_icon = get_field_icon(field_name)
@@ -971,6 +1007,23 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
             return EditStates.BUTTON_SELECTION
 
+        # Validate TableName business rule: only allowed for CANDIDATE role
+        effective_table_name = changes.get("table_name", getattr(participant, "table_name", None))
+        try:
+            update_service.validate_table_name_business_rule(effective_role, effective_table_name)
+        except ValidationError as e:
+            # Block save and show error message
+            await query.message.edit_text(
+                text=f"❌ Ошибка валидации: {e}",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🔙 Назад к редактированию", callback_data="show_edit_menu")],
+                    [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+                ]),
+            )
+            from src.bot.handlers.search_handlers import SearchStates
+
+            return SearchStates.SHOWING_RESULTS
+
         # Optionally apply payment automation if enabled and applicable
         suppress_automation = bool(context.user_data.get("suppress_payment_automation"))
         if not suppress_automation and "payment_amount" in changes:
@@ -1205,6 +1258,9 @@ async def show_save_confirmation(
         "room_number": "Номер комнаты",
         "date_of_birth": "Дата рождения",
         "age": "Возраст",
+        "church_leader": "Лидер церкви",
+        "table_name": "Название стола",
+        "notes": "Заметки",
     }
 
     for field, new_value in changes.items():

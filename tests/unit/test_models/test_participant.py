@@ -276,6 +276,9 @@ class TestAirtableFieldMapping:
             room_number="101A",
             date_of_birth=date(1990, 5, 15),
             age=35,
+            church_leader="Пастор Иванов",
+            table_name="Стол 1",
+            notes="Специальные требования к питанию\nВегетарианская диета",
         )
 
         fields = participant.to_airtable_fields()
@@ -298,6 +301,9 @@ class TestAirtableFieldMapping:
             "RoomNumber": "101A",
             "DateOfBirth": "1990-05-15",
             "Age": 35,
+            "ChurchLeader": "Пастор Иванов",
+            "TableName": "Стол 1",
+            "Notes": "Специальные требования к питанию\nВегетарианская диета",
         }
 
         assert fields == expected
@@ -311,6 +317,9 @@ class TestAirtableFieldMapping:
             gender=None,
             date_of_birth=None,
             age=None,
+            church_leader=None,
+            table_name=None,
+            notes=None,
         )
 
         fields = participant.to_airtable_fields()
@@ -323,6 +332,9 @@ class TestAirtableFieldMapping:
         assert "RoomNumber" not in fields
         assert "DateOfBirth" not in fields
         assert "Age" not in fields
+        assert "ChurchLeader" not in fields
+        assert "TableName" not in fields
+        assert "Notes" not in fields
 
     def test_accommodation_fields_serialization(self):
         """Test Floor and Room Number fields serialize correctly to Airtable format."""
@@ -387,6 +399,68 @@ class TestAirtableFieldMapping:
         assert "DateOfBirth" not in fields
         assert "Age" not in fields
 
+    def test_new_extended_fields_serialization(self):
+        """Test ChurchLeader, TableName, and Notes fields serialize correctly to Airtable format."""
+        # All three new fields present
+        participant = Participant(
+            full_name_ru="Test User",
+            church_leader="Пастор Петров",
+            table_name="Основной стол",
+            notes="Важная информация:\n- Вегетарианец\n- Аллергия на орехи",
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["ChurchLeader"] == "Пастор Петров"
+        assert fields["TableName"] == "Основной стол"
+        assert fields["Notes"] == "Важная информация:\n- Вегетарианец\n- Аллергия на орехи"
+
+        # Only ChurchLeader
+        participant = Participant(
+            full_name_ru="Test User",
+            church_leader="Дьякон Иванов",
+            table_name=None,
+            notes=None,
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["ChurchLeader"] == "Дьякон Иванов"
+        assert "TableName" not in fields
+        assert "Notes" not in fields
+
+        # Only TableName
+        participant = Participant(
+            full_name_ru="Test User",
+            church_leader=None,
+            table_name="Стол молодежи",
+            notes=None,
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["TableName"] == "Стол молодежи"
+        assert "ChurchLeader" not in fields
+        assert "Notes" not in fields
+
+        # Only Notes with multiline content
+        participant = Participant(
+            full_name_ru="Test User",
+            church_leader=None,
+            table_name=None,
+            notes="Строка 1\nСтрока 2\nСтрока 3",
+        )
+        fields = participant.to_airtable_fields()
+        assert fields["Notes"] == "Строка 1\nСтрока 2\nСтрока 3"
+        assert "ChurchLeader" not in fields
+        assert "TableName" not in fields
+
+        # Empty strings should not be serialized
+        participant = Participant(
+            full_name_ru="Test User",
+            church_leader="",
+            table_name="",
+            notes="",
+        )
+        fields = participant.to_airtable_fields()
+        assert "ChurchLeader" not in fields
+        assert "TableName" not in fields
+        assert "Notes" not in fields
+
 
 class TestAirtableRecordCreation:
     """Test suite for creating participant from Airtable records."""
@@ -424,6 +498,9 @@ class TestAirtableRecordCreation:
                 "RoomNumber": "301A",
                 "DateOfBirth": "1990-05-15",
                 "Age": 35,
+                "ChurchLeader": "Протоиерей Сидоров",
+                "TableName": "Почетный стол",
+                "Notes": "Особые потребности:\n- Wheelchair accessible\n- Диетические ограничения",
             },
         }
 
@@ -447,6 +524,9 @@ class TestAirtableRecordCreation:
         assert participant.room_number == "301A"
         assert participant.date_of_birth == date(1990, 5, 15)
         assert participant.age == 35
+        assert participant.church_leader == "Протоиерей Сидоров"
+        assert participant.table_name == "Почетный стол"
+        assert participant.notes == "Особые потребности:\n- Wheelchair accessible\n- Диетические ограничения"
 
     def test_from_airtable_record_missing_fields(self):
         """Test handling of Airtable records with missing required fields."""
@@ -566,6 +646,63 @@ class TestAirtableRecordCreation:
         assert participant.date_of_birth is None
         assert participant.age is None
 
+    def test_new_extended_fields_deserialization(self):
+        """Test ChurchLeader, TableName, and Notes fields deserialize correctly from Airtable records."""
+        # All three extended fields present
+        record = {
+            "id": "rec123456789",
+            "fields": {
+                "FullNameRU": "Test User",
+                "ChurchLeader": "Архимандрит Георгий",
+                "TableName": "VIP стол",
+                "Notes": "Многострочные заметки:\n1. Первый пункт\n2. Второй пункт\n3. Третий пункт",
+            },
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.church_leader == "Архимандрит Георгий"
+        assert participant.table_name == "VIP стол"
+        assert participant.notes == "Многострочные заметки:\n1. Первый пункт\n2. Второй пункт\n3. Третий пункт"
+
+        # Only ChurchLeader present
+        record = {
+            "id": "rec987654321",
+            "fields": {"FullNameRU": "Test User 2", "ChurchLeader": "Диакон Алексей"},
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.church_leader == "Диакон Алексей"
+        assert participant.table_name is None
+        assert participant.notes is None
+
+        # Only TableName present
+        record = {
+            "id": "rec555666777",
+            "fields": {"FullNameRU": "Test User 3", "TableName": "Детский стол"},
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.table_name == "Детский стол"
+        assert participant.church_leader is None
+        assert participant.notes is None
+
+        # Only Notes present (with special characters and formatting)
+        record = {
+            "id": "rec111222333",
+            "fields": {
+                "FullNameRU": "Test User 4",
+                "Notes": "Special chars: !@#$%^&*()_+\nТекст на русском\nEmoji: 🙏✝️",
+            },
+        }
+        participant = Participant.from_airtable_record(record)
+        assert participant.notes == "Special chars: !@#$%^&*()_+\nТекст на русском\nEmoji: 🙏✝️"
+        assert participant.church_leader is None
+        assert participant.table_name is None
+
+        # None of the extended fields present (should be None)
+        record = {"id": "rec999888777", "fields": {"FullNameRU": "Test User 5"}}
+        participant = Participant.from_airtable_record(record)
+        assert participant.church_leader is None
+        assert participant.table_name is None
+        assert participant.notes is None
+
 
 class TestParticipantRoundtrip:
     """Test suite for roundtrip conversions (model -> Airtable -> model)."""
@@ -586,6 +723,9 @@ class TestParticipantRoundtrip:
             room_number="301A",
             date_of_birth=date(1985, 3, 10),
             age=40,
+            church_leader="Епископ Николай",
+            table_name="Главный стол",
+            notes="Тестовые заметки\nВторая строка\nТретья строка",
         )
 
         # Convert to Airtable format
@@ -611,6 +751,9 @@ class TestParticipantRoundtrip:
         assert restored.room_number == original.room_number
         assert restored.date_of_birth == original.date_of_birth
         assert restored.age == original.age
+        assert restored.church_leader == original.church_leader
+        assert restored.table_name == original.table_name
+        assert restored.notes == original.notes
         assert restored.record_id == "rec123456789"
 
     def test_roundtrip_conversion_accommodation_fields_only(self):
@@ -661,4 +804,34 @@ class TestParticipantRoundtrip:
         assert restored.full_name_ru == original.full_name_ru
         assert restored.date_of_birth == original.date_of_birth
         assert restored.age == original.age
+        assert restored.record_id == "rec123456789"
+
+    def test_roundtrip_conversion_extended_fields_only(self):
+        """Test roundtrip conversion with only ChurchLeader, TableName, and Notes fields set."""
+        original = Participant(
+            full_name_ru="Test User",
+            church_leader="Митрополит Владимир",
+            table_name="Духовенство",
+            notes="Многострочный текст:\n- Пункт 1\n- Пункт 2\n- Особые требования",
+        )
+
+        # Convert to Airtable format
+        airtable_fields = original.to_airtable_fields()
+
+        # Verify Airtable format includes extended fields
+        assert airtable_fields["ChurchLeader"] == "Митрополит Владимир"
+        assert airtable_fields["TableName"] == "Духовенство"
+        assert airtable_fields["Notes"] == "Многострочный текст:\n- Пункт 1\n- Пункт 2\n- Особые требования"
+
+        # Create mock Airtable record
+        airtable_record = {"id": "rec123456789", "fields": airtable_fields}
+
+        # Convert back to participant
+        restored = Participant.from_airtable_record(airtable_record)
+
+        # Verify extended field data integrity
+        assert restored.full_name_ru == original.full_name_ru
+        assert restored.church_leader == original.church_leader
+        assert restored.table_name == original.table_name
+        assert restored.notes == original.notes
         assert restored.record_id == "rec123456789"

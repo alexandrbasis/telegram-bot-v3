@@ -5,11 +5,18 @@ Provides inline keyboard layouts for field selection, value selection,
 and editing workflow control with Russian labels.
 """
 
-from typing import List
+from typing import List, Optional
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from src.models.participant import Department, Gender, PaymentStatus, Role, Size
+from src.models.participant import (
+    Department,
+    Gender,
+    PaymentStatus,
+    Participant,
+    Role,
+    Size,
+)
 
 
 def get_field_icon(field_name: str) -> str:
@@ -41,18 +48,27 @@ def get_field_icon(field_name: str) -> str:
         "room_number": "🚪",  # door/room
         "date_of_birth": "🎂",  # birthday cake
         "age": "🔢",  # input numbers
+        "church_leader": "🧑‍💼",  # church leader
+        "table_name": "🪑",  # table
+        "notes": "📝",  # notes
     }
 
     return field_icons.get(field_name, "✏️")  # Default to pencil for unknown fields
 
 
-def create_participant_edit_keyboard() -> InlineKeyboardMarkup:
+def create_participant_edit_keyboard(
+    participant: Optional[Participant] = None,
+) -> InlineKeyboardMarkup:
     """
     Create keyboard with edit buttons for participant fields.
 
     Generates buttons for editable participant fields with field-specific icons
     and Russian labels. Payment status and date are excluded as they are
-    automatically handled when payment amount is entered.
+    automatically handled when payment amount is entered. TableName is only
+    shown for participants with CANDIDATE role.
+
+    Args:
+        participant: Optional participant object to determine role-based visibility
 
     Returns:
         InlineKeyboardMarkup with field edit buttons
@@ -156,6 +172,40 @@ def create_participant_edit_keyboard() -> InlineKeyboardMarkup:
             ),
         ]
     )
+
+    # New fields - Church Leader and Notes for all roles
+    church_leader_button = InlineKeyboardButton(
+        f"{get_field_icon('church_leader')} Лидер церкви",
+        callback_data="edit_field:church_leader",
+    )
+    notes_button = InlineKeyboardButton(
+        f"{get_field_icon('notes')} Заметки",
+        callback_data="edit_field:notes",
+    )
+
+    # Check if we should show TableName button (only for CANDIDATE role)
+    participant_role = None
+    if participant:
+        participant_role = (
+            participant.role.value
+            if hasattr(participant.role, "value")
+            else str(participant.role)
+        ) if participant.role else None
+
+    if participant_role == "CANDIDATE":
+        # Add TableName button in a row with ChurchLeader
+        keyboard.append([
+            church_leader_button,
+            InlineKeyboardButton(
+                f"{get_field_icon('table_name')} Название стола",
+                callback_data="edit_field:table_name",
+            ),
+        ])
+        # Add Notes button on its own row
+        keyboard.append([notes_button])
+    else:
+        # Add ChurchLeader and Notes buttons together
+        keyboard.append([church_leader_button, notes_button])
 
     # Control buttons
     keyboard.append(

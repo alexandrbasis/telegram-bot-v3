@@ -98,12 +98,12 @@ Access pre-filtered participant lists by role for quick bulk viewing. Available 
 5. Navigation with "◀️ Назад", "▶️ Далее", and "🏠 Главное меню" buttons
 
 ### Team Members List
-View complete list of all team members with comprehensive details for logistics and organization planning.
+View complete list of all team members with organizational details for logistics and planning.
 
 **Features:**
 - **Server-side Role Filtering**: Efficient Airtable filtering by role="TEAM"
 - **Numbered List Format**: Sequential numbering (1., 2., 3.) for easy reference
-- **Complete Information**: Full name (Russian), clothing size, church, date of birth (DD.MM.YYYY)
+- **Organizational Information**: Full name (Russian), department, church affiliation
 - **Pagination**: Dynamic page size with Telegram 4096-character message limit handling
 - **Offset-based Navigation**: Ensures no participants are skipped during pagination
 
@@ -112,40 +112,36 @@ View complete list of all team members with comprehensive details for logistics 
 **Список участников команды** (элементы 1-20 из 45)
 
 1. **Иван Петров**
-   👕 Размер: M
+   🏢 Отдел: Setup
    ⛪ Церковь: Храм Христа Спасителя
-   📅 Дата рождения: 15.06.1985
 
 2. **Мария Иванова**
-   👕 Размер: S
+   🏢 Отдел: Kitchen
    ⛪ Церковь: Церковь Святого Николая
-   📅 Дата рождения: 22.03.1990
 
 ... (continues with remaining participants)
 ```
 
 ### Candidates List
-View complete list of all candidates with the same comprehensive formatting as team members.
+View complete list of all candidates with organizational context for administrative planning.
 
 **Features:**
 - **Server-side Role Filtering**: Efficient Airtable filtering by role="CANDIDATE"
 - **Identical Format**: Same numbered list format and information display as team list
 - **Consistent Navigation**: Same pagination and navigation controls
-- **Administrative Focus**: Designed for candidate management and review processes
+- **Administrative Focus**: Designed for candidate management and organizational planning
 
 **Display Example:**
 ```
 **Список кандидатов** (элементы 1-18 из 32)
 
 1. **Анна Козлова**
-   👕 Размер: L
+   🏢 Отдел: —
    ⛪ Церковь: Церковь Покрова
-   📅 Дата рождения: 08.12.1988
 
 2. **Петр Смирнов**
-   👕 Размер: XL
+   🏢 Отдел: —
    ⛪ Церковь: Собор Александра Невского
-   📅 Дата рождения: Не указано
 
 ... (continues with remaining participants)
 ```
@@ -515,3 +511,54 @@ Error handling has been enhanced with centralized message templates located in `
 6. User clicks recovery button → Returns to main menu with clean state
 7. User can start fresh conversation without any residual context
 8. **Alternative**: User can also ignore timeout message and use any main menu command
+
+### Extended Fields Usage Examples (2025-01-14)
+
+#### Church Leader Management
+1. User searches for participant: `/search Иван Петров`
+2. Bot displays search results with Church Leader field ("⛪ Церковный лидер: —")
+3. User clicks "Подробнее" → "Изменить церковного лидера"
+4. Bot prompts: "Отправьте имя церковного лидера"
+5. User types: "Отец Владимир"
+6. Bot displays complete participant profile with updated church leader information
+
+#### Table Assignment for Candidates
+1. User searches for candidate: `/search Мария Козлова`
+2. Bot displays search results with Table Name field visible (role=CANDIDATE)
+3. User clicks "Подробнее" → "Изменить название стола"
+4. Bot prompts: "Отправьте название стола"
+5. User types: "Стол 12A"
+6. Bot displays complete participant profile with table assignment
+7. **Role Restriction**: If user changes role to TEAM, Table Name button disappears
+
+#### Multiline Notes Management
+1. User selects participant and clicks "Изменить заметки"
+2. Bot prompts: "Отправьте заметки"
+3. User types multiline text:
+   ```
+   Нуждается в особом питании
+   Аллергия на орехи
+   Прибывает в пятницу
+   ```
+4. Bot displays complete participant profile with full notes preserved
+5. Search results show truncated version: "📝 Заметки: Нуждается в особом питании..."
+
+### Integration with Existing Features
+
+The new participant fields (ChurchLeader, TableName, Notes) are fully integrated with all existing bot functionality:
+
+#### Save/Cancel Workflow Integration
+- **Change Confirmation**: New fields appear in confirmation screens showing "Current Value → **New Value**" format
+- **Save Success**: Complete participant display includes all new fields after successful save
+- **Cancel Workflow**: All new field changes are properly discarded when user cancels
+- **Retry Mechanism**: Failed saves preserve new field values during retry attempts
+
+#### Search Integration
+- **Name Search Results**: New fields displayed with appropriate formatting and role-based visibility
+- **List View Integration**: Team and candidate lists show new fields where appropriate
+- **Multi-field Search**: Notes field content is searchable via existing search functionality
+
+#### Role-Based Business Logic
+- **Dynamic Interface**: TableName edit button visibility changes based on participant role
+- **Validation Rules**: Business rules prevent saving TableName for TEAM role participants
+- **Error Handling**: Clear Russian error messages for role-based validation failures

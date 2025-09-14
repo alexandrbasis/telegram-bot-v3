@@ -24,7 +24,7 @@ class ParticipantUpdateService:
     """
     Service for validating and converting participant field updates.
 
-    Handles validation for all 13 participant fields with appropriate
+    Handles validation for all participant fields with appropriate
     type conversion and Russian error messages.
     """
 
@@ -36,6 +36,9 @@ class ParticipantUpdateService:
         "country_and_city",
         "contact_information",
         "submitted_by",
+        "church_leader",
+        "table_name",
+        "notes",
     ]
 
     BUTTON_FIELDS = ["gender", "size", "role", "department", "payment_status"]
@@ -66,8 +69,9 @@ class ParticipantUpdateService:
         Raises:
             ValidationError: If input is invalid for the field type
         """
-        # Trim whitespace
-        user_input = user_input.strip()
+        # Trim whitespace for all fields except notes (which preserves formatting)
+        if field_name != "notes":
+            user_input = user_input.strip()
 
         if field_name in self.TEXT_FIELDS:
             return self._validate_text_field(field_name, user_input)
@@ -100,7 +104,44 @@ class ParticipantUpdateService:
                 f"Поле '{self._get_field_label(field_name)}' не может быть пустым"
             )
 
+        # Special handling for notes field - preserve multiline and limit length
+        if field_name == "notes":
+            return self._validate_notes_field(user_input)
+
+        # Apply length limits for other text fields
+        if field_name == "church_leader" and len(user_input) > 100:
+            raise ValidationError("Имя лидера церкви не может превышать 100 символов")
+
+        if field_name == "table_name" and len(user_input) > 50:
+            raise ValidationError("Название стола не может превышать 50 символов")
+
         return user_input
+
+    def _validate_notes_field(self, user_input: str) -> str:
+        """
+        Validate notes field with multiline support.
+
+        Preserves line breaks and formatting while applying length limits.
+        """
+        # Don't strip leading/trailing whitespace for notes to preserve formatting
+        if len(user_input) > 5000:
+            raise ValidationError("Заметки не могут превышать 5000 символов")
+
+        return user_input
+
+    def validate_table_name_business_rule(self, effective_role: Optional[Role], table_name: Optional[str]) -> None:
+        """
+        Validate business rule that TableName is only allowed for CANDIDATE role.
+
+        Args:
+            effective_role: The effective role (current or changed)
+            table_name: The table name value being saved
+
+        Raises:
+            ValidationError: If trying to save TableName for TEAM role
+        """
+        if table_name and effective_role == Role.TEAM:
+            raise ValidationError("Название стола доступно только для роли «Кандидат»")
 
     def _validate_payment_amount(self, user_input: str) -> int:
         """
@@ -365,6 +406,9 @@ class ParticipantUpdateService:
             "room_number": "Номер комнаты",
             "date_of_birth": "Дата рождения",
             "age": "Возраст",
+            "church_leader": "Лидер церкви",
+            "table_name": "Название стола",
+            "notes": "Заметки",
         }
         return field_labels.get(field_name, field_name)
 
