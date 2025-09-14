@@ -511,3 +511,54 @@ Error handling has been enhanced with centralized message templates located in `
 6. User clicks recovery button → Returns to main menu with clean state
 7. User can start fresh conversation without any residual context
 8. **Alternative**: User can also ignore timeout message and use any main menu command
+
+### Extended Fields Usage Examples (2025-01-14)
+
+#### Church Leader Management
+1. User searches for participant: `/search Иван Петров`
+2. Bot displays search results with Church Leader field ("⛪ Церковный лидер: —")
+3. User clicks "Подробнее" → "Изменить церковного лидера"
+4. Bot prompts: "Отправьте имя церковного лидера"
+5. User types: "Отец Владимир"
+6. Bot displays complete participant profile with updated church leader information
+
+#### Table Assignment for Candidates
+1. User searches for candidate: `/search Мария Козлова`
+2. Bot displays search results with Table Name field visible (role=CANDIDATE)
+3. User clicks "Подробнее" → "Изменить название стола"
+4. Bot prompts: "Отправьте название стола"
+5. User types: "Стол 12A"
+6. Bot displays complete participant profile with table assignment
+7. **Role Restriction**: If user changes role to TEAM, Table Name button disappears
+
+#### Multiline Notes Management
+1. User selects participant and clicks "Изменить заметки"
+2. Bot prompts: "Отправьте заметки"
+3. User types multiline text:
+   ```
+   Нуждается в особом питании
+   Аллергия на орехи
+   Прибывает в пятницу
+   ```
+4. Bot displays complete participant profile with full notes preserved
+5. Search results show truncated version: "📝 Заметки: Нуждается в особом питании..."
+
+### Integration with Existing Features
+
+The new participant fields (ChurchLeader, TableName, Notes) are fully integrated with all existing bot functionality:
+
+#### Save/Cancel Workflow Integration
+- **Change Confirmation**: New fields appear in confirmation screens showing "Current Value → **New Value**" format
+- **Save Success**: Complete participant display includes all new fields after successful save
+- **Cancel Workflow**: All new field changes are properly discarded when user cancels
+- **Retry Mechanism**: Failed saves preserve new field values during retry attempts
+
+#### Search Integration
+- **Name Search Results**: New fields displayed with appropriate formatting and role-based visibility
+- **List View Integration**: Team and candidate lists show new fields where appropriate
+- **Multi-field Search**: Notes field content is searchable via existing search functionality
+
+#### Role-Based Business Logic
+- **Dynamic Interface**: TableName edit button visibility changes based on participant role
+- **Validation Rules**: Business rules prevent saving TableName for TEAM role participants
+- **Error Handling**: Clear Russian error messages for role-based validation failures

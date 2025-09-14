@@ -3,7 +3,7 @@
 ## Participant Editing Interface
 
 ### Overview
-Comprehensive participant profile editing interface accessible through search results. Supports all 13 participant fields with appropriate input methods and validation.
+Comprehensive participant profile editing interface accessible through search results. Supports all 18 participant fields with appropriate input methods and validation.
 
 **Status**: ✅ Implemented (2025-09-01)
 **Implementation**: 4-state ConversationHandler with Russian localization
@@ -14,9 +14,10 @@ Comprehensive participant profile editing interface accessible through search re
 #### 1. Participant Selection Interface
 - **Access**: Click "Подробнее" (Details) button on any search result
 - **Display**: Complete participant profile with all field values
-- **Layout**: 13 individual "Изменить [Field]" edit buttons
+- **Layout**: 18 individual "Изменить [Field]" edit buttons with role-based visibility
 - **Actions**: Save Changes, Cancel, Back to Search
 - **Enhanced Display**: After field updates, shows complete participant information with updated values
+- **Role-Based Fields**: TableName field only visible when participant role is CANDIDATE
 
 #### 2. Field-Specific Editing Methods
 
@@ -32,7 +33,7 @@ Fields:
 - **Department (Департамент)**: 13 department options
 - **Payment Status (Статус платежа)**: Оплачено/Частично/Не оплачено (3 options)
 
-**Text Input Fields (6 fields)**
+**Text Input Fields (9 fields)**
 - Prompted text input workflow
 - Russian prompts and validation messages
 - Optional/required field validation
@@ -43,8 +44,11 @@ Fields:
 - **Full Name English (Имя английское)**: Optional
 - **Church (Церковь)**: Optional
 - **Location (Местоположение)**: Optional
-- **Contact (Контакты)**: Optional 
+- **Contact (Контакты)**: Optional
 - **Submitted By (Кто подал)**: Optional
+- **Church Leader (Церковный лидер)**: Optional
+- **Table Name (Название стола)**: Optional, role-based visibility (CANDIDATE only)
+- **Notes (Заметки)**: Optional, supports multiline text
 
 **Special Validation Fields (4 fields)**
 - Custom validation logic
@@ -138,7 +142,7 @@ Fields:
 
 ### Acceptance Criteria
 
-- [x] ✅ All 15 participant fields accessible through editing interface (including DateOfBirth and Age added 2025-09-10)
+- [x] ✅ All 18 participant fields accessible through editing interface (including DateOfBirth and Age added 2025-09-10, ChurchLeader, TableName, Notes added 2025-01-14)
 - [x] ✅ Button-based fields show correct options with Russian labels
 - [x] ✅ Text fields accept and validate input with Russian prompts
 - [x] ✅ State management maintains editing context properly
