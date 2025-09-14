@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from src.models.participant import Participant, Role, Department
+from src.models.participant import Department, Participant, Role
 from src.services.participant_list_service import ParticipantListService
 
 
