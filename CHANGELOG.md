@@ -101,6 +101,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - tests/unit/test_bot_handlers/test_list_handlers.py
 
 ### Changed
+### Team List Display Update (AGB-51)
+- Show department in team/candidate lists; remove birth date and clothing size (PR #42, merged SHA c0d9c938, 2025-09-14)
+  - Service: `src/services/participant_list_service.py` now displays "🏢 Департамент" with MarkdownV2 escaping and placeholders for missing values
+  - Tests: Updated unit and integration tests to assert department presence and absence of removed fields
+  - Documentation: Added code review doc; task doc reflects implementation and tests
+
 - Dependencies: use `python-telegram-bot[job-queue]` to enable ConversationHandler timeouts and remove JobQueue warnings in production (requirements/base.txt).
 
 ### Added
