@@ -54,3 +54,5 @@ See [docs/development/development-workflow.md](docs/development/development-work
 
 Private use - Alexandr Basis
 npx claude-code-templates@latest --analytics
+alias cs='codex --search'
+alias ch='codex --search -c model_reasoning_effort="high"'

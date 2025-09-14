@@ -144,16 +144,7 @@ class ParticipantListService:
         Returns:
             Formatted participant line
         """
-        # Format date of birth
-        if participant.date_of_birth:
-            dob_str = participant.date_of_birth.strftime("%d.%m.%Y")
-        else:
-            dob_str = "Не указано"
-
         # Handle optional fields with Markdown escaping
-        size_str = (
-            escape_markdown(participant.size, version=2) if participant.size else "—"
-        )
         church_str = (
             escape_markdown(participant.church, version=2)
             if participant.church
@@ -164,14 +155,19 @@ class ParticipantListService:
             if participant.full_name_ru
             else "Неизвестно"
         )
-        dob_escaped = escape_markdown(dob_str, version=2)
+
+        # Handle department field
+        if participant.department:
+            # Department is already a string value from the enum
+            department_str = escape_markdown(str(participant.department), version=2)
+        else:
+            department_str = "—"
 
         # Format the line with proper Markdown V2 escaping
         line = (
             f"{number}\\. **{name_str}**\n"
-            f"   👕 Размер: {size_str}\n"
-            f"   ⛪ Церковь: {church_str}\n"
-            f"   📅 Дата рождения: {dob_escaped}"
+            f"   🏢 Департамент: {department_str}\n"
+            f"   ⛪ Церковь: {church_str}"
         )
 
         return line
