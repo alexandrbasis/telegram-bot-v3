@@ -84,12 +84,15 @@ class TestParticipantListServiceRepositoryIntegration:
         # Execute
         result = await service.get_team_members_list()
 
-        # Verify
+        # Verify (updated for new format without birth dates)
         assert result["total_count"] == 2
         assert "Команда Один" in result["formatted_list"]
         assert "Команда Два" in result["formatted_list"]
-        assert r"01\.01\.1985" in result["formatted_list"]
-        assert r"31\.12\.1990" in result["formatted_list"]
+        # New format shows department instead of birth date
+        assert "🏢 Отдел:" in result["formatted_list"]
+        assert "⛪ Церковь:" in result["formatted_list"]
+        assert "Церковь 1" in result["formatted_list"]
+        assert "Церковь 2" in result["formatted_list"]
 
     @pytest.mark.asyncio
     async def test_service_processes_repository_candidate_results(
@@ -111,11 +114,12 @@ class TestParticipantListServiceRepositoryIntegration:
         # Execute
         result = await service.get_candidates_list()
 
-        # Verify
+        # Verify (updated for new format without birth dates or clothing sizes)
         assert result["total_count"] == 1
         assert "Кандидат Первый" in result["formatted_list"]
-        assert r"15\.06\.1992" in result["formatted_list"]
-        assert "S" in result["formatted_list"]
+        # New format shows department instead of birth date and clothing size
+        assert "🏢 Отдел:" in result["formatted_list"]
+        assert "⛪ Церковь:" in result["formatted_list"]
         assert "Церковь кандидата" in result["formatted_list"]
 
     @pytest.mark.asyncio
