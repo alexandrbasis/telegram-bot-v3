@@ -127,7 +127,7 @@ class TestParticipantListService:
         assert "Храм Христа Спасителя" in formatted_list
 
         # Should include department field (new format)
-        assert "🏢 Отдел:" in formatted_list
+        assert "🏢 Департамент:" in formatted_list
 
         # Should NOT include birth date or clothing size (removed fields)
         assert "📅" not in formatted_list
@@ -152,7 +152,7 @@ class TestParticipantListService:
         formatted_list = result["formatted_list"]
 
         # Should display department in new format
-        assert "🏢 Отдел: Kitchen" in formatted_list
+        assert "🏢 Департамент: Kitchen" in formatted_list
         assert "Тестов Тест Тестович" in formatted_list
 
     @pytest.mark.asyncio
@@ -172,7 +172,7 @@ class TestParticipantListService:
 
         # Should show placeholder for missing department
         assert "Безотдельный Без Отдела" in formatted_list
-        assert "🏢 Отдел: —" in formatted_list
+        assert "🏢 Департамент: —" in formatted_list
 
     @pytest.mark.asyncio
     async def test_pagination_first_page(
@@ -255,7 +255,7 @@ class TestParticipantListService:
         # Should handle missing fields gracefully
         assert "Минималист Мин Минович" in formatted_list
         # Should show placeholders for missing optional fields
-        assert "🏢 Отдел: —" in formatted_list  # Missing department
+        assert "🏢 Департамент: —" in formatted_list  # Missing department
         assert "⛪ Церковь: —" in formatted_list  # Missing church
 
 
@@ -322,7 +322,7 @@ class TestTeamListDisplayUpdate:
         formatted_list = result["formatted_list"]
 
         # Should include department information
-        assert "🏢" in formatted_list or "Отдел:" in formatted_list or "Департамент:" in formatted_list
+        assert "🏢" in formatted_list or "Департамент:" in formatted_list
         assert Department.SETUP.value in formatted_list or "SETUP" in formatted_list
         assert Department.KITCHEN.value in formatted_list or "KITCHEN" in formatted_list
 

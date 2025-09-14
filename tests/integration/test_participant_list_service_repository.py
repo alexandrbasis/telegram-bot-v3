@@ -89,7 +89,7 @@ class TestParticipantListServiceRepositoryIntegration:
         assert "Команда Один" in result["formatted_list"]
         assert "Команда Два" in result["formatted_list"]
         # New format shows department instead of birth date
-        assert "🏢 Отдел:" in result["formatted_list"]
+        assert "🏢 Департамент:" in result["formatted_list"]
         assert "⛪ Церковь:" in result["formatted_list"]
         assert "Церковь 1" in result["formatted_list"]
         assert "Церковь 2" in result["formatted_list"]
@@ -118,7 +118,7 @@ class TestParticipantListServiceRepositoryIntegration:
         assert result["total_count"] == 1
         assert "Кандидат Первый" in result["formatted_list"]
         # New format shows department instead of birth date and clothing size
-        assert "🏢 Отдел:" in result["formatted_list"]
+        assert "🏢 Департамент:" in result["formatted_list"]
         assert "⛪ Церковь:" in result["formatted_list"]
         assert "Церковь кандидата" in result["formatted_list"]
 

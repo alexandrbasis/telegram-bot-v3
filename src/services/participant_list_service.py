@@ -166,7 +166,7 @@ class ParticipantListService:
         # Format the line with proper Markdown V2 escaping
         line = (
             f"{number}\\. **{name_str}**\n"
-            f"   🏢 Отдел: {department_str}\n"
+            f"   🏢 Департамент: {department_str}\n"
             f"   ⛪ Церковь: {church_str}"
         )
 
