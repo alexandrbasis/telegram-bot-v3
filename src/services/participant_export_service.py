@@ -41,7 +41,7 @@ class ParticipantExportService:
     def __init__(
         self,
         repository: ParticipantRepository,
-        progress_callback: Optional[Callable[[int, int], None]] = None
+        progress_callback: Optional[Callable[[int, int], None]] = None,
     ):
         """
         Initialize the export service.
@@ -84,11 +84,7 @@ class ParticipantExportService:
         headers = self._get_csv_headers()
 
         # Create CSV writer
-        writer = csv.DictWriter(
-            output,
-            fieldnames=headers,
-            extrasaction='ignore'
-        )
+        writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
 
         # Write headers
         writer.writeheader()
@@ -112,9 +108,7 @@ class ParticipantExportService:
         return csv_string
 
     async def save_to_file(
-        self,
-        directory: Optional[str] = None,
-        filename_prefix: Optional[str] = None
+        self, directory: Optional[str] = None, filename_prefix: Optional[str] = None
     ) -> str:
         """
         Export participants to a CSV file.
@@ -148,7 +142,7 @@ class ParticipantExportService:
 
         try:
             # Write to file with UTF-8 encoding
-            with open(file_path, 'w', encoding='utf-8', newline='') as f:
+            with open(file_path, "w", encoding="utf-8", newline="") as f:
                 f.write(csv_content)
 
             logger.info(f"CSV file saved to: {file_path}")
@@ -178,7 +172,7 @@ class ParticipantExportService:
 
         # Calculate header size (approximate)
         headers = self._get_csv_headers()
-        header_size = len(','.join(headers)) + 2  # +2 for newline
+        header_size = len(",".join(headers)) + 2  # +2 for newline
 
         # Estimate total size
         estimated_size = header_size + (total_count * self.BYTES_PER_RECORD_ESTIMATE)
@@ -221,7 +215,7 @@ class ParticipantExportService:
             python_field,
             airtable_field,
         ) in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
-            if python_field != 'record_id':  # Skip record_id as it's internal
+            if python_field != "record_id":  # Skip record_id as it's internal
                 headers.append(airtable_field)
 
         return headers
@@ -243,7 +237,7 @@ class ParticipantExportService:
             python_field,
             airtable_field,
         ) in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
-            if python_field == 'record_id':
+            if python_field == "record_id":
                 continue  # Skip internal record_id
 
             # Get value from participant
@@ -254,7 +248,7 @@ class ParticipantExportService:
                 row[airtable_field] = ""
             elif isinstance(value, (date, datetime)):
                 row[airtable_field] = value.isoformat()[:10]  # YYYY-MM-DD format
-            elif hasattr(value, 'value'):  # Enum
+            elif hasattr(value, "value"):  # Enum
                 row[airtable_field] = str(value.value)
             else:
                 row[airtable_field] = str(value)

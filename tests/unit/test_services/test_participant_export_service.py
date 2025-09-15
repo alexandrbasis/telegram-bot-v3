@@ -118,7 +118,9 @@ class TestGetAllParticipantsAsCSV:
     """Test get_all_participants_as_csv method."""
 
     @pytest.mark.asyncio
-    async def test_successful_export(self, export_service, mock_repository, sample_participants):
+    async def test_successful_export(
+        self, export_service, mock_repository, sample_participants
+    ):
         """Test successful CSV export with sample data."""
         # Arrange
         mock_repository.list_all.return_value = sample_participants
@@ -223,7 +225,9 @@ class TestGetAllParticipantsAsCSV:
         assert first_row["PaymentAmount"] == ""
 
     @pytest.mark.asyncio
-    async def test_field_mapping_accuracy(self, export_service, mock_repository, sample_participants):
+    async def test_field_mapping_accuracy(
+        self, export_service, mock_repository, sample_participants
+    ):
         """Test that CSV headers match Airtable field names exactly."""
         # Arrange
         mock_repository.list_all.return_value = sample_participants
@@ -236,11 +240,27 @@ class TestGetAllParticipantsAsCSV:
 
         # Expected headers from AirtableFieldMapping (excluding 'id')
         expected_headers = [
-            "FullNameRU", "FullNameEN", "Church", "CountryAndCity",
-            "SubmittedBy", "ContactInformation", "TelegramID", "ChurchLeader",
-            "TableName", "Notes", "Gender", "Size", "Role", "Department",
-            "PaymentStatus", "PaymentAmount", "PaymentDate", "DateOfBirth",
-            "Age", "Floor", "RoomNumber"
+            "FullNameRU",
+            "FullNameEN",
+            "Church",
+            "CountryAndCity",
+            "SubmittedBy",
+            "ContactInformation",
+            "TelegramID",
+            "ChurchLeader",
+            "TableName",
+            "Notes",
+            "Gender",
+            "Size",
+            "Role",
+            "Department",
+            "PaymentStatus",
+            "PaymentAmount",
+            "PaymentDate",
+            "DateOfBirth",
+            "Age",
+            "Floor",
+            "RoomNumber",
         ]
 
         # Check all expected headers are present
@@ -302,8 +322,8 @@ class TestGetAllParticipantsAsCSV:
         assert "ё, й, щ, ъ, ь" in csv_string
 
         # Verify it can be re-encoded as UTF-8
-        csv_bytes = csv_string.encode('utf-8')
-        decoded = csv_bytes.decode('utf-8')
+        csv_bytes = csv_string.encode("utf-8")
+        decoded = csv_bytes.decode("utf-8")
         assert decoded == csv_string
 
     @pytest.mark.asyncio
@@ -322,7 +342,9 @@ class TestSaveToFile:
     """Test save_to_file method."""
 
     @pytest.mark.asyncio
-    async def test_save_csv_to_file(self, export_service, mock_repository, sample_participants):
+    async def test_save_csv_to_file(
+        self, export_service, mock_repository, sample_participants
+    ):
         """Test saving CSV to a file."""
         # Arrange
         mock_repository.list_all.return_value = sample_participants
@@ -333,10 +355,10 @@ class TestSaveToFile:
         # Assert
         assert file_path is not None
         assert Path(file_path).exists()
-        assert file_path.endswith('.csv')
+        assert file_path.endswith(".csv")
 
         # Verify file content
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
             assert "Иванов Иван Иванович" in content
             assert "Петрова Мария Сергеевна" in content
@@ -345,7 +367,9 @@ class TestSaveToFile:
         Path(file_path).unlink()
 
     @pytest.mark.asyncio
-    async def test_save_with_custom_filename(self, export_service, mock_repository, sample_participants):
+    async def test_save_with_custom_filename(
+        self, export_service, mock_repository, sample_participants
+    ):
         """Test saving CSV with custom filename."""
         # Arrange
         mock_repository.list_all.return_value = sample_participants
@@ -362,7 +386,9 @@ class TestSaveToFile:
         Path(file_path).unlink()
 
     @pytest.mark.asyncio
-    async def test_save_to_custom_directory(self, export_service, mock_repository, sample_participants):
+    async def test_save_to_custom_directory(
+        self, export_service, mock_repository, sample_participants
+    ):
         """Test saving CSV to custom directory."""
         # Arrange
         mock_repository.list_all.return_value = sample_participants
@@ -393,7 +419,9 @@ class TestFileSizeEstimation:
     """Test file size estimation functionality."""
 
     @pytest.mark.asyncio
-    async def test_estimate_file_size(self, export_service, mock_repository, sample_participants):
+    async def test_estimate_file_size(
+        self, export_service, mock_repository, sample_participants
+    ):
         """Test file size estimation before generation."""
         # Arrange
         mock_repository.list_all.return_value = sample_participants
@@ -471,8 +499,7 @@ class TestProgressTracking:
             progress_calls.append((current, total))
 
         service = ParticipantExportService(
-            repository=mock_repository,
-            progress_callback=progress_callback
+            repository=mock_repository, progress_callback=progress_callback
         )
 
         # Act
@@ -485,7 +512,9 @@ class TestProgressTracking:
         assert progress_calls[-1][0] == 100  # Completed all
 
     @pytest.mark.asyncio
-    async def test_export_without_progress_callback(self, export_service, mock_repository, sample_participants):
+    async def test_export_without_progress_callback(
+        self, export_service, mock_repository, sample_participants
+    ):
         """Test that export works without progress callback."""
         # Arrange
         mock_repository.list_all.return_value = sample_participants
