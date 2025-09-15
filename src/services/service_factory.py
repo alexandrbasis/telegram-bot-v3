@@ -58,7 +58,7 @@ def get_participant_list_service() -> ParticipantListService:
 
 
 def get_export_service(
-    progress_callback: Optional[Callable[[int, int], None]] = None
+    progress_callback: Optional[Callable[[int, int], None]] = None,
 ) -> ParticipantExportService:
     """
     Get export service instance.

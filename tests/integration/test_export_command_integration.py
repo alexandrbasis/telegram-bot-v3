@@ -167,7 +167,9 @@ class TestExportCommandIntegration:
         # Verify access denied
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
-        assert "нет прав" in call_args[0][0] or "администратор" in call_args[0][0].lower()
+        assert (
+            "нет прав" in call_args[0][0] or "администратор" in call_args[0][0].lower()
+        )
 
         # Should not send document
         update.message.reply_document.assert_not_called()

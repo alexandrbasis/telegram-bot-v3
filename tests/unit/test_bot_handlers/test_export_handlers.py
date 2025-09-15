@@ -180,9 +180,9 @@ class TestExportCommandHandler:
             # Should warn about file size
             calls = mock_update.message.reply_text.call_args_list
             assert any(
-                "превышает лимит" in call[0][0].lower() or
-                "слишком большой" in call[0][0].lower() or
-                "предупреждение" in call[0][0].lower()
+                "превышает лимит" in call[0][0].lower()
+                or "слишком большой" in call[0][0].lower()
+                or "предупреждение" in call[0][0].lower()
                 for call in calls
             )
 
@@ -203,8 +203,7 @@ class TestExportCommandHandler:
             # Should send error message to user
             calls = mock_update.message.reply_text.call_args_list
             assert any(
-                "ошибка" in call[0][0].lower() or
-                "не удалось" in call[0][0].lower()
+                "ошибка" in call[0][0].lower() or "не удалось" in call[0][0].lower()
                 for call in calls
             )
 

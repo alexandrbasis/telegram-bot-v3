@@ -10,12 +10,8 @@ import logging
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
 from telegram import Message, Update
 from telegram.ext import ContextTypes
-
-from src.config.settings import Settings
 from src.services import service_factory
 from src.utils.auth_utils import is_admin_user
 
@@ -112,7 +108,9 @@ async def handle_export_command(
 
     # Check admin access
     if not is_admin_user(user_id, settings):
-        logger.warning(f"Unauthorized export attempt by user {username} (ID: {user_id})")
+        logger.warning(
+            f"Unauthorized export attempt by user {username} (ID: {user_id})"
+        )
         await update.message.reply_text(
             "🚫 У вас нет прав для выполнения этой команды.\n"
             "Только администраторы могут экспортировать данные."
@@ -120,9 +118,8 @@ async def handle_export_command(
         return
 
     # Send initial message
-    initial_message = await update.message.reply_text(
-        "🔄 Начинаю экспорт данных участников...\n"
-        "Это может занять некоторое время."
+    await update.message.reply_text(
+        "🔄 Начинаю экспорт данных участников...\n" "Это может занять некоторое время."
     )
 
     try:
@@ -153,8 +150,7 @@ async def handle_export_command(
         # Check if data is empty
         if not csv_data or csv_data.strip() == "":
             await update.message.reply_text(
-                "📭 Нет данных для экспорта.\n"
-                "База данных участников пуста."
+                "📭 Нет данных для экспорта.\n" "База данных участников пуста."
             )
             return
 
@@ -204,9 +200,7 @@ async def handle_export_command(
         )
 
 
-async def handle_export_progress(
-    message: Message, current: int, total: int
-) -> None:
+async def handle_export_progress(message: Message, current: int, total: int) -> None:
     """
     Handle export progress notification.
 
@@ -223,8 +217,7 @@ async def handle_export_progress(
         percentage = int((current / total) * 100)
 
     progress_text = (
-        f"📊 Прогресс экспорта: {percentage}%\n"
-        f"Обработано: {current} из {total}"
+        f"📊 Прогресс экспорта: {percentage}%\n" f"Обработано: {current} из {total}"
     )
 
     try:
