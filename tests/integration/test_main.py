@@ -61,7 +61,11 @@ class TestMainBotApplication:
             # Mock builder chain
             mock_builder_instance = Mock()
             mock_builder_instance.token.return_value = mock_builder_instance
-            mock_builder_instance.build.return_value = Mock(spec=Application)
+            # Create mock app with real dictionary for bot_data
+            mock_app = Mock(spec=Application)
+            mock_app.bot_data = {}  # Real dictionary, not Mock
+            mock_app.add_handler = Mock()
+            mock_builder_instance.build.return_value = mock_app
             mock_builder.return_value = mock_builder_instance
 
             from src.main import create_application
@@ -90,8 +94,9 @@ class TestMainBotApplication:
             mock_conversation_handler = Mock(spec=ConversationHandler)
             mock_get_handler.return_value = mock_conversation_handler
 
-            # Mock application
+            # Mock application with real bot_data dictionary
             mock_app = Mock(spec=Application)
+            mock_app.bot_data = {}  # Real dictionary, not Mock
             mock_app.add_handler = Mock()
 
             mock_builder_instance = Mock()
@@ -103,8 +108,16 @@ class TestMainBotApplication:
 
             app = create_application()
 
-            # Should add conversation handler
-            mock_app.add_handler.assert_called_once_with(mock_conversation_handler)
+            # Should add both search conversation handler and export command handler
+            assert mock_app.add_handler.call_count == 2
+
+            # First call should be the search conversation handler
+            mock_app.add_handler.assert_any_call(mock_conversation_handler)
+
+            # Second call should be the export command handler (we'll check the type)
+            calls = mock_app.add_handler.call_args_list
+            export_handler_call = calls[1][0][0]  # Second call, first argument
+            assert "export" in export_handler_call.commands
 
     @pytest.mark.asyncio
     async def test_create_application_configures_logging(self):

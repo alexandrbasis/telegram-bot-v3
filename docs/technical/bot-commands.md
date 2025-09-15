@@ -512,6 +512,56 @@ Error handling has been enhanced with centralized message templates located in `
 7. User can start fresh conversation without any residual context
 8. **Alternative**: User can also ignore timeout message and use any main menu command
 
+## Data Export Commands
+
+### /export
+Export complete participant database to CSV format for administrative use. Available to authorized administrators only.
+
+**Admin-Only Access Control**:
+- Command validates user authorization using `auth_utils.is_admin_user()` function
+- Unauthorized users receive appropriate error message: "Доступ запрещён. Эта команда доступна только администраторам."
+- Admin user IDs configured via `ADMIN_USER_IDS` environment variable
+- Comprehensive logging for security monitoring and access control
+
+**Export Process**:
+1. User (admin) types: `/export`
+2. Bot validates admin access using auth utilities
+3. **Progress Notifications**: Real-time export progress updates with throttled notifications (minimum 2-second intervals)
+4. **CSV Generation**: Complete participant dataset exported with all fields
+5. **File Delivery**: CSV file sent to user via Telegram file upload
+6. **Progress Tracking**: Updates show export status and completion percentage
+
+**Features**:
+- **Complete Data Export**: All participant fields included with exact Airtable field names
+- **UTF-8 Encoding**: Proper Russian text support in exported files
+- **Progress Updates**: Throttled progress notifications prevent Telegram rate limiting
+- **File Size Validation**: 50MB Telegram upload limit compliance
+- **Secure Processing**: Temporary file creation with automatic cleanup
+- **Error Handling**: User-friendly error messages for various failure scenarios
+
+**Usage Example**:
+```
+Admin: /export
+Bot: 🔄 Начинается экспорт данных участников...
+Bot: 📈 Экспорт: 25% завершено (250/1000 участников)
+Bot: 📈 Экспорт: 50% завершено (500/1000 участников)
+Bot: 📈 Экспорт: 75% завершено (750/1000 участников)
+Bot: ✅ Экспорт завершён! Отправляю файл...
+[CSV file attachment: participants_export_YYYY-MM-DD_HH-MM.csv]
+```
+
+**Integration Features**:
+- **Progress Tracker**: ExportProgressTracker class manages throttled notifications
+- **Service Integration**: Uses ParticipantExportService for CSV generation
+- **Repository Pattern**: Leverages existing data access layer
+- **3-Layer Architecture**: Follows established bot → service → data pattern
+
+**Error Scenarios**:
+- **Unauthorized Access**: "Доступ запрещён. Эта команда доступна только администраторам."
+- **Export Failure**: "Произошла ошибка при экспорте данных. Попробуйте позже."
+- **File Size Exceeded**: "Файл слишком большой для отправки через Telegram."
+- **Network Issues**: "Ошибка сети. Попробуйте позже."
+
 ### Extended Fields Usage Examples (2025-01-14)
 
 #### Church Leader Management
