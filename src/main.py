@@ -13,8 +13,9 @@ from typing import Optional
 
 from telegram import Update
 from telegram.error import Conflict, NetworkError, RetryAfter, TimedOut
-from telegram.ext import Application, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes
 
+from src.bot.handlers.export_handlers import handle_export_command
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
 from src.services.file_logging_service import FileLoggingService
@@ -114,6 +115,14 @@ def create_application() -> Application:
     logger.info("Adding search conversation handler")
     search_handler = get_search_conversation_handler()
     app.add_handler(search_handler)
+
+    # Add export command handler (admin-only)
+    logger.info("Adding export command handler")
+    export_handler = CommandHandler("export", handle_export_command)
+    app.add_handler(export_handler)
+
+    # Store settings in bot_data for handlers to access
+    app.bot_data["settings"] = settings
 
     # Register global error handler for better diagnostics
     async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
