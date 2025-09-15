@@ -8,16 +8,34 @@ with admin-only access control and progress notifications.
 import asyncio
 import logging
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from telegram import Message, Update
+from telegram.error import BadRequest, NetworkError, RetryAfter, TelegramError
+from typing import Optional
 from telegram.ext import ContextTypes
 
 from src.services import service_factory
+from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
 
 logger = logging.getLogger(__name__)
+
+
+async def _cleanup_temp_file(file_path: str) -> None:
+    """
+    Clean up temporary file with proper error handling.
+
+    Args:
+        file_path: Path to the temporary file to delete
+    """
+    try:
+        if file_path and Path(file_path).exists():
+            Path(file_path).unlink()
+            logger.debug(f"Successfully cleaned up temporary file: {file_path}")
+    except Exception as e:
+        logger.warning(f"Failed to delete temporary file {file_path}: {e}")
 
 
 class ExportProgressTracker:
@@ -35,6 +53,8 @@ class ExportProgressTracker:
         self.min_interval = min_interval_seconds
         self.last_update = None
         self.last_percentage = -1
+        # The progress message that will be edited in place to reduce chat noise
+        self.progress_message: Optional[Message] = None
 
     async def update(self, current: int, total: int) -> None:
         """
@@ -63,14 +83,22 @@ class ExportProgressTracker:
             self.last_percentage = percentage
 
             progress_bar = self._create_progress_bar(percentage)
-            message = (
+            text = (
                 f"📊 Экспорт данных...\n\n"
                 f"{progress_bar}\n"
                 f"Прогресс: {percentage}% ({current}/{total})"
             )
 
             try:
-                await self.message.reply_text(message)
+                # Send once, then edit the same message to avoid spamming the chat
+                if self.progress_message is None:
+                    self.progress_message = await self.message.reply_text(text)
+                else:
+                    await self.progress_message.edit_text(text)
+            except BadRequest as e:
+                # Ignore harmless "message is not modified"; log other cases
+                if "message is not modified" not in str(e).lower():
+                    logger.warning(f"Failed to edit progress message: {e}")
             except Exception as e:
                 logger.warning(f"Failed to send progress update: {e}")
 
@@ -97,7 +125,17 @@ async def handle_export_command(
     user_id = update.effective_user.id if update.effective_user else None
     username = update.effective_user.username if update.effective_user else "Unknown"
 
+    # Initialize interaction logger
+    interaction_logger = UserInteractionLogger()
+
     logger.info(f"Export command received from user {username} (ID: {user_id})")
+
+    # Log the export attempt
+    interaction_logger.log_journey_step(
+        user_id=user_id,
+        step="export_command_initiated",
+        context={"username": username, "command": "/export"}
+    )
 
     # Get settings from context
     settings = context.bot_data.get("settings")
@@ -113,6 +151,14 @@ async def handle_export_command(
         logger.warning(
             f"Unauthorized export attempt by user {username} (ID: {user_id})"
         )
+
+        # Log unauthorized access attempt
+        interaction_logger.log_journey_step(
+            user_id=user_id,
+            step="export_access_denied",
+            context={"reason": "insufficient_permissions", "is_admin": False}
+        )
+
         await update.message.reply_text(
             "🚫 У вас нет прав для выполнения этой команды.\n"
             "Только администраторы могут экспортировать данные."
@@ -138,8 +184,10 @@ async def handle_export_command(
         )
 
         # Check estimated file size
-        if not export_service.is_within_telegram_limit():
-            estimated_size_mb = export_service.estimate_file_size() / (1024 * 1024)
+        if not await export_service.is_within_telegram_limit():
+            estimated_size_mb = (
+                await export_service.estimate_file_size() / (1024 * 1024)
+            )
             await update.message.reply_text(
                 f"⚠️ Предупреждение: Файл может превышать лимит Telegram (50MB).\n"
                 f"Приблизительный размер: {estimated_size_mb:.1f}MB\n"
@@ -147,7 +195,7 @@ async def handle_export_command(
             )
 
         # Export data to CSV
-        csv_data = export_service.export_to_csv()
+        csv_data = await export_service.get_all_participants_as_csv()
 
         # Check if data is empty
         if not csv_data or csv_data.strip() == "":
@@ -157,41 +205,180 @@ async def handle_export_command(
             return
 
         # Create temporary file
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            suffix=".csv",
-            prefix=f"participants_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}_",
-            delete=False,
-            encoding="utf-8",
-        ) as temp_file:
-            temp_file.write(csv_data)
-            temp_file_path = temp_file.name
+        temp_file_path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                suffix=".csv",
+                prefix=(
+                    f"participants_export_"
+                    f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_"
+                ),
+                delete=False,
+                encoding="utf-8",
+            ) as temp_file:
+                temp_file.write(csv_data)
+                temp_file_path = temp_file.name
+        except Exception as e:
+            logger.error(f"Failed to create temporary file for user {user_id}: {e}")
+            await update.message.reply_text(
+                "❌ Ошибка при создании файла для экспорта\n\n"
+                "Попробуйте повторить команду позже или обратитесь к администратору."
+            )
+            return
 
         try:
-            # Send file to user
+            # Send file to user with comprehensive error handling
             file_size_mb = Path(temp_file_path).stat().st_size / (1024 * 1024)
-            await update.message.reply_document(
-                document=open(temp_file_path, "rb"),
-                filename=f"participants_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                caption=(
-                    f"✅ Экспорт завершен успешно!\n\n"
-                    f"📊 Файл содержит данные всех участников\n"
-                    f"📁 Размер файла: {file_size_mb:.2f}MB\n"
-                    f"📅 Дата экспорта: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-                ),
-            )
 
-            logger.info(
-                f"Export completed successfully for user {username} (ID: {user_id}). "
-                f"File size: {file_size_mb:.2f}MB"
-            )
+            # Check file size limit before attempting upload
+            if file_size_mb > 50:
+                await update.message.reply_text(
+                    f"❌ Файл слишком большой для отправки через Telegram\n\n"
+                    f"📁 Размер файла: {file_size_mb:.2f}MB\n"
+                    f"📏 Лимит Telegram: 50MB\n\n"
+                    f"💡 Рекомендации:\n"
+                    f"• Попробуйте экспортировать меньше данных\n"
+                    f"• Обратитесь к администратору для получения файла"
+                )
+                return
+
+            max_retries = 3
+            retry_delay = 2
+
+            for attempt in range(max_retries):
+                try:
+                    with open(temp_file_path, "rb") as file:
+                        # Prepare UTC timestamp for caption
+                        ts_utc = datetime.now(timezone.utc).strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        )
+
+                        await update.message.reply_document(
+                            document=file,
+                            filename=(
+                                f"participants_"
+                                f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+                            ),
+                            caption=(
+                                f"✅ Экспорт завершен успешно!\n\n"
+                                f"📊 Файл содержит данные всех участников\n"
+                                f"📁 Размер файла: {file_size_mb:.2f}MB\n"
+                                f"📅 Дата экспорта: "
+                                f"{ts_utc} UTC"
+                            ),
+                        )
+
+                    logger.info(
+                        f"Export completed successfully for user {username} "
+                        f"(ID: {user_id}). File size: {file_size_mb:.2f}MB"
+                    )
+
+                    # Log successful export
+                    interaction_logger.log_journey_step(
+                        user_id=user_id,
+                        step="export_completed_successfully",
+                        context={
+                            "file_size_mb": round(file_size_mb, 2),
+                            "delivery_method": "telegram_document",
+                            "attempt": attempt + 1
+                        }
+                    )
+                    break  # Success, exit retry loop
+
+                except RetryAfter as e:
+                    if attempt < max_retries - 1:
+                        wait_time = e.retry_after + retry_delay
+                        logger.warning(
+                            f"Telegram rate limit hit, waiting {wait_time}s before "
+                            f"retry {attempt + 1}/{max_retries}"
+                        )
+                        await update.message.reply_text(
+                            f"⏳ Telegram временно ограничивает загрузки\n"
+                            f"Повторная попытка через {wait_time} секунд..."
+                        )
+                        await asyncio.sleep(wait_time)
+                    else:
+                        raise
+
+                except BadRequest as e:
+                    error_message = str(e).lower()
+                    error_type = "unknown_bad_request"
+
+                    if (
+                        "file too large" in error_message
+                        or "entity too large" in error_message
+                    ):
+                        error_type = "file_too_large"
+                        await update.message.reply_text(
+                            f"❌ Файл слишком большой для Telegram\n\n"
+                            f"📁 Размер: {file_size_mb:.2f}MB\n"
+                            f"🚫 Ошибка: {str(e)}\n\n"
+                            f"Попробуйте уменьшить объем экспортируемых данных."
+                        )
+                    elif "invalid file" in error_message:
+                        error_type = "invalid_file_format"
+                        await update.message.reply_text(
+                            f"❌ Ошибка формата файла\n\n"
+                            f"🚫 Детали: {str(e)}\n\n"
+                            f"Попробуйте повторить экспорт."
+                        )
+                    else:
+                        await update.message.reply_text(
+                            f"❌ Ошибка при отправке файла\n\n"
+                            f"🚫 Причина: {str(e)}\n\n"
+                            f"Попробуйте повторить экспорт позже."
+                        )
+
+                    # Log error details
+                    interaction_logger.log_missing_response(
+                        user_id=user_id,
+                        button_data="export_command",
+                        error_type=error_type,
+                        error_message=f"BadRequest: {str(e)}"
+                    )
+
+                    logger.error(
+                        f"BadRequest during file upload for user {user_id}: {e}"
+                    )
+                    return
+
+                except NetworkError as e:
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            f"Network error during file upload, retrying "
+                            f"{attempt + 1}/{max_retries}: {e}"
+                        )
+                        await update.message.reply_text(
+                            f"🌐 Проблемы с сетью, повторная попытка "
+                            f"{attempt + 1}/{max_retries}..."
+                        )
+                        await asyncio.sleep(retry_delay * (attempt + 1))
+                    else:
+                        await update.message.reply_text(
+                            "❌ Ошибка сети при отправке файла\n\n"
+                            "🌐 Попробуйте повторить команду через несколько минут\n\n"
+                            "Если проблема продолжается, обратитесь к администратору."
+                        )
+                        logger.error(
+                            f"Persistent network error for user {user_id}: {e}"
+                        )
+                        return
+
+                except TelegramError as e:
+                    await update.message.reply_text(
+                        f"❌ Ошибка Telegram API\n\n"
+                        f"🚫 Детали: {str(e)}\n\n"
+                        f"Попробуйте повторить экспорт через несколько минут."
+                    )
+                    logger.error(
+                        f"Telegram API error during file upload for user {user_id}: {e}"
+                    )
+                    return
 
         finally:
-            # Clean up temporary file
-            try:
-                Path(temp_file_path).unlink()
-            except Exception as e:
-                logger.warning(f"Failed to delete temporary file: {e}")
+            # Clean up temporary file - always execute
+            await _cleanup_temp_file(temp_file_path)
 
     except Exception as e:
         logger.error(f"Export failed for user {username} (ID: {user_id}): {e}")

@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from telegram import Message, Update, User
+from telegram.error import BadRequest, NetworkError, RetryAfter, TelegramError
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.export_handlers import (
@@ -63,10 +64,10 @@ class TestExportCommandHandler:
     def mock_export_service(self):
         """Create mock export service."""
         service = Mock()
-        service.export_to_csv = Mock(return_value="field1,field2\nvalue1,value2")
-        service.save_to_file = Mock()
-        service.is_within_telegram_limit = Mock(return_value=True)
-        service.estimate_file_size = Mock(return_value=1000)
+        service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        service.save_to_file = AsyncMock()
+        service.is_within_telegram_limit = AsyncMock(return_value=True)
+        service.estimate_file_size = AsyncMock(return_value=1000)
         return service
 
     @pytest.fixture
@@ -106,7 +107,7 @@ class TestExportCommandHandler:
             assert "Начинаю экспорт" in first_call[0][0]
 
             # Should call export service
-            mock_export_service.export_to_csv.assert_called_once()
+            mock_export_service.get_all_participants_as_csv.assert_called_once()
 
             # Should send document with CSV file
             mock_update.message.reply_document.assert_called_once()
@@ -151,7 +152,9 @@ class TestExportCommandHandler:
     async def test_export_command_empty_data(self, mock_update, mock_context):
         """Test handling when no participants exist."""
         mock_export_service = Mock()
-        mock_export_service.export_to_csv = Mock(return_value="")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="")
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
 
         with patch(
             "src.bot.handlers.export_handlers.service_factory.get_export_service",
@@ -168,8 +171,8 @@ class TestExportCommandHandler:
         self, mock_update, mock_context, mock_export_service
     ):
         """Test handling when file exceeds Telegram size limit."""
-        mock_export_service.is_within_telegram_limit = Mock(return_value=False)
-        mock_export_service.estimate_file_size = Mock(return_value=60_000_000)  # 60MB
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=False)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=60_000_000)  # 60MB
 
         with patch(
             "src.bot.handlers.export_handlers.service_factory.get_export_service",
@@ -190,7 +193,7 @@ class TestExportCommandHandler:
     async def test_export_command_error_handling(self, mock_update, mock_context):
         """Test proper error handling during export."""
         mock_export_service = Mock()
-        mock_export_service.export_to_csv = Mock(
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
             side_effect=Exception("Database connection failed")
         )
 
@@ -321,3 +324,265 @@ class TestExportProgressHandler:
         call_args = mock_message.reply_text.call_args
         # Should show some progress indication
         assert "экспорт" in call_args[0][0].lower()
+
+
+class TestExportErrorHandling:
+    """Test comprehensive error handling for file delivery scenarios."""
+
+    @pytest.fixture
+    def mock_update_with_file(self):
+        """Create mock update for file delivery tests."""
+        update = Mock(spec=Update)
+        update.message = Mock(spec=Message)
+        update.message.text = "/export"
+        update.message.reply_text = AsyncMock()
+        update.message.reply_document = AsyncMock()
+
+        # Mock user
+        user = Mock(spec=User)
+        user.id = 123456
+        user.username = "testuser"
+        update.message.from_user = user
+        update.effective_user = user
+
+        return update
+
+    @pytest.fixture
+    def mock_context_with_settings(self):
+        """Create mock context with settings."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        context.bot_data = {}
+
+        # Mock settings with proper telegram attribute
+        settings = Mock()
+        settings.telegram = Mock()
+        settings.telegram.admin_user_ids = [123456, 789012]
+        context.bot_data["settings"] = settings
+
+        return context
+
+    @pytest.mark.asyncio
+    async def test_export_command_telegram_rate_limit_with_retry(
+        self, mock_update_with_file, mock_context_with_settings
+    ):
+        """Test RetryAfter error handling with automatic retry."""
+        mock_export_service = Mock()
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+
+        # Mock RetryAfter error on first attempt, success on second
+        retry_error = RetryAfter(retry_after=2)
+        mock_update_with_file.message.reply_document.side_effect = [
+            retry_error,
+            None,  # Success on second attempt
+        ]
+
+        with patch(
+            "src.bot.handlers.export_handlers.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ), patch("asyncio.sleep", return_value=None) as mock_sleep:
+            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+
+            # Should attempt retry
+            assert mock_update_with_file.message.reply_document.call_count == 2
+            mock_sleep.assert_called_once_with(4)  # retry_after + retry_delay
+
+    @pytest.mark.asyncio
+    async def test_export_command_file_too_large_error(
+        self, mock_update_with_file, mock_context_with_settings
+    ):
+        """Test BadRequest error for file too large."""
+        mock_export_service = Mock()
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+
+        # Mock BadRequest with file too large error
+        bad_request_error = BadRequest("Request Entity Too Large")
+        mock_update_with_file.message.reply_document.side_effect = bad_request_error
+
+        with patch(
+            "src.bot.handlers.export_handlers.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+
+            # Should send appropriate error message
+            error_calls = [
+                call for call in mock_update_with_file.message.reply_text.call_args_list
+                if any("слишком большой" in str(arg).lower() for arg in call[0])
+            ]
+            assert len(error_calls) > 0
+
+    @pytest.mark.asyncio
+    async def test_export_command_invalid_file_error(
+        self, mock_update_with_file, mock_context_with_settings
+    ):
+        """Test BadRequest error for invalid file format."""
+        mock_export_service = Mock()
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+
+        # Mock BadRequest with invalid file error
+        bad_request_error = BadRequest("Invalid file format")
+        mock_update_with_file.message.reply_document.side_effect = bad_request_error
+
+        with patch(
+            "src.bot.handlers.export_handlers.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+
+            # Should send appropriate error message
+            error_calls = [
+                call for call in mock_update_with_file.message.reply_text.call_args_list
+                if any("формата файла" in str(arg).lower() for arg in call[0])
+            ]
+            assert len(error_calls) > 0
+
+    @pytest.mark.asyncio
+    async def test_export_command_network_error_with_retries(
+        self, mock_update_with_file, mock_context_with_settings
+    ):
+        """Test NetworkError with retry logic."""
+        mock_export_service = Mock()
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+
+        # Mock persistent network error
+        network_error = NetworkError("Connection timeout")
+        mock_update_with_file.message.reply_document.side_effect = network_error
+
+        with patch(
+            "src.bot.handlers.export_handlers.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ), patch("asyncio.sleep", return_value=None) as mock_sleep:
+            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+
+            # Should retry 3 times
+            assert mock_update_with_file.message.reply_document.call_count == 3
+            # Should send network error message
+            error_calls = [
+                call for call in mock_update_with_file.message.reply_text.call_args_list
+                if any("сети" in str(arg).lower() for arg in call[0])
+            ]
+            assert len(error_calls) > 0
+
+    @pytest.mark.asyncio
+    async def test_export_command_general_telegram_error(
+        self, mock_update_with_file, mock_context_with_settings
+    ):
+        """Test general TelegramError handling."""
+        mock_export_service = Mock()
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+
+        # Mock general Telegram error
+        telegram_error = TelegramError("API Error")
+        mock_update_with_file.message.reply_document.side_effect = telegram_error
+
+        with patch(
+            "src.bot.handlers.export_handlers.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+
+            # Should send Telegram API error message
+            error_calls = [
+                call for call in mock_update_with_file.message.reply_text.call_args_list
+                if any("telegram api" in str(arg).lower() for arg in call[0])
+            ]
+            assert len(error_calls) > 0
+
+    @pytest.mark.asyncio
+    async def test_export_command_file_size_check_before_upload(
+        self, mock_update_with_file, mock_context_with_settings
+    ):
+        """Test file size check before attempting upload."""
+        mock_export_service = Mock()
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+
+        # Mock file creation that results in oversized file
+        with patch("tempfile.NamedTemporaryFile"), patch(
+            "pathlib.Path.stat"
+        ) as mock_stat, patch("src.bot.handlers.export_handlers.service_factory.get_export_service", return_value=mock_export_service):
+            # Mock file size > 50MB
+            mock_stat.return_value.st_size = 55 * 1024 * 1024  # 55MB
+
+            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+
+            # Should send file too large message without attempting upload
+            error_calls = [
+                call for call in mock_update_with_file.message.reply_text.call_args_list
+                if any("слишком большой" in str(arg).lower() for arg in call[0])
+            ]
+            assert len(error_calls) > 0
+
+            # Should not attempt document upload
+            mock_update_with_file.message.reply_document.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_export_command_temp_file_creation_failure(
+        self, mock_update_with_file, mock_context_with_settings
+    ):
+        """Test handling of temporary file creation failure."""
+        mock_export_service = Mock()
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+
+        # Mock tempfile creation failure
+        with patch(
+            "src.bot.handlers.export_handlers.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ), patch("tempfile.NamedTemporaryFile", side_effect=OSError("Disk full")):
+            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+
+            # Should send error message about file creation
+            error_calls = [
+                call for call in mock_update_with_file.message.reply_text.call_args_list
+                if any("создании файла" in str(arg).lower() for arg in call[0])
+            ]
+            assert len(error_calls) > 0
+
+    @pytest.mark.asyncio
+    async def test_export_command_user_interaction_logging(
+        self, mock_update_with_file, mock_context_with_settings
+    ):
+        """Test that user interactions are properly logged."""
+        mock_export_service = Mock()
+        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
+
+        with patch(
+            "src.bot.handlers.export_handlers.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ), patch(
+            "src.bot.handlers.export_handlers.UserInteractionLogger"
+        ) as mock_logger_class:
+            mock_logger = Mock()
+            mock_logger_class.return_value = mock_logger
+
+            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+
+            # Should log export initiation
+            mock_logger.log_journey_step.assert_any_call(
+                user_id=123456,
+                step="export_command_initiated",
+                context={"username": "testuser", "command": "/export"}
+            )
+
+            # Should log successful completion
+            success_calls = [
+                call for call in mock_logger.log_journey_step.call_args_list
+                if call[1]["step"] == "export_completed_successfully"
+            ]
+            assert len(success_calls) > 0
