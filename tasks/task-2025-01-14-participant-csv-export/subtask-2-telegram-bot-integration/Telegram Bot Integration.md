@@ -41,8 +41,8 @@ Create Telegram bot command interface for CSV export functionality with admin-on
 
 ### PR Details
 - **Branch**: feature/TDB-58-telegram-bot-integration
-- **PR URL**: [Link]
-- **Status**: [Draft/Review/Merged]
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/45
+- **Status**: In Review
 
 ## Business Context
 Enable authorized administrators to export participant data through Telegram bot commands with real-time progress feedback.
@@ -123,3 +123,47 @@ Enable authorized administrators to export participant data through Telegram bot
 - [x] ✅ Export command properly validates admin access
 - [x] ✅ Progress notifications work correctly during export operations
 - [x] ✅ Command integration with main bot application successful
+
+## PR Traceability & Code Review Preparation
+- **PR Created**: 2025-09-15
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/45
+- **Branch**: feature/TDB-58-telegram-bot-integration
+- **Status**: In Review
+- **Linear Issue**: AGB-54 (TDB-58) - Updated to "In Review"
+
+### Implementation Summary for Code Review
+- **Total Steps Completed**: 2 of 2 steps
+- **Test Coverage**: 16/16 tests passing (11 unit + 5 integration)
+- **Key Files Modified**:
+  - `src/bot/handlers/export_handlers.py:1-233` - Complete export command handler with admin validation and progress tracking
+  - `src/main.py:119-125` - Command registration and settings injection
+  - `src/services/service_factory.py:60-75` - Export service factory method
+  - `tests/unit/test_bot_handlers/test_export_handlers.py:1-324` - Comprehensive unit test suite
+  - `tests/integration/test_export_command_integration.py:1-207` - Integration test coverage
+- **Breaking Changes**: None
+- **Dependencies Added**: None (uses existing auth_utils and export service)
+
+### Step-by-Step Completion Status
+- [x] ✅ Step 1: Create Bot Command Handler - Completed 2025-09-15 14:35
+  - [x] Sub-step 1.1: Create export command handler module - Completed
+  - [x] Sub-step 1.2: Implement /export command with admin validation - Completed
+  - [x] Sub-step 1.3: Add export progress notifications to users - Completed
+- [x] ✅ Step 2: Register Command in Bot Application - Completed 2025-09-15 14:42
+  - [x] Sub-step 2.1: Add export command to main bot handlers - Completed
+
+### Code Review Checklist
+- [ ] **Functionality**: All acceptance criteria met (admin access, progress notifications, command registration)
+- [ ] **Testing**: Test coverage adequate (16/16 tests passing with comprehensive scenarios)
+- [ ] **Code Quality**: Follows project conventions and existing bot architecture patterns
+- [ ] **Documentation**: Code comments and task documentation updated
+- [ ] **Security**: Admin validation using existing auth_utils.is_admin_user()
+- [ ] **Performance**: Progress notification throttling prevents rate limiting issues
+- [ ] **Integration**: Works seamlessly with existing bot conversation flows
+
+### Implementation Notes for Reviewer
+- **Admin Validation**: Uses existing `auth_utils.is_admin_user()` for consistency with other admin features
+- **Progress Throttling**: Minimum 2-second intervals between progress updates to prevent Telegram rate limits
+- **Error Handling**: Comprehensive error handling with user-friendly messages for all failure scenarios
+- **Architecture**: Follows established bot handler patterns with proper dependency injection
+- **Localization**: All user messages support Russian/English through translations.py
+- **Testing**: Both unit and integration tests cover admin access, progress notifications, and error scenarios
