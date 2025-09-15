@@ -8,6 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Telegram Bot CSV Export Integration with Admin-Only Access Control and Progress Tracking** - Complete Telegram bot command interface for CSV export functionality enabling authorized administrators to export participant data through real-time progress notifications and comprehensive error handling (TDB-58, completed 2025-09-15, PR #45)
+  - Admin-only /export command with authentication validation using existing auth_utils.is_admin_user() for secure access control (`src/bot/handlers/export_handlers.py:110-119`)
+    - Comprehensive authorization validation preventing unauthorized access with appropriate error messages
+    - Integration with existing admin authentication utilities maintaining consistent security patterns
+    - Command registration in main bot application with proper settings injection for admin validation
+  - Real-time export progress tracking with throttled notifications preventing Telegram rate limits (`src/bot/handlers/export_handlers.py:25-80`)
+    - ExportProgressTracker class with 2-second minimum throttling intervals for progress notifications
+    - Progressive percentage updates keeping users informed during long export operations
+    - Graceful handling of progress callback failures ensuring export completion regardless of notification issues
+  - Complete export command handler implementation with comprehensive error handling (`src/bot/handlers/export_handlers.py:1-233`)
+    - Integration with existing ParticipantExportService for CSV generation and file management
+    - File size validation ensuring exports remain within Telegram's 50MB document upload limits
+    - Temporary file management with automatic cleanup preventing disk space issues
+    - Russian language interface with user-friendly error messages and success notifications
+  - Bot application integration with proper command registration and dependency injection (`src/main.py:119-125`)
+    - CommandHandler registration for /export command with handler module integration
+    - Settings injection into bot_data enabling access to admin configuration throughout handlers
+    - Seamless integration with existing bot conversation patterns and command structure
+  - Enhanced service factory with export service creation method supporting dependency injection (`src/services/service_factory.py:60-75`)
+    - get_export_service() factory method providing centralized service instantiation
+    - Repository dependency injection maintaining clean architecture patterns
+    - Settings-based configuration enabling flexible export service initialization
+  - Comprehensive test coverage with 16/16 export-specific tests achieving 100% success rate
+    - Unit tests covering admin validation, progress tracking, error handling, and file management scenarios (`tests/unit/test_bot_handlers/test_export_handlers.py:1-324`)
+    - Integration tests validating command registration, bot application setup, and end-to-end workflow (`tests/integration/test_export_command_integration.py:1-207`)
+    - Test regression fixes ensuring 980/980 total tests passing with proper bot_data mock support
+  - Production-ready implementation following established 3-layer architecture (Bot → Service → Repository)
+    - Complete error handling for all failure scenarios with user-friendly messaging
+    - Localization support using existing translations.py for Russian language interface
+    - Integration with existing conversation flows and main menu navigation patterns
+    - Code review addressed with test regression fixes and comprehensive functionality validation
 - **CSV Export Service Foundation with Admin Authentication and Progress Tracking** - Complete foundational service implementation enabling administrative data export of ALL participant records to CSV format with comprehensive field mapping, secure file management, and robust error handling (TDB-57, completed 2025-01-15, PR #44)
   - Comprehensive ParticipantExportService class with repository dependency injection pattern and streaming CSV generation (`src/services/participant_export_service.py:1-263`)
     - `get_all_participants_as_csv()` method using repository.list_all() for complete participant data retrieval with UTF-8 encoding support (lines 40-76)
