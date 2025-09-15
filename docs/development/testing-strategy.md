@@ -34,6 +34,10 @@ tests/
 │   │   └── test_edit_participant_handlers.py
 │   ├── test_bot_keyboards/
 │   ├── test_services/
+│   │   ├── test_participant_export_service.py  # CSV export service testing
+│   │   └── test_participant_update_service.py
+│   ├── test_utils/
+│   │   └── test_auth_utils.py           # Admin authentication testing
 │   └── test_data/
 ├── integration/
 │   └── test_bot_handlers/
@@ -149,6 +153,102 @@ test_field_mapping_accuracy()
 test_partial_update_payload()
 test_update_error_handling()
 ```
+
+## CSV Export Service Testing (2025-01-15)
+
+### Test Coverage Summary
+**Total Tests**: 30 tests (19 service tests + 11 authentication tests)
+**Pass Rate**: 100%
+**Coverage**: 91% for export service, 100% for authentication utilities
+
+#### Export Service Testing (`test_participant_export_service.py`)
+**Tests**: 19 comprehensive unit tests covering all methods and edge cases
+**Coverage**:
+- CSV generation with repository integration
+- Progress tracking callback functionality
+- File management and secure temporary file creation
+- Size estimation and Telegram limit validation
+- UTF-8 encoding support for Russian text
+- Error handling and resource cleanup
+- Large dataset handling (1500+ records)
+
+**Key Test Scenarios**:
+```python
+# CSV export testing
+test_get_all_participants_as_csv_success()
+test_get_all_participants_as_csv_empty_dataset()
+test_get_all_participants_as_csv_with_progress_callback()
+test_csv_generation_with_none_values()
+test_csv_generation_large_dataset()
+
+# File management testing
+test_save_to_file_default_directory()
+test_save_to_file_custom_directory()
+test_save_to_file_cleanup_on_error()
+test_file_size_estimation()
+test_telegram_limit_validation()
+
+# Field mapping integration testing
+test_field_mapping_integration()
+test_csv_headers_match_airtable_structure()
+test_utf8_encoding_support()
+
+# Error handling testing
+test_repository_error_handling()
+test_invalid_directory_handling()
+test_resource_cleanup_on_exceptions()
+```
+
+#### Authentication Utilities Testing (`test_auth_utils.py`)
+**Tests**: 11 comprehensive unit tests with 100% coverage
+**Coverage**:
+- Admin user validation with various input types
+- Type conversion and validation (int, str, None handling)
+- Settings integration and configuration validation
+- Edge cases and error scenarios
+- Logging validation for authentication attempts
+
+**Key Test Scenarios**:
+```python
+# Authentication testing
+test_is_admin_user_valid_int_user_id()
+test_is_admin_user_valid_str_user_id()
+test_is_admin_user_invalid_user_id()
+test_is_admin_user_none_user_id()
+test_is_admin_user_empty_admin_list()
+
+# Type conversion testing
+test_is_admin_user_type_conversion()
+test_is_admin_user_invalid_type_conversion()
+
+# Settings integration testing
+test_is_admin_user_settings_integration()
+test_is_admin_user_multiple_admins()
+
+# Edge case testing
+test_is_admin_user_edge_cases()
+test_is_admin_user_logging_validation()
+```
+
+### Testing Methodology
+
+#### Test-Driven Development Approach
+- **Implementation**: All tests written alongside service implementation
+- **Coverage Goals**: Minimum 90% code coverage achieved (91% service, 100% auth)
+- **Edge Case Focus**: Comprehensive testing of boundary conditions and error scenarios
+- **Mock Strategy**: Repository mocking for isolated service testing
+
+#### Performance and Scalability Testing
+- **Large Dataset Testing**: Validated with 1500+ participant records
+- **Memory Efficiency**: Streaming CSV generation prevents memory exhaustion
+- **Progress Tracking**: Minimal overhead callback testing with mock verification
+- **File Size Estimation**: Accurate size prediction for large datasets
+
+#### Security and Error Handling Testing
+- **Admin Authentication**: Comprehensive validation of unauthorized access prevention
+- **Type Safety**: Robust testing of input type handling and conversion
+- **Resource Cleanup**: Try-finally block testing ensures proper file cleanup
+- **Error Recovery**: Exception handling testing with graceful degradation
 
 ## Integration Testing
 
@@ -354,6 +454,10 @@ test_field_format_validation()
 ./venv/bin/pytest tests/unit/test_bot_handlers/test_edit_participant_handlers.py -v
 ./venv/bin/pytest tests/unit/test_bot_keyboards/test_edit_keyboards.py -v
 ./venv/bin/pytest tests/unit/test_services/test_participant_update_service.py -v
+
+# CSV export functionality tests
+./venv/bin/pytest tests/unit/test_services/test_participant_export_service.py -v
+./venv/bin/pytest tests/unit/test_utils/test_auth_utils.py -v
 
 # Single test file
 ./venv/bin/pytest path/to/test_file.py::test_function_name -v
@@ -731,6 +835,10 @@ test_floor_search_russian_formatting()
 - [x] ✅ Keyboard generation testing
 - [x] ✅ Repository integration testing (8 update_by_id tests)
 - [x] ✅ End-to-end integration testing (4 workflow tests)
+- [x] ✅ **CSV Export Service Testing (2025-01-15)**: 30 comprehensive tests with 91% service coverage and 100% auth coverage
+- [x] ✅ **Admin Authentication Testing**: Complete validation of user authorization with type safety and edge case coverage
+- [x] ✅ **File Management Testing**: Secure temporary file creation, cleanup, and size estimation validation
+- [x] ✅ **Progress Tracking Testing**: CSV generation with callback functionality and large dataset support
 - [x] ✅ Save confirmation and retry mechanism testing
 - [x] ✅ **Display regression prevention testing (11 comprehensive tests)**
 - [x] ✅ **Error handling and graceful degradation testing**

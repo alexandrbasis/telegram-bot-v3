@@ -91,6 +91,14 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
 
+**Participant Export Service** (2025-01-15):
+- CSV export functionality with repository pattern integration
+- Progress tracking and file size estimation capabilities
+- UTF-8 encoding support for Russian text content
+- Telegram file size limit validation (50MB)
+- Secure temporary file management with automatic cleanup
+- AirtableFieldMapping integration for accurate column headers
+
 **Search Service Extensions** (Enhanced 2025-01-21):
 - **Room-based search**: `search_by_room(room: str)` with input validation
 - **Floor-based search**: `search_by_floor(floor: Union[int, str])` with type conversion
@@ -217,6 +225,8 @@ Floor Discovery Button Click → Callback Handler → get_available_floors() →
 - Selective field updates reduce API call overhead
 - In-memory state management for conversation context
 - **Floor discovery caching**: 5-minute TTL reduces API load by up to 12x during active usage
+- **CSV Export Capabilities**: Admin-only data export with progress tracking and file management
+- **Authentication Utilities**: Admin user validation with robust type handling and settings integration
 
 ### Maintainability  
 - Separation of concerns across 3 layers

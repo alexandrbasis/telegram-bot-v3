@@ -754,3 +754,129 @@ Quick bulk access functionality for categorized participant lists by role, provi
 - [x] ✅ Zero breaking changes to existing search functionality
 - [x] ✅ 100% test success rate with comprehensive coverage
 - [x] ✅ Production-ready implementation with robust pagination and state management
+
+## CSV Export Functionality
+
+### Overview
+Administrative data export capability that enables authorized users to export complete participant datasets to CSV format for external analysis and reporting.
+
+**Status**: ✅ Implemented (2025-01-15)
+**Implementation**: ParticipantExportService with admin authentication and file management
+**Test Coverage**: 30 tests (91% service coverage, 100% auth coverage)
+
+### Core Features
+
+#### 1. Admin-Only Access Control
+- **Authorization**: Admin user validation using `ADMIN_USER_IDS` environment configuration
+- **Authentication Utility**: Robust type handling for user ID validation
+- **Security**: Prevents unauthorized access to sensitive participant data
+- **Logging**: Comprehensive logging for authentication attempts and access control
+
+#### 2. Complete Data Export
+- **Repository Integration**: Uses repository pattern to retrieve ALL participant data
+- **Field Mapping**: Exact Airtable field name matching for seamless external usage
+- **UTF-8 Support**: Proper UTF-8 encoding for Russian text content
+- **Data Integrity**: Maintains complete participant information without data loss
+
+#### 3. CSV Generation with Progress Tracking
+- **Streaming Generation**: Memory-efficient CSV generation for large datasets
+- **Progress Callbacks**: Optional progress tracking for UI updates (every 10 records)
+- **Field Headers**: AirtableFieldMapping integration ensures accurate column headers
+- **Large Dataset Support**: Tested with 1500+ records without memory issues
+
+#### 4. File Management and Validation
+- **Secure File Creation**: Temporary file generation in secure directories
+- **Automatic Cleanup**: Try-finally blocks ensure file cleanup even on errors
+- **Size Estimation**: File size estimation with 500 bytes/record estimate
+- **Telegram Limits**: 50MB upload limit validation for bot integration
+- **Custom Directories**: Support for custom output directories
+
+### Technical Implementation
+
+#### Service Architecture
+- **File**: `src/services/participant_export_service.py`
+- **Dependencies**: ParticipantRepository interface for data access
+- **Design Pattern**: Dependency injection for testability and modularity
+- **Error Handling**: Comprehensive exception handling with resource cleanup
+
+#### Authentication Integration
+- **File**: `src/utils/auth_utils.py`
+- **Function**: `is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool`
+- **Type Safety**: Handles multiple user ID input types with conversion
+- **Configuration**: Integrates with existing settings infrastructure
+- **Edge Cases**: Comprehensive handling of None, invalid, and edge case inputs
+
+#### Key Methods
+```python
+# CSV Export Service Methods
+async def get_all_participants_as_csv(self, progress_callback=None) -> str
+async def save_to_file(self, csv_content: str, directory: str = None, filename: str = None) -> str
+def estimate_file_size(self, participant_count: int) -> int
+def is_within_telegram_limit(self, estimated_size: int) -> bool
+
+# Authentication Utility
+def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool
+```
+
+### Quality Assurance
+
+#### Test Coverage
+- **Service Tests**: 19 tests covering all methods and edge cases (91% coverage)
+- **Authentication Tests**: 11 tests covering all scenarios (100% coverage)
+- **Total Tests**: 30 tests with 100% pass rate
+- **TDD Approach**: Test-driven development with comprehensive edge case coverage
+
+#### Performance Characteristics
+- **Memory Efficiency**: Streaming CSV generation prevents memory exhaustion
+- **Large Dataset Support**: Tested with 1500 records without performance degradation
+- **File Size Estimation**: Accurate size prediction for upload limit validation
+- **Progress Tracking**: Minimal overhead progress callbacks for UI responsiveness
+
+#### Security Features
+- **Admin-Only Access**: Robust authentication prevents unauthorized data access
+- **Type Validation**: Comprehensive input validation and type conversion
+- **Error Logging**: Detailed logging for security monitoring and debugging
+- **Resource Cleanup**: Secure file cleanup prevents data leakage
+
+### Integration Points
+
+#### Repository Pattern Integration
+- **Interface**: Uses ParticipantRepository abstract interface
+- **Implementation**: Compatible with existing AirtableParticipantRepo
+- **Modularity**: Easy database backend switching without code changes
+- **Testing**: Mock repositories for isolated unit testing
+
+#### Field Mapping Integration
+- **Configuration**: Uses AirtableFieldMapping for header generation
+- **Accuracy**: CSV headers match exact Airtable field names
+- **Consistency**: Field conversion maintains data integrity
+- **External Usage**: Seamless integration with external analysis tools
+
+### Acceptance Criteria
+
+- [x] ✅ Service successfully retrieves 100% of participant data from repository
+- [x] ✅ Field mapping integration ensures CSV headers match Airtable structure exactly
+- [x] ✅ File generation handles large datasets without memory issues (tested with 1500 records)
+- [x] ✅ Admin authentication utility properly validates authorized users
+- [x] ✅ Comprehensive test coverage (91% for service, 100% for auth utils) - 30 total tests passing
+- [x] ✅ UTF-8 encoding explicitly implemented for Russian text support
+- [x] ✅ Streaming CSV generation optimizes memory for large datasets
+- [x] ✅ File size estimation accounts for Telegram's 50MB upload limit
+- [x] ✅ Progress tracking provides UI update capabilities
+- [x] ✅ Secure file management with automatic cleanup
+
+### Future Enhancements
+
+**Potential Improvements**:
+- Telegram bot integration for admin-triggered exports
+- Filtered export options (by role, department, date range)
+- Multiple export formats (Excel, JSON, XML)
+- Scheduled automatic exports
+- Export history and audit logging
+
+**Integration Opportunities**:
+- Integration with Telegram bot handlers for direct export commands
+- Export scheduling and automation
+- Email delivery for exported files
+- Data analytics and reporting dashboards
+- Export templates and customization options
