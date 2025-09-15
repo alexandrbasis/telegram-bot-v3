@@ -227,6 +227,9 @@ Floor Discovery Button Click → Callback Handler → get_available_floors() →
 - **Floor discovery caching**: 5-minute TTL reduces API load by up to 12x during active usage
 - **CSV Export Capabilities**: Admin-only data export with progress tracking and file management
 - **Authentication Utilities**: Admin user validation with robust type handling and settings integration
+- **Export Progress Throttling**: 2-second minimum intervals prevent Telegram rate limit violations during long exports
+- **Streaming CSV Generation**: Memory-efficient export processing for large datasets (1500+ participants tested)
+- **Secure File Management**: Automatic cleanup prevents storage accumulation from export operations
 
 ### Maintainability  
 - Separation of concerns across 3 layers

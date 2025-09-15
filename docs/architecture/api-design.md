@@ -198,6 +198,79 @@ Errors: "❌ Возраст должен быть от 0 до 120" or "❌ Во�
 Display: Fixed participant reconstruction to include age field in all contexts
 ```
 
+## Data Export API
+
+### /export Command API
+**Purpose**: Administrative CSV export of complete participant database
+
+**Authorization**:
+- **Admin Validation**: Uses `auth_utils.is_admin_user()` for access control
+- **Settings Integration**: Admin user IDs from `ADMIN_USER_IDS` environment variable
+- **Type Safety**: Handles Union[int, str, None] user ID types with conversion
+- **Security Logging**: Comprehensive logging for access attempts and failures
+
+**Request Flow**:
+```
+/export command → Admin validation → Progress notifications → CSV generation → File delivery
+```
+
+**Response Format**:
+```
+🔄 Начинается экспорт данных участников...
+📈 Экспорт: 25% завершено (250/1000 участников)
+📈 Экспорт: 50% завершено (500/1000 участников)
+📈 Экспорт: 75% завершено (750/1000 участников)
+✅ Экспорт завершён! Отправляю файл...
+[CSV file attachment: participants_export_YYYY-MM-DD_HH-MM.csv]
+```
+
+**Progress Tracking API**:
+- **Throttled Notifications**: Minimum 2-second intervals prevent Telegram rate limiting
+- **Progress Updates**: Real-time export status with percentage and count
+- **ExportProgressTracker**: Dedicated class for progress management
+- **Message Pattern**: Consistent Russian progress messages
+
+**Error Response API**:
+```
+# Unauthorized access
+{
+  "message": "Доступ запрещён. Эта команда доступна только администраторам.",
+  "status": "access_denied"
+}
+
+# Export failure
+{
+  "message": "Произошла ошибка при экспорте данных. Попробуйте позже.",
+  "status": "export_failed"
+}
+
+# File too large
+{
+  "message": "Файл слишком большой для отправки через Telegram.",
+  "status": "file_size_exceeded"
+}
+```
+
+**CSV Export Service API**:
+- **Method**: `ParticipantExportService.get_all_participants_as_csv(progress_callback)`
+- **Progress Callbacks**: Optional callback for UI updates (every 10 records)
+- **Field Mapping**: Uses AirtableFieldMapping for accurate column headers
+- **UTF-8 Encoding**: Proper Russian text support
+- **File Management**: Secure temporary file creation with automatic cleanup
+
+**File Delivery API**:
+- **Format**: CSV with exact Airtable field names as headers
+- **Encoding**: UTF-8 for Russian text support
+- **Filename**: `participants_export_YYYY-MM-DD_HH-MM.csv` pattern
+- **Size Limit**: 50MB Telegram upload limit validation
+- **Cleanup**: Automatic temporary file removal after delivery
+
+**Integration Points**:
+- **Repository Pattern**: Uses existing ParticipantRepository interface
+- **Service Factory**: Integrated via ServiceFactory for dependency injection
+- **3-Layer Architecture**: Bot → Service → Repository pattern compliance
+- **Settings Integration**: Admin configuration via existing settings system
+
 ### Save/Cancel APIs
 
 #### Save Changes API
@@ -492,11 +565,15 @@ API_ERROR = "Произошла ошибка. Попробуйте позже"
 ### Bot Response Performance (Validated 2025-09-05)
 - **Handler Response**: < 2 seconds
 - **Field Update**: < 3 seconds (including Airtable call) - **Integration tested**
-- **Search Results**: < 3 seconds for complex queries - **Performance validated** 
+- **Search Results**: < 3 seconds for complex queries - **Performance validated**
 - **Room Search**: < 3 seconds for alphanumeric room queries
 - **Floor Search**: < 3 seconds for multi-room floor queries with grouping
+- **CSV Export Performance**: < 30 seconds for datasets up to 1500 participants
+- **Progress Notifications**: 2-second throttling prevents rate limit violations
 
 ### Memory Management
 - **Conversation Context**: < 1MB per user session
 - **State Persistence**: In-memory for active conversations
 - **Data Caching**: Participant data cached during editing session
+- **Export Memory**: Streaming CSV generation prevents memory exhaustion for large datasets
+- **File Cleanup**: Automatic temporary file removal after export completion
