@@ -8,7 +8,7 @@ A simple, well-structured Telegram bot for managing Tres Dias event participants
 - **Interactive Editing**: Complete participant profile editing with 13 editable fields
 - **Save/Cancel Workflow**: Confirmation screens and error recovery for data safety
 - **Payment Tracking**: Track payment status and generate reports  
-- **Data Export**: Export participant data in various formats
+- **CSV Export with File Delivery**: Admin-only CSV export with comprehensive error handling and direct Telegram file delivery
 - **Database Abstraction**: Easy migration between different database backends
 
 ## Architecture

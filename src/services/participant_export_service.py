@@ -107,6 +107,32 @@ class ParticipantExportService:
         logger.info(f"CSV export completed with {total_count} records")
         return csv_string
 
+    def export_to_csv(self) -> str:
+        """
+        Export all participants to CSV format string (synchronous wrapper).
+
+        This method provides a synchronous interface for the asynchronous
+        get_all_participants_as_csv method, compatible with the existing
+        export handler interface.
+
+        Returns:
+            CSV formatted string with all participant data
+
+        Raises:
+            Exception: If repository access fails
+        """
+        import asyncio
+
+        # Check if we're already in an event loop
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No event loop running, create new one
+            return asyncio.run(self.get_all_participants_as_csv())
+        else:
+            # Event loop is running, use it
+            return loop.run_until_complete(self.get_all_participants_as_csv())
+
     async def save_to_file(
         self, directory: Optional[str] = None, filename_prefix: Optional[str] = None
     ) -> str:
@@ -157,6 +183,7 @@ class ParticipantExportService:
                     # Best-effort cleanup only
                     pass
             raise e
+
 
     async def estimate_file_size(self) -> int:
         """

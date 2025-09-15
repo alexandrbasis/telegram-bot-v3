@@ -459,6 +459,12 @@ test_field_format_validation()
 ./venv/bin/pytest tests/unit/test_services/test_participant_export_service.py -v
 ./venv/bin/pytest tests/unit/test_utils/test_auth_utils.py -v
 
+# File delivery error handling tests
+./venv/bin/pytest tests/unit/test_bot_handlers/test_export_handlers.py::test_handle_export_command_retry_after_error -v
+./venv/bin/pytest tests/unit/test_bot_handlers/test_export_handlers.py::test_handle_export_command_bad_request_error -v
+./venv/bin/pytest tests/unit/test_bot_handlers/test_export_handlers.py::test_handle_export_command_network_error -v
+./venv/bin/pytest tests/unit/test_bot_handlers/test_export_handlers.py::test_handle_export_command_telegram_error -v
+
 # Single test file
 ./venv/bin/pytest path/to/test_file.py::test_function_name -v
 ```
