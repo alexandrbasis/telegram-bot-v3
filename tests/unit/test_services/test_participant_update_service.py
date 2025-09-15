@@ -254,7 +254,9 @@ class TestValidateFieldInput:
         result = self.service.validate_field_input("church_leader", "Пастор Иванов")
         assert result == "Пастор Иванов"
 
-        result = self.service.validate_field_input("church_leader", "Архимандрит Георгий")
+        result = self.service.validate_field_input(
+            "church_leader", "Архимандрит Георгий"
+        )
         assert result == "Архимандрит Георгий"
 
     def test_validate_church_leader_field_empty_optional(self):
@@ -318,7 +320,9 @@ class TestValidateFieldInput:
 
     def test_validate_notes_field_preserves_formatting(self):
         """Test notes field preserves formatting and whitespace."""
-        formatted_notes = "  Отступ в начале\n    Больший отступ\n\nПустая строка выше  "
+        formatted_notes = (
+            "  Отступ в начале\n    Больший отступ\n\nПустая строка выше  "
+        )
         result = self.service.validate_field_input("notes", formatted_notes)
         assert result == formatted_notes
 
@@ -696,10 +700,14 @@ class TestTableNameBusinessRule:
 
     def test_validate_table_name_business_rule_team_role_with_table_name_invalid(self):
         """Test TableName is not allowed for TEAM role."""
-        with pytest.raises(ValidationError, match="доступно только для роли «Кандидат»"):
+        with pytest.raises(
+            ValidationError, match="доступно только для роли «Кандидат»"
+        ):
             self.service.validate_table_name_business_rule(Role.TEAM, "Some table")
 
-        with pytest.raises(ValidationError, match="доступно только для роли «Кандидат»"):
+        with pytest.raises(
+            ValidationError, match="доступно только для роли «Кандидат»"
+        ):
             self.service.validate_table_name_business_rule(Role.TEAM, "Основной стол")
 
     def test_validate_table_name_business_rule_team_role_empty_valid(self):

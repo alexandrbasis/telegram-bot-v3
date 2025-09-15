@@ -12,8 +12,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from src.models.participant import (
     Department,
     Gender,
-    PaymentStatus,
     Participant,
+    PaymentStatus,
     Role,
     Size,
 )
@@ -187,20 +187,26 @@ def create_participant_edit_keyboard(
     participant_role = None
     if participant:
         participant_role = (
-            participant.role.value
-            if hasattr(participant.role, "value")
-            else str(participant.role)
-        ) if participant.role else None
+            (
+                participant.role.value
+                if hasattr(participant.role, "value")
+                else str(participant.role)
+            )
+            if participant.role
+            else None
+        )
 
     if participant_role == "CANDIDATE":
         # Add TableName button in a row with ChurchLeader
-        keyboard.append([
-            church_leader_button,
-            InlineKeyboardButton(
-                f"{get_field_icon('table_name')} Название стола",
-                callback_data="edit_field:table_name",
-            ),
-        ])
+        keyboard.append(
+            [
+                church_leader_button,
+                InlineKeyboardButton(
+                    f"{get_field_icon('table_name')} Название стола",
+                    callback_data="edit_field:table_name",
+                ),
+            ]
+        )
         # Add Notes button on its own row
         keyboard.append([notes_button])
     else:

@@ -411,7 +411,9 @@ class TestAirtableFieldMapping:
         fields = participant.to_airtable_fields()
         assert fields["ChurchLeader"] == "Пастор Петров"
         assert fields["TableName"] == "Основной стол"
-        assert fields["Notes"] == "Важная информация:\n- Вегетарианец\n- Аллергия на орехи"
+        assert (
+            fields["Notes"] == "Важная информация:\n- Вегетарианец\n- Аллергия на орехи"
+        )
 
         # Only ChurchLeader
         participant = Participant(
@@ -526,7 +528,10 @@ class TestAirtableRecordCreation:
         assert participant.age == 35
         assert participant.church_leader == "Протоиерей Сидоров"
         assert participant.table_name == "Почетный стол"
-        assert participant.notes == "Особые потребности:\n- Wheelchair accessible\n- Диетические ограничения"
+        assert (
+            participant.notes
+            == "Особые потребности:\n- Wheelchair accessible\n- Диетические ограничения"
+        )
 
     def test_from_airtable_record_missing_fields(self):
         """Test handling of Airtable records with missing required fields."""
@@ -661,7 +666,10 @@ class TestAirtableRecordCreation:
         participant = Participant.from_airtable_record(record)
         assert participant.church_leader == "Архимандрит Георгий"
         assert participant.table_name == "VIP стол"
-        assert participant.notes == "Многострочные заметки:\n1. Первый пункт\n2. Второй пункт\n3. Третий пункт"
+        assert (
+            participant.notes
+            == "Многострочные заметки:\n1. Первый пункт\n2. Второй пункт\n3. Третий пункт"
+        )
 
         # Only ChurchLeader present
         record = {
@@ -692,7 +700,10 @@ class TestAirtableRecordCreation:
             },
         }
         participant = Participant.from_airtable_record(record)
-        assert participant.notes == "Special chars: !@#$%^&*()_+\nТекст на русском\nEmoji: 🙏✝️"
+        assert (
+            participant.notes
+            == "Special chars: !@#$%^&*()_+\nТекст на русском\nEmoji: 🙏✝️"
+        )
         assert participant.church_leader is None
         assert participant.table_name is None
 
@@ -821,7 +832,10 @@ class TestParticipantRoundtrip:
         # Verify Airtable format includes extended fields
         assert airtable_fields["ChurchLeader"] == "Митрополит Владимир"
         assert airtable_fields["TableName"] == "Духовенство"
-        assert airtable_fields["Notes"] == "Многострочный текст:\n- Пункт 1\n- Пункт 2\n- Особые требования"
+        assert (
+            airtable_fields["Notes"]
+            == "Многострочный текст:\n- Пункт 1\n- Пункт 2\n- Особые требования"
+        )
 
         # Create mock Airtable record
         airtable_record = {"id": "rec123456789", "fields": airtable_fields}

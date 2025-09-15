@@ -344,8 +344,14 @@ async def show_participant_edit_menu(
 
     # TableName only if role is CANDIDATE
     participant_role = (
-        participant.role.value if hasattr(participant.role, "value") else str(participant.role)
-    ) if participant.role else None
+        (
+            participant.role.value
+            if hasattr(participant.role, "value")
+            else str(participant.role)
+        )
+        if participant.role
+        else None
+    )
 
     if participant_role == "CANDIDATE":
         message_text += f"🪑 Название стола: {participant.table_name or 'Не указано'}\n"
@@ -354,7 +360,9 @@ async def show_participant_edit_menu(
     notes_display = "Не указано"
     if participant.notes:
         notes_truncated = participant.notes[:100].replace("\n", " ")
-        notes_display = notes_truncated + ("..." if len(participant.notes) > 100 else "")
+        notes_display = notes_truncated + (
+            "..." if len(participant.notes) > 100 else ""
+        )
     message_text += f"📝 Заметки: {notes_display}\n"
 
     # Show pending changes if any
@@ -1008,17 +1016,32 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             return EditStates.BUTTON_SELECTION
 
         # Validate TableName business rule: only allowed for CANDIDATE role
-        effective_table_name = changes.get("table_name", getattr(participant, "table_name", None))
+        effective_table_name = changes.get(
+            "table_name", getattr(participant, "table_name", None)
+        )
         try:
-            update_service.validate_table_name_business_rule(effective_role, effective_table_name)
+            update_service.validate_table_name_business_rule(
+                effective_role, effective_table_name
+            )
         except ValidationError as e:
             # Block save and show error message
             await query.message.edit_text(
                 text=f"❌ Ошибка валидации: {e}",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🔙 Назад к редактированию", callback_data="show_edit_menu")],
-                    [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
-                ]),
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "🔙 Назад к редактированию",
+                                callback_data="show_edit_menu",
+                            )
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                "🏠 Главное меню", callback_data="main_menu"
+                            )
+                        ],
+                    ]
+                ),
             )
             from src.bot.handlers.search_handlers import SearchStates
 

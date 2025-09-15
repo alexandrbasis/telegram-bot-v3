@@ -161,22 +161,46 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
 
     # Add ChurchLeader if available
     if participant.church_leader:
-        church_leader_escaped = participant.church_leader.replace("[", r"\[").replace("]", r"\]").replace("*", r"\*").replace("_", r"\_").replace("`", r"\`")
+        church_leader_escaped = (
+            participant.church_leader.replace("[", r"\[")
+            .replace("]", r"\]")
+            .replace("*", r"\*")
+            .replace("_", r"\_")
+            .replace("`", r"\`")
+        )
         result_parts.append(f" | Leader: {church_leader_escaped}")
 
     # Add TableName only if role is CANDIDATE
     participant_role = (
-        participant.role.value if hasattr(participant.role, "value") else str(participant.role)
-    ) if participant.role else None
+        (
+            participant.role.value
+            if hasattr(participant.role, "value")
+            else str(participant.role)
+        )
+        if participant.role
+        else None
+    )
 
     if participant_role == "CANDIDATE" and participant.table_name:
-        table_name_escaped = participant.table_name.replace("[", r"\[").replace("]", r"\]").replace("*", r"\*").replace("_", r"\_").replace("`", r"\`")
+        table_name_escaped = (
+            participant.table_name.replace("[", r"\[")
+            .replace("]", r"\]")
+            .replace("*", r"\*")
+            .replace("_", r"\_")
+            .replace("`", r"\`")
+        )
         result_parts.append(f" | Table: {table_name_escaped}")
 
     # Add truncated Notes if available
     if participant.notes:
         notes_truncated = participant.notes[:50].replace("\n", " ").replace("\r", "")
-        notes_escaped = notes_truncated.replace("[", r"\[").replace("]", r"\]").replace("*", r"\*").replace("_", r"\_").replace("`", r"\`")
+        notes_escaped = (
+            notes_truncated.replace("[", r"\[")
+            .replace("]", r"\]")
+            .replace("*", r"\*")
+            .replace("_", r"\_")
+            .replace("`", r"\`")
+        )
         if len(participant.notes) > 50:
             notes_escaped += "..."
         result_parts.append(f" | Notes: {notes_escaped}")
@@ -314,15 +338,27 @@ def format_participant_full(participant: Participant, language: str = "ru") -> s
 
     # TableName only if role is CANDIDATE
     participant_role = (
-        participant.role.value if hasattr(participant.role, "value") else str(participant.role)
-    ) if participant.role else None
+        (
+            participant.role.value
+            if hasattr(participant.role, "value")
+            else str(participant.role)
+        )
+        if participant.role
+        else None
+    )
 
     if participant_role == "CANDIDATE":
         lines.append(f"{labels['table_name']}: {value_or_na(participant.table_name)}")
 
     # Full multiline Notes (escaped)
     if participant.notes:
-        notes_escaped = participant.notes.replace("*", r"\*").replace("_", r"\_").replace("[", r"\[").replace("]", r"\]").replace("`", r"\`")
+        notes_escaped = (
+            participant.notes.replace("*", r"\*")
+            .replace("_", r"\_")
+            .replace("[", r"\[")
+            .replace("]", r"\]")
+            .replace("`", r"\`")
+        )
         lines.append(f"{labels['notes']}: {notes_escaped}")
     else:
         lines.append(f"{labels['notes']}: Не указано")

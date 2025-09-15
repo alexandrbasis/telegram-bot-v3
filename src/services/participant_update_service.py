@@ -129,7 +129,9 @@ class ParticipantUpdateService:
 
         return user_input
 
-    def validate_table_name_business_rule(self, effective_role: Optional[Role], table_name: Optional[str]) -> None:
+    def validate_table_name_business_rule(
+        self, effective_role: Optional[Role], table_name: Optional[str]
+    ) -> None:
         """
         Validate business rule that TableName is only allowed for CANDIDATE role.
 
