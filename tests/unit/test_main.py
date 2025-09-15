@@ -120,7 +120,11 @@ class TestMainFileLoggingIntegration:
             # Mock the application builder chain
             mock_builder = Mock()
             mock_builder.token.return_value = mock_builder
-            mock_builder.build.return_value = Mock()
+            # Create mock app with real dictionary for bot_data
+            mock_app = Mock()
+            mock_app.bot_data = {}  # Real dictionary, not Mock
+            mock_app.add_handler = Mock()
+            mock_builder.build.return_value = mock_app
             mock_app_builder.return_value = mock_builder
 
             create_application()
