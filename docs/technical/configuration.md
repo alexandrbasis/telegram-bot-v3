@@ -19,6 +19,7 @@
 | `LOG_LEVEL` | Logging level | `INFO`, `DEBUG`, `WARNING` | `INFO` |
 | `ENVIRONMENT` | Runtime environment | `development`, `production` | `development` |
 | `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` | Conversation timeout in minutes | `30`, `60` | `30` |
+| `ADMIN_USER_IDS` | Comma-separated admin user IDs | `123456789,987654321` | None |
 
 ## Telegram Settings
 
@@ -44,12 +45,37 @@ TELEGRAM_CONVERSATION_TIMEOUT_MINUTES=30
 TELEGRAM_CONVERSATION_TIMEOUT_MINUTES=60
 ```
 
+### Admin Authentication
+
+The bot includes admin-only features that require proper user authorization. Admin access is controlled through environment configuration.
+
+- **Environment Variable**: `ADMIN_USER_IDS`
+- **Format**: Comma-separated list of Telegram user IDs
+- **Example**: `123456789,987654321`
+- **Usage**: Controls access to admin features like CSV export functionality
+
+**Configuration Examples:**
+```bash
+# Single admin user
+ADMIN_USER_IDS=123456789
+
+# Multiple admin users
+ADMIN_USER_IDS=123456789,987654321,555666777
+```
+
+**Authentication Utilities:**
+- **Function**: `is_admin_user(user_id, settings)` in `src/utils/auth_utils.py`
+- **Type Safety**: Handles Union[int, str, None] user ID types with robust validation
+- **Logging**: Comprehensive logging for authentication attempts and failures
+- **Integration**: Uses existing settings configuration for admin user list
+
 ### Validation Rules
 
 - **Timeout Minutes**: Must be between 1 and 1440 minutes
 - **Bot Token**: Must be provided for bot functionality
 - **Airtable API Key**: Required for data persistence
 - **Environment**: Validates against known environments
+- **Admin User IDs**: Must be valid integer user IDs if provided
 
 ## Configuration Loading
 
