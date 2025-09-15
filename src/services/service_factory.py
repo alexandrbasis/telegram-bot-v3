@@ -6,9 +6,12 @@ This is a simple factory pattern that should eventually be replaced with a prope
 DI container.
 """
 
+from typing import Callable, Optional
+
 from src.config.settings import get_settings
 from src.data.airtable.airtable_client import AirtableClient
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+from src.services.participant_export_service import ParticipantExportService
 from src.services.participant_list_service import ParticipantListService
 from src.services.search_service import SearchService
 
@@ -52,3 +55,21 @@ def get_participant_list_service() -> ParticipantListService:
     """
     repository = get_participant_repository()
     return ParticipantListService(repository)
+
+
+def get_export_service(
+    progress_callback: Optional[Callable[[int, int], None]] = None
+) -> ParticipantExportService:
+    """
+    Get export service instance.
+
+    Centralized factory method for export service creation with repository.
+
+    Args:
+        progress_callback: Optional callback for progress updates
+
+    Returns:
+        ParticipantExportService: Configured export service instance
+    """
+    repository = get_participant_repository()
+    return ParticipantExportService(repository, progress_callback)
