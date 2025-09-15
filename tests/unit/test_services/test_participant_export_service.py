@@ -128,6 +128,7 @@ class TestGetAllParticipantsAsCSV:
 
         # Assert
         assert csv_string is not None
+
         assert isinstance(csv_string, str)
 
         # Verify CSV structure

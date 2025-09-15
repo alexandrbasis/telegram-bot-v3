@@ -121,7 +121,8 @@ class ParticipantExportService:
 
         Args:
             directory: Optional directory path (uses temp dir if not specified)
-            filename_prefix: Optional prefix for filename (default: "participants_export")
+            filename_prefix: Optional prefix for filename
+                (default: "participants_export")
 
         Returns:
             Path to the created CSV file
@@ -158,7 +159,8 @@ class ParticipantExportService:
             if file_path.exists():
                 try:
                     file_path.unlink()
-                except:
+                except Exception:
+                    # Best-effort cleanup only
                     pass
             raise e
 
@@ -181,7 +183,11 @@ class ParticipantExportService:
         # Estimate total size
         estimated_size = header_size + (total_count * self.BYTES_PER_RECORD_ESTIMATE)
 
-        logger.info(f"Estimated CSV size: {estimated_size} bytes for {total_count} records")
+        logger.info(
+            "Estimated CSV size: %s bytes for %s records",
+            estimated_size,
+            total_count,
+        )
         return estimated_size
 
     async def is_within_telegram_limit(self) -> bool:
@@ -211,7 +217,10 @@ class ParticipantExportService:
         """
         # Get all Airtable field names from mapping (excluding 'id')
         headers = []
-        for python_field, airtable_field in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
+        for (
+            python_field,
+            airtable_field,
+        ) in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
             if python_field != 'record_id':  # Skip record_id as it's internal
                 headers.append(airtable_field)
 
@@ -230,7 +239,10 @@ class ParticipantExportService:
         row = {}
 
         # Map each field
-        for python_field, airtable_field in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
+        for (
+            python_field,
+            airtable_field,
+        ) in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
             if python_field == 'record_id':
                 continue  # Skip internal record_id
 

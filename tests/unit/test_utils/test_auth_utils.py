@@ -25,6 +25,7 @@ class TestIsAdminUser:
         # Act & Assert
         assert is_admin_user(123456, settings) is True
         assert is_admin_user(789012, settings) is True
+
         assert is_admin_user(345678, settings) is True
 
     def test_non_admin_user(self):
