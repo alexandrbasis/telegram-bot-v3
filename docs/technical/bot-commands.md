@@ -539,7 +539,7 @@ Export complete participant database to CSV format for administrative use. Avail
 - **Secure Processing**: Temporary file creation with automatic cleanup
 - **Error Handling**: User-friendly error messages for various failure scenarios
 
-**Usage Example**:
+**Usage Example with File Delivery**:
 ```
 Admin: /export
 Bot: 🔄 Начинается экспорт данных участников...
@@ -547,20 +547,36 @@ Bot: 📈 Экспорт: 25% завершено (250/1000 участников)
 Bot: 📈 Экспорт: 50% завершено (500/1000 участников)
 Bot: 📈 Экспорт: 75% завершено (750/1000 участников)
 Bot: ✅ Экспорт завершён! Отправляю файл...
+Bot: 📁 Файл успешно отправлен!
 [CSV file attachment: participants_export_YYYY-MM-DD_HH-MM.csv]
+
+# Error scenario example:
+Bot: ❌ Ошибка при отправке файла. Повторная попытка...
+Bot: 📁 Файл успешно отправлен!
 ```
 
-**Integration Features**:
+**File Delivery Integration Features**:
 - **Progress Tracker**: ExportProgressTracker class manages throttled notifications
 - **Service Integration**: Uses ParticipantExportService for CSV generation
 - **Repository Pattern**: Leverages existing data access layer
 - **3-Layer Architecture**: Follows established bot → service → data pattern
+- **Telegram File Upload**: Direct CSV delivery via Telegram document upload API
+- **File Size Validation**: Pre-upload validation against 50MB Telegram limit
+- **Resource Management**: Guaranteed file cleanup with try-finally blocks
+- **Error Recovery**: Comprehensive retry logic for transient failures
+- **Audit Logging**: Complete user interaction logging for administrative monitoring
 
-**Error Scenarios**:
+**Error Scenarios with File Delivery**:
 - **Unauthorized Access**: "Доступ запрещён. Эта команда доступна только администраторам."
 - **Export Failure**: "Произошла ошибка при экспорте данных. Попробуйте позже."
-- **File Size Exceeded**: "Файл слишком большой для отправки через Telegram."
+- **File Size Exceeded**: "Файл слишком большой для отправки через Telegram (максимум 50MB)."
 - **Network Issues**: "Ошибка сети. Попробуйте позже."
+- **File Upload Failures**: Comprehensive error handling for Telegram API failures:
+  - **RetryAfter Errors**: Automatic retry with exponential backoff (up to 3 attempts)
+  - **BadRequest Errors**: File format or size validation with user-friendly messages
+  - **NetworkError**: Connection retry mechanism with progress preservation
+  - **TelegramError**: General API error handling with detailed logging
+- **File Cleanup**: Automatic temporary file removal ensures no disk space accumulation
 
 ### Extended Fields Usage Examples (2025-01-14)
 

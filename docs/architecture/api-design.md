@@ -230,7 +230,7 @@ Display: Fixed participant reconstruction to include age field in all contexts
 - **ExportProgressTracker**: Dedicated class for progress management
 - **Message Pattern**: Consistent Russian progress messages
 
-**Error Response API**:
+**Error Response API with File Delivery**:
 ```
 # Unauthorized access
 {
@@ -244,10 +244,39 @@ Display: Fixed participant reconstruction to include age field in all contexts
   "status": "export_failed"
 }
 
-# File too large
+# File too large (enhanced with 50MB limit)
 {
-  "message": "Файл слишком большой для отправки через Telegram.",
+  "message": "Файл слишком большой для отправки через Telegram (максимум 50MB).",
   "status": "file_size_exceeded"
+}
+
+# Comprehensive Telegram API Error Handling
+# RetryAfter error with automatic retry
+{
+  "message": "Слишком много запросов. Повторная попытка...",
+  "status": "retry_after",
+  "retry_seconds": 30,
+  "attempt": "1/3"
+}
+
+# BadRequest error with validation details
+{
+  "message": "Неверный формат файла или превышен размер.",
+  "status": "bad_request"
+}
+
+# NetworkError with retry mechanism
+{
+  "message": "Ошибка сети. Повторная попытка...",
+  "status": "network_error",
+  "attempt": "2/3"
+}
+
+# General TelegramError with audit logging
+{
+  "message": "Ошибка Telegram API. Попробуйте позже.",
+  "status": "telegram_error",
+  "logged": "admin_audit_trail"
 }
 ```
 
@@ -258,18 +287,28 @@ Display: Fixed participant reconstruction to include age field in all contexts
 - **UTF-8 Encoding**: Proper Russian text support
 - **File Management**: Secure temporary file creation with automatic cleanup
 
-**File Delivery API**:
+**File Delivery API with Comprehensive Error Handling**:
 - **Format**: CSV with exact Airtable field names as headers
 - **Encoding**: UTF-8 for Russian text support
 - **Filename**: `participants_export_YYYY-MM-DD_HH-MM.csv` pattern
-- **Size Limit**: 50MB Telegram upload limit validation
-- **Cleanup**: Automatic temporary file removal after delivery
+- **Size Limit**: 50MB Telegram upload limit with pre-validation
+- **Delivery Method**: Telegram document upload API with comprehensive error handling
+- **Error Recovery**: Automatic retry mechanism for transient failures (up to 3 attempts)
+- **Retry Logic**: Exponential backoff for RetryAfter errors with user progress updates
+- **Cleanup**: Guaranteed temporary file removal with try-finally blocks even on failures
+- **Audit Logging**: Complete user interaction logging for all delivery attempts and errors
+- **Resource Management**: Secure file creation in temporary directories with automatic cleanup
 
-**Integration Points**:
+**Integration Points with File Delivery**:
 - **Repository Pattern**: Uses existing ParticipantRepository interface
 - **Service Factory**: Integrated via ServiceFactory for dependency injection
 - **3-Layer Architecture**: Bot → Service → Repository pattern compliance
 - **Settings Integration**: Admin configuration via existing settings system
+- **Telegram API Integration**: Direct file upload via python-telegram-bot library
+- **Error Classification**: Comprehensive handling of all Telegram API error types
+- **Progress Integration**: ExportProgressTracker with file delivery status updates
+- **Logging Integration**: UserInteractionLogger for administrative monitoring and audit trails
+- **Resource Management**: Dedicated file cleanup utilities with exception-safe patterns
 
 ### Save/Cancel APIs
 
