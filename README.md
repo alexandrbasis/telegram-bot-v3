@@ -1,6 +1,6 @@
 # Tres Dias Telegram Bot v3
 
-A production-ready Telegram bot for managing event participants with enterprise-grade architecture, comprehensive testing, and seamless Airtable integration.
+A Telegram bot for managing event participants with enterprise-grade architecture, comprehensive testing, and seamless Airtable integration.
 
 ## 🎯 Project Overview
 
