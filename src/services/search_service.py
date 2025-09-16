@@ -138,17 +138,9 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
 
     # Append accommodation info: Floor and Room Number
     floor_raw = getattr(participant, "floor", None)
-    floor_display = (
-        str(floor_raw)
-        if floor_raw not in (None, "")
-        else not_available
-    )
+    floor_display = str(floor_raw) if floor_raw not in (None, "") else not_available
     room_raw = getattr(participant, "room_number", None)
-    room_display = (
-        str(room_raw)
-        if room_raw not in (None, "")
-        else not_available
-    )
+    room_display = str(room_raw) if room_raw not in (None, "") else not_available
     result_parts.append(
         f" | {labels['floor']}: {floor_display}, {labels['room']}: {room_display}"
     )

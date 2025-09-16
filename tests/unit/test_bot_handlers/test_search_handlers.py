@@ -1112,9 +1112,7 @@ class TestUserInteractionLogging:
 
     @patch("src.bot.handlers.search_handlers.get_user_interaction_logger")
     @pytest.mark.asyncio
-    async def test_search_button_without_username_logs_correctly(
-        self, mock_get_logger
-    ):
+    async def test_search_button_without_username_logs_correctly(self, mock_get_logger):
         """Test logging when user has no username."""
         # Setup user without username
         update = Mock(spec=Update)
@@ -1149,9 +1147,7 @@ class TestUserInteractionLogging:
     @patch("src.bot.handlers.search_handlers.get_user_interaction_logger")
     @patch("src.bot.handlers.search_handlers.get_participant_repository")
     @pytest.mark.asyncio
-    async def test_search_error_logs_missing_response(
-        self, mock_repo, mock_get_logger
-    ):
+    async def test_search_error_logs_missing_response(self, mock_repo, mock_get_logger):
         """Test that search errors are logged as missing responses."""
         # Setup search failure
         mock_repo_instance = Mock()
@@ -1193,9 +1189,7 @@ class TestUserInteractionLogging:
 
     @patch("src.bot.handlers.search_handlers.get_user_interaction_logger")
     @pytest.mark.asyncio
-    async def test_logging_disabled_by_configuration(
-        self, mock_get_logger
-    ):
+    async def test_logging_disabled_by_configuration(self, mock_get_logger):
         """Test that logging is disabled when configuration is set to false."""
         # Simulate disabled logging by returning None
         mock_get_logger.return_value = None

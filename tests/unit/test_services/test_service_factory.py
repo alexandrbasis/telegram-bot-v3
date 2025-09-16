@@ -54,9 +54,7 @@ class TestAirtableClientReuse:
 
     @patch("src.services.service_factory.AirtableClient")
     @patch("src.services.service_factory.get_settings")
-    def test_reset_creates_new_client(
-        self, mock_get_settings, mock_airtable_client
-    ):
+    def test_reset_creates_new_client(self, mock_get_settings, mock_airtable_client):
         config = AirtableConfig(
             api_key="key",
             base_id="base",

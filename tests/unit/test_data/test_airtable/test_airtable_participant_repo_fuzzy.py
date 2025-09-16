@@ -12,8 +12,8 @@ import pytest
 
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
 from src.data.airtable.airtable_participant_repo import (
-    AirtableParticipantRepository,
     _PARTICIPANT_CACHE,
+    AirtableParticipantRepository,
 )
 from src.data.repositories.participant_repository import RepositoryError
 from src.models.participant import Department, Participant, Role

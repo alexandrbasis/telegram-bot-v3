@@ -10,7 +10,6 @@ from src.services.participant_export_service import ParticipantExportService
 from src.services.participant_list_service import ParticipantListService
 from src.services.search_service import SearchService
 
-
 _AIRTABLE_CLIENT: Optional[AirtableClient] = None
 _AIRTABLE_CLIENT_SIGNATURE: Optional[tuple] = None
 

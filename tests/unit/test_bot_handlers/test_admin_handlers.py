@@ -31,7 +31,9 @@ def mock_context():
 
 @patch("src.bot.handlers.admin_handlers.is_admin_user", return_value=False)
 @pytest.mark.asyncio
-async def test_logging_toggle_denies_non_admin(mock_is_admin, mock_update, mock_context):
+async def test_logging_toggle_denies_non_admin(
+    mock_is_admin, mock_update, mock_context
+):
     await handle_logging_toggle_command(mock_update, mock_context)
 
     mock_is_admin.assert_called_once()

@@ -116,8 +116,12 @@ class TestMainBotApplication:
 
             # Subsequent calls should include the export and logging command handlers
             calls = mock_app.add_handler.call_args_list
-            command_handlers = [call[0][0] for call in calls if isinstance(call[0][0], CommandHandler)]
-            command_commands = {cmd for handler in command_handlers for cmd in handler.commands}
+            command_handlers = [
+                call[0][0] for call in calls if isinstance(call[0][0], CommandHandler)
+            ]
+            command_commands = {
+                cmd for handler in command_handlers for cmd in handler.commands
+            }
             assert "export" in command_commands
             assert "logging" in command_commands
 

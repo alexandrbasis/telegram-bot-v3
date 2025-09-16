@@ -207,8 +207,7 @@ class TestParticipantListService:
     async def test_offset_clamped_to_last_full_page(self, service, mock_repository):
         """Offset beyond range should snap to the last available page."""
         participants = [
-            Participant(full_name_ru=f"Участник {i}", role=Role.TEAM)
-            for i in range(5)
+            Participant(full_name_ru=f"Участник {i}", role=Role.TEAM) for i in range(5)
         ]
         mock_repository.get_by_role.return_value = participants
 

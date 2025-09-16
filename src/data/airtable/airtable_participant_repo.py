@@ -470,7 +470,9 @@ class AirtableParticipantRepository(ParticipantRepository):
                         )
                     should_quote, normalized_value = prepare_formula_value(value)
                     if should_quote:
-                        conditions.append(f"{{{airtable_field}}} = '{normalized_value}'")
+                        conditions.append(
+                            f"{{{airtable_field}}} = '{normalized_value}'"
+                        )
                     else:
                         conditions.append(f"{{{airtable_field}}} = {normalized_value}")
                 else:
@@ -509,7 +511,6 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(
                 f"Unexpected error searching participants by criteria: {e}", e
             )
-
 
     def _get_participant_cache_key(self) -> str:
         """Build cache key for participant list based on Airtable configuration."""

@@ -289,11 +289,7 @@ def get_user_interaction_logger(
         _LOGGER_LEVEL = desired_level
         return None
 
-    if (
-        _LOGGER_CACHE is not None
-        and _LOGGER_ENABLED
-        and _LOGGER_LEVEL == desired_level
-    ):
+    if _LOGGER_CACHE is not None and _LOGGER_ENABLED and _LOGGER_LEVEL == desired_level:
         return _LOGGER_CACHE
 
     _LOGGER_CACHE = UserInteractionLogger(
