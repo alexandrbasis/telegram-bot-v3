@@ -6,6 +6,7 @@ variables and default values for database connections, API settings, and
 application behavior.
 """
 
+import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -15,6 +16,29 @@ from src.data.airtable.airtable_client import AirtableConfig
 
 if TYPE_CHECKING:  # For type hints without import-time dependency
     from src.services.file_logging_service import FileLoggingConfig
+
+
+def _parse_admin_ids() -> list[int]:
+    """
+    Parse TELEGRAM_ADMIN_IDS from environment variable.
+    Supports both comma-separated values and JSON array format.
+    """
+    admin_ids_env = os.getenv("TELEGRAM_ADMIN_IDS", "").strip()
+    if not admin_ids_env:
+        return []
+
+    # Try parsing as JSON array first (e.g., "[123, 456, 789]")
+    if admin_ids_env.startswith("[") and admin_ids_env.endswith("]"):
+        try:
+            ids = json.loads(admin_ids_env)
+            return [int(id) for id in ids if str(id).strip()]
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Fall back to comma-separated values (e.g., "123,456,789")
+    return [
+        int(uid.strip()) for uid in admin_ids_env.split(",") if uid.strip().isdigit()
+    ]
 
 
 @dataclass
@@ -130,13 +154,7 @@ class TelegramSettings:
     )
 
     # Admin settings
-    admin_user_ids: list[int] = field(
-        default_factory=lambda: [
-            int(uid.strip())
-            for uid in os.getenv("TELEGRAM_ADMIN_IDS", "").split(",")
-            if uid.strip()
-        ]
-    )
+    admin_user_ids: list[int] = field(default_factory=lambda: _parse_admin_ids())
 
     def validate(self) -> None:
         """

@@ -57,6 +57,7 @@ class ExportProgressTracker:
         self.progress_message: Optional[Message] = None
         # Guard concurrent updates to avoid duplicate messages
         import asyncio
+
         self._lock = asyncio.Lock()
 
     async def update(self, current: int, total: int) -> None:
