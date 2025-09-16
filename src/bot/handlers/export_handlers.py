@@ -10,10 +10,10 @@ import logging
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 from telegram import Message, Update
 from telegram.error import BadRequest, NetworkError, RetryAfter, TelegramError
-from typing import Optional
 from telegram.ext import ContextTypes
 
 from src.services import service_factory
@@ -134,7 +134,7 @@ async def handle_export_command(
     interaction_logger.log_journey_step(
         user_id=user_id,
         step="export_command_initiated",
-        context={"username": username, "command": "/export"}
+        context={"username": username, "command": "/export"},
     )
 
     # Get settings from context
@@ -156,7 +156,7 @@ async def handle_export_command(
         interaction_logger.log_journey_step(
             user_id=user_id,
             step="export_access_denied",
-            context={"reason": "insufficient_permissions", "is_admin": False}
+            context={"reason": "insufficient_permissions", "is_admin": False},
         )
 
         await update.message.reply_text(
@@ -185,8 +185,8 @@ async def handle_export_command(
 
         # Check estimated file size
         if not await export_service.is_within_telegram_limit():
-            estimated_size_mb = (
-                await export_service.estimate_file_size() / (1024 * 1024)
+            estimated_size_mb = await export_service.estimate_file_size() / (
+                1024 * 1024
             )
             await update.message.reply_text(
                 f"⚠️ Предупреждение: Файл может превышать лимит Telegram (50MB).\n"
@@ -281,8 +281,8 @@ async def handle_export_command(
                         context={
                             "file_size_mb": round(file_size_mb, 2),
                             "delivery_method": "telegram_document",
-                            "attempt": attempt + 1
-                        }
+                            "attempt": attempt + 1,
+                        },
                     )
                     break  # Success, exit retry loop
 
@@ -335,7 +335,7 @@ async def handle_export_command(
                         user_id=user_id,
                         button_data="export_command",
                         error_type=error_type,
-                        error_message=f"BadRequest: {str(e)}"
+                        error_message=f"BadRequest: {str(e)}",
                     )
 
                     logger.error(

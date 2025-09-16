@@ -184,7 +184,6 @@ class ParticipantExportService:
                     pass
             raise e
 
-
     async def estimate_file_size(self) -> int:
         """
         Estimate the size of the CSV file before generation.

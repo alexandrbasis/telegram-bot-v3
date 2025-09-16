@@ -64,7 +64,9 @@ class TestExportCommandHandler:
     def mock_export_service(self):
         """Create mock export service."""
         service = Mock()
-        service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         service.save_to_file = AsyncMock()
         service.is_within_telegram_limit = AsyncMock(return_value=True)
         service.estimate_file_size = AsyncMock(return_value=1000)
@@ -172,7 +174,9 @@ class TestExportCommandHandler:
     ):
         """Test handling when file exceeds Telegram size limit."""
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=False)
-        mock_export_service.estimate_file_size = AsyncMock(return_value=60_000_000)  # 60MB
+        mock_export_service.estimate_file_size = AsyncMock(
+            return_value=60_000_000
+        )  # 60MB
 
         with patch(
             "src.bot.handlers.export_handlers.service_factory.get_export_service",
@@ -368,7 +372,9 @@ class TestExportErrorHandling:
     ):
         """Test RetryAfter error handling with automatic retry."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
@@ -379,11 +385,16 @@ class TestExportErrorHandling:
             None,  # Success on second attempt
         ]
 
-        with patch(
-            "src.bot.handlers.export_handlers.service_factory.get_export_service",
-            return_value=mock_export_service,
-        ), patch("asyncio.sleep", return_value=None) as mock_sleep:
-            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+        with (
+            patch(
+                "src.bot.handlers.export_handlers.service_factory.get_export_service",
+                return_value=mock_export_service,
+            ),
+            patch("asyncio.sleep", return_value=None) as mock_sleep,
+        ):
+            await handle_export_command(
+                mock_update_with_file, mock_context_with_settings
+            )
 
             # Should attempt retry
             assert mock_update_with_file.message.reply_document.call_count == 2
@@ -395,7 +406,9 @@ class TestExportErrorHandling:
     ):
         """Test BadRequest error for file too large."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
@@ -407,11 +420,14 @@ class TestExportErrorHandling:
             "src.bot.handlers.export_handlers.service_factory.get_export_service",
             return_value=mock_export_service,
         ):
-            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+            await handle_export_command(
+                mock_update_with_file, mock_context_with_settings
+            )
 
             # Should send appropriate error message
             error_calls = [
-                call for call in mock_update_with_file.message.reply_text.call_args_list
+                call
+                for call in mock_update_with_file.message.reply_text.call_args_list
                 if any("слишком большой" in str(arg).lower() for arg in call[0])
             ]
             assert len(error_calls) > 0
@@ -422,7 +438,9 @@ class TestExportErrorHandling:
     ):
         """Test BadRequest error for invalid file format."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
@@ -434,11 +452,14 @@ class TestExportErrorHandling:
             "src.bot.handlers.export_handlers.service_factory.get_export_service",
             return_value=mock_export_service,
         ):
-            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+            await handle_export_command(
+                mock_update_with_file, mock_context_with_settings
+            )
 
             # Should send appropriate error message
             error_calls = [
-                call for call in mock_update_with_file.message.reply_text.call_args_list
+                call
+                for call in mock_update_with_file.message.reply_text.call_args_list
                 if any("формата файла" in str(arg).lower() for arg in call[0])
             ]
             assert len(error_calls) > 0
@@ -449,7 +470,9 @@ class TestExportErrorHandling:
     ):
         """Test NetworkError with retry logic."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
@@ -457,17 +480,23 @@ class TestExportErrorHandling:
         network_error = NetworkError("Connection timeout")
         mock_update_with_file.message.reply_document.side_effect = network_error
 
-        with patch(
-            "src.bot.handlers.export_handlers.service_factory.get_export_service",
-            return_value=mock_export_service,
-        ), patch("asyncio.sleep", return_value=None) as mock_sleep:
-            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+        with (
+            patch(
+                "src.bot.handlers.export_handlers.service_factory.get_export_service",
+                return_value=mock_export_service,
+            ),
+            patch("asyncio.sleep", return_value=None) as mock_sleep,
+        ):
+            await handle_export_command(
+                mock_update_with_file, mock_context_with_settings
+            )
 
             # Should retry 3 times
             assert mock_update_with_file.message.reply_document.call_count == 3
             # Should send network error message
             error_calls = [
-                call for call in mock_update_with_file.message.reply_text.call_args_list
+                call
+                for call in mock_update_with_file.message.reply_text.call_args_list
                 if any("сети" in str(arg).lower() for arg in call[0])
             ]
             assert len(error_calls) > 0
@@ -478,7 +507,9 @@ class TestExportErrorHandling:
     ):
         """Test general TelegramError handling."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
@@ -490,11 +521,14 @@ class TestExportErrorHandling:
             "src.bot.handlers.export_handlers.service_factory.get_export_service",
             return_value=mock_export_service,
         ):
-            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+            await handle_export_command(
+                mock_update_with_file, mock_context_with_settings
+            )
 
             # Should send Telegram API error message
             error_calls = [
-                call for call in mock_update_with_file.message.reply_text.call_args_list
+                call
+                for call in mock_update_with_file.message.reply_text.call_args_list
                 if any("telegram api" in str(arg).lower() for arg in call[0])
             ]
             assert len(error_calls) > 0
@@ -505,22 +539,32 @@ class TestExportErrorHandling:
     ):
         """Test file size check before attempting upload."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
         # Mock file creation that results in oversized file
-        with patch("tempfile.NamedTemporaryFile"), patch(
-            "pathlib.Path.stat"
-        ) as mock_stat, patch("src.bot.handlers.export_handlers.service_factory.get_export_service", return_value=mock_export_service):
+        with (
+            patch("tempfile.NamedTemporaryFile"),
+            patch("pathlib.Path.stat") as mock_stat,
+            patch(
+                "src.bot.handlers.export_handlers.service_factory.get_export_service",
+                return_value=mock_export_service,
+            ),
+        ):
             # Mock file size > 50MB
             mock_stat.return_value.st_size = 55 * 1024 * 1024  # 55MB
 
-            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+            await handle_export_command(
+                mock_update_with_file, mock_context_with_settings
+            )
 
             # Should send file too large message without attempting upload
             error_calls = [
-                call for call in mock_update_with_file.message.reply_text.call_args_list
+                call
+                for call in mock_update_with_file.message.reply_text.call_args_list
                 if any("слишком большой" in str(arg).lower() for arg in call[0])
             ]
             assert len(error_calls) > 0
@@ -534,20 +578,28 @@ class TestExportErrorHandling:
     ):
         """Test handling of temporary file creation failure."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
         # Mock tempfile creation failure
-        with patch(
-            "src.bot.handlers.export_handlers.service_factory.get_export_service",
-            return_value=mock_export_service,
-        ), patch("tempfile.NamedTemporaryFile", side_effect=OSError("Disk full")):
-            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+        with (
+            patch(
+                "src.bot.handlers.export_handlers.service_factory.get_export_service",
+                return_value=mock_export_service,
+            ),
+            patch("tempfile.NamedTemporaryFile", side_effect=OSError("Disk full")),
+        ):
+            await handle_export_command(
+                mock_update_with_file, mock_context_with_settings
+            )
 
             # Should send error message about file creation
             error_calls = [
-                call for call in mock_update_with_file.message.reply_text.call_args_list
+                call
+                for call in mock_update_with_file.message.reply_text.call_args_list
                 if any("создании файла" in str(arg).lower() for arg in call[0])
             ]
             assert len(error_calls) > 0
@@ -558,31 +610,39 @@ class TestExportErrorHandling:
     ):
         """Test that user interactions are properly logged."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="field1,field2\nvalue1,value2")
+        mock_export_service.get_all_participants_as_csv = AsyncMock(
+            return_value="field1,field2\nvalue1,value2"
+        )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
-        with patch(
-            "src.bot.handlers.export_handlers.service_factory.get_export_service",
-            return_value=mock_export_service,
-        ), patch(
-            "src.bot.handlers.export_handlers.UserInteractionLogger"
-        ) as mock_logger_class:
+        with (
+            patch(
+                "src.bot.handlers.export_handlers.service_factory.get_export_service",
+                return_value=mock_export_service,
+            ),
+            patch(
+                "src.bot.handlers.export_handlers.UserInteractionLogger"
+            ) as mock_logger_class,
+        ):
             mock_logger = Mock()
             mock_logger_class.return_value = mock_logger
 
-            await handle_export_command(mock_update_with_file, mock_context_with_settings)
+            await handle_export_command(
+                mock_update_with_file, mock_context_with_settings
+            )
 
             # Should log export initiation
             mock_logger.log_journey_step.assert_any_call(
                 user_id=123456,
                 step="export_command_initiated",
-                context={"username": "testuser", "command": "/export"}
+                context={"username": "testuser", "command": "/export"},
             )
 
             # Should log successful completion
             success_calls = [
-                call for call in mock_logger.log_journey_step.call_args_list
+                call
+                for call in mock_logger.log_journey_step.call_args_list
                 if call[1]["step"] == "export_completed_successfully"
             ]
             assert len(success_calls) > 0
