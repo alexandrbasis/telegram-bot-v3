@@ -261,7 +261,7 @@ class TestRichResultFormatting:
 
         assert "Анна Морозова" in result
         assert "Anna Morozova" in result
-        assert "Floor: 3, Room: 301A" in result
+        assert "Этаж: 3, Комната: 301A" in result
 
     def test_format_participant_accommodation_fields_with_na_fallbacks(self):
         """Test Floor and Room Number fields display as 'N/A' when not set in participant."""
@@ -275,7 +275,7 @@ class TestRichResultFormatting:
         result = format_participant_result(participant, "ru")
 
         assert "Михаил Кузнецов" in result
-        assert "Floor: N/A, Room: N/A" in result
+        assert "Этаж: Не указано, Комната: Не указано" in result
 
     def test_format_participant_partial_accommodation_fields(self):
         """Test Floor and Room Number display with only one field set."""
@@ -285,7 +285,7 @@ class TestRichResultFormatting:
         )
 
         result = format_participant_result(participant, "ru")
-        assert "Floor: Ground, Room: N/A" in result
+        assert "Этаж: Ground, Комната: Не указано" in result
 
         # Only room number set
         participant = Participant(
@@ -293,7 +293,7 @@ class TestRichResultFormatting:
         )
 
         result = format_participant_result(participant, "ru")
-        assert "Floor: N/A, Room: Suite 100" in result
+        assert "Этаж: Не указано, Комната: Suite 100" in result
 
     def test_format_participant_accommodation_with_empty_strings(self):
         """Test Floor and Room Number display handles empty strings as N/A."""
@@ -304,7 +304,7 @@ class TestRichResultFormatting:
         )
 
         result = format_participant_result(participant, "ru")
-        assert "Floor: N/A, Room: N/A" in result
+        assert "Этаж: Не указано, Комната: Не указано" in result
 
     def test_format_participant_accommodation_string_floor_alphanumeric_room(self):
         """Test Floor (string) and Room Number (alphanumeric) display correctly."""
@@ -313,7 +313,7 @@ class TestRichResultFormatting:
         )
 
         result = format_participant_result(participant, "ru")
-        assert "Floor: Basement, Room: B12A" in result
+        assert "Этаж: Basement, Комната: B12A" in result
 
     def test_format_participant_complete_with_accommodation(self):
         """Test complete participant formatting including accommodation information."""
@@ -335,7 +335,7 @@ class TestRichResultFormatting:
         assert "TEAM" in result
         assert "Administration" in result
         assert "Holy Trinity Church" in result
-        assert "Floor: 2, Room: 204" in result
+        assert "Этаж: 2, Комната: 204" in result
 
     def test_format_participant_with_demographic_fields(self):
         """Test demographic fields display as 'Date of Birth: YYYY-MM-DD | Age: XX years' when available."""
@@ -352,7 +352,7 @@ class TestRichResultFormatting:
 
         assert "Петр Смирнов" in result
         assert "Petr Smirnov" in result
-        assert "Date of Birth: 1990-05-15 | Age: 33 years" in result
+        assert "Дата рождения: 15.05.1990 | Возраст: 33 года" in result
 
     def test_format_participant_demographic_fields_with_na_fallbacks(self):
         """Test demographic fields display as 'N/A' when not set in participant."""
@@ -365,7 +365,7 @@ class TestRichResultFormatting:
         result = format_participant_result(participant, "ru")
 
         assert "Ольга Ковалева" in result
-        assert "Date of Birth: N/A | Age: N/A" in result
+        assert "Дата рождения: Не указано | Возраст: Не указано" in result
 
     def test_format_participant_partial_demographic_fields(self):
         """Test demographic fields display with mixed availability (some N/A, some values)."""
@@ -379,7 +379,7 @@ class TestRichResultFormatting:
         result = format_participant_result(participant, "ru")
 
         assert "Игорь Кузнецов" in result
-        assert "Date of Birth: N/A | Age: 29 years" in result
+        assert "Дата рождения: Не указано | Возраст: 29 лет" in result
 
 
 class TestRussianNormalization:
@@ -762,7 +762,7 @@ class TestRoomFloorSearchService:
 
         assert len(result) == 1
         assert "Участник Тест" in result[0]
-        assert "Floor: 2, Room: 205" in result[0]
+        assert "Этаж: 2, Комната: 205" in result[0]
 
 
 class TestFullParticipantFormatting:

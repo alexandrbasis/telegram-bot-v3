@@ -17,3 +17,6 @@ Bulk create/update helpers bypass `_translate_fields_for_api`, risking incorrect
 - Tests fail if select options are sent with display values instead of option IDs.
 - No regressions in existing bulk behavior (still respects Airtable limits).
 
+## Change Log
+- Updated Airtable client bulk create/update to reuse `_translate_fields_for_api` so select options map to IDs consistently.
+- Extended bulk operation tests to assert translated payloads are sent to Airtable.

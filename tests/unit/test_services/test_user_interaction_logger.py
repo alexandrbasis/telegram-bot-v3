@@ -15,6 +15,8 @@ from src.services.user_interaction_logger import (
     InteractionType,
     LoggingError,
     UserInteractionLogger,
+    get_user_interaction_logger,
+    refresh_user_interaction_logger,
 )
 
 
@@ -428,3 +430,58 @@ class TestLoggingErrorException:
         except Exception as e:
             assert isinstance(e, LoggingError)
             assert str(e) == "Test logging error"
+
+
+class TestUserInteractionLoggerProvider:
+    """Test helper functions that cache the user interaction logger."""
+
+    def teardown_method(self) -> None:
+        """Reset provider cache after each test."""
+        refresh_user_interaction_logger()
+
+    @patch("src.services.user_interaction_logger.get_settings")
+    def test_provider_returns_none_when_disabled(self, mock_get_settings):
+        """Provider should return None if logging disabled in settings."""
+        mock_settings = Mock()
+        mock_settings.logging.enable_user_interaction_logging = False
+        mock_settings.logging.user_interaction_log_level = "INFO"
+        mock_get_settings.return_value = mock_settings
+
+        refresh_user_interaction_logger()
+
+        logger_instance = get_user_interaction_logger()
+        assert logger_instance is None
+
+    @patch("src.services.user_interaction_logger.get_settings")
+    def test_provider_caches_logger_instance(self, mock_get_settings):
+        """Provider should reuse the same logger while settings stay unchanged."""
+        mock_settings = Mock()
+        mock_settings.logging.enable_user_interaction_logging = True
+        mock_settings.logging.user_interaction_log_level = "DEBUG"
+        mock_get_settings.return_value = mock_settings
+
+        refresh_user_interaction_logger()
+
+        first = get_user_interaction_logger()
+        second = get_user_interaction_logger()
+
+        assert first is not None
+        assert first is second
+
+    @patch("src.services.user_interaction_logger.get_settings")
+    def test_refresh_invalidates_cached_logger(self, mock_get_settings):
+        """Refreshing should drop cached instance so next call rebuilds it."""
+        mock_settings = Mock()
+        mock_settings.logging.enable_user_interaction_logging = True
+        mock_settings.logging.user_interaction_log_level = "INFO"
+        mock_get_settings.return_value = mock_settings
+
+        refresh_user_interaction_logger()
+
+        first = get_user_interaction_logger()
+        refresh_user_interaction_logger()
+        second = get_user_interaction_logger()
+
+        assert first is not None
+        assert second is not None
+        assert first is not second

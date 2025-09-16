@@ -15,6 +15,7 @@ from telegram import Update
 from telegram.error import Conflict, NetworkError, RetryAfter, TimedOut
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+from src.bot.handlers.admin_handlers import handle_logging_toggle_command
 from src.bot.handlers.export_handlers import handle_export_command
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
@@ -120,6 +121,11 @@ def create_application() -> Application:
     logger.info("Adding export command handler")
     export_handler = CommandHandler("export", handle_export_command)
     app.add_handler(export_handler)
+
+    # Add admin logging toggle command handler
+    logger.info("Adding logging toggle command handler")
+    logging_handler = CommandHandler("logging", handle_logging_toggle_command)
+    app.add_handler(logging_handler)
 
     # Store settings in bot_data for handlers to access
     app.bot_data["settings"] = settings

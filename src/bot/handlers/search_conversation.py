@@ -16,6 +16,7 @@ from telegram.ext import (
     filters,
 )
 
+from src.bot.handlers.admin_handlers import handle_logging_toggle_command
 from src.bot.handlers.edit_participant_handlers import (
     EditStates,
     cancel_editing,
@@ -289,7 +290,10 @@ def get_search_conversation_handler() -> ConversationHandler:
                 *get_timeout_recovery_handlers(),
             ],
         },
-        fallbacks=[CommandHandler("start", start_command)],
+        fallbacks=[
+            CommandHandler("start", start_command),
+            CommandHandler("logging", handle_logging_toggle_command),
+        ],
         # Timeout configuration: Convert minutes to seconds
         conversation_timeout=get_telegram_settings().conversation_timeout_minutes * 60,
         allow_reentry=True,

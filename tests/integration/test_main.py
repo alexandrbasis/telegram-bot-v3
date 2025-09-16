@@ -10,7 +10,7 @@ import logging
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from telegram.ext import Application, ConversationHandler
+from telegram.ext import Application, CommandHandler, ConversationHandler
 
 
 class TestMainBotApplication:
@@ -108,16 +108,18 @@ class TestMainBotApplication:
 
             app = create_application()
 
-            # Should add both search conversation handler and export command handler
-            assert mock_app.add_handler.call_count == 2
+            # Should add conversation handler and both command handlers
+            assert mock_app.add_handler.call_count == 3
 
             # First call should be the search conversation handler
             mock_app.add_handler.assert_any_call(mock_conversation_handler)
 
-            # Second call should be the export command handler (we'll check the type)
+            # Subsequent calls should include the export and logging command handlers
             calls = mock_app.add_handler.call_args_list
-            export_handler_call = calls[1][0][0]  # Second call, first argument
-            assert "export" in export_handler_call.commands
+            command_handlers = [call[0][0] for call in calls if isinstance(call[0][0], CommandHandler)]
+            command_commands = {cmd for handler in command_handlers for cmd in handler.commands}
+            assert "export" in command_commands
+            assert "logging" in command_commands
 
     @pytest.mark.asyncio
     async def test_create_application_configures_logging(self):

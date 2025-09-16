@@ -5,6 +5,7 @@ Provides role-based participant filtering, list formatting with pagination,
 and Russian date formatting for list display.
 """
 
+from enum import Enum
 from typing import Any, Dict, List
 
 from telegram.helpers import escape_markdown
@@ -84,8 +85,11 @@ class ParticipantListService:
                 "prev_offset": None,
             }
 
-        # Ensure offset is within bounds
-        offset = max(0, min(offset, total_count - 1))
+        # Ensure offset is within bounds snapping to the start of the last page
+        max_valid_offset = 0
+        if page_size > 0:
+            max_valid_offset = ((total_count - 1) // page_size) * page_size
+        offset = min(max(offset, 0), max_valid_offset)
 
         # Calculate pagination using offset
         end_idx = min(offset + page_size, total_count)
@@ -158,8 +162,8 @@ class ParticipantListService:
 
         # Handle department field
         if participant.department:
-            # Department is already a string value from the enum
-            department_str = escape_markdown(str(participant.department), version=2)
+            department_value = self._get_display_value(participant.department)
+            department_str = escape_markdown(department_value, version=2)
         else:
             department_str = "—"
 
@@ -171,3 +175,10 @@ class ParticipantListService:
         )
 
         return line
+
+    @staticmethod
+    def _get_display_value(value: Any) -> str:
+        """Return a user-facing string for enums or plain values."""
+        if isinstance(value, Enum):
+            return value.value
+        return str(value)

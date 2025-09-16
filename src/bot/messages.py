@@ -162,3 +162,61 @@ class ButtonLabels:
     # Search
     SEARCH_AGAIN = "🔍 Искать еще раз"
     NEW_SEARCH = "🔍 Новый поиск"
+
+
+class SearchResultLabels:
+    """Localized labels used in participant search result formatting."""
+
+    _LABELS = {
+        "ru": {
+            "floor": "Этаж",
+            "room": "Комната",
+            "date_of_birth": "Дата рождения",
+            "age": "Возраст",
+            "not_available": "Не указано",
+            "leader": "Наставник",
+            "table": "Стол",
+            "notes": "Заметки",
+            "years_suffix": "лет",
+        },
+        "en": {
+            "floor": "Floor",
+            "room": "Room",
+            "date_of_birth": "Date of Birth",
+            "age": "Age",
+            "not_available": "N/A",
+            "leader": "Leader",
+            "table": "Table",
+            "notes": "Notes",
+            "years_suffix": "years",
+        },
+    }
+
+    @classmethod
+    def for_language(cls, language: str) -> dict:
+        """Return labels for the requested language (defaults to Russian)."""
+        return cls._LABELS.get(language, cls._LABELS["ru"])
+
+    @classmethod
+    def get(cls, key: str, language: str = "ru") -> str:
+        """Get a localized label by key."""
+        return cls.for_language(language)[key]
+
+    @classmethod
+    def format_age(cls, age: int, language: str = "ru") -> str:
+        """Format age with localized suffix."""
+        if language == "ru":
+            suffix = cls._ru_year_suffix(age)
+            return f"{age} {suffix}"
+        suffix = cls.get("years_suffix", language)
+        return f"{age} {suffix}"
+
+    @staticmethod
+    def _ru_year_suffix(age: int) -> str:
+        """Return grammatical suffix for Russian age values."""
+        value = abs(int(age))
+        if value % 10 == 1 and value % 100 != 11:
+            return "год"
+        if value % 10 in (2, 3, 4) and value % 100 not in (12, 13, 14):
+            return "года"
+        return "лет"

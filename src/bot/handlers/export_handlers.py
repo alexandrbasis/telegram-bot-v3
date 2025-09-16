@@ -201,7 +201,7 @@ async def handle_export_command(
             )
 
         # Export data to CSV
-        csv_data = await export_service.get_all_participants_as_csv()
+        csv_data = await export_service.export_to_csv_async()
 
         # Check if data is empty
         if not csv_data or csv_data.strip() == "":

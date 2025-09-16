@@ -1,11 +1,6 @@
-"""
-Service factory for dependency injection.
+"""Service factory for dependency injection and shared client reuse."""
 
-Provides centralized service instantiation to avoid duplication across handlers.
-This is a simple factory pattern that should eventually be replaced with a proper
-DI container.
-"""
-
+from dataclasses import asdict
 from typing import Callable, Optional
 
 from src.config.settings import get_settings
@@ -14,6 +9,33 @@ from src.data.airtable.airtable_participant_repo import AirtableParticipantRepos
 from src.services.participant_export_service import ParticipantExportService
 from src.services.participant_list_service import ParticipantListService
 from src.services.search_service import SearchService
+
+
+_AIRTABLE_CLIENT: Optional[AirtableClient] = None
+_AIRTABLE_CLIENT_SIGNATURE: Optional[tuple] = None
+
+
+def get_airtable_client() -> AirtableClient:
+    """Return a shared AirtableClient instance based on current settings."""
+    global _AIRTABLE_CLIENT, _AIRTABLE_CLIENT_SIGNATURE
+
+    settings = get_settings()
+    config = settings.get_airtable_config()
+    signature = tuple(sorted(asdict(config).items()))
+
+    if _AIRTABLE_CLIENT is not None and _AIRTABLE_CLIENT_SIGNATURE == signature:
+        return _AIRTABLE_CLIENT
+
+    _AIRTABLE_CLIENT = AirtableClient(config)
+    _AIRTABLE_CLIENT_SIGNATURE = signature
+    return _AIRTABLE_CLIENT
+
+
+def reset_airtable_client_cache() -> None:
+    """Reset cached Airtable client (useful for testing or config reloads)."""
+    global _AIRTABLE_CLIENT, _AIRTABLE_CLIENT_SIGNATURE
+    _AIRTABLE_CLIENT = None
+    _AIRTABLE_CLIENT_SIGNATURE = None
 
 
 def get_participant_repository() -> AirtableParticipantRepository:
@@ -25,8 +47,7 @@ def get_participant_repository() -> AirtableParticipantRepository:
     Returns:
         AirtableParticipantRepository: Configured repository instance
     """
-    settings = get_settings()
-    client = AirtableClient(settings.get_airtable_config())
+    client = get_airtable_client()
     return AirtableParticipantRepository(client)
 
 

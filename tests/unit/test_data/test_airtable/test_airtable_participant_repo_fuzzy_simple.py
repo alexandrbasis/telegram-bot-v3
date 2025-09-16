@@ -10,15 +10,30 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import (
+    AirtableParticipantRepository,
+    _PARTICIPANT_CACHE,
+)
 from src.data.repositories.participant_repository import RepositoryError
 from src.models.participant import Participant
+
+
+@pytest.fixture(autouse=True)
+def reset_cache():
+    _PARTICIPANT_CACHE.clear()
+    yield
+    _PARTICIPANT_CACHE.clear()
 
 
 @pytest.fixture
 def mock_airtable_client():
     """Fixture providing a mock AirtableClient."""
-    return Mock()
+    client = Mock()
+    client.config = Mock()
+    client.config.base_id = "appSimpleBase"
+    client.config.table_id = "tblSimple"
+    client.config.table_name = "Participants"
+    return client
 
 
 @pytest.fixture

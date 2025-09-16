@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from src.config.settings import get_settings
+from src.config.settings import get_settings, reset_settings
 
 
 class InteractionType(Enum):
@@ -45,7 +45,10 @@ class UserInteractionLogger:
     ]
 
     def __init__(
-        self, logger_name: str = "user_interaction", log_level: int = logging.INFO
+        self,
+        logger_name: str = "user_interaction",
+        log_level: int = logging.INFO,
+        apply_settings_level: bool = True,
     ):
         """
         Initialize user interaction logger.
@@ -55,6 +58,10 @@ class UserInteractionLogger:
             log_level: Logging level (default: INFO)
         """
         self._logger = logging.getLogger(logger_name)
+
+        if not apply_settings_level:
+            self._logger.setLevel(log_level)
+            return
 
         # Set log level - prioritize provided level, fallback to settings
         if log_level != logging.INFO:  # Custom level provided
@@ -246,3 +253,80 @@ class UserInteractionLogger:
             sanitized = re.sub(pattern, r"\1:[REDACTED]", sanitized)
 
         return sanitized
+
+
+_LOGGER_CACHE: Optional[UserInteractionLogger] = None
+_LOGGER_ENABLED: Optional[bool] = None
+_LOGGER_LEVEL: Optional[int] = None
+_LOGGER_RUNTIME_OVERRIDE: Optional[bool] = None
+
+
+def _resolve_logging_preferences() -> tuple[bool, int]:
+    """Return current logging enabled flag and configured level."""
+    settings = get_settings()
+    enabled = settings.logging.enable_user_interaction_logging
+    if _LOGGER_RUNTIME_OVERRIDE is not None:
+        enabled = _LOGGER_RUNTIME_OVERRIDE
+    level_name = settings.logging.user_interaction_log_level.upper()
+    level = getattr(logging, level_name, logging.INFO)
+    return enabled, level
+
+
+def get_user_interaction_logger(
+    force_refresh: bool = False,
+) -> Optional[UserInteractionLogger]:
+    """Return cached user interaction logger instance based on settings."""
+    global _LOGGER_CACHE, _LOGGER_ENABLED, _LOGGER_LEVEL
+
+    if force_refresh:
+        _clear_cached_logger()
+
+    enabled, desired_level = _resolve_logging_preferences()
+
+    if not enabled:
+        _LOGGER_CACHE = None
+        _LOGGER_ENABLED = False
+        _LOGGER_LEVEL = desired_level
+        return None
+
+    if (
+        _LOGGER_CACHE is not None
+        and _LOGGER_ENABLED
+        and _LOGGER_LEVEL == desired_level
+    ):
+        return _LOGGER_CACHE
+
+    _LOGGER_CACHE = UserInteractionLogger(
+        log_level=desired_level, apply_settings_level=False
+    )
+    _LOGGER_ENABLED = True
+    _LOGGER_LEVEL = desired_level
+    return _LOGGER_CACHE
+
+
+def refresh_user_interaction_logger() -> None:
+    """Clear cached settings and logger instance for next retrieval."""
+    reset_settings()
+    _clear_cached_logger()
+
+
+def set_user_interaction_logging_enabled(enabled: bool) -> None:
+    """Override logging enablement at runtime."""
+    global _LOGGER_RUNTIME_OVERRIDE
+
+    _LOGGER_RUNTIME_OVERRIDE = enabled
+    _clear_cached_logger()
+
+
+def _clear_cached_logger() -> None:
+    """Helper to drop cached logger without touching settings override."""
+    global _LOGGER_CACHE, _LOGGER_ENABLED, _LOGGER_LEVEL
+    _LOGGER_CACHE = None
+    _LOGGER_ENABLED = None
+    _LOGGER_LEVEL = None
+
+
+def is_user_interaction_logging_enabled() -> bool:
+    """Return effective logging state with runtime overrides applied."""
+    enabled, _ = _resolve_logging_preferences()
+    return enabled

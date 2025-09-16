@@ -109,29 +109,36 @@ class ParticipantExportService:
 
     def export_to_csv(self) -> str:
         """
-        Export all participants to CSV format string (synchronous wrapper).
+        Export all participants to CSV using a synchronous interface.
 
-        This method provides a synchronous interface for the asynchronous
-        get_all_participants_as_csv method, compatible with the existing
-        export handler interface.
+        The method delegates to the async exporter when no event loop is
+        running. When called from an async context it raises a descriptive
+        error so callers can switch to the coroutine API instead of
+        triggering ``RuntimeError`` via ``run_until_complete``.
 
         Returns:
             CSV formatted string with all participant data
 
         Raises:
-            Exception: If repository access fails
+            RuntimeError: If invoked while an event loop is already running
         """
         import asyncio
 
-        # Check if we're already in an event loop
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
-            # No event loop running, create new one
+            # Safe to run synchronously when no loop is active
             return asyncio.run(self.get_all_participants_as_csv())
-        else:
-            # Event loop is running, use it
-            return loop.run_until_complete(self.get_all_participants_as_csv())
+
+        raise RuntimeError(
+            "ParticipantExportService.export_to_csv() cannot be called while an event "
+            "loop is running; use await "
+            "get_all_participants_as_csv() in async contexts."
+        )
+
+    async def export_to_csv_async(self) -> str:
+        """Async wrapper matching the synchronous export method name."""
+        return await self.get_all_participants_as_csv()
 
     async def save_to_file(
         self, directory: Optional[str] = None, filename_prefix: Optional[str] = None

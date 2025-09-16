@@ -16,3 +16,5 @@ Participant list responses currently render enum objects with their full Python 
 - Tests fail if enum rendering regresses.
 - No Markdown formatting regressions in bot messages.
 
+## Change Log
+- Updated `ParticipantListService` to render enum-backed fields using their `.value` strings and added tests ensuring `Department.NAME` variants no longer appear in formatted output.

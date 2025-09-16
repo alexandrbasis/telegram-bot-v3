@@ -365,7 +365,13 @@ class AirtableClient:
             try:
                 logger.debug(f"Creating batch of {len(batch)} records")
 
-                batch_results = await asyncio.to_thread(self.table.batch_create, batch)
+                translated_batch = [
+                    self._translate_fields_for_api(record) for record in batch
+                ]
+
+                batch_results = await asyncio.to_thread(
+                    self.table.batch_create, translated_batch
+                )
 
                 results.extend(batch_results)
                 logger.debug(f"Created batch with {len(batch_results)} records")
@@ -404,8 +410,16 @@ class AirtableClient:
             try:
                 logger.debug(f"Updating batch of {len(batch)} records")
 
+                translated_batch = [
+                    {
+                        "id": update["id"],
+                        "fields": self._translate_fields_for_api(update["fields"]),
+                    }
+                    for update in batch
+                ]
+
                 batch_results = await asyncio.to_thread(
-                    self.table.batch_update, batch  # type: ignore[arg-type]
+                    self.table.batch_update, translated_batch  # type: ignore[arg-type]
                 )
 
                 results.extend(batch_results)

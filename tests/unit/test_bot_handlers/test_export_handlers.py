@@ -64,7 +64,7 @@ class TestExportCommandHandler:
     def mock_export_service(self):
         """Create mock export service."""
         service = Mock()
-        service.get_all_participants_as_csv = AsyncMock(
+        service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         service.save_to_file = AsyncMock()
@@ -109,7 +109,7 @@ class TestExportCommandHandler:
             assert "Начинаю экспорт" in first_call[0][0]
 
             # Should call export service
-            mock_export_service.get_all_participants_as_csv.assert_called_once()
+            mock_export_service.export_to_csv_async.assert_called_once()
 
             # Should send document with CSV file
             mock_update.message.reply_document.assert_called_once()
@@ -154,7 +154,7 @@ class TestExportCommandHandler:
     async def test_export_command_empty_data(self, mock_update, mock_context):
         """Test handling when no participants exist."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(return_value="")
+        mock_export_service.export_to_csv_async = AsyncMock(return_value="")
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
 
@@ -197,7 +197,7 @@ class TestExportCommandHandler:
     async def test_export_command_error_handling(self, mock_update, mock_context):
         """Test proper error handling during export."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             side_effect=Exception("Database connection failed")
         )
 
@@ -372,7 +372,7 @@ class TestExportErrorHandling:
     ):
         """Test RetryAfter error handling with automatic retry."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
@@ -406,7 +406,7 @@ class TestExportErrorHandling:
     ):
         """Test BadRequest error for file too large."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
@@ -438,7 +438,7 @@ class TestExportErrorHandling:
     ):
         """Test BadRequest error for invalid file format."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
@@ -470,7 +470,7 @@ class TestExportErrorHandling:
     ):
         """Test NetworkError with retry logic."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
@@ -507,7 +507,7 @@ class TestExportErrorHandling:
     ):
         """Test general TelegramError handling."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
@@ -539,7 +539,7 @@ class TestExportErrorHandling:
     ):
         """Test file size check before attempting upload."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
@@ -578,7 +578,7 @@ class TestExportErrorHandling:
     ):
         """Test handling of temporary file creation failure."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
@@ -610,7 +610,7 @@ class TestExportErrorHandling:
     ):
         """Test that user interactions are properly logged."""
         mock_export_service = Mock()
-        mock_export_service.get_all_participants_as_csv = AsyncMock(
+        mock_export_service.export_to_csv_async = AsyncMock(
             return_value="field1,field2\nvalue1,value2"
         )
         mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
