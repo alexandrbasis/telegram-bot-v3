@@ -55,6 +55,9 @@ class ExportProgressTracker:
         self.last_percentage = -1
         # The progress message that will be edited in place to reduce chat noise
         self.progress_message: Optional[Message] = None
+        # Guard concurrent updates to avoid duplicate messages
+        import asyncio
+        self._lock = asyncio.Lock()
 
     async def update(self, current: int, total: int) -> None:
         """
@@ -79,28 +82,30 @@ class ExportProgressTracker:
         )
 
         if should_update:
-            self.last_update = now
-            self.last_percentage = percentage
+            # Ensure only one progress message operation at a time
+            async with self._lock:
+                self.last_update = now
+                self.last_percentage = percentage
 
-            progress_bar = self._create_progress_bar(percentage)
-            text = (
-                f"📊 Экспорт данных...\n\n"
-                f"{progress_bar}\n"
-                f"Прогресс: {percentage}% ({current}/{total})"
-            )
+                progress_bar = self._create_progress_bar(percentage)
+                text = (
+                    f"📊 Экспорт данных...\n\n"
+                    f"{progress_bar}\n"
+                    f"Прогресс: {percentage}% ({current}/{total})"
+                )
 
-            try:
-                # Send once, then edit the same message to avoid spamming the chat
-                if self.progress_message is None:
-                    self.progress_message = await self.message.reply_text(text)
-                else:
-                    await self.progress_message.edit_text(text)
-            except BadRequest as e:
-                # Ignore harmless "message is not modified"; log other cases
-                if "message is not modified" not in str(e).lower():
-                    logger.warning(f"Failed to edit progress message: {e}")
-            except Exception as e:
-                logger.warning(f"Failed to send progress update: {e}")
+                try:
+                    # Send once, then edit the same message to avoid spamming the chat
+                    if self.progress_message is None:
+                        self.progress_message = await self.message.reply_text(text)
+                    else:
+                        await self.progress_message.edit_text(text)
+                except BadRequest as e:
+                    # Ignore harmless "message is not modified"; log other cases
+                    if "message is not modified" not in str(e).lower():
+                        logger.warning(f"Failed to edit progress message: {e}")
+                except Exception as e:
+                    logger.warning(f"Failed to send progress update: {e}")
 
     def _create_progress_bar(self, percentage: int) -> str:
         """Create visual progress bar."""
@@ -215,7 +220,8 @@ async def handle_export_command(
                     f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_"
                 ),
                 delete=False,
-                encoding="utf-8",
+                # Write with UTF-8 BOM to ensure Excel correctly detects encoding
+                encoding="utf-8-sig",
             ) as temp_file:
                 temp_file.write(csv_data)
                 temp_file_path = temp_file.name

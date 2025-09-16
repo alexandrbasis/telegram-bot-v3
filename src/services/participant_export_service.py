@@ -167,8 +167,9 @@ class ParticipantExportService:
         file_path = dir_path / filename
 
         try:
-            # Write to file with UTF-8 encoding
-            with open(file_path, "w", encoding="utf-8", newline="") as f:
+            # Write to file with UTF-8 BOM so apps like Excel detect Cyrillic
+            # correctly when opening CSV files.
+            with open(file_path, "w", encoding="utf-8-sig", newline="") as f:
                 f.write(csv_content)
 
             logger.info(f"CSV file saved to: {file_path}")
