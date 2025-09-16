@@ -23,7 +23,6 @@ from src.bot.keyboards.edit_keyboards import (
     get_field_icon,
 )
 from src.bot.messages import InfoMessages
-from src.config.settings import get_settings
 from src.models.participant import Gender, Participant, Role
 from src.services.participant_update_service import (
     ParticipantUpdateService,
@@ -33,48 +32,24 @@ from src.services.search_service import format_participant_full
 
 # Import repository factory at module level (no circular deps)
 from src.services.service_factory import get_participant_repository
-from src.services.user_interaction_logger import UserInteractionLogger
+from src.services.user_interaction_logger import (
+    UserInteractionLogger,
+    get_user_interaction_logger,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def get_user_interaction_logger():
-    """
-    Get user interaction logger instance if logging is enabled.
-
-    Returns:
-        UserInteractionLogger instance or None if disabled
-    """
-    try:
-        # Reset settings to pick up new environment variables
-        from src.config.settings import reset_settings
-
-        reset_settings()
-
-        settings = get_settings()
-        if not settings.logging.enable_user_interaction_logging:
-            return None
-
-        # Use configured log level for user interactions
-        import logging
-
-        log_level = getattr(
-            logging, settings.logging.user_interaction_log_level.upper(), logging.INFO
-        )
-        return UserInteractionLogger(log_level=log_level)
-    except Exception as e:
-        logger.error(f"Failed to initialize user interaction logger: {e}")
-        return None
-
-
 def _log_missing(
-    user_logger: UserInteractionLogger,
+    user_logger: Optional[UserInteractionLogger],
     user_id: int,
     expected_action: str,
     error_context: str,
     error_type: str = "handler_error",
 ) -> None:
     """Compatibility wrapper for different log_missing_response signatures."""
+    if user_logger is None:
+        return
     try:
         user_logger.log_missing_response(
             user_id=user_id,

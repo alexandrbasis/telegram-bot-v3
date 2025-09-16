@@ -625,6 +625,12 @@ class TestAirtableClientBulkOperations:
         client, mock_table = client_with_mock_table
         records = [{"TestField": "Value 1"}, {"TestField": "Value 2"}]
 
+        translated_records = [
+            {"TranslatedField": "Value 1"},
+            {"TranslatedField": "Value 2"},
+        ]
+        client._translate_fields_for_api = Mock(side_effect=translated_records)
+
         result = await client.bulk_create(records)
 
         expected = [
@@ -632,7 +638,7 @@ class TestAirtableClientBulkOperations:
             {"id": "rec456", "fields": {"TestField": "Batch 2"}},
         ]
         assert result == expected
-        mock_table.batch_create.assert_called_once_with(records)
+        mock_table.batch_create.assert_called_once_with(translated_records)
 
     @pytest.mark.asyncio
     async def test_bulk_create_multiple_batches(self, client_with_mock_table):
@@ -642,6 +648,11 @@ class TestAirtableClientBulkOperations:
         # Create 15 records (should be split into 2 batches of 10 and 5)
         records = [{"TestField": f"Value {i}"} for i in range(15)]
 
+        def translate(fields):
+            return {f"Translated_{k}": v for k, v in fields.items()}
+
+        client._translate_fields_for_api = Mock(side_effect=translate)
+
         result = await client.bulk_create(records)
 
         # Should result in 4 created records (2 batches × 2 records per batch)
@@ -649,10 +660,15 @@ class TestAirtableClientBulkOperations:
         assert mock_table.batch_create.call_count == 2
 
         # Check batch sizes
-        first_call = mock_table.batch_create.call_args_list[0][0][0]
-        second_call = mock_table.batch_create.call_args_list[1][0][0]
-        assert len(first_call) == 10
-        assert len(second_call) == 5
+        first_batch = mock_table.batch_create.call_args_list[0][0][0]
+        second_batch = mock_table.batch_create.call_args_list[1][0][0]
+        assert len(first_batch) == 10
+        assert len(second_batch) == 5
+
+        # Ensure translated keys are used
+        for batch in (first_batch, second_batch):
+            for record in batch:
+                assert all(key.startswith("Translated_") for key in record.keys())
 
     @pytest.mark.asyncio
     async def test_bulk_create_failure(self, client_with_mock_table):
@@ -674,6 +690,12 @@ class TestAirtableClientBulkOperations:
             {"id": "rec456", "fields": {"TestField": "Updated 2"}},
         ]
 
+        translated_updates = [
+            {"TranslatedField": "Updated 1"},
+            {"TranslatedField": "Updated 2"},
+        ]
+        client._translate_fields_for_api = Mock(side_effect=translated_updates)
+
         result = await client.bulk_update(updates)
 
         expected = [
@@ -681,7 +703,11 @@ class TestAirtableClientBulkOperations:
             {"id": "rec456", "fields": {"TestField": "Updated 2"}},
         ]
         assert result == expected
-        mock_table.batch_update.assert_called_once_with(updates)
+        expected_payload = [
+            {"id": "rec123", "fields": {"TranslatedField": "Updated 1"}},
+            {"id": "rec456", "fields": {"TranslatedField": "Updated 2"}},
+        ]
+        mock_table.batch_update.assert_called_once_with(expected_payload)
 
     @pytest.mark.asyncio
     async def test_bulk_update_empty_list(self, client_with_mock_table):

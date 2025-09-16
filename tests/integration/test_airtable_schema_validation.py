@@ -30,6 +30,10 @@ class TestAirtableSchemaValidation:
         client.get_record = AsyncMock()
         client.update_record = AsyncMock()
         client.create_record = AsyncMock()
+        client.config = Mock()
+        client.config.base_id = "appTestBase"
+        client.config.table_id = "tblTestTable"
+        client.config.table_name = "TestTable"
         return client
 
     @pytest.fixture

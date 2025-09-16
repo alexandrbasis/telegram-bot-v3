@@ -11,15 +11,30 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
-from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import (
+    _PARTICIPANT_CACHE,
+    AirtableParticipantRepository,
+)
 from src.data.repositories.participant_repository import RepositoryError
 from src.models.participant import Department, Participant, Role
+
+
+@pytest.fixture(autouse=True)
+def clear_participant_cache():
+    """Ensure participant cache is cleared between tests."""
+    _PARTICIPANT_CACHE.clear()
+    yield
+    _PARTICIPANT_CACHE.clear()
 
 
 @pytest.fixture
 def mock_airtable_client():
     """Fixture providing a mock AirtableClient."""
     client = Mock(spec=AirtableClient)
+    client.config = Mock()
+    client.config.base_id = "appTestBase"
+    client.config.table_id = "tblTestParticipants"
+    client.config.table_name = "Participants"
     return client
 
 
@@ -50,6 +65,34 @@ def sample_participants():
         ),
         Participant(
             record_id="rec4", full_name_ru="Иван Смирнов", full_name_en="Ivan Smirnov"
+        ),
+    ]
+
+
+@pytest.fixture
+def enhanced_sample_participants():
+    """Enhanced sample participants with role and department information."""
+    return [
+        Participant(
+            record_id="rec1",
+            full_name_ru="Александр Иванов",
+            full_name_en="Alexander Ivanov",
+            role=Role.TEAM,
+            department=Department.KITCHEN,
+        ),
+        Participant(
+            record_id="rec2",
+            full_name_ru="Мария Петрова",
+            full_name_en="Maria Petrova",
+            role=Role.CANDIDATE,
+            department=Department.WORSHIP,
+        ),
+        Participant(
+            record_id="rec3",
+            full_name_ru="Иван Сидоров",
+            full_name_en="Ivan Sidorov",
+            role=Role.TEAM,
+            department=Department.MEDIA,
         ),
     ]
 
@@ -327,33 +370,6 @@ class TestFuzzySearchEdgeCases:
 class TestEnhancedRepositorySearch:
     """Test enhanced repository search functionality with new features."""
 
-    @pytest.fixture
-    def enhanced_sample_participants(self):
-        """Enhanced sample participants with role and department information."""
-        return [
-            Participant(
-                record_id="rec1",
-                full_name_ru="Александр Иванов",
-                full_name_en="Alexander Ivanov",
-                role=Role.TEAM,
-                department=Department.KITCHEN,
-            ),
-            Participant(
-                record_id="rec2",
-                full_name_ru="Мария Петрова",
-                full_name_en="Maria Petrova",
-                role=Role.CANDIDATE,
-                department=Department.WORSHIP,
-            ),
-            Participant(
-                record_id="rec3",
-                full_name_ru="Иван Сидоров",
-                full_name_en="Ivan Sidorov",
-                role=Role.TEAM,
-                department=Department.MEDIA,
-            ),
-        ]
-
     @pytest.mark.asyncio
     async def test_search_by_name_enhanced_method(
         self, repository, mock_airtable_client, enhanced_sample_participants
@@ -501,3 +517,53 @@ class TestEnhancedRepositorySearch:
             assert "TEAM" in formatted
             # Should handle missing fields gracefully
             assert formatted is not None and len(formatted) > 0
+
+
+class TestEnhancedSearchCaching:
+    """Test participant caching logic used by enhanced search."""
+
+    @pytest.mark.asyncio
+    async def test_enhanced_search_uses_cached_participants(
+        self, repository, enhanced_sample_participants
+    ):
+        """Repeated enhanced searches avoid extra list_all calls within TTL."""
+        repository.list_all = AsyncMock(return_value=enhanced_sample_participants)
+
+        _PARTICIPANT_CACHE.clear()
+
+        with patch(
+            "src.data.airtable.airtable_participant_repo.SearchService"
+        ) as mock_search_service:
+            mock_instance = Mock()
+            mock_instance.search_participants_enhanced.return_value = []
+            mock_search_service.return_value = mock_instance
+
+            await repository.search_by_name_enhanced("Александр")
+            await repository.search_by_name_enhanced("Мария")
+
+        assert repository.list_all.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_enhanced_search_cache_expires_after_ttl(
+        self, repository, enhanced_sample_participants
+    ):
+        """Cache expiry triggers a fresh Airtable fetch."""
+        repository.list_all = AsyncMock(return_value=enhanced_sample_participants)
+
+        _PARTICIPANT_CACHE.clear()
+
+        with patch(
+            "src.data.airtable.airtable_participant_repo.SearchService"
+        ) as mock_search_service:
+            mock_instance = Mock()
+            mock_instance.search_participants_enhanced.return_value = []
+            mock_search_service.return_value = mock_instance
+
+            with patch(
+                "src.data.airtable.airtable_participant_repo._PARTICIPANT_CACHE_TTL_SECONDS",
+                0,
+            ):
+                await repository.search_by_name_enhanced("Александр")
+                await repository.search_by_name_enhanced("Мария")
+
+        assert repository.list_all.await_count == 2

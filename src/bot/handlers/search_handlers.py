@@ -21,14 +21,13 @@ from src.bot.keyboards.search_keyboards import (
     get_waiting_for_name_keyboard,
 )
 from src.bot.messages import InfoMessages
-from src.config.settings import get_settings
 from src.services.search_service import (
     SearchResult,
     SearchService,
     format_match_quality,
 )
 from src.services.service_factory import get_participant_repository
-from src.services.user_interaction_logger import UserInteractionLogger
+from src.services.user_interaction_logger import get_user_interaction_logger
 
 logger = logging.getLogger(__name__)
 
@@ -43,35 +42,6 @@ class SearchStates(IntEnum):
 
 
 # Participant repository factory imported at top
-
-
-def get_user_interaction_logger():
-    """
-    Get user interaction logger instance if logging is enabled.
-
-    Returns:
-        UserInteractionLogger instance or None if disabled
-    """
-    try:
-        # Reset settings to pick up new environment variables
-        from src.config.settings import reset_settings
-
-        reset_settings()
-
-        settings = get_settings()
-        if not settings.logging.enable_user_interaction_logging:
-            return None
-
-        # Use configured log level for user interactions
-        import logging
-
-        log_level = getattr(
-            logging, settings.logging.user_interaction_log_level.upper(), logging.INFO
-        )
-        return UserInteractionLogger(log_level=log_level)
-    except Exception as e:
-        logger.error(f"Failed to initialize user interaction logger: {e}")
-        return None
 
 
 # Backward compatibility constants

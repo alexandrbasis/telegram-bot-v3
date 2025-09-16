@@ -94,9 +94,11 @@ class TestExportCommandIntegration:
 
         # Mock export service
         mock_export_service = Mock()
-        mock_export_service.export_to_csv = Mock(return_value="test,data\n1,2")
-        mock_export_service.is_within_telegram_limit = Mock(return_value=True)
-        mock_export_service.estimate_file_size = Mock(return_value=1000)
+        mock_export_service.export_to_csv_async = AsyncMock(
+            return_value="test,data\n1,2"
+        )
+        mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+        mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
         with patch(
             "src.bot.handlers.export_handlers.service_factory.get_export_service",

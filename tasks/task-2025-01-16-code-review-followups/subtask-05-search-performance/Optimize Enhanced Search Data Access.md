@@ -17,3 +17,6 @@
 - Performance characteristics and rate-limit adherence are validated (via tests or instrumentation).
 - Added tests confirm search results remain correct after optimization.
 
+## Change Log
+- Introduced a short-lived participant cache in `AirtableParticipantRepository` with automatic invalidation on create/update/delete/bulk operations.
+- Updated fuzzy and enhanced name search methods to reuse cached participant lists and added tests covering cache reuse, expiry, and invalidation triggers.

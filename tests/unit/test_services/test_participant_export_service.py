@@ -524,3 +524,45 @@ class TestProgressTracking:
 
         # Assert
         assert csv_string is not None
+
+
+class TestExportToCsvInterface:
+    """Test synchronous and asynchronous export entry points."""
+
+    def test_export_to_csv_no_running_loop(self, sample_participants):
+        """Synchronous export succeeds when no loop is active."""
+        repo = AsyncMock(spec=ParticipantRepository)
+        repo.list_all.return_value = sample_participants
+        service = ParticipantExportService(repository=repo)
+
+        csv_data = service.export_to_csv()
+
+        assert "FullNameRU" in csv_data
+        repo.list_all.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_export_to_csv_raises_with_active_loop(
+        self, sample_participants
+    ) -> None:
+        """Sync API signals callers to use coroutine when loop is running."""
+        repo = AsyncMock(spec=ParticipantRepository)
+        repo.list_all.return_value = sample_participants
+        service = ParticipantExportService(repository=repo)
+
+        with pytest.raises(RuntimeError) as exc:
+            service.export_to_csv()
+
+        assert "use await" in str(exc.value)
+        repo.list_all.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_export_to_csv_async_alias(self, sample_participants) -> None:
+        """Dedicated async alias mirrors primary coroutine implementation."""
+        repo = AsyncMock(spec=ParticipantRepository)
+        repo.list_all.return_value = sample_participants
+        service = ParticipantExportService(repository=repo)
+
+        csv_data = await service.export_to_csv_async()
+
+        assert "FullNameRU" in csv_data
+        repo.list_all.assert_awaited()

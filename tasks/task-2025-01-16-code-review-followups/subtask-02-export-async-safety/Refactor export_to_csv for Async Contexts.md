@@ -17,3 +17,6 @@
 - Unit/integration tests demonstrate both sync and async invocation paths succeed.
 - Documentation/comments updated to clarify usage expectations.
 
+## Change Log
+- Reworked `ParticipantExportService.export_to_csv()` to guard against active event loops and added an `export_to_csv_async()` alias so handlers always await the coroutine-friendly path.
+- Updated export handlers and associated tests (unit + integration) to exercise the new async API and added regression coverage for the sync wrapper behaviour.

@@ -17,3 +17,6 @@ Search result formatting mixes English labels (`Floor`, `Room`, `Date of Birth`,
 - Unit tests cover localization output to prevent reintroduction of English strings.
 - No regressions in Markdown rendering or formatting.
 
+## Change Log
+- Added localized search result labels (этаж, комната, дата рождения, возраст, etc.) and age pluralization via `SearchResultLabels` in `bot/messages.py`.
+- Updated `format_participant_result` to surface Russian fallbacks such as “Не указано” and formatted dates, with adjusted unit tests to cover the localized output.

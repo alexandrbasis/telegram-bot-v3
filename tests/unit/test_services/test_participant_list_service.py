@@ -154,6 +154,7 @@ class TestParticipantListService:
 
         # Should display department in new format
         assert "🏢 Департамент: Kitchen" in formatted_list
+        assert "Department.KITCHEN" not in formatted_list
         assert "Тестов Тест Тестович" in formatted_list
 
     @pytest.mark.asyncio
@@ -201,6 +202,21 @@ class TestParticipantListService:
         assert result["has_prev"] is True
         assert result["has_next"] is False  # No more participants
         assert result["current_offset"] == 1
+
+    @pytest.mark.asyncio
+    async def test_offset_clamped_to_last_full_page(self, service, mock_repository):
+        """Offset beyond range should snap to the last available page."""
+        participants = [
+            Participant(full_name_ru=f"Участник {i}", role=Role.TEAM) for i in range(5)
+        ]
+        mock_repository.get_by_role.return_value = participants
+
+        result = await service.get_team_members_list(offset=999, page_size=2)
+
+        assert result["current_offset"] == 4
+        assert result["has_prev"] is True
+        assert result["has_next"] is False
+        assert result["actual_displayed"] == 1
 
     @pytest.mark.asyncio
     async def test_empty_participant_list(self, service, mock_repository):

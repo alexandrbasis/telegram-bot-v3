@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from src.config.field_mappings import AirtableFieldMapping
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
+from src.data.airtable.formula_utils import escape_formula_value, prepare_formula_value
 from src.data.repositories.participant_repository import (
     DuplicateError,
     NotFoundError,
@@ -32,6 +33,9 @@ logger = logging.getLogger(__name__)
 # Cache key format: "{base_id}:{table_identifier}" -> (timestamp, floors)
 _FLOOR_CACHE: Dict[str, Tuple[float, List[int]]] = {}
 _FLOOR_CACHE_TTL_SECONDS = 300  # 5 minutes
+
+_PARTICIPANT_CACHE: Dict[str, Tuple[float, List[Participant]]] = {}
+_PARTICIPANT_CACHE_TTL_SECONDS = 60  # 1 minute cache for enhanced search
 
 
 class AirtableParticipantRepository(ParticipantRepository):
@@ -90,6 +94,7 @@ class AirtableParticipantRepository(ParticipantRepository):
             created_participant = Participant.from_airtable_record(record)
 
             logger.info(f"Created participant with ID: {record['id']}")
+            self._invalidate_participant_cache()
             return created_participant
 
         except AirtableAPIError as e:
@@ -169,6 +174,7 @@ class AirtableParticipantRepository(ParticipantRepository):
             updated_participant = Participant.from_airtable_record(updated_record)
 
             logger.info(f"Updated participant: {participant.record_id}")
+            self._invalidate_participant_cache()
             return updated_participant
 
         except AirtableAPIError as e:
@@ -227,6 +233,7 @@ class AirtableParticipantRepository(ParticipantRepository):
 
             if updated_record:
                 logger.info(f"Successfully updated participant {record_id}")
+                self._invalidate_participant_cache()
                 return True
             else:
                 logger.warning(f"No record returned from update for {record_id}")
@@ -313,6 +320,7 @@ class AirtableParticipantRepository(ParticipantRepository):
 
             if success:
                 logger.info(f"Deleted participant: {participant_id}")
+                self._invalidate_participant_cache()
 
             return success
 
@@ -441,7 +449,7 @@ class AirtableParticipantRepository(ParticipantRepository):
                 if field in ("full_name_ru", "full_name_en"):
                     # Escape single quotes in string patterns
                     pattern = str(value)
-                    escaped = pattern.replace("'", "''")
+                    escaped = escape_formula_value(pattern)
                     formula_field = AirtableFieldMapping.build_formula_field(field)
                     if not formula_field:
                         raise RepositoryError(
@@ -460,11 +468,13 @@ class AirtableParticipantRepository(ParticipantRepository):
                         raise RepositoryError(
                             f"Field mapping not found for search field: {field}"
                         )
-                    if isinstance(value, str):
-                        escaped_val = value.replace("'", "''")
-                        conditions.append(f"{{{airtable_field}}} = '{escaped_val}'")
+                    should_quote, normalized_value = prepare_formula_value(value)
+                    if should_quote:
+                        conditions.append(
+                            f"{{{airtable_field}}} = '{normalized_value}'"
+                        )
                     else:
-                        conditions.append(f"{{{airtable_field}}} = {value}")
+                        conditions.append(f"{{{airtable_field}}} = {normalized_value}")
                 else:
                     raise ValueError(f"Unsupported search criteria field: {field}")
 
@@ -501,6 +511,35 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(
                 f"Unexpected error searching participants by criteria: {e}", e
             )
+
+    def _get_participant_cache_key(self) -> str:
+        """Build cache key for participant list based on Airtable configuration."""
+        config = self.client.config
+        table_identifier = config.table_id if config.table_id else config.table_name
+        return f"{config.base_id}:{table_identifier}:participants"
+
+    def _invalidate_participant_cache(self) -> None:
+        """Invalidate cached participant list to reflect data mutations."""
+        cache_key = self._get_participant_cache_key()
+        if cache_key in _PARTICIPANT_CACHE:
+            logger.debug("Invalidating participant cache for %s", cache_key)
+            _PARTICIPANT_CACHE.pop(cache_key, None)
+
+    async def _get_all_participants_cached(self) -> List[Participant]:
+        """Fetch all participants with short-lived caching to reduce Airtable load."""
+        cache_key = self._get_participant_cache_key()
+        cached = _PARTICIPANT_CACHE.get(cache_key)
+        now = time.time()
+
+        if cached:
+            cached_at, participants = cached
+            if now - cached_at < _PARTICIPANT_CACHE_TTL_SECONDS:
+                logger.debug("Using cached participants for enhanced search")
+                return participants
+
+        participants = await self.list_all()
+        _PARTICIPANT_CACHE[cache_key] = (now, participants)
+        return participants
 
     async def get_by_role(self, role: str) -> List[Participant]:
         """
@@ -688,7 +727,7 @@ class AirtableParticipantRepository(ParticipantRepository):
 
             # Build Airtable formula for partial name matching using centralized field references
             # Escape single quotes in name_pattern to prevent formula injection
-            escaped_pattern = name_pattern.replace("'", "''")
+            escaped_pattern = escape_formula_value(name_pattern)
             ru_field = AirtableFieldMapping.build_formula_field("full_name_ru")
             en_field = AirtableFieldMapping.build_formula_field("full_name_en")
 
@@ -860,6 +899,7 @@ class AirtableParticipantRepository(ParticipantRepository):
                 created_participants.append(participant)
 
             logger.info(f"Bulk created {len(created_participants)} participants")
+            self._invalidate_participant_cache()
             return created_participants
 
         except AirtableAPIError as e:
@@ -922,6 +962,7 @@ class AirtableParticipantRepository(ParticipantRepository):
                 updated_participants.append(participant)
 
             logger.info(f"Bulk updated {len(updated_participants)} participants")
+            self._invalidate_participant_cache()
             return updated_participants
 
         except AirtableAPIError as e:
@@ -1026,8 +1067,8 @@ class AirtableParticipantRepository(ParticipantRepository):
                 logger.debug("Empty query, returning no results")
                 return []
 
-            # Get all participants from Airtable
-            all_participants = await self.list_all()
+            # Get participants with short-lived caching to minimize repeated Airtable reads
+            all_participants = await self._get_all_participants_cached()
 
             if not all_participants:
                 logger.debug("No participants in database")
@@ -1083,8 +1124,8 @@ class AirtableParticipantRepository(ParticipantRepository):
                 logger.debug("Empty query, returning no results")
                 return []
 
-            # Get all participants from Airtable
-            all_participants = await self.list_all()
+            # Get participants with caching support to avoid repeated full-table scans
+            all_participants = await self._get_all_participants_cached()
 
             if not all_participants:
                 logger.debug("No participants in database")

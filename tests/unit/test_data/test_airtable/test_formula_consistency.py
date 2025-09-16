@@ -12,6 +12,7 @@ import pytest
 
 from src.config.field_mappings import AirtableFieldMapping
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+from src.models.participant import Department, Gender, PaymentStatus, Role
 
 
 class TestFormulaConsistency:
@@ -50,6 +51,37 @@ class TestFormulaConsistency:
                 },
             },
         ]
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "field, enum_value, expected",
+        [
+            ("role", Role.CANDIDATE, "CANDIDATE"),
+            ("department", Department.KITCHEN, "Kitchen"),
+            ("payment_status", PaymentStatus.PAID, "Paid"),
+            ("gender", Gender.FEMALE, "F"),
+        ],
+    )
+    async def test_search_by_criteria_quotes_enum_values(
+        self, repository, mock_client, field, enum_value, expected
+    ):
+        """Ensure enum criteria are converted to string values and quoted."""
+        mock_client.search_by_formula.return_value = []
+
+        with patch(
+            "src.data.airtable.airtable_participant_repo.Participant.from_airtable_record"
+        ) as mock_from_record:
+            mock_from_record.return_value = MagicMock()
+
+            await repository.search_by_criteria({field: enum_value})
+
+        mock_client.search_by_formula.assert_called_once()
+        formula_arg = mock_client.search_by_formula.call_args[0][0]
+        airtable_field = AirtableFieldMapping.get_airtable_field_name(field)
+        assert f"{{{airtable_field}}} = '{expected}'" in formula_arg
+        assert f"{enum_value.__class__.__name__}." not in formula_arg
+
+        mock_client.search_by_formula.reset_mock()
 
     @pytest.mark.asyncio
     async def test_search_by_criteria_uses_consistent_formula_format(

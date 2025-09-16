@@ -17,3 +17,6 @@ Service factory helpers build a fresh `AirtableClient` each time, preventing con
 - Tests validate that repeated calls obtain the same client (unless explicitly reset).
 - No regressions in dependency injection flexibility (tests still able to mock).
 
+## Change Log
+- Added shared Airtable client caching in `service_factory` with explicit reset helper to prevent redundant client creation.
+- Updated factories to reuse the cached client and introduced unit tests verifying reuse, reset, and configuration change behaviour.

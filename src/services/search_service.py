@@ -12,6 +12,7 @@ from typing import List, Optional, Tuple, Union
 
 from rapidfuzz import fuzz, process
 
+from src.bot.messages import SearchResultLabels
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.participant import Gender, Participant, PaymentStatus, Role
 
@@ -132,31 +133,40 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
     if context_parts:
         result_parts.append(f" | {context_parts[0]}")
 
+    labels = SearchResultLabels.for_language(language)
+    not_available = labels["not_available"]
+
     # Append accommodation info: Floor and Room Number
-    floor_display = (
-        participant.floor
-        if getattr(participant, "floor", None) not in (None, "")
-        else "N/A"
+    floor_raw = getattr(participant, "floor", None)
+    floor_display = str(floor_raw) if floor_raw not in (None, "") else not_available
+    room_raw = getattr(participant, "room_number", None)
+    room_display = str(room_raw) if room_raw not in (None, "") else not_available
+    result_parts.append(
+        f" | {labels['floor']}: {floor_display}, {labels['room']}: {room_display}"
     )
-    room_display = (
-        participant.room_number
-        if getattr(participant, "room_number", None) not in (None, "")
-        else "N/A"
-    )
-    result_parts.append(f" | Floor: {floor_display}, Room: {room_display}")
 
     # Append demographic info: Date of Birth and Age
     date_of_birth_val = getattr(participant, "date_of_birth", None)
-    date_of_birth_display = (
-        date_of_birth_val.isoformat() if date_of_birth_val is not None else "N/A"
-    )
-    age_display = (
-        f"{participant.age} years"
-        if getattr(participant, "age", None) not in (None, "")
-        else "N/A"
-    )
+    if date_of_birth_val is not None:
+        if language == "ru":
+            date_of_birth_display = date_of_birth_val.strftime("%d.%m.%Y")
+        else:
+            date_of_birth_display = date_of_birth_val.isoformat()
+    else:
+        date_of_birth_display = not_available
+
+    age_raw = getattr(participant, "age", None)
+    if isinstance(age_raw, (int, str)) and age_raw != "":
+        try:
+            age_value = int(age_raw)
+            age_display = SearchResultLabels.format_age(age_value, language)
+        except (TypeError, ValueError):
+            age_display = str(age_raw)
+    else:
+        age_display = not_available
+
     result_parts.append(
-        f" | Date of Birth: {date_of_birth_display} | Age: {age_display}"
+        f" | {labels['date_of_birth']}: {date_of_birth_display} | {labels['age']}: {age_display}"
     )
 
     # Add ChurchLeader if available
@@ -168,7 +178,7 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
             .replace("_", r"\_")
             .replace("`", r"\`")
         )
-        result_parts.append(f" | Leader: {church_leader_escaped}")
+        result_parts.append(f" | {labels['leader']}: {church_leader_escaped}")
 
     # Add TableName only if role is CANDIDATE
     participant_role = (
@@ -189,7 +199,7 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
             .replace("_", r"\_")
             .replace("`", r"\`")
         )
-        result_parts.append(f" | Table: {table_name_escaped}")
+        result_parts.append(f" | {labels['table']}: {table_name_escaped}")
 
     # Add truncated Notes if available
     if participant.notes:
@@ -203,7 +213,7 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
         )
         if len(participant.notes) > 50:
             notes_escaped += "..."
-        result_parts.append(f" | Notes: {notes_escaped}")
+        result_parts.append(f" | {labels['notes']}: {notes_escaped}")
 
     return "".join(result_parts)
 

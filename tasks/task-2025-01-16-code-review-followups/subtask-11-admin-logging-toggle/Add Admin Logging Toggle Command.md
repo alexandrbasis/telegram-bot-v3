@@ -18,3 +18,6 @@ Provide administrators with a bot command to enable/disable user interaction log
 - Logging state reflects the toggle immediately across handlers.
 - Tests cover toggling behavior and permission checks.
 
+## Change Log
+- Added `/logging` admin command with runtime overrides in `user_interaction_logger`, allowing logging to be toggled without restarts.
+- Registered command in the application and conversation fallback, including tests for permission checks and state changes.

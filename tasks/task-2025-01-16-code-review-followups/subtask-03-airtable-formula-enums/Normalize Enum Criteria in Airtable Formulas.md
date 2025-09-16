@@ -17,3 +17,6 @@
 - Tests fail if formulas render raw enum representations.
 - Formula generation logic remains backward compatible for string inputs.
 
+## Change Log
+- Normalized formula comparisons to coerce Enum inputs into their string values before quoting, preventing raw `EnumName.MEMBER` leakage into Airtable filters.
+- Added parameterized tests covering role, department, gender, and payment status criteria to lock the quoting behaviour.

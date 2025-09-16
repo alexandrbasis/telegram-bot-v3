@@ -17,3 +17,6 @@ Participant list pagination clamps offsets to the last item, producing single-en
 - Pagination metadata (`has_prev`, `has_next`, offsets) stays consistent.
 - Tests cover edge cases for offsets before 0 and beyond total count.
 
+## Change Log
+- Updated participant list pagination to clamp offsets to the start of the final page when overshooting the dataset.
+- Added unit test covering out-of-range offsets to ensure UX stays consistent.

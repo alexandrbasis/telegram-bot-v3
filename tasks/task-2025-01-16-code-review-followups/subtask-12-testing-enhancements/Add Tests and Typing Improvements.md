@@ -18,3 +18,6 @@ Strengthen test coverage and typing guarantees highlighted in the review, focusi
 - `mypy` reports no new issues in touched modules.
 - CI documentation updated if new commands or scripts are introduced.
 
+## Change Log
+- Added helper tests for Airtable formula utilities and ensured export integration tests exercise the async path.
+- Updated `_log_missing` typing to handle optional logger instances safely.

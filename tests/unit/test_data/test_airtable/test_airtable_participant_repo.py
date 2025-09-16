@@ -18,7 +18,10 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
-from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+from src.data.airtable.airtable_participant_repo import (
+    _PARTICIPANT_CACHE,
+    AirtableParticipantRepository,
+)
 from src.data.repositories.participant_repository import (
     DuplicateError,
     NotFoundError,
@@ -519,6 +522,39 @@ class TestAirtableParticipantRepositorySearch:
         assert isinstance(result, list)
         assert len(result) == 1
         assert isinstance(result[0], Participant)
+
+
+class TestParticipantCacheBehavior:
+    """Test caching invalidation logic for participant list."""
+
+    @pytest.mark.asyncio
+    async def test_create_invalidates_participant_cache(
+        self, repository, mock_airtable_client
+    ):
+        """Creating a participant clears the cached list used by enhanced search."""
+        sample_participants = [
+            Participant(record_id="recA", full_name_ru="Кэш Тест"),
+        ]
+
+        repository.list_all = AsyncMock(return_value=sample_participants)
+        _PARTICIPANT_CACHE.clear()
+
+        with patch(
+            "src.data.airtable.airtable_participant_repo.SearchService"
+        ) as mock_search_service:
+            mock_instance = Mock()
+            mock_instance.search_participants_enhanced.return_value = []
+            mock_search_service.return_value = mock_instance
+
+            await repository.search_by_name_enhanced("Тест")
+
+        cache_key = repository._get_participant_cache_key()
+        assert cache_key in _PARTICIPANT_CACHE
+
+        new_participant = Participant(full_name_ru="Новый Участник")
+        await repository.create(new_participant)
+
+        assert cache_key not in _PARTICIPANT_CACHE
 
 
 class TestAirtableParticipantRepositoryBulkOperations:

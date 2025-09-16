@@ -18,3 +18,6 @@
 - Behavior around `ENABLE_USER_INTERACTION_LOGGING` remains correct.
 - Tests cover both enabled/disabled scenarios.
 
+## Change Log
+- Added a cached logger provider in `user_interaction_logger` that consults settings without calling `reset_settings()` on every request and exposes an explicit refresh hook.
+- Updated search and edit handlers to use the provider instead of reloading settings per call, and extended service/handler tests to cover caching and disabled scenarios.
