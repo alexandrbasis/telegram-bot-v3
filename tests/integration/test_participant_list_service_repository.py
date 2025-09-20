@@ -114,11 +114,11 @@ class TestParticipantListServiceRepositoryIntegration:
         # Execute
         result = await service.get_candidates_list()
 
-        # Verify (updated for new format without birth dates or clothing sizes)
+        # Verify candidate format excludes department and includes church
         assert result["total_count"] == 1
         assert "Кандидат Первый" in result["formatted_list"]
-        # New format shows department instead of birth date and clothing size
-        assert "🏢 Департамент:" in result["formatted_list"]
+        assert "🏢" not in result["formatted_list"]
+        assert "Департамент" not in result["formatted_list"]
         assert "⛪ Церковь:" in result["formatted_list"]
         assert "Церковь кандидата" in result["formatted_list"]
 
