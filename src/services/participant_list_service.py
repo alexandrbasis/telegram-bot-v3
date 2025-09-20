@@ -40,7 +40,9 @@ class ParticipantListService:
             Dict with formatted_list, pagination info, offsets, and counts
         """
         participants = await self.repository.get_by_role("TEAM")
-        return self._format_participant_list(participants, offset, page_size)
+        return self._format_participant_list(
+            participants, offset, page_size, include_department=True
+        )
 
     async def get_candidates_list(
         self, offset: int = 0, page_size: int = 20
@@ -56,10 +58,17 @@ class ParticipantListService:
             Dict with formatted_list, pagination info, offsets, and counts
         """
         participants = await self.repository.get_by_role("CANDIDATE")
-        return self._format_participant_list(participants, offset, page_size)
+        return self._format_participant_list(
+            participants, offset, page_size, include_department=False
+        )
 
     def _format_participant_list(
-        self, participants: List[Participant], offset: int, page_size: int
+        self,
+        participants: List[Participant],
+        offset: int,
+        page_size: int,
+        *,
+        include_department: bool,
     ) -> Dict[str, Any]:
         """
         Format participant list with offset-based pagination.
@@ -68,6 +77,7 @@ class ParticipantListService:
             participants: List of participants to format
             offset: Starting offset in the participants list (0-indexed)
             page_size: Number of participants per page
+            include_department: Whether to include department field in display
 
         Returns:
             Dict with formatted list and pagination information including offsets
@@ -98,7 +108,9 @@ class ParticipantListService:
         # Format the list
         formatted_lines = []
         for i, participant in enumerate(page_participants, start=offset + 1):
-            line = self._format_participant_line(i, participant)
+            line = self._format_participant_line(
+                i, participant, include_department=include_department
+            )
             formatted_lines.append(line)
 
         formatted_list = "\n\n".join(formatted_lines)
@@ -137,13 +149,20 @@ class ParticipantListService:
             "actual_displayed": actual_displayed_count,  # For debugging/testing
         }
 
-    def _format_participant_line(self, number: int, participant: Participant) -> str:
+    def _format_participant_line(
+        self,
+        number: int,
+        participant: Participant,
+        *,
+        include_department: bool,
+    ) -> str:
         """
         Format single participant line for display.
 
         Args:
             number: Sequential number for the participant
             participant: Participant to format
+            include_department: Whether department information should be shown
 
         Returns:
             Formatted participant line
@@ -160,21 +179,19 @@ class ParticipantListService:
             else "Неизвестно"
         )
 
-        # Handle department field
-        if participant.department:
-            department_value = self._get_display_value(participant.department)
-            department_str = escape_markdown(department_value, version=2)
-        else:
-            department_str = "—"
+        lines = [f"{number}\\. **{name_str}**"]
 
-        # Format the line with proper Markdown V2 escaping
-        line = (
-            f"{number}\\. **{name_str}**\n"
-            f"   🏢 Департамент: {department_str}\n"
-            f"   ⛪ Церковь: {church_str}"
-        )
+        if include_department:
+            if participant.department:
+                department_value = self._get_display_value(participant.department)
+                department_str = escape_markdown(department_value, version=2)
+            else:
+                department_str = "—"
+            lines.append(f"   🏢 Департамент: {department_str}")
 
-        return line
+        lines.append(f"   ⛪ Церковь: {church_str}")
+
+        return "\n".join(lines)
 
     @staticmethod
     def _get_display_value(value: Any) -> str:

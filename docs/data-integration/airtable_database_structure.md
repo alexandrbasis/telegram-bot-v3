@@ -1,9 +1,9 @@
 # Airtable Database Structure Documentation
 
 ## Last Updated
-- **Date**: January 12, 2025
-- **Version**: 2.0.0
-- **Changes**: Added new fields (ChurchLeader, TableName, Notes, Floor, RoomNumber)
+- **Date**: January 19, 2025
+- **Version**: 3.0.0
+- **Changes**: Added IsDepartmentChief field, new ROE and BibleReaders tables, and relationship fields
 
 ## Database Information
 - **Base ID**: `appRp7Vby2JMzN0mC`
@@ -15,6 +15,14 @@
 ### 1. Participants Table
 **Table ID**: `tbl8ivwOdAUvMi3Jy`
 **Primary Field**: `FullNameRU` (fldOcpA3JW5MRmR6R)
+
+### 2. ROE Table
+**Table ID**: `tbl0j8bcgkV3lVAdc`
+**Primary Field**: `RoeTopic` (fldSniGvfWpmkpc1r)
+
+### 3. BibleReaders Table
+**Table ID**: `tblGEnSfpPOuPLXcm`
+**Primary Field**: `Where` (fldsSNHSXJBhewCxq)
 
 ## Field Specifications
 
@@ -163,7 +171,7 @@
 - **Type**: `number`
 - **Purpose**: Participant's age in years
 - **Required**: No
-- **Precision**: 0 (integers only)
+- **Precision**: 1 (supports one decimal place)
 - **Constraints**: Must be >= 0 and <= 120
 - **Example**: 35
 
@@ -183,6 +191,43 @@
 - **Precision**: 0 (integers only)
 - **Example**: Not provided in sample data
 
+### Checkbox Fields
+
+#### IsDepartmentChief
+- **Field ID**: `fldWAay3tQiXN9888`
+- **Type**: `checkbox`
+- **Purpose**: Indicates if the participant is a department chief/leader
+- **Required**: No
+- **Values**: `true` (checked) or `false` (unchecked)
+- **Default**: `false`
+- **Example**: `true` for department heads
+
+### Relationship Fields
+
+#### BibleReaders
+- **Field ID**: `fldaiLErSw51C4pFN`
+- **Type**: `multipleRecordLinks`
+- **Purpose**: Links participant to Bible reading sessions they're involved in
+- **Required**: No
+- **Links To**: BibleReaders table (tblGEnSfpPOuPLXcm)
+- **Example**: Array of record IDs from BibleReaders table
+
+#### Roe
+- **Field ID**: `fldl5TjaTqhdzbdLu`
+- **Type**: `multipleRecordLinks`
+- **Purpose**: Links participant as a primary presenter for ROE sessions
+- **Required**: No
+- **Links To**: ROE table (tbl0j8bcgkV3lVAdc)
+- **Example**: Array of record IDs from ROE table where participant serves as the main presenter
+
+#### RoeAssistant
+- **Field ID**: `fldYCDajNakfOhdZ8`
+- **Type**: `multipleRecordLinks`
+- **Purpose**: Links participant as an assistant presenter for ROE sessions
+- **Required**: No
+- **Links To**: ROE table (tbl0j8bcgkV3lVAdc)
+- **Example**: Array of record IDs from ROE table where participant serves as an assistant
+
 ### Date Fields
 
 #### PaymentDate
@@ -198,14 +243,152 @@
 - **Type**: `date`
 - **Purpose**: Participant's date of birth
 - **Required**: No
-- **Format**: ISO format (YYYY-MM-DD)
-- **Example**: "1990-05-15"
+- **Format**: Localized Airtable date (`format = l`)
+- **Example**: Locale-specific (e.g., "15.05.1990")
 
 ## Views Available
 
+### Participants Table Views
 1. **All Data** (`viwxzBkV6XPSOlaY6`) - Grid view showing all records
-2. **Team Members** (`viwhPNd0BbAxw9lr2`) - Grid view filtered for team members
-3. **Candidates** (`viwIJSnpWr61efCYB`) - Grid view filtered for candidates
+2. **Тимы** (`viwhPNd0BbAxw9lr2`) - Grid view filtered for team members
+3. **Кандидаты** (`viwIJSnpWr61efCYB`) - Grid view filtered for candidates
+4. **По этажам** (`viwvKvD2hDiAHmEK9`) - Grid view grouped by accommodation floor
+5. **По комнатам** (`viwOFJJ8vmhwCsiJZ`) - Grid view grouped by accommodation room
+
+---
+
+## ROE Table Structure
+
+### Table Information
+- **Table ID**: `tbl0j8bcgkV3lVAdc`
+- **Primary Field**: `RoeTopic` (fldSniGvfWpmkpc1r)
+- **Purpose**: Manages ROE (Rollo of Encouragement) sessions and assignments
+
+### ROE Table Fields
+
+#### RoeTopic
+- **Field ID**: `fldSniGvfWpmkpc1r`
+- **Type**: `singleLineText`
+- **Purpose**: Primary field - The topic or name of the ROE session
+- **Required**: Yes (Primary field)
+- **Example**: "Faith Journey", "Grace and Forgiveness"
+
+#### Roista
+- **Field ID**: `fldLWsfnGvJ26GwMI`
+- **Type**: `multipleRecordLinks`
+- **Purpose**: Links to main Roista (presenter) from Participants table
+- **Required**: No
+- **Links To**: Participants table (tbl8ivwOdAUvMi3Jy)
+
+#### RoistaChurch
+- **Field ID**: `flday5BYiQsP8njau`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing church of the main Roista
+- **Source**: Church field from linked Roista record
+- **Read-only**: Yes (computed field)
+
+#### RoistaDepartment
+- **Field ID**: `fldomNR0M0AHolSmj`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing department of the main Roista
+- **Source**: Department field from linked Roista record
+- **Read-only**: Yes (computed field)
+
+#### RoistaRoom
+- **Field ID**: `fldNlkZv2bktVqFDl`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing room number of the main Roista
+- **Source**: RoomNumber field from linked Roista record
+- **Read-only**: Yes (computed field)
+
+#### RoistaNotes
+- **Field ID**: `fldHa1gyW60Dz9wfC`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing notes about the main Roista
+- **Source**: Notes field from linked Roista record
+- **Read-only**: Yes (computed field)
+
+#### Assistant
+- **Field ID**: `fldtTUTsJy6oCg1sE`
+- **Type**: `multipleRecordLinks`
+- **Purpose**: Links to assistant Roista from Participants table
+- **Required**: No
+- **Links To**: Participants table (tbl8ivwOdAUvMi3Jy)
+
+#### AssistantChuch
+- **Field ID**: `fldsDcqcSfilntPws`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing church of the assistant Roista
+- **Source**: Church field from linked Assistant record
+- **Read-only**: Yes (computed field)
+
+#### AssistantDepartment
+- **Field ID**: `fldgDVWQNFeooDRo7`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing department of the assistant Roista
+- **Source**: Department field from linked Assistant record
+- **Read-only**: Yes (computed field)
+
+#### AssistantRoom
+- **Field ID**: `fldBlcyDcW0NcUVcX`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing room number of the assistant Roista
+- **Source**: RoomNumber field from linked Assistant record
+- **Read-only**: Yes (computed field)
+
+---
+
+## BibleReaders Table Structure
+
+### Table Information
+- **Table ID**: `tblGEnSfpPOuPLXcm`
+- **Primary Field**: `Where` (fldsSNHSXJBhewCxq)
+- **Purpose**: Manages Bible reading sessions and reader assignments
+
+### BibleReaders Table Fields
+
+#### Where
+- **Field ID**: `fldsSNHSXJBhewCxq`
+- **Type**: `singleLineText`
+- **Purpose**: Primary field - Location or context of the Bible reading
+- **Required**: Yes (Primary field)
+- **Example**: "Morning Chapel", "Evening Service", "Room 101"
+
+#### Participants
+- **Field ID**: `fldVBlRvv295QhBlX`
+- **Type**: `multipleRecordLinks`
+- **Purpose**: Links to participants who will be Bible readers
+- **Required**: No
+- **Links To**: Participants table (tbl8ivwOdAUvMi3Jy)
+
+#### Church (from Participants)
+- **Field ID**: `fldadEnWickpmcDCE`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing churches of the Bible readers
+- **Source**: Church field from linked Participants records
+- **Read-only**: Yes (computed field)
+
+#### RoomNumber (from Participants)
+- **Field ID**: `fldOGZxVkpFycVs38`
+- **Type**: `multipleLookupValues`
+- **Purpose**: Lookup field showing room numbers of the Bible readers
+- **Source**: RoomNumber field from linked Participants records
+- **Read-only**: Yes (computed field)
+
+#### When
+- **Field ID**: `fld6WfIcctT2WZnNO`
+- **Type**: `date`
+- **Purpose**: Date and time of the Bible reading session
+- **Required**: No
+- **Format**: Localized Airtable date (`format = l`)
+- **Example**: Locale-specific (e.g., "15.02.2025")
+
+#### Bible
+- **Field ID**: `fldi18WKRAa7iUXBQ`
+- **Type**: `singleLineText`
+- **Purpose**: Bible passage or reference to be read
+- **Required**: No
+- **Example**: "John 3:16", "Psalm 23", "1 Corinthians 13"
 
 ## API Integration Notes
 
@@ -220,7 +403,9 @@
 - Single select fields require option IDs for writes, but accept option names
 - Primary field (FullNameRU) cannot be empty
 
-### Sample Record Structure:
+### Sample Record Structures:
+
+#### Participants Table Record
 ```json
 {
   "fields": {
@@ -232,6 +417,7 @@
     "ChurchLeader": "string (optional)",
     "Role": "CANDIDATE|TEAM",
     "Department": "ROE|Chapel|Setup|...",
+    "IsDepartmentChief": "boolean (optional)",
     "CountryAndCity": "string (optional)",
     "SubmittedBy": "string (optional)",
     "ContactInformation": "string (optional)",
@@ -243,7 +429,33 @@
     "Floor": "number (integer, optional)",
     "RoomNumber": "number (integer, optional)",
     "TableName": "string (optional)",
-    "Notes": "string (multiline, optional)"
+    "Notes": "string (multiline, optional)",
+    "BibleReaders": ["recXXXXXXXXXXXXXX"],
+    "Roe": ["recYYYYYYYYYYYYYY"],
+    "RoeAssistant": ["recZZZZZZZZZZZZZZ"]
+  }
+}
+```
+
+#### ROE Table Record
+```json
+{
+  "fields": {
+    "RoeTopic": "string (required)",
+    "Roista": ["recParticipantID1"],
+    "Assistant": ["recParticipantID2"]
+  }
+}
+```
+
+#### BibleReaders Table Record
+```json
+{
+  "fields": {
+    "Where": "string (required)",
+    "Participants": ["recParticipantID1", "recParticipantID2"],
+    "When": "YYYY-MM-DD",
+    "Bible": "string (optional)"
   }
 }
 ```
@@ -272,3 +484,23 @@
     - Supports rich participant information that doesn't fit standard fields
     - Useful for special requirements, dietary restrictions, or administrative notes
     - Content should be sanitized for display in various formats
+11. **Department Leadership**: IsDepartmentChief checkbox identifies department leaders
+    - Critical for organizational hierarchy and delegation
+    - Can be used for filtering authorized users for administrative actions
+    - Should be synchronized with Department field for consistency
+12. **ROE Session Management**: ROE table enables Rollo assignment tracking
+    - Links Roista presenters and assistants to specific topics
+    - Lookup fields automatically show participant details for planning
+    - Supports multiple Roistas per topic through relationship fields
+13. **Bible Reading Coordination**: BibleReaders table manages reading assignments
+    - Tracks multiple readers per session with location and timing
+    - Enables scheduling and conflict detection through date fields
+    - Can generate reading schedules and participant notifications
+14. **Cross-Table Relationships**: Multiple relationship fields enable complex queries
+    - Roe and RoeAssistant fields in Participants show ROE involvement
+    - BibleReaders field shows reading assignments per participant
+    - Enables comprehensive participant activity tracking across events
+15. **Lookup Field Optimization**: Multiple lookup fields reduce API calls
+    - Computed fields automatically update when source records change
+    - Read-only fields prevent accidental data corruption
+    - Useful for displaying related data without additional queries

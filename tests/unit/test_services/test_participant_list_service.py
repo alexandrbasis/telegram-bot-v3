@@ -136,6 +136,21 @@ class TestParticipantListService:
         assert "Дата рождения:" not in formatted_list
 
     @pytest.mark.asyncio
+    async def test_candidate_list_excludes_department(
+        self, service, mock_repository, sample_candidate_participants
+    ):
+        """Candidate list output should omit department field entirely."""
+        mock_repository.get_by_role.return_value = sample_candidate_participants
+
+        result = await service.get_candidates_list(offset=0, page_size=20)
+        formatted_list = result["formatted_list"]
+
+        assert "Сидоров Сидор Сидорович" in formatted_list
+        assert "Департамент" not in formatted_list
+        assert "🏢" not in formatted_list
+        assert "⛪ Церковь:" in formatted_list
+
+    @pytest.mark.asyncio
     async def test_new_format_department_display(self, service, mock_repository):
         """Test new format displays department field correctly."""
         from src.models.participant import Department
