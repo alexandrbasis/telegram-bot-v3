@@ -8,6 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Complete Department Filtering User Workflow with Handler Integration** - Full end-to-end department filtering experience with integrated conversation handlers, navigation context preservation, and comprehensive Russian localization enabling seamless team member browsing by department (AGB-60, completed 2025-09-21, PR #51)
+  - Department selection handler with comprehensive filtering workflow (`src/bot/handlers/list_handlers.py:226-307`)
+    - Added handle_department_filter_selection function supporting all 15 filter options (13 departments + "Все участники" + "Без департамента")
+    - Complete integration with existing conversation flow routing from team role selection to department filtering
+    - Comprehensive error handling for empty departments, invalid callbacks, and Airtable API failures with user-friendly messaging
+    - Russian localized department names and interface text throughout the filtering workflow
+  - Enhanced role selection workflow with department routing integration (`src/bot/handlers/list_handlers.py:42-113`)
+    - Updated handle_role_selection to route team member selection through department filtering interface
+    - Maintains backward compatibility for candidate list selection with direct service integration
+    - Preserves existing conversation flow patterns while adding new department-based navigation paths
+  - Navigation context preservation across pagination and filtering (`src/bot/handlers/list_handlers.py:143-227`)
+    - Extended handle_list_navigation to maintain department filter state during pagination operations
+    - Added "🔄 Выбор департамента" navigation button for returning to department selection from filtered lists
+    - Complete state management preventing data loss during navigation and error recovery scenarios
+  - Conversation handler registration and integration (`src/bot/handlers/search_conversation.py:36,127,149`)
+    - Added department filter handler registration to main conversation flow with proper callback pattern matching
+    - Seamless integration with existing search conversation patterns and error handling workflows
+  - Comprehensive test coverage with complete workflow validation (`tests/unit/test_bot_handlers/test_list_handlers.py:720-1182`, `tests/integration/test_conversation_list_integration.py:223-516`)
+    - Unit tests covering all department selection scenarios, navigation flows, and error conditions with 100% handler coverage
+    - Integration tests validating complete user journey from role selection through department filtering to paginated results
+    - Real Airtable integration testing with credential guards ensuring production data consistency (`tests/integration/test_participant_list_service_repository.py:227-435`)
+  - Enhanced user experience features with visual indicators and localized interface
+    - Chief-first sorting with crown emoji indicators (👑) for department leaders in all filtered lists
+    - Russian department name translation with proper localization for all user-facing text
+    - Clear visual indication of active filter in list headers with member counts and navigation context
+    - Intuitive back navigation flow preserving filter context while enabling efficient department switching
 - **Repository and Service Layer Department Filtering with Chief-First Sorting** - Complete backend data layer implementation enabling efficient department-based participant filtering with hierarchical chief prioritization and visual indicators for enhanced administrative operations (AGB-59, completed 2025-01-21, PR #50)
   - Repository layer department filtering with comprehensive filtering method implementation (`src/data/repositories/participant_repository.py:372-398`)
     - Added get_team_members_by_department abstract method supporting department-specific participant retrieval with enum validation
