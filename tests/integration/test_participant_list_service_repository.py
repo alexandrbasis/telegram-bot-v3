@@ -226,8 +226,11 @@ class TestParticipantListServiceRepositoryIntegration:
 
 
 @pytest.mark.skipif(
-    not os.getenv("AIRTABLE_API_KEY") or not os.getenv("AIRTABLE_BASE_ID"),
-    reason="Airtable credentials not available - skipping real API integration tests",
+    not os.getenv("AIRTABLE_API_KEY")
+    or not os.getenv("AIRTABLE_BASE_ID")
+    or os.getenv("AIRTABLE_API_KEY") == "dummy"
+    or os.getenv("AIRTABLE_BASE_ID") in ["appTestBase", "dummy"],
+    reason="Airtable credentials not available or dummy values - skipping real API integration tests",
 )
 class TestParticipantListServiceAirtableIntegration:
     """Test participant list service with real Airtable repository integration."""
