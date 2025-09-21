@@ -303,7 +303,9 @@ def get_search_conversation_handler() -> ConversationHandler:
         ],
         # Timeout configuration: Convert minutes to seconds
         conversation_timeout=get_telegram_settings().conversation_timeout_minutes * 60,
-        allow_reentry=True,
+        # Disable allow_reentry to avoid duplicate handler execution when
+        # entry points overlap with state handlers (e.g., /start or menu buttons).
+        allow_reentry=False,
         per_message=False,  # Required for mixed handler types (CommandHandler + MessageHandler + CallbackQueryHandler)
         # Note: PTB may emit a warning about CallbackQueryHandler tracking, but this is expected
         # for mixed conversations and functionality works correctly as verified by tests
