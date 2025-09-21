@@ -93,7 +93,7 @@ def create_department_filter_keyboard() -> InlineKeyboardMarkup:
 
     # First row: Special "All participants" button
     keyboard.append(
-        [InlineKeyboardButton("🌐 Все участники", callback_data="list:filter:all")]
+        [InlineKeyboardButton("🌐 Все Тимы", callback_data="list:filter:all")]
     )
 
     # Department buttons - organize in rows of 3

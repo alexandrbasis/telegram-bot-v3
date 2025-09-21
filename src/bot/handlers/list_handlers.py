@@ -7,6 +7,7 @@ Get List → Role Selection → List Display
 
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
 from src.bot.handlers.search_handlers import SearchStates, main_menu_button
 from src.bot.keyboards.list_keyboards import (
@@ -62,7 +63,7 @@ async def handle_role_selection(
 
         message_text = (
             "Выберите департамент для фильтрации участников команды:\n\n"
-            "🌐 **Все участники** \\- показать всех участников команды\n"
+            "🌐 **Все Тимы** \\- показать всех участников команды\n"
             "🏢 **Департамент** \\- показать участников конкретного департамента\n"
             "❓ **Без департамента** \\- показать участников "
             "без назначенного департамента"
@@ -106,8 +107,9 @@ async def handle_role_selection(
 
         except Exception as e:
             # Handle errors gracefully
+            error_text = escape_markdown(str(e), version=2)
             await query.edit_message_text(
-                text=f"Произошла ошибка при получении списка участников: {str(e)}",
+                text=f"Произошла ошибка при получении списка участников: {error_text}",
                 parse_mode="MarkdownV2",
             )
 
@@ -144,7 +146,7 @@ async def handle_list_navigation(
 
         message_text = (
             "Выберите департамент для фильтрации участников команды:\n\n"
-            "🌐 **Все участники** \\- показать всех участников команды\n"
+            "🌐 **Все Тимы** \\- показать всех участников команды\n"
             "🏢 **Департамент** \\- показать участников конкретного департамента\n"
             "❓ **Без департамента** \\- показать участников "
             "без назначенного департамента"
@@ -218,8 +220,9 @@ async def handle_list_navigation(
             # Update context with new offset
             context.user_data["current_offset"] = new_offset
         except Exception as e:
+            error_text = escape_markdown(str(e), version=2)
             await query.edit_message_text(
-                text=f"Произошла ошибка при навигации: {str(e)}",
+                text=f"Произошла ошибка при навигации: {error_text}",
                 parse_mode="MarkdownV2",
             )
             return SearchStates.MAIN_MENU
@@ -233,12 +236,13 @@ async def handle_list_navigation(
                 )
                 # Format title with department filter indication
                 if current_department == "all":
-                    title = "**Список участников команды: Все участники**"
+                    title = "**Список участников команды: Все Тимы**"
                 elif current_department == "none":
                     title = "**Список участников команды: Без департамента**"
                 elif current_department:
                     dept_name_russian = department_to_russian(current_department)
-                    title = f"**Список участников команды: {dept_name_russian}**"
+                    dept_name_safe = escape_markdown(dept_name_russian, version=2)
+                    title = f"**Список участников команды: {dept_name_safe}**"
                 else:
                     title = "**Список участников команды**"
             elif current_role == "CANDIDATE":
@@ -278,8 +282,9 @@ async def handle_list_navigation(
 
         except Exception as e:
             # Handle errors gracefully
+            error_text = escape_markdown(str(e), version=2)
             await query.edit_message_text(
-                text=f"Произошла ошибка при навигации: {str(e)}",
+                text=f"Произошла ошибка при навигации: {error_text}",
                 parse_mode="MarkdownV2",
             )
             return SearchStates.MAIN_MENU
@@ -313,7 +318,7 @@ async def handle_department_filter_selection(
     # Determine department filter value
     if filter_type == "all":
         department_filter = None
-        department_name = "Все участники"
+        department_name = "Все Тимы"
         current_department = "all"
     elif filter_type == "none":
         department_filter = "unassigned"
@@ -328,6 +333,8 @@ async def handle_department_filter_selection(
             text="Неизвестный фильтр департамента", parse_mode="MarkdownV2"
         )
         return
+
+    department_name_safe = escape_markdown(department_name, version=2)
 
     # Store filter state in context for pagination
     context.user_data["current_role"] = "TEAM"
@@ -344,7 +351,7 @@ async def handle_department_filter_selection(
         )
 
         # Format title with department filter indication
-        title = f"**Список участников команды: {department_name}**"
+        title = f"**Список участников команды: {department_name_safe}**"
 
         # Format message with title and participant data
         start_pos = data["current_offset"] + 1
@@ -367,7 +374,8 @@ async def handle_department_filter_selection(
 
     except Exception as e:
         # Handle errors gracefully
+        error_text = escape_markdown(str(e), version=2)
         await query.edit_message_text(
-            text=f"Произошла ошибка при получении списка участников: {str(e)}",
+            text=f"Произошла ошибка при получении списка участников: {error_text}",
             parse_mode="MarkdownV2",
         )

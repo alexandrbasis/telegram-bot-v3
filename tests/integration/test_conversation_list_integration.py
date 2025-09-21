@@ -443,7 +443,7 @@ class TestDepartmentFilteringIntegration:
             mock_department_all_update.callback_query.edit_message_text.call_args
         )
         all_message = all_call_args[1]["text"]
-        assert "Все участники" in all_message
+        assert "Все Тимы" in all_message
         assert "Team Lead" in all_message
 
         # Verify context was updated correctly

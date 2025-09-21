@@ -157,19 +157,19 @@ class TestDepartmentFilterKeyboard:
 
         # Check special buttons have Russian text
         button_texts = [btn.text for btn in buttons]
-        assert "🌐 Все участники" in button_texts  # All participants
+        assert "🌐 Все Тимы" in button_texts  # All teams
         assert "❓ Без департамента" in button_texts  # No department
 
         # Check some department Russian translations are present
         assert "РОЭ" in button_texts
-        assert "Часовня" in button_texts
-        assert "Подготовка" in button_texts
+        assert "Чапл" in button_texts
+        assert "Сетап" in button_texts
         assert "Паланка" in button_texts
         assert "Администрация" in button_texts
         assert "Кухня" in button_texts
-        assert "Оформление" in button_texts
-        assert "Звонок" in button_texts
-        assert "Освежение" in button_texts
+        assert "Декорации" in button_texts
+        assert "Звонарь" in button_texts
+        assert "Рефрешмент" in button_texts
         assert "Прославление" in button_texts
         assert "Медиа" in button_texts
         assert "Духовенство" in button_texts
@@ -184,7 +184,7 @@ class TestDepartmentFilterKeyboard:
         assert len(rows) > 0
 
         # First row should have special "All participants" button
-        assert rows[0][0].text == "🌐 Все участники"
+        assert rows[0][0].text == "🌐 Все Тимы"
 
         # Last row should have "No department" button
         assert rows[-1][-1].text == "❓ Без департамента"
@@ -195,7 +195,7 @@ class TestDepartmentFilterKeyboard:
 
         # First button should be "All participants"
         first_button = keyboard.inline_keyboard[0][0]
-        assert first_button.text == "🌐 Все участники"
+        assert first_button.text == "🌐 Все Тимы"
         assert first_button.callback_data == "list:filter:all"
 
         # Last button should be "No department"

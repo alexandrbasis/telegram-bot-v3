@@ -174,8 +174,8 @@ class TestRoleSelectionHandler:
         # Should have department filter buttons
         buttons = [btn for row in keyboard.inline_keyboard for btn in row]
 
-        # Should have "All participants" button
-        all_buttons = [btn for btn in buttons if "Все участники" in btn.text]
+        # Should have "All teams" button
+        all_buttons = [btn for btn in buttons if "Все Тимы" in btn.text]
         assert len(all_buttons) == 1
 
 
@@ -277,7 +277,7 @@ class TestRoleSelectionWithServiceIntegration:
         # Check message text contains department selection prompt
         message_text = call_args[1]["text"]
         assert "Выберите департамент для фильтрации участников команды" in message_text
-        assert "🌐 **Все участники**" in message_text
+        assert "🌐 **Все Тимы**" in message_text
         assert "🏢 **Департамент**" in message_text
         assert "❓ **Без департамента**" in message_text
 
@@ -336,7 +336,7 @@ class TestRoleSelectionWithServiceIntegration:
         # Check first button is "All participants"
         first_row = keyboard.inline_keyboard[0]
         assert len(first_row) == 1
-        assert "Все участники" in first_row[0].text
+        assert "Все Тимы" in first_row[0].text
         assert first_row[0].callback_data == "list:filter:all"
 
         # Check last button is "No department"
@@ -936,7 +936,7 @@ class TestRoleSelectionWithDepartmentFilter:
         buttons = [btn for row in keyboard.inline_keyboard for btn in row]
 
         # Should have "All participants" button
-        all_buttons = [btn for btn in buttons if "Все участники" in btn.text]
+        all_buttons = [btn for btn in buttons if "Все Тимы" in btn.text]
         assert len(all_buttons) == 1
         assert all_buttons[0].callback_data == "list:filter:all"
 

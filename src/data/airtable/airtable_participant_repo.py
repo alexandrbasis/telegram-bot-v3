@@ -1384,7 +1384,7 @@ class AirtableParticipantRepository(ParticipantRepository):
                 pass
             elif department == "unassigned":
                 # Filter for participants with no department
-                base_conditions.append("IS_BLANK({Department})")
+                base_conditions.append("NOT({Department})")
             else:
                 # Validate department value against enum
                 from src.models.participant import Department

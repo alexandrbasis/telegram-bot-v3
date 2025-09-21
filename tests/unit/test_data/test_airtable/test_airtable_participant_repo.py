@@ -636,10 +636,7 @@ class TestAirtableParticipantRepositorySearch:
         call_args = call_kwargs.get("formula", "")
         assert "AND(" in call_args
         assert "{Role} = 'TEAM'" in call_args
-        assert (
-            "IS_BLANK({Department})" in call_args
-            or "{Department} = BLANK()" in call_args
-        )
+        assert "NOT({Department})" in call_args
 
         assert isinstance(result, list)
         assert len(result) == 1
