@@ -227,7 +227,7 @@ class TestParticipantListServiceRepositoryIntegration:
 
 @pytest.mark.skipif(
     not os.getenv("AIRTABLE_API_KEY") or not os.getenv("AIRTABLE_BASE_ID"),
-    reason="Airtable credentials not available - skipping real API integration tests"
+    reason="Airtable credentials not available - skipping real API integration tests",
 )
 class TestParticipantListServiceAirtableIntegration:
     """Test participant list service with real Airtable repository integration."""
@@ -236,6 +236,7 @@ class TestParticipantListServiceAirtableIntegration:
     def airtable_service(self):
         """Create participant list service with real Airtable repository."""
         from src.services.service_factory import get_participant_list_service
+
         return get_participant_list_service()
 
     @pytest.mark.asyncio
@@ -248,8 +249,8 @@ class TestParticipantListServiceAirtableIntegration:
         service = airtable_service
 
         # Verify service has repository with department filtering capability
-        assert hasattr(service, 'repository')
-        assert hasattr(service.repository, 'get_team_members_by_department')
+        assert hasattr(service, "repository")
+        assert hasattr(service.repository, "get_team_members_by_department")
 
     @pytest.mark.asyncio
     async def test_department_filtering_with_none_returns_all_team_members(
@@ -292,9 +293,7 @@ class TestParticipantListServiceAirtableIntegration:
             assert "🏢 Департамент: ROE" in result["formatted_list"]
 
     @pytest.mark.asyncio
-    async def test_department_filtering_with_unassigned_filter(
-        self, airtable_service
-    ):
+    async def test_department_filtering_with_unassigned_filter(self, airtable_service):
         """Test department filtering for participants without assigned departments."""
         # Test unassigned department filter
         result = await airtable_service.get_team_members_list(department="unassigned")
@@ -358,13 +357,13 @@ class TestParticipantListServiceAirtableIntegration:
             assert "1\\." in formatted_list  # At least first item
 
             # Check if any chiefs exist (they would have crown emoji)
-            lines = formatted_list.split('\n')
-            name_lines = [line for line in lines if '\\.' in line and '**' in line]
+            lines = formatted_list.split("\n")
+            name_lines = [line for line in lines if "\\." in line and "**" in line]
 
             # Each participant should have proper structure
             for line in name_lines:
                 # Should have either crown or no crown, but proper name formatting
-                assert '**' in line  # Bold names
+                assert "**" in line  # Bold names
 
     @pytest.mark.asyncio
     async def test_service_handles_nonexistent_department_gracefully(
@@ -399,12 +398,20 @@ class TestParticipantListServiceAirtableIntegration:
 
             # Each result should have consistent structure
             required_keys = [
-                "total_count", "formatted_list", "has_prev", "has_next",
-                "current_offset", "next_offset", "prev_offset", "actual_displayed"
+                "total_count",
+                "formatted_list",
+                "has_prev",
+                "has_next",
+                "current_offset",
+                "next_offset",
+                "prev_offset",
+                "actual_displayed",
             ]
 
             for key in required_keys:
-                assert key in result, f"Missing key {key} for department filter {department_filter}"
+                assert (
+                    key in result
+                ), f"Missing key {key} for department filter {department_filter}"
 
             # Types should be consistent
             assert isinstance(result["total_count"], int)
@@ -415,9 +422,7 @@ class TestParticipantListServiceAirtableIntegration:
             assert isinstance(result["actual_displayed"], int)
 
     @pytest.mark.asyncio
-    async def test_real_airtable_connection_and_field_mapping(
-        self, airtable_service
-    ):
+    async def test_real_airtable_connection_and_field_mapping(self, airtable_service):
         """Test that service can connect to real Airtable and map fields correctly."""
         # This is a connectivity test to ensure the integration works end-to-end
         try:
@@ -437,4 +442,6 @@ class TestParticipantListServiceAirtableIntegration:
         except Exception as e:
             # If connection fails, ensure it's a configuration issue, not a code issue
             # This test documents the expected behavior
-            pytest.fail(f"Airtable connection failed: {e}. Check configuration and network connectivity.")
+            pytest.fail(
+                f"Airtable connection failed: {e}. Check configuration and network connectivity."
+            )

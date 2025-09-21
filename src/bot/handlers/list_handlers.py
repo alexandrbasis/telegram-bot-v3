@@ -64,7 +64,8 @@ async def handle_role_selection(
             "Выберите департамент для фильтрации участников команды:\n\n"
             "🌐 **Все участники** \\- показать всех участников команды\n"
             "🏢 **Департамент** \\- показать участников конкретного департамента\n"
-            "❓ **Без департамента** \\- показать участников без назначенного департамента"
+            "❓ **Без департамента** \\- показать участников "
+            "без назначенного департамента"
         )
 
         keyboard = create_department_filter_keyboard()
@@ -89,7 +90,9 @@ async def handle_role_selection(
             start_pos = data["current_offset"] + 1
             end_pos = data["current_offset"] + data["actual_displayed"]
             # Escape parentheses and '-' for MarkdownV2
-            page_info = f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
+            page_info = (
+                f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
+            )
             message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
             # Add pagination keyboard based on data
@@ -120,7 +123,8 @@ async def handle_list_navigation(
     """
     Handle list navigation callbacks.
 
-    Processes list_nav:PREV, list_nav:NEXT, list_nav:DEPARTMENT, and list_nav:MAIN_MENU callbacks.
+    Processes list_nav:PREV, list_nav:NEXT, list_nav:DEPARTMENT, and
+    list_nav:MAIN_MENU callbacks.
 
     Returns:
         Next conversation state
@@ -142,7 +146,8 @@ async def handle_list_navigation(
             "Выберите департамент для фильтрации участников команды:\n\n"
             "🌐 **Все участники** \\- показать всех участников команды\n"
             "🏢 **Департамент** \\- показать участников конкретного департамента\n"
-            "❓ **Без департамента** \\- показать участников без назначенного департамента"
+            "❓ **Без департамента** \\- показать участников "
+            "без назначенного департамента"
         )
 
         keyboard = create_department_filter_keyboard()
@@ -260,7 +265,9 @@ async def handle_list_navigation(
             # Show department back button for team lists, not for candidate lists
             show_dept_back = current_role == "TEAM"
             keyboard = get_list_pagination_keyboard(
-                has_prev=data["has_prev"], has_next=data["has_next"], show_department_back=show_dept_back
+                has_prev=data["has_prev"],
+                has_next=data["has_next"],
+                show_department_back=show_dept_back,
             )
 
             await query.edit_message_text(
@@ -346,9 +353,12 @@ async def handle_department_filter_selection(
         page_info = f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
         message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
-        # Add pagination keyboard based on data (with department back button for team lists)
+        # Add pagination keyboard based on data
+        # (with department back button for team lists)
         keyboard = get_list_pagination_keyboard(
-            has_prev=data["has_prev"], has_next=data["has_next"], show_department_back=True
+            has_prev=data["has_prev"],
+            has_next=data["has_next"],
+            show_department_back=True,
         )
 
         await query.edit_message_text(

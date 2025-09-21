@@ -124,7 +124,9 @@ def get_search_conversation_handler() -> ConversationHandler:
                 CallbackQueryHandler(search_button, pattern="^search$"),
                 # List callback handlers for role selection, department filtering, and navigation
                 CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
-                CallbackQueryHandler(handle_department_filter_selection, pattern="^list:filter:"),
+                CallbackQueryHandler(
+                    handle_department_filter_selection, pattern="^list:filter:"
+                ),
                 CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
             ],
             SearchStates.SEARCH_MODE_SELECTION: [
@@ -146,7 +148,9 @@ def get_search_conversation_handler() -> ConversationHandler:
                 ),
                 # List handlers for role selection, department filtering, and navigation
                 CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
-                CallbackQueryHandler(handle_department_filter_selection, pattern="^list:filter:"),
+                CallbackQueryHandler(
+                    handle_department_filter_selection, pattern="^list:filter:"
+                ),
                 CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
             ],
             SearchStates.WAITING_FOR_NAME: [

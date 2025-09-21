@@ -110,9 +110,7 @@ class TestRoleSelectionHandler:
         return context
 
     @pytest.mark.asyncio
-    async def test_handle_team_role_selection(
-        self, mock_team_update, mock_context
-    ):
+    async def test_handle_team_role_selection(self, mock_team_update, mock_context):
         """Test team role selection triggers department selection display."""
         await handle_role_selection(mock_team_update, mock_context)
 
@@ -331,7 +329,9 @@ class TestRoleSelectionWithServiceIntegration:
 
         # Check that keyboard has expected structure
         # Should have "All participants" button, department buttons, and "No department" button
-        assert len(keyboard.inline_keyboard) >= 3  # At least all participants, some departments, no department
+        assert (
+            len(keyboard.inline_keyboard) >= 3
+        )  # At least all participants, some departments, no department
 
         # Check first button is "All participants"
         first_row = keyboard.inline_keyboard[0]
@@ -430,9 +430,13 @@ class TestPaginationNavigationHandler:
         # Verify service called twice: first with current offset, then with new offset
         assert mock_service.get_team_members_list.call_count == 2
         # First call gets pagination info from current offset (with default department=None)
-        mock_service.get_team_members_list.assert_any_call(department=None, offset=20, page_size=20)
+        mock_service.get_team_members_list.assert_any_call(
+            department=None, offset=20, page_size=20
+        )
         # Second call gets data for new offset (with default department=None)
-        mock_service.get_team_members_list.assert_any_call(department=None, offset=40, page_size=20)
+        mock_service.get_team_members_list.assert_any_call(
+            department=None, offset=40, page_size=20
+        )
 
         # Verify response includes range info (shows current data from service)
         call_args = mock_next_update.callback_query.edit_message_text.call_args
@@ -765,7 +769,9 @@ class TestDepartmentSelectionHandler:
         mock_get_service.return_value = mock_service
 
         # Execute
-        await handle_department_filter_selection(mock_all_participants_update, mock_context)
+        await handle_department_filter_selection(
+            mock_all_participants_update, mock_context
+        )
 
         # Should call service without department filter (None)
         mock_service.get_team_members_list.assert_called_once_with(
@@ -797,7 +803,9 @@ class TestDepartmentSelectionHandler:
         mock_get_service.return_value = mock_service
 
         # Execute
-        await handle_department_filter_selection(mock_no_department_update, mock_context)
+        await handle_department_filter_selection(
+            mock_no_department_update, mock_context
+        )
 
         # Should call service with "unassigned" filter
         mock_service.get_team_members_list.assert_called_once_with(
@@ -915,7 +923,10 @@ class TestRoleSelectionWithDepartmentFilter:
 
         message_text = call_args[1]["text"]
         # Should ask for department selection
-        assert "Выберите департамент" in message_text or "департамент" in message_text.lower()
+        assert (
+            "Выберите департамент" in message_text
+            or "департамент" in message_text.lower()
+        )
 
         # Should include department filter keyboard
         assert "reply_markup" in call_args[1]
@@ -935,7 +946,11 @@ class TestRoleSelectionWithDepartmentFilter:
         assert none_buttons[0].callback_data == "list:filter:none"
 
         # Should have at least one department button
-        dept_buttons = [btn for btn in buttons if btn.callback_data.startswith("list:filter:department:")]
+        dept_buttons = [
+            btn
+            for btn in buttons
+            if btn.callback_data.startswith("list:filter:department:")
+        ]
         assert len(dept_buttons) > 0
 
     @pytest.mark.asyncio
@@ -1011,7 +1026,7 @@ class TestNavigationWithDepartmentContext:
         context.user_data = {
             "current_role": "TEAM",
             "current_department": "Finance",
-            "current_offset": 0
+            "current_offset": 0,
         }
         return context
 
@@ -1022,7 +1037,7 @@ class TestNavigationWithDepartmentContext:
         context.user_data = {
             "current_role": "TEAM",
             "current_department": "all",
-            "current_offset": 20
+            "current_offset": 20,
         }
         return context
 
@@ -1054,7 +1069,9 @@ class TestNavigationWithDepartmentContext:
             "prev_offset": 0,
             "actual_displayed": 20,
         }
-        mock_service.get_team_members_list = AsyncMock(side_effect=[current_data, next_data])
+        mock_service.get_team_members_list = AsyncMock(
+            side_effect=[current_data, next_data]
+        )
         mock_get_service.return_value = mock_service
 
         # Execute
@@ -1102,7 +1119,9 @@ class TestNavigationWithDepartmentContext:
             "prev_offset": None,
             "actual_displayed": 20,
         }
-        mock_service.get_team_members_list = AsyncMock(side_effect=[current_data, prev_data])
+        mock_service.get_team_members_list = AsyncMock(
+            side_effect=[current_data, prev_data]
+        )
         mock_get_service.return_value = mock_service
 
         # Execute
@@ -1150,7 +1169,9 @@ class TestNavigationWithDepartmentContext:
             "prev_offset": 0,
             "actual_displayed": 20,
         }
-        mock_service.get_team_members_list = AsyncMock(side_effect=[current_data, next_data])
+        mock_service.get_team_members_list = AsyncMock(
+            side_effect=[current_data, next_data]
+        )
         mock_get_service.return_value = mock_service
 
         # Execute

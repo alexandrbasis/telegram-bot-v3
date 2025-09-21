@@ -291,7 +291,9 @@ class TestDepartmentFilteringIntegration:
         update.effective_user.id = 67890
         return update
 
-    def test_department_filter_callbacks_included_in_conversation(self, conversation_handler):
+    def test_department_filter_callbacks_included_in_conversation(
+        self, conversation_handler
+    ):
         """Test that department filter callbacks are included in conversation states."""
         # Check that list:filter callback handlers are included in conversation states
         callback_patterns = []
@@ -303,7 +305,9 @@ class TestDepartmentFilteringIntegration:
 
         # Should include patterns for department filter selection
         filter_patterns = [p for p in callback_patterns if "list:filter:" in p]
-        assert len(filter_patterns) > 0, "Should have department filter callback patterns"
+        assert (
+            len(filter_patterns) > 0
+        ), "Should have department filter callback patterns"
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.list_handlers.service_factory")
@@ -352,7 +356,9 @@ class TestDepartmentFilteringIntegration:
 
         # Verify department selection was shown
         mock_team_role_update.callback_query.edit_message_text.assert_called_once()
-        team_call_args = mock_team_role_update.callback_query.edit_message_text.call_args
+        team_call_args = (
+            mock_team_role_update.callback_query.edit_message_text.call_args
+        )
         team_message = team_call_args[1]["text"]
         assert "Выберите департамент" in team_message
 
@@ -369,7 +375,9 @@ class TestDepartmentFilteringIntegration:
 
         # Verify filtered list was shown
         mock_department_finance_update.callback_query.edit_message_text.assert_called_once()
-        finance_call_args = mock_department_finance_update.callback_query.edit_message_text.call_args
+        finance_call_args = (
+            mock_department_finance_update.callback_query.edit_message_text.call_args
+        )
         finance_message = finance_call_args[1]["text"]
         assert "Finance" in finance_message
         assert "Finance Chief" in finance_message
@@ -431,7 +439,9 @@ class TestDepartmentFilteringIntegration:
 
         # Verify all participants list was shown
         mock_department_all_update.callback_query.edit_message_text.assert_called_once()
-        all_call_args = mock_department_all_update.callback_query.edit_message_text.call_args
+        all_call_args = (
+            mock_department_all_update.callback_query.edit_message_text.call_args
+        )
         all_message = all_call_args[1]["text"]
         assert "Все участники" in all_message
         assert "Team Lead" in all_message
@@ -454,7 +464,7 @@ class TestDepartmentFilteringIntegration:
         mock_context.user_data = {
             "current_role": "TEAM",
             "current_department": "Finance",
-            "current_offset": 0
+            "current_offset": 0,
         }
 
         # Setup mock service
@@ -479,7 +489,9 @@ class TestDepartmentFilteringIntegration:
             "prev_offset": 0,
             "actual_displayed": 20,
         }
-        mock_service.get_team_members_list = AsyncMock(side_effect=[current_data, next_data])
+        mock_service.get_team_members_list = AsyncMock(
+            side_effect=[current_data, next_data]
+        )
         mock_service_factory.get_participant_list_service.return_value = mock_service
 
         # Find navigation handler
@@ -510,6 +522,8 @@ class TestDepartmentFilteringIntegration:
         assert mock_context.user_data["current_offset"] == 20
 
         # Verify department was preserved in title
-        nav_call_args = mock_navigation_next_update.callback_query.edit_message_text.call_args
+        nav_call_args = (
+            mock_navigation_next_update.callback_query.edit_message_text.call_args
+        )
         nav_message = nav_call_args[1]["text"]
         assert "Finance" in nav_message

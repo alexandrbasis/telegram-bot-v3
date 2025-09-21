@@ -61,7 +61,11 @@ def get_list_pagination_keyboard(
     # Add department selection button if this is a team list
     if show_department_back:
         keyboard.append(
-            [InlineKeyboardButton("🔄 Выбор департамента", callback_data="list_nav:DEPARTMENT")]
+            [
+                InlineKeyboardButton(
+                    "🔄 Выбор департамента", callback_data="list_nav:DEPARTMENT"
+                )
+            ]
         )
 
     # Always add main menu button
