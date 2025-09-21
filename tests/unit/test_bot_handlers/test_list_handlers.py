@@ -715,3 +715,208 @@ class TestTrimmingLogicAndPagination:
         assert (
             len(next_buttons) == 1
         ), "Should show NEXT button when has_next=True despite trimming"
+
+
+class TestDepartmentSelectionHandler:
+    """Test department selection handler functionality."""
+
+    @pytest.fixture
+    def mock_department_update(self):
+        """Create mock update for department filter selection."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list:filter:department:Finance"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_all_participants_update(self):
+        """Create mock update for all participants filter."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list:filter:all"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_no_department_update(self):
+        """Create mock update for no department filter."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list:filter:none"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_context(self):
+        """Create mock context."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_department_filter_selection_calls_service_with_department(
+        self, mock_get_service, mock_department_update, mock_context
+    ):
+        """Test department filter selection calls service with specific department."""
+        from src.bot.handlers.list_handlers import handle_department_filter_selection
+
+        # Setup mock service
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. 👑 **Finance Chief**\n",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 1,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
+                "actual_displayed": 1,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_department_filter_selection(mock_department_update, mock_context)
+
+        # Should call service with department filter
+        mock_service.get_team_members_list.assert_called_once_with(
+            department="Finance", offset=0, page_size=20
+        )
+
+        # Should answer callback and show filtered results
+        mock_department_update.callback_query.answer.assert_called_once()
+        mock_department_update.callback_query.edit_message_text.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_all_participants_filter_calls_service_without_department(
+        self, mock_get_service, mock_all_participants_update, mock_context
+    ):
+        """Test all participants filter calls service without department filter."""
+        from src.bot.handlers.list_handlers import handle_department_filter_selection
+
+        # Setup mock service
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. 👑 **All Team Members**\n",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 1,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
+                "actual_displayed": 1,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_department_filter_selection(mock_all_participants_update, mock_context)
+
+        # Should call service without department filter (None)
+        mock_service.get_team_members_list.assert_called_once_with(
+            department=None, offset=0, page_size=20
+        )
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_no_department_filter_calls_service_with_unassigned(
+        self, mock_get_service, mock_no_department_update, mock_context
+    ):
+        """Test no department filter calls service with unassigned filter."""
+        from src.bot.handlers.list_handlers import handle_department_filter_selection
+
+        # Setup mock service
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. **Unassigned Member**\n",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 1,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
+                "actual_displayed": 1,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_department_filter_selection(mock_no_department_update, mock_context)
+
+        # Should call service with "unassigned" filter
+        mock_service.get_team_members_list.assert_called_once_with(
+            department="unassigned", offset=0, page_size=20
+        )
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_department_filter_stores_context_state(
+        self, mock_get_service, mock_department_update, mock_context
+    ):
+        """Test department filter stores pagination and filter state in context."""
+        from src.bot.handlers.list_handlers import handle_department_filter_selection
+
+        # Setup mock service
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. **Finance Member**\n",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 1,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
+                "actual_displayed": 1,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_department_filter_selection(mock_department_update, mock_context)
+
+        # Should store role, department, and offset in context
+        assert mock_context.user_data["current_role"] == "TEAM"
+        assert mock_context.user_data["current_department"] == "Finance"
+        assert mock_context.user_data["current_offset"] == 0
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_department_filter_includes_filter_in_title(
+        self, mock_get_service, mock_department_update, mock_context
+    ):
+        """Test department filter includes department name in list title."""
+        from src.bot.handlers.list_handlers import handle_department_filter_selection
+
+        # Setup mock service
+        mock_service = Mock()
+        mock_service.get_team_members_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. **Finance Member**\n",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 1,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
+                "actual_displayed": 1,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_department_filter_selection(mock_department_update, mock_context)
+
+        # Should include department in title
+        call_args = mock_department_update.callback_query.edit_message_text.call_args
+        message_text = call_args[1]["text"]
+        assert "Finance" in message_text
