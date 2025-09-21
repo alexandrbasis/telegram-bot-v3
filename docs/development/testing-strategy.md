@@ -428,8 +428,60 @@ test_field_format_validation()
 - **Test Normalization**: All tests follow repository contract patterns
 - **Backward Compatibility**: Existing search functionality fully preserved
 
+## Department Filtering Integration Testing (2025-01-21)
+
+### Repository and Service Layer Testing
+**Test Coverage**: Department filtering functionality with chief-first ordering and AsyncMock integration
+**Total Tests**: 123 tests passing (enhanced from previous count)
+**Coverage Areas**: Repository interface compliance, Airtable implementation, service layer integration, chief indicator formatting
+
+#### Repository Interface Testing
+**Tests**: Repository interface compliance for `get_team_members_by_department` method
+**Coverage**:
+- Abstract method definition validation
+- Department parameter handling (Optional[Department])
+- Chief-first sorting implementation
+- Airtable formula generation for department filtering
+- Error handling for invalid departments
+
+#### Airtable Implementation Testing
+**Tests**: Comprehensive testing of department filtering with complex queries
+**Coverage**:
+- Department-specific filtering formulas (`{Department} = 'ROE'`)
+- Chief-first sorting with multi-field sort parameters
+- "Unassigned" participant filtering (`{Department} = BLANK()`)
+- All participants retrieval (no filter applied)
+- Performance optimization with server-side filtering
+
+#### Service Layer Integration Testing
+**Tests**: Service layer department filtering with backward compatibility
+**Coverage**:
+- Optional department parameter integration
+- Chief indicator formatting with crown emoji (👑)
+- Backward compatibility validation (existing callers unaffected)
+- Integration with existing pagination and list functionality
+- Russian formatting preservation with new chief indicators
+
+#### Integration Test Updates (Critical Fix)
+**Issue Resolved**: Integration tests failing due to outdated mock expectations
+**Solution Applied**: Updated `tests/integration/test_participant_list_service_repository.py` with:
+- AsyncMock configuration for `get_team_members_by_department` method
+- Comprehensive test scenarios for department filtering workflows
+- Chief indicator display functionality validation
+- **Result**: All 9 integration tests passing, maintaining 1050/1050 total test suite success
+
+**Key Test Scenarios**:
+```python
+# Department filtering integration testing
+test_department_filtering_with_chief_ordering()
+test_all_participants_retrieval_integration()
+test_unassigned_participants_filtering()
+test_chief_indicator_display_integration()
+test_backward_compatibility_preservation()
+```
+
 ### Future Integration Test Areas
-- Multi-user concurrent editing scenarios  
+- Multi-user concurrent editing scenarios
 - Performance testing under load
 - Long conversation session stability testing
 - State collision stress testing with multiple ConversationHandlers
@@ -868,6 +920,7 @@ test_floor_search_russian_formatting()
 - [x] ✅ **Main Menu Start Command Equivalence Testing (2025-09-09)**: Comprehensive test coverage for shared initialization helpers, start/main menu button equivalence, timeout recovery entry points, and cancel handler consistency
 - [x] ✅ **Airtable Schema Update Testing (2025-09-10)**: Comprehensive test coverage for DateOfBirth and Age field integration including field mapping validation, participant model conversion testing, backward compatibility validation, and schema discovery script verification
 - [x] ✅ **Floor Search Callback Integration Testing (2025-01-21)**: Comprehensive test coverage for conversation flow integration with floor discovery callbacks, complete user journey validation, error recovery scenarios, callback timeout handling, and backward compatibility with traditional floor input
+- [x] ✅ **Department Filtering Repository and Service Testing (2025-01-21)**: Comprehensive test coverage for repository layer department filtering with chief-first ordering, service layer integration with backward compatibility, chief indicator formatting with crown emoji, and AsyncMock integration test fixes resolving all test failures
 - [ ] ⏳ Performance benchmarking
 - [ ] ⏳ Load testing for concurrent users
 

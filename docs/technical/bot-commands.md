@@ -51,15 +51,18 @@ Search for participants on a specific floor with room-by-room breakdown. Feature
 - `/search_floor 1` - Find all participants on floor 1
 - `/search_floor Ground` - Find participants on ground floor
 
-### Department-Based Filtering
-Enhanced filtering capabilities for participant lists based on department assignments with chief identification.
+### Department-Based Filtering (Enhanced 2025-01-21)
+Enhanced filtering capabilities for participant lists based on department assignments with chief identification and prioritization.
 
 **Features:**
 - **Department Selection Interface**: 15-option keyboard (13 departments + "All participants" + "No department")
 - **Russian Interface**: All department names displayed in Russian with accurate translations
-- **Chief Identification**: Department chiefs highlighted in filtered results for priority access
+- **Chief Identification**: Department chiefs marked with crown emoji (👑) for visual recognition
+- **Chief-First Ordering**: Department chiefs automatically appear at top of all filtered lists
 - **Complete Coverage**: All 13 predefined departments accessible through intuitive selection
 - **Special Options**: "Все участники" for complete lists, "Без департамента" for unassigned members
+- **Server-Side Filtering**: Efficient Airtable queries reduce response times and data transfer
+- **Backward Compatibility**: Existing list functionality preserved with optional department parameter
 
 **Enhanced Interactive Features (2025-01-21):**
 - **Interactive Floor Discovery**: "Показать доступные этажи" button reveals available floors without guessing
@@ -115,7 +118,8 @@ View complete list of all team members with organizational details for logistics
 **Features:**
 - **Server-side Role Filtering**: Efficient Airtable filtering by role="TEAM"
 - **Department-Based Filtering**: Enhanced filtering with department selection keyboard (15 options)
-- **Chief Identification**: Department chiefs identified within filtered lists for organizational structure
+- **Chief Identification**: Department chiefs marked with crown emoji (👑) for organizational structure
+- **Chief-First Ordering**: Department chiefs automatically appear first in filtered lists
 - **Numbered List Format**: Sequential numbering (1., 2., 3.) for easy reference
 - **Organizational Information**: Full name (Russian), department, church affiliation
 - **Pagination**: Dynamic page size with Telegram 4096-character message limit handling
@@ -123,14 +127,14 @@ View complete list of all team members with organizational details for logistics
 
 **Display Example:**
 ```
-**Список участников команды** (элементы 1-20 из 45)
+**Список участников команды - Setup** (элементы 1-20 из 45)
 
-1. **Иван Петров**
+1. **👑 Иван Петров** (Руководитель отдела)
    🏢 Отдел: Setup
    ⛪ Церковь: Храм Христа Спасителя
 
 2. **Мария Иванова**
-   🏢 Отдел: Kitchen
+   🏢 Отдел: Setup
    ⛪ Церковь: Церковь Святого Николая
 
 ... (continues with remaining participants)
@@ -142,7 +146,8 @@ View complete list of all candidates with organizational context for administrat
 **Features:**
 - **Server-side Role Filtering**: Efficient Airtable filtering by role="CANDIDATE"
 - **Department Filtering**: Enhanced filtering capabilities with department selection interface
-- **Chief Identification**: Department chiefs highlighted within filtered lists for priority management
+- **Chief Identification**: Department chiefs marked with crown emoji (👑) for priority management
+- **Chief-First Ordering**: Department chiefs appear first in all filtered department lists
 - **Identical Format**: Same numbered list format and information display as team list
 - **Consistent Navigation**: Same pagination and navigation controls
 - **Administrative Focus**: Designed for candidate management and organizational planning
