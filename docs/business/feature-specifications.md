@@ -883,44 +883,69 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool
 - Data analytics and reporting dashboards
 - Export templates and customization options
 
-## Department Selection Interface
+## Department Filtering Feature
 
 ### Overview
-Foundational department selection keyboard interface enabling department-based filtering of participant lists with comprehensive Russian language support.
+Complete department filtering feature enabling users to navigate from team selection to department-specific participant lists with enhanced navigation and Russian localization.
 
 **Status**: ✅ Implemented (2025-01-19)
-**Implementation**: Department selection keyboard with 15 options and Russian translations
-**Test Coverage**: 15 new tests (100% pass rate)
+**Implementation**: Complete workflow with handler integration, navigation context preservation, and Russian translations
+**Test Coverage**: Comprehensive unit and integration tests (100% pass rate)
 
 ### Core Features
 
-#### 1. Department Selection Keyboard
+#### 1. Complete User Workflow
+- **Team Selection Integration**: Users navigate from "Team members" selection to department filtering interface
+- **Department Selection**: 15-option keyboard (13 departments + "All participants" + "No department")
+- **Filtered Results**: Department-specific participant lists with chief-first sorting
+- **Navigation Context**: Department filter state preserved through pagination and navigation
+- **Back Navigation**: Returns to department selection (not role selection) for intuitive workflow
+- **Russian Localization**: All interface elements translated with department_to_russian function
+
+#### 2. Department Selection Keyboard
 - **15-Option Interface**: 13 predefined departments plus 2 special options
 - **Department Coverage**: All departments from Department enum (ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate)
 - **Special Options**: "Все участники" (All participants) and "Без департамента" (No department)
 - **Russian Interface**: All department names displayed in Russian with accurate translations
 - **Keyboard Layout**: Intuitive 3-column layout optimized for mobile interaction
 
-#### 2. Department Chief Identification
+#### 3. Department Chief Identification and Sorting
 - **Model Extension**: Added IsDepartmentChief boolean field to Participant model
 - **Airtable Integration**: Field mapped to fldWAay3tQiXN9888 (Checkbox type)
+- **Chief-First Sorting**: Department chiefs automatically appear at top of filtered lists
+- **Visual Indicators**: Crown emoji (👑) marks department chiefs in all list displays
 - **Filtering Support**: Enables identification and prioritization of department chiefs
 - **Optional Field**: Backward compatible with existing participants (defaults to None/false)
 - **Validation**: Proper boolean handling with true/false/None support
 
-#### 3. Russian Translation Integration
+#### 4. Russian Translation Integration
 - **Translation System**: Uses existing DEPARTMENT_RUSSIAN translations from translations.py
 - **Consistency**: Maintains consistent Russian naming across all bot interfaces
 - **Callback Structure**: Uses English identifiers for callbacks while displaying Russian text
 - **Pattern**: Follows "list:filter:department:{dept_name}" callback pattern
+- **List Headers**: Department names translated in list headers and navigation elements
 
 ### Technical Implementation
+
+#### Handler Integration
+- **Department Selection Handler**: `handle_department_filter_selection()` in `src/bot/handlers/list_handlers.py` (lines 226-307)
+- **Role Selection Update**: Modified `handle_role_selection()` to route team selection to department filtering
+- **Navigation Enhancement**: Updated `handle_list_navigation()` to preserve department context through pagination
+- **Conversation Registration**: Department filter handler registered in `search_conversation.py`
+- **Callback Pattern**: Uses "list:filter:department:{dept_name}" for proper routing
+- **Russian Localization**: Integrated department_to_russian translation function
 
 #### Keyboard Generation
 - **Function**: `create_department_filter_keyboard()` in `src/bot/keyboards/list_keyboards.py`
 - **Button Creation**: InlineKeyboardButton objects with Russian text and English callback data
 - **Layout**: 3 buttons per row for optimal mobile usability
 - **Special Options**: All participants and no department options included for complete coverage
+
+#### Service Layer Integration
+- **Department Filtering**: Enhanced `get_team_members_list()` with optional department parameter
+- **Chief-First Sorting**: Leverages repository `get_team_members_by_department()` method
+- **Navigation Support**: Department filter state maintained in pagination metadata
+- **Server-Side Filtering**: Efficient Airtable queries with department and chief sorting
 
 #### Model Extensions
 - **Field**: `is_department_chief: Optional[bool] = None` in Participant model
@@ -945,28 +970,51 @@ Foundational department selection keyboard interface enabling department-based f
 
 ### Acceptance Criteria
 
-- [x] ✅ Department selection keyboard displays all 13 departments plus 2 special options
-- [x] ✅ All department names properly translated to Russian with accurate translations
-- [x] ✅ IsDepartmentChief field added to Participant model with proper validation
-- [x] ✅ Field mapping configured for Airtable integration (fldWAay3tQiXN9888)
-- [x] ✅ Keyboard layout optimized for mobile interaction with 3-column structure
-- [x] ✅ Callback data structure follows established pattern for handler processing
-- [x] ✅ Backward compatibility maintained with existing model consumers
-- [x] ✅ Comprehensive test coverage with 15 new tests passing
-- [x] ✅ Integration with existing Russian translation system
-- [x] ✅ Foundation ready for service layer integration and filtering implementation
+- [x] ✅ Complete user workflow from team selection to filtered results works smoothly
+- [x] ✅ All 15 filter options (13 departments + "All participants" + "No department") function correctly
+- [x] ✅ Navigation preserves context and provides intuitive back/forward flow
+- [x] ✅ Department selection keyboard displays all options with Russian translations
+- [x] ✅ Chief-first sorting shows department chiefs at top of filtered lists
+- [x] ✅ Navigation returns to department selection (not role selection) for better UX
+- [x] ✅ Department filter state preserved through pagination
+- [x] ✅ Russian localization throughout entire workflow
+- [x] ✅ IsDepartmentChief field integrated with proper validation
+- [x] ✅ Error scenarios handled gracefully without conversation interruption
+- [x] ✅ Comprehensive test coverage including unit and integration tests
+- [x] ✅ Backward compatibility maintained with existing functionality
 
-### Future Integration Points
+### Integration Points
+
+**Conversation Flow Integration**:
+- Seamless integration with existing list conversation handlers
+- Department filter handler registered in search_conversation.py
+- Navigation handlers enhanced to support department context preservation
+- Pagination logic extended to maintain filter state across pages
 
 **Service Layer Integration**:
-- Department-based filtering in participant list services
-- Chief identification in search results and list displays
-- Priority handling for department chiefs in organizational workflows
+- Enhanced participant list service with department filtering capabilities
+- Chief identification in search results and list displays with crown emoji
+- Repository integration with get_team_members_by_department method
+- Server-side filtering for efficient Airtable queries
 
-**UI Enhancement Opportunities**:
-- Department chief badges or indicators in participant displays
-- Department-specific workflows and permissions
+**Russian Localization Integration**:
+- Department name translation using existing translation system
+- Consistent Russian interface throughout filtering workflow
+- List headers showing current filter and member counts in Russian
+- Navigation buttons with proper Russian labels
+
+### Future Enhancement Opportunities
+
+**Advanced Filtering**:
+- Multi-department filtering capabilities
+- Department-specific permissions and workflows
 - Analytics and reporting based on department structure
+- Export functionality with department-based filtering
+
+**UI Enhancements**:
+- Department statistics and member distribution views
+- Department chief management interface
+- Bulk operations for department members
 
 ## Telegram Bot CSV Export Integration
 
