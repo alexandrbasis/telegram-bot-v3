@@ -127,30 +127,30 @@ Target: 90%+ coverage across model extensions, keyboard generation, and translat
     - **Done**: ✅ Serialization tests pass for all chief field values (true/false/None)
     - **Changelog**: Added serialization at line 236-237, deserialization at line 296. All 6 tests passing.
 
-- [ ] Step 2: Create Department Selection Keyboard
-  - [ ] Sub-step 2.1: Implement department selection keyboard generator
+- [x] ✅ Step 2: Create Department Selection Keyboard - Completed 2025-01-21 01:55
+  - [x] ✅ Sub-step 2.1: Implement department selection keyboard generator
     - **Directory**: `src/bot/keyboards/`
     - **Files to create/modify**: `src/bot/keyboards/list_keyboards.py`
     - **Accept**: Function `create_department_filter_keyboard()` generates 15-option keyboard
     - **Tests**: Write tests first in `tests/unit/test_bot_keyboards/test_list_keyboards.py`
-    - **Done**: Keyboard includes all departments plus "All" and "No department" options
-    - **Changelog**: [Will record: Added create_department_filter_keyboard() function with 3x5 layout]
+    - **Done**: ✅ Keyboard includes all departments plus "All" and "No department" options
+    - **Changelog**: Added create_department_filter_keyboard() with 15 buttons (13 departments + 2 special)
 
-  - [ ] Sub-step 2.2: Add department names to translation system
+  - [x] ✅ Sub-step 2.2: Add department names to translation system
     - **Directory**: `src/utils/`
     - **Files to create/modify**: `src/utils/translations.py` (create if doesn't exist)
     - **Accept**: DEPARTMENT_TRANSLATIONS dictionary with all 13 departments in Russian
     - **Tests**: Write tests first in `tests/unit/test_utils/test_translations.py`
-    - **Done**: All department names have accurate Russian translations
-    - **Changelog**: [Will record: Created/updated translations.py with DEPARTMENT_TRANSLATIONS dict]
+    - **Done**: ✅ All department names have accurate Russian translations
+    - **Changelog**: Used existing DEPARTMENT_RUSSIAN translations from translations.py
 
-  - [ ] Sub-step 2.3: Integrate translations with keyboard generation
+  - [x] ✅ Sub-step 2.3: Integrate translations with keyboard generation
     - **Directory**: `src/bot/keyboards/`
     - **Files to create/modify**: `src/bot/keyboards/list_keyboards.py`
     - **Accept**: Keyboard uses translated department names for button text
     - **Tests**: Verify in existing keyboard tests
-    - **Done**: All buttons display Russian text while callbacks use English identifiers
-    - **Changelog**: [Will record: Updated keyboard to use translations for button labels]
+    - **Done**: ✅ All buttons display Russian text while callbacks use English identifiers
+    - **Changelog**: Keyboard function imports and uses DEPARTMENT_RUSSIAN translations
 
 - [x] ✅ Step 3: Validate Foundation Components - Completed 2025-01-21 02:02
   - [x] ✅ Sub-step 3.1: Run comprehensive test suite
