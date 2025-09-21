@@ -858,30 +858,25 @@ class TestParticipantDepartmentChiefField:
         """Verify IsDepartmentChief field exists with correct type."""
         # Test creation with chief field set to True
         participant = Participant(
-            full_name_ru="Александр Басис",
-            is_department_chief=True
+            full_name_ru="Александр Басис", is_department_chief=True
         )
         assert participant.is_department_chief is True
 
         # Test creation with chief field set to False
         participant2 = Participant(
-            full_name_ru="Иван Иванов",
-            is_department_chief=False
+            full_name_ru="Иван Иванов", is_department_chief=False
         )
         assert participant2.is_department_chief is False
 
         # Test creation with chief field set to None (default)
-        participant3 = Participant(
-            full_name_ru="Петр Петров"
-        )
+        participant3 = Participant(full_name_ru="Петр Петров")
         assert participant3.is_department_chief is None
 
     def test_chief_field_serialization(self):
         """Validate chief status preserved during model serialization."""
         # Test with True value
         participant = Participant(
-            full_name_ru="Александр Басис",
-            is_department_chief=True
+            full_name_ru="Александр Басис", is_department_chief=True
         )
         airtable_fields = participant.to_airtable_fields()
         assert "IsDepartmentChief" in airtable_fields
@@ -889,18 +884,14 @@ class TestParticipantDepartmentChiefField:
 
         # Test with False value
         participant2 = Participant(
-            full_name_ru="Иван Иванов",
-            is_department_chief=False
+            full_name_ru="Иван Иванов", is_department_chief=False
         )
         airtable_fields2 = participant2.to_airtable_fields()
         assert "IsDepartmentChief" in airtable_fields2
         assert airtable_fields2["IsDepartmentChief"] is False
 
         # Test with None value (should not be in output)
-        participant3 = Participant(
-            full_name_ru="Петр Петров",
-            is_department_chief=None
-        )
+        participant3 = Participant(full_name_ru="Петр Петров", is_department_chief=None)
         airtable_fields3 = participant3.to_airtable_fields()
         assert "IsDepartmentChief" not in airtable_fields3
 
@@ -909,10 +900,7 @@ class TestParticipantDepartmentChiefField:
         # Test with True value
         record_true = {
             "id": "rec123456789",
-            "fields": {
-                "FullNameRU": "Александр Басис",
-                "IsDepartmentChief": True
-            }
+            "fields": {"FullNameRU": "Александр Басис", "IsDepartmentChief": True},
         }
         participant = Participant.from_airtable_record(record_true)
         assert participant.is_department_chief is True
@@ -920,21 +908,13 @@ class TestParticipantDepartmentChiefField:
         # Test with False value
         record_false = {
             "id": "rec987654321",
-            "fields": {
-                "FullNameRU": "Иван Иванов",
-                "IsDepartmentChief": False
-            }
+            "fields": {"FullNameRU": "Иван Иванов", "IsDepartmentChief": False},
         }
         participant2 = Participant.from_airtable_record(record_false)
         assert participant2.is_department_chief is False
 
         # Test with missing field (should default to None)
-        record_none = {
-            "id": "rec111111111",
-            "fields": {
-                "FullNameRU": "Петр Петров"
-            }
-        }
+        record_none = {"id": "rec111111111", "fields": {"FullNameRU": "Петр Петров"}}
         participant3 = Participant.from_airtable_record(record_none)
         assert participant3.is_department_chief is None
 
@@ -946,7 +926,7 @@ class TestParticipantDepartmentChiefField:
             full_name_en="Alexandr Basis",
             church="Грейс",
             department=Department.ADMINISTRATION,
-            role=Role.TEAM
+            role=Role.TEAM,
         )
 
         # Verify existing fields work as before
@@ -969,28 +949,23 @@ class TestParticipantDepartmentChiefField:
         """Validate model handles true/false/None values for chief field."""
         # Test with explicit boolean values
         participant_true = Participant(
-            full_name_ru="Chief True",
-            is_department_chief=True
+            full_name_ru="Chief True", is_department_chief=True
         )
         assert participant_true.is_department_chief is True
 
         participant_false = Participant(
-            full_name_ru="Chief False",
-            is_department_chief=False
+            full_name_ru="Chief False", is_department_chief=False
         )
         assert participant_false.is_department_chief is False
 
         # Test with None value
         participant_none = Participant(
-            full_name_ru="Chief None",
-            is_department_chief=None
+            full_name_ru="Chief None", is_department_chief=None
         )
         assert participant_none.is_department_chief is None
 
         # Test with no value provided (should default to None)
-        participant_default = Participant(
-            full_name_ru="Chief Default"
-        )
+        participant_default = Participant(full_name_ru="Chief Default")
         assert participant_default.is_department_chief is None
 
     def test_invalid_chief_field_value(self):
@@ -999,25 +974,27 @@ class TestParticipantDepartmentChiefField:
         with pytest.raises(ValidationError) as exc_info:
             Participant(
                 full_name_ru="Test User",
-                is_department_chief={"invalid": "dict"}  # Dict cannot be converted to bool
+                is_department_chief={
+                    "invalid": "dict"
+                },  # Dict cannot be converted to bool
             )
         assert "is_department_chief" in str(exc_info.value).lower()
 
         # Test that truthy values are converted (Pydantic behavior)
         participant_str = Participant(
             full_name_ru="Test User",
-            is_department_chief="yes"  # String converts to True
+            is_department_chief="yes",  # String converts to True
         )
         assert participant_str.is_department_chief is True
 
         participant_int = Participant(
             full_name_ru="Test User",
-            is_department_chief=1  # Integer 1 converts to True
+            is_department_chief=1,  # Integer 1 converts to True
         )
         assert participant_int.is_department_chief is True
 
         participant_zero = Participant(
             full_name_ru="Test User",
-            is_department_chief=0  # Integer 0 converts to False
+            is_department_chief=0,  # Integer 0 converts to False
         )
         assert participant_zero.is_department_chief is False

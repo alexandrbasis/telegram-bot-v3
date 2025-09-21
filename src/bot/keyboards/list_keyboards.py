@@ -74,14 +74,16 @@ def create_department_filter_keyboard() -> InlineKeyboardMarkup:
     Uses Russian translations for all department names.
 
     Returns:
-        InlineKeyboardMarkup with 3x5 layout (15 buttons total)
+        InlineKeyboardMarkup with 15 buttons total: first/last rows contain
+        single special buttons, middle rows group department buttons in
+        batches of three.
     """
     keyboard = []
 
     # First row: Special "All participants" button
-    keyboard.append([
-        InlineKeyboardButton("🌐 Все участники", callback_data="list:filter:all")
-    ])
+    keyboard.append(
+        [InlineKeyboardButton("🌐 Все участники", callback_data="list:filter:all")]
+    )
 
     # Department buttons - organize in rows of 3
     department_buttons = []
@@ -89,19 +91,18 @@ def create_department_filter_keyboard() -> InlineKeyboardMarkup:
         # Get Russian translation for department name
         russian_name = DEPARTMENT_RUSSIAN.get(department.value, department.value)
         button = InlineKeyboardButton(
-            russian_name,
-            callback_data=f"list:filter:department:{department.value}"
+            russian_name, callback_data=f"list:filter:department:{department.value}"
         )
         department_buttons.append(button)
 
     # Arrange department buttons in rows of 3
     for i in range(0, len(department_buttons), 3):
-        row = department_buttons[i:i+3]
+        row = department_buttons[i : i + 3]
         keyboard.append(row)
 
     # Last row: Special "No department" button
-    keyboard.append([
-        InlineKeyboardButton("❓ Без департамента", callback_data="list:filter:none")
-    ])
+    keyboard.append(
+        [InlineKeyboardButton("❓ Без департамента", callback_data="list:filter:none")]
+    )
 
     return InlineKeyboardMarkup(keyboard)

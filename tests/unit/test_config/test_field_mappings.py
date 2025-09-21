@@ -758,11 +758,15 @@ class TestFieldMappingCompleteness:
         assert field_id == "fldWAay3tQiXN9888"
 
         # Test Python to Airtable field name mapping for chief field
-        airtable_field_name = AirtableFieldMapping.get_airtable_field_name("is_department_chief")
+        airtable_field_name = AirtableFieldMapping.get_airtable_field_name(
+            "is_department_chief"
+        )
         assert airtable_field_name == "IsDepartmentChief"
 
         # Test reverse mapping
-        python_field_name = AirtableFieldMapping.get_python_field_name("IsDepartmentChief")
+        python_field_name = AirtableFieldMapping.get_python_field_name(
+            "IsDepartmentChief"
+        )
         assert python_field_name == "is_department_chief"
 
         # Test field type is checkbox (boolean)
