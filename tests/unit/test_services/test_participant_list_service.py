@@ -685,3 +685,163 @@ class TestParticipantListServiceDepartmentFiltering:
 
         with pytest.raises(RepositoryError, match="Database error"):
             await service.get_team_members_list(department="ROE", offset=0, page_size=20)
+
+
+class TestParticipantListServiceChiefIndicators:
+    """Test chief indicator formatting functionality in participant list service."""
+
+    @pytest.fixture
+    def mock_repository(self):
+        """Create mock participant repository."""
+        repository = Mock()
+        repository.get_team_members_by_department = AsyncMock()
+        return repository
+
+    @pytest.fixture
+    def service(self, mock_repository):
+        """Create participant list service with mock repository."""
+        return ParticipantListService(mock_repository)
+
+    @pytest.fixture
+    def sample_team_with_mixed_chiefs(self):
+        """Create sample team participants with mixed chief status for testing."""
+        return [
+            Participant(
+                full_name_ru="Главный ROE",
+                role=Role.TEAM,
+                department=Department.ROE,
+                is_department_chief=True,
+                church="Церковь A",
+            ),
+            Participant(
+                full_name_ru="Участник ROE",
+                role=Role.TEAM,
+                department=Department.ROE,
+                is_department_chief=False,
+                church="Церковь B",
+            ),
+            Participant(
+                full_name_ru="Без статуса",
+                role=Role.TEAM,
+                department=Department.CHAPEL,
+                is_department_chief=None,  # Explicitly None to test handling
+                church="Церковь C",
+            ),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_chief_indicator_display_for_chiefs(
+        self, service, mock_repository, sample_team_with_mixed_chiefs
+    ):
+        """Test that department chiefs display with crown emoji indicator."""
+        mock_repository.get_team_members_by_department.return_value = [sample_team_with_mixed_chiefs[0]]  # Only chief
+
+        result = await service.get_team_members_list(department="ROE", offset=0, page_size=20)
+        formatted_list = result["formatted_list"]
+
+        # Chief should have crown emoji indicator
+        assert "👑" in formatted_list
+        assert "Главный ROE" in formatted_list
+        # Crown should appear before the name
+        chief_line = next(line for line in formatted_list.split('\n') if "Главный ROE" in line)
+        crown_index = chief_line.find("👑")
+        name_index = chief_line.find("Главный ROE")
+        assert crown_index < name_index, "Crown emoji should appear before name"
+
+    @pytest.mark.asyncio
+    async def test_no_chief_indicator_for_regular_members(
+        self, service, mock_repository, sample_team_with_mixed_chiefs
+    ):
+        """Test that regular team members don't display crown emoji."""
+        mock_repository.get_team_members_by_department.return_value = [sample_team_with_mixed_chiefs[1]]  # Only regular member
+
+        result = await service.get_team_members_list(department="ROE", offset=0, page_size=20)
+        formatted_list = result["formatted_list"]
+
+        # Regular member should NOT have crown emoji
+        assert "👑" not in formatted_list
+        assert "Участник ROE" in formatted_list
+
+    @pytest.mark.asyncio
+    async def test_no_chief_indicator_for_null_status(
+        self, service, mock_repository, sample_team_with_mixed_chiefs
+    ):
+        """Test that participants with None chief status don't display crown emoji."""
+        mock_repository.get_team_members_by_department.return_value = [sample_team_with_mixed_chiefs[2]]  # None status
+
+        result = await service.get_team_members_list(department="Chapel", offset=0, page_size=20)
+        formatted_list = result["formatted_list"]
+
+        # Participant with None status should NOT have crown emoji
+        assert "👑" not in formatted_list
+        assert "Без статуса" in formatted_list
+
+    @pytest.mark.asyncio
+    async def test_mixed_team_chief_indicators(
+        self, service, mock_repository, sample_team_with_mixed_chiefs
+    ):
+        """Test chief indicators in mixed team with chiefs and regular members."""
+        mock_repository.get_team_members_by_department.return_value = sample_team_with_mixed_chiefs
+
+        result = await service.get_team_members_list(offset=0, page_size=20)
+        formatted_list = result["formatted_list"]
+
+        # Should have exactly one crown emoji (for the one chief)
+        crown_count = formatted_list.count("👑")
+        assert crown_count == 1
+
+        # Chief line should have crown
+        lines = formatted_list.split('\n')
+        chief_lines = [line for line in lines if "Главный ROE" in line]
+        assert len(chief_lines) > 0
+        assert "👑" in chief_lines[0]
+
+        # Regular member lines should not have crown
+        regular_lines = [line for line in lines if "Участник ROE" in line or "Без статуса" in line]
+        for line in regular_lines:
+            assert "👑" not in line
+
+    @pytest.mark.asyncio
+    async def test_chief_indicator_with_candidates_list(
+        self, service, mock_repository
+    ):
+        """Test that candidates list doesn't show chief indicators (only team members have departments)."""
+        candidates = [
+            Participant(
+                full_name_ru="Кандидат Иван",
+                role=Role.CANDIDATE,
+                church="Церковь X",
+            ),
+        ]
+        mock_repository.get_by_role = AsyncMock(return_value=candidates)
+
+        result = await service.get_candidates_list(offset=0, page_size=20)
+        formatted_list = result["formatted_list"]
+
+        # Candidates should never have crown emoji (no departments for candidates)
+        assert "👑" not in formatted_list
+        assert "Кандидат Иван" in formatted_list
+
+    @pytest.mark.asyncio
+    async def test_chief_indicator_formatting_consistency(
+        self, service, mock_repository
+    ):
+        """Test that chief indicator formatting is consistent with existing list formatting."""
+        chief_participant = Participant(
+            full_name_ru="Главный Тест",
+            role=Role.TEAM,
+            department=Department.KITCHEN,
+            is_department_chief=True,
+            church="Тестовая церковь",
+        )
+        mock_repository.get_team_members_by_department.return_value = [chief_participant]
+
+        result = await service.get_team_members_list(offset=0, page_size=20)
+        formatted_list = result["formatted_list"]
+
+        # Should maintain all existing formatting while adding crown
+        assert "👑" in formatted_list
+        assert "**Главный Тест**" in formatted_list  # Bold name formatting should be preserved
+        assert "🏢" in formatted_list  # Department emoji should be preserved
+        assert "⛪" in formatted_list  # Church emoji should be preserved
+        assert "Kitchen" in formatted_list  # Department value should be present

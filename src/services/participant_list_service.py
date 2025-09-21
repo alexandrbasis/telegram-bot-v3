@@ -183,7 +183,12 @@ class ParticipantListService:
             else "Неизвестно"
         )
 
-        lines = [f"{number}\\. **{name_str}**"]
+        # Add chief indicator if participant is a department chief
+        chief_indicator = ""
+        if participant.is_department_chief is True:
+            chief_indicator = "👑 "
+
+        lines = [f"{number}\\. {chief_indicator}**{name_str}**"]
 
         if include_department:
             if participant.department:
