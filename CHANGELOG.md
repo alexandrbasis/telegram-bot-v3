@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Complete Department Filtering User Workflow with Handler Integration** - Full end-to-end department filtering experience with integrated conversation handlers, navigation context preservation, and comprehensive Russian localization enabling seamless team member browsing by department (AGB-60, completed 2025-09-21, PR #51)
+- **Complete Department Filtering User Workflow with Handler Integration** - Full end-to-end department filtering experience with integrated conversation handlers, navigation context preservation, and comprehensive Russian localization enabling seamless team member browsing by department (AGB-60, completed 2025-09-21, PR #51, SHA 74e3df8, merged 2025-09-21)
   - Department selection handler with comprehensive filtering workflow (`src/bot/handlers/list_handlers.py:226-307`)
     - Added handle_department_filter_selection function supporting all 15 filter options (13 departments + "Все участники" + "Без департамента")
     - Complete integration with existing conversation flow routing from team role selection to department filtering
