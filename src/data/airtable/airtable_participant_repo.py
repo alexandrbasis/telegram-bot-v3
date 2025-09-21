@@ -1388,9 +1388,12 @@ class AirtableParticipantRepository(ParticipantRepository):
             else:
                 # Validate department value against enum
                 from src.models.participant import Department
+
                 valid_departments = [dept.value for dept in Department]
                 if department not in valid_departments:
-                    raise ValueError(f"Invalid department: {department}. Valid options: {valid_departments}")
+                    raise ValueError(
+                        f"Invalid department: {department}. Valid options: {valid_departments}"
+                    )
 
                 # Filter for specific department
                 escaped_dept = escape_formula_value(department)

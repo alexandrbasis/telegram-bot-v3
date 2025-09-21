@@ -568,10 +568,10 @@ class TestAirtableParticipantRepositorySearch:
         # Should call list_records with role filter and chief-first sorting
         mock_airtable_client.list_records.assert_called_once()
         call_kwargs = mock_airtable_client.list_records.call_args[1]
-        assert "{Role} = 'TEAM'" in call_kwargs.get('formula', '')
+        assert "{Role} = 'TEAM'" in call_kwargs.get("formula", "")
 
         # Check sorting parameter was passed
-        sort_param = call_kwargs.get('sort', [])
+        sort_param = call_kwargs.get("sort", [])
         expected_sort = ["-IsDepartmentChief", "Church"]
         assert sort_param == expected_sort
 
@@ -602,7 +602,7 @@ class TestAirtableParticipantRepositorySearch:
         # Should call list_records with both role and department filters
         mock_airtable_client.list_records.assert_called_once()
         call_kwargs = mock_airtable_client.list_records.call_args[1]
-        call_args = call_kwargs.get('formula', '')
+        call_args = call_kwargs.get("formula", "")
         assert "AND(" in call_args
         assert "{Role} = 'TEAM'" in call_args
         assert "{Department} = 'ROE'" in call_args
@@ -633,10 +633,13 @@ class TestAirtableParticipantRepositorySearch:
         # Should call list_records with role filter and null department check
         mock_airtable_client.list_records.assert_called_once()
         call_kwargs = mock_airtable_client.list_records.call_args[1]
-        call_args = call_kwargs.get('formula', '')
+        call_args = call_kwargs.get("formula", "")
         assert "AND(" in call_args
         assert "{Role} = 'TEAM'" in call_args
-        assert "IS_BLANK({Department})" in call_args or "{Department} = BLANK()" in call_args
+        assert (
+            "IS_BLANK({Department})" in call_args
+            or "{Department} = BLANK()" in call_args
+        )
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -659,7 +662,9 @@ class TestAirtableParticipantRepositorySearch:
             "API Error", 500
         )
 
-        with pytest.raises(RepositoryError, match="Failed to get team members by department"):
+        with pytest.raises(
+            RepositoryError, match="Failed to get team members by department"
+        ):
             await repository.get_team_members_by_department("ROE")
 
 

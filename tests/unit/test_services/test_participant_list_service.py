@@ -68,7 +68,9 @@ class TestParticipantListService:
         self, service, mock_repository, sample_team_participants
     ):
         """Test getting team members list."""
-        mock_repository.get_team_members_by_department.return_value = sample_team_participants
+        mock_repository.get_team_members_by_department.return_value = (
+            sample_team_participants
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
 
@@ -112,7 +114,9 @@ class TestParticipantListService:
         self, service, mock_repository, sample_team_participants
     ):
         """Test list formatting includes all required fields (updated format)."""
-        mock_repository.get_team_members_by_department.return_value = sample_team_participants
+        mock_repository.get_team_members_by_department.return_value = (
+            sample_team_participants
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -197,7 +201,9 @@ class TestParticipantListService:
         self, service, mock_repository, sample_team_participants
     ):
         """Test pagination for first page."""
-        mock_repository.get_team_members_by_department.return_value = sample_team_participants
+        mock_repository.get_team_members_by_department.return_value = (
+            sample_team_participants
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=1)
 
@@ -211,7 +217,9 @@ class TestParticipantListService:
         self, service, mock_repository, sample_team_participants
     ):
         """Test pagination for last page."""
-        mock_repository.get_team_members_by_department.return_value = sample_team_participants
+        mock_repository.get_team_members_by_department.return_value = (
+            sample_team_participants
+        )
 
         result = await service.get_team_members_list(offset=1, page_size=1)
 
@@ -350,7 +358,9 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that team list includes department field."""
-        mock_repository.get_team_members_by_department.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_with_department
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -365,7 +375,9 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that team list does NOT include birth date."""
-        mock_repository.get_team_members_by_department.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_with_department
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -383,7 +395,9 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that team list does NOT include clothing size."""
-        mock_repository.get_team_members_by_department.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_with_department
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -399,7 +413,9 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_empty_department
     ):
         """Test graceful handling when department field is empty or None."""
-        mock_repository.get_team_members_by_department.return_value = participants_with_empty_department
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_with_empty_department
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -414,7 +430,9 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that department text is properly formatted (escaping, truncation)."""
-        mock_repository.get_team_members_by_department.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_with_department
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -438,7 +456,9 @@ class TestTeamListDisplayUpdate:
                 role=Role.TEAM,
             ),
         ]
-        mock_repository.get_team_members_by_department.return_value = participants_without_department
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_without_department
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -462,7 +482,9 @@ class TestTeamListDisplayUpdate:
                 role=Role.TEAM,
             ),
         ]
-        mock_repository.get_team_members_by_department.return_value = participants_malformed
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_malformed
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
 
@@ -476,7 +498,9 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test full flow from team command to formatted results with department."""
-        mock_repository.get_team_members_by_department.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_with_department
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -500,7 +524,9 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that department displays correctly across paginated results."""
-        mock_repository.get_team_members_by_department.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = (
+            participants_with_department
+        )
 
         # Test first page
         result = await service.get_team_members_list(offset=0, page_size=1)
@@ -593,9 +619,13 @@ class TestParticipantListServiceDepartmentFiltering:
         self, service, mock_repository, sample_team_with_chiefs
     ):
         """Test team member list with specific department filter."""
-        mock_repository.get_team_members_by_department.return_value = sample_team_with_chiefs[:2]  # Only ROE members
+        mock_repository.get_team_members_by_department.return_value = (
+            sample_team_with_chiefs[:2]
+        )  # Only ROE members
 
-        result = await service.get_team_members_list(department="ROE", offset=0, page_size=20)
+        result = await service.get_team_members_list(
+            department="ROE", offset=0, page_size=20
+        )
 
         # Should call repository with department parameter
         mock_repository.get_team_members_by_department.assert_called_once_with("ROE")
@@ -611,7 +641,9 @@ class TestParticipantListServiceDepartmentFiltering:
         self, service, mock_repository, sample_team_with_chiefs
     ):
         """Test team member list without department filter (backward compatibility)."""
-        mock_repository.get_team_members_by_department.return_value = sample_team_with_chiefs
+        mock_repository.get_team_members_by_department.return_value = (
+            sample_team_with_chiefs
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
 
@@ -636,12 +668,18 @@ class TestParticipantListServiceDepartmentFiltering:
                 church="Церковь X",
             )
         ]
-        mock_repository.get_team_members_by_department.return_value = unassigned_participants
+        mock_repository.get_team_members_by_department.return_value = (
+            unassigned_participants
+        )
 
-        result = await service.get_team_members_list(department="unassigned", offset=0, page_size=20)
+        result = await service.get_team_members_list(
+            department="unassigned", offset=0, page_size=20
+        )
 
         # Should call repository with "unassigned" parameter
-        mock_repository.get_team_members_by_department.assert_called_once_with("unassigned")
+        mock_repository.get_team_members_by_department.assert_called_once_with(
+            "unassigned"
+        )
 
         assert isinstance(result, dict)
         assert "formatted_list" in result
@@ -651,7 +689,9 @@ class TestParticipantListServiceDepartmentFiltering:
         self, service, mock_repository, sample_team_with_chiefs
     ):
         """Test that new method preserves backward compatibility with original signature."""
-        mock_repository.get_team_members_by_department.return_value = sample_team_with_chiefs
+        mock_repository.get_team_members_by_department.return_value = (
+            sample_team_with_chiefs
+        )
 
         # Original signature should still work
         result = await service.get_team_members_list(offset=0, page_size=5)
@@ -671,10 +711,14 @@ class TestParticipantListServiceDepartmentFiltering:
         """Test error handling for invalid department value."""
         from src.data.repositories.participant_repository import RepositoryError
 
-        mock_repository.get_team_members_by_department.side_effect = ValueError("Invalid department")
+        mock_repository.get_team_members_by_department.side_effect = ValueError(
+            "Invalid department"
+        )
 
         with pytest.raises(ValueError, match="Invalid department"):
-            await service.get_team_members_list(department="InvalidDept", offset=0, page_size=20)
+            await service.get_team_members_list(
+                department="InvalidDept", offset=0, page_size=20
+            )
 
     @pytest.mark.asyncio
     async def test_get_team_members_list_repository_error(
@@ -683,10 +727,14 @@ class TestParticipantListServiceDepartmentFiltering:
         """Test error handling when repository fails."""
         from src.data.repositories.participant_repository import RepositoryError
 
-        mock_repository.get_team_members_by_department.side_effect = RepositoryError("Database error")
+        mock_repository.get_team_members_by_department.side_effect = RepositoryError(
+            "Database error"
+        )
 
         with pytest.raises(RepositoryError, match="Database error"):
-            await service.get_team_members_list(department="ROE", offset=0, page_size=20)
+            await service.get_team_members_list(
+                department="ROE", offset=0, page_size=20
+            )
 
 
 class TestParticipantListServiceChiefIndicators:
@@ -736,16 +784,22 @@ class TestParticipantListServiceChiefIndicators:
         self, service, mock_repository, sample_team_with_mixed_chiefs
     ):
         """Test that department chiefs display with crown emoji indicator."""
-        mock_repository.get_team_members_by_department.return_value = [sample_team_with_mixed_chiefs[0]]  # Only chief
+        mock_repository.get_team_members_by_department.return_value = [
+            sample_team_with_mixed_chiefs[0]
+        ]  # Only chief
 
-        result = await service.get_team_members_list(department="ROE", offset=0, page_size=20)
+        result = await service.get_team_members_list(
+            department="ROE", offset=0, page_size=20
+        )
         formatted_list = result["formatted_list"]
 
         # Chief should have crown emoji indicator
         assert "👑" in formatted_list
         assert "Главный ROE" in formatted_list
         # Crown should appear before the name
-        chief_line = next(line for line in formatted_list.split('\n') if "Главный ROE" in line)
+        chief_line = next(
+            line for line in formatted_list.split("\n") if "Главный ROE" in line
+        )
         crown_index = chief_line.find("👑")
         name_index = chief_line.find("Главный ROE")
         assert crown_index < name_index, "Crown emoji should appear before name"
@@ -755,9 +809,13 @@ class TestParticipantListServiceChiefIndicators:
         self, service, mock_repository, sample_team_with_mixed_chiefs
     ):
         """Test that regular team members don't display crown emoji."""
-        mock_repository.get_team_members_by_department.return_value = [sample_team_with_mixed_chiefs[1]]  # Only regular member
+        mock_repository.get_team_members_by_department.return_value = [
+            sample_team_with_mixed_chiefs[1]
+        ]  # Only regular member
 
-        result = await service.get_team_members_list(department="ROE", offset=0, page_size=20)
+        result = await service.get_team_members_list(
+            department="ROE", offset=0, page_size=20
+        )
         formatted_list = result["formatted_list"]
 
         # Regular member should NOT have crown emoji
@@ -769,9 +827,13 @@ class TestParticipantListServiceChiefIndicators:
         self, service, mock_repository, sample_team_with_mixed_chiefs
     ):
         """Test that participants with None chief status don't display crown emoji."""
-        mock_repository.get_team_members_by_department.return_value = [sample_team_with_mixed_chiefs[2]]  # None status
+        mock_repository.get_team_members_by_department.return_value = [
+            sample_team_with_mixed_chiefs[2]
+        ]  # None status
 
-        result = await service.get_team_members_list(department="Chapel", offset=0, page_size=20)
+        result = await service.get_team_members_list(
+            department="Chapel", offset=0, page_size=20
+        )
         formatted_list = result["formatted_list"]
 
         # Participant with None status should NOT have crown emoji
@@ -783,7 +845,9 @@ class TestParticipantListServiceChiefIndicators:
         self, service, mock_repository, sample_team_with_mixed_chiefs
     ):
         """Test chief indicators in mixed team with chiefs and regular members."""
-        mock_repository.get_team_members_by_department.return_value = sample_team_with_mixed_chiefs
+        mock_repository.get_team_members_by_department.return_value = (
+            sample_team_with_mixed_chiefs
+        )
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -793,20 +857,20 @@ class TestParticipantListServiceChiefIndicators:
         assert crown_count == 1
 
         # Chief line should have crown
-        lines = formatted_list.split('\n')
+        lines = formatted_list.split("\n")
         chief_lines = [line for line in lines if "Главный ROE" in line]
         assert len(chief_lines) > 0
         assert "👑" in chief_lines[0]
 
         # Regular member lines should not have crown
-        regular_lines = [line for line in lines if "Участник ROE" in line or "Без статуса" in line]
+        regular_lines = [
+            line for line in lines if "Участник ROE" in line or "Без статуса" in line
+        ]
         for line in regular_lines:
             assert "👑" not in line
 
     @pytest.mark.asyncio
-    async def test_chief_indicator_with_candidates_list(
-        self, service, mock_repository
-    ):
+    async def test_chief_indicator_with_candidates_list(self, service, mock_repository):
         """Test that candidates list doesn't show chief indicators (only team members have departments)."""
         candidates = [
             Participant(
@@ -836,14 +900,18 @@ class TestParticipantListServiceChiefIndicators:
             is_department_chief=True,
             church="Тестовая церковь",
         )
-        mock_repository.get_team_members_by_department.return_value = [chief_participant]
+        mock_repository.get_team_members_by_department.return_value = [
+            chief_participant
+        ]
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
 
         # Should maintain all existing formatting while adding crown
         assert "👑" in formatted_list
-        assert "**Главный Тест**" in formatted_list  # Bold name formatting should be preserved
+        assert (
+            "**Главный Тест**" in formatted_list
+        )  # Bold name formatting should be preserved
         assert "🏢" in formatted_list  # Department emoji should be preserved
         assert "⛪" in formatted_list  # Church emoji should be preserved
         assert "Kitchen" in formatted_list  # Department value should be present

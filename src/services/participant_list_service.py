@@ -30,12 +30,14 @@ class ParticipantListService:
         self, department: Optional[str] = None, offset: int = 0, page_size: int = 20
     ) -> Dict[str, Any]:
         """
-        Get formatted team members list with optional department filtering and offset-based pagination.
+        Get formatted team members list with optional department filtering and
+        offset-based pagination.
 
         Args:
             department: Optional department filter. Options:
                        - None: Return all team members (default, backward compatible)
-                       - Department enum value (e.g., "ROE", "Chapel"): Filter by specific department
+                       - Department enum value (e.g., "ROE", "Chapel"):
+                         Filter by specific department
                        - "unassigned": Return only participants with no department
             offset: Starting offset in the participants list (0-indexed)
             page_size: Number of participants per page

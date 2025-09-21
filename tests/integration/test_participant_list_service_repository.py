@@ -84,7 +84,9 @@ class TestParticipantListServiceRepositoryIntegration:
         await service.get_team_members_list(department="unassigned")
 
         # Verify - should call new method with unassigned filter
-        mock_repository.get_team_members_by_department.assert_called_once_with("unassigned")
+        mock_repository.get_team_members_by_department.assert_called_once_with(
+            "unassigned"
+        )
 
     @pytest.mark.asyncio
     async def test_service_processes_repository_team_results(
@@ -184,7 +186,11 @@ class TestParticipantListServiceRepositoryIntegration:
         assert result["total_count"] == 2
         assert "👑 **Начальник Департамента**" in result["formatted_list"]
         # Verify no crown for regular member by checking the line containing their name
-        lines_with_regular_member = [line for line in result["formatted_list"].split('\n') if "Обычный Участник" in line]
+        lines_with_regular_member = [
+            line
+            for line in result["formatted_list"].split("\n")
+            if "Обычный Участник" in line
+        ]
         assert len(lines_with_regular_member) == 1
         assert "👑" not in lines_with_regular_member[0]
 
