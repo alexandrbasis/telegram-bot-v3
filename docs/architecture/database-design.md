@@ -46,6 +46,9 @@ class Participant(BaseModel):
     table_name: Optional[str]     # Event seating management (CANDIDATE only)
     notes: Optional[str]          # Multiline administrative notes
 
+    # Leadership and management (Added 2025-01-19)
+    is_department_chief: Optional[bool]  # Department chief identification
+
     # Administrative
     submitted_by: Optional[str]
 ```
@@ -62,6 +65,9 @@ class Participant(BaseModel):
 - `table_name`: Role-restricted field (CANDIDATE only) for event seating arrangements
 - `notes`: Multiline text field for administrative information and special requirements
 
+**Leadership Identification Fields (2025-01-19)**:
+- `is_department_chief`: Optional boolean field for identifying department chiefs within their assigned departments
+
 **Role-Based Field Access**:
 - `table_name` field has business logic restrictions:
   - Only visible in UI when participant role is CANDIDATE
@@ -70,13 +76,16 @@ class Participant(BaseModel):
 
 ### Airtable Schema Mapping
 
-#### Extended Field Mappings (Updated 2025-01-14)
+#### Extended Field Mappings (Updated 2025-01-19)
 ```python
 FIELD_MAPPINGS = {
     # Extended participant fields
     "church_leader": "fldbQr0R6nEtg1nXM",   # ChurchLeader (Single line text)
     "table_name": "fldwIopXniSHk94v9",     # TableName (Single line text)
     "notes": "fldL4wmlV9de1kKa1",         # Notes (Long text)
+
+    # Leadership identification fields
+    "is_department_chief": "fldWAay3tQiXN9888",  # IsDepartmentChief (Checkbox)
 
     # Existing fields
     "full_name_ru": "fldXXXXXXXXXXXXX",    # Full Name Russian
@@ -89,6 +98,7 @@ FIELD_MAPPINGS = {
 - **ChurchLeader**: Airtable Single line text → Python Optional[str]
 - **TableName**: Airtable Single line text → Python Optional[str] (role-restricted)
 - **Notes**: Airtable Long text → Python Optional[str] (multiline support)
+- **IsDepartmentChief**: Airtable Checkbox → Python Optional[bool] (department leadership indicator)
 
 ### Data Access Patterns
 
@@ -109,6 +119,10 @@ class ParticipantUpdateService:
     TEXT_FIELDS = [
         'full_name_ru', 'full_name_en', 'church', 'location', 'contact',
         'submitted_by', 'church_leader', 'table_name', 'notes'  # Extended fields
+    ]
+
+    BOOLEAN_FIELDS = [
+        'is_department_chief'  # Leadership identification fields
     ]
 
     def validate_field_input(self, field_name: str, value: str) -> ValidationResult:

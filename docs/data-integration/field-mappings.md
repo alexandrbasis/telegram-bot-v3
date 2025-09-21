@@ -20,6 +20,9 @@ FIELD_MAPPINGS = {
     "church_leader": "fldbQr0R6nEtg1nXM",   # ChurchLeader field in Airtable
     "table_name": "fldwIopXniSHk94v9",     # TableName field in Airtable
     "notes": "fldL4wmlV9de1kKa1",         # Notes field in Airtable
+
+    # Leadership identification fields (Added 2025-01-19)
+    "is_department_chief": "fldWAay3tQiXN9888",  # IsDepartmentChief field in Airtable
     
     # Other participant fields
     "full_name_ru": "fld...",
@@ -140,6 +143,15 @@ Resolved critical bugs affecting participant editing interface:
 - **Full Display**: Complete notes shown in detailed participant view with proper escaping
 - **Edit Interface**: Multiline text input field with Russian prompt "Отправьте заметки"
 - **Markdown Safety**: Content properly escaped to prevent formatting injection
+
+#### IsDepartmentChief Field Integration (Added 2025-01-19)
+- **Internal Model**: `is_department_chief: Optional[bool]`
+- **Airtable Field**: "IsDepartmentChief"
+- **Data Type**: Checkbox (boolean)
+- **Validation**: Optional boolean field with true/false/None handling
+- **Usage**: Identify department chiefs for filtering and prioritization in participant lists
+- **UI Integration**: Boolean field support with proper serialization/deserialization
+- **Business Logic**: Enables department-based filtering with chief identification
 
 ### Security Enhancements
 
@@ -280,13 +292,14 @@ The three new participant fields have been thoroughly tested with comprehensive 
 Field IDs have been validated through comprehensive integration testing with actual Airtable API calls:
 
 ```python
-# Verified field mappings (Integration tested 2025-09-05, Extended 2025-01-14)
+# Verified field mappings (Integration tested 2025-09-05, Extended 2025-01-19)
 FIELD_MAPPINGS = {
     "room_number": "fldJTPjo8AHQaADVu",  # Validated: TEXT type, alphanumeric support
     "floor": "fldlzG1sVg01hsy2g",        # Validated: Union[int, str] support
     "church_leader": "fldbQr0R6nEtg1nXM", # Validated: TEXT type, optional
     "table_name": "fldwIopXniSHk94v9",   # Validated: TEXT type, role-restricted
     "notes": "fldL4wmlV9de1kKa1",       # Validated: LONG_TEXT type, multiline
+    "is_department_chief": "fldWAay3tQiXN9888",  # Validated: CHECKBOX type, boolean
 }
 ```
 
