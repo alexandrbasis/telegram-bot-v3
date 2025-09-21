@@ -443,10 +443,10 @@ class TestPaginationNavigationHandler:
 
         # Verify service called twice: first with current offset, then with new offset
         assert mock_service.get_team_members_list.call_count == 2
-        # First call gets pagination info from current offset
-        mock_service.get_team_members_list.assert_any_call(offset=20, page_size=20)
-        # Second call gets data for new offset
-        mock_service.get_team_members_list.assert_any_call(offset=40, page_size=20)
+        # First call gets pagination info from current offset (with default department=None)
+        mock_service.get_team_members_list.assert_any_call(department=None, offset=20, page_size=20)
+        # Second call gets data for new offset (with default department=None)
+        mock_service.get_team_members_list.assert_any_call(department=None, offset=40, page_size=20)
 
         # Verify response includes range info (shows current data from service)
         call_args = mock_next_update.callback_query.edit_message_text.call_args
@@ -484,7 +484,7 @@ class TestPaginationNavigationHandler:
         # Should stay at offset 0 (no prev_offset available)
         assert context.user_data["current_offset"] == 0
         mock_service.get_team_members_list.assert_called_once_with(
-            offset=0, page_size=20
+            department=None, offset=0, page_size=20
         )
 
     @pytest.mark.asyncio
@@ -619,15 +619,11 @@ class TestPaginationNavigationHandler:
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {}
 
-        # Execute (note: this will fail because service isn't mocked, but we want to check state storage)
-        try:
-            await handle_role_selection(update, context)
-        except Exception:
-            pass  # Ignore service errors, we're testing state storage
+        # Execute
+        await handle_role_selection(update, context)
 
-        # Verify state stored
-        assert context.user_data["current_role"] == "TEAM"
-        assert context.user_data["current_offset"] == 0
+        # Verify state stored (TEAM role now stores selected_role and shows department selection)
+        assert context.user_data["selected_role"] == "TEAM"
 
 
 class TestTrimmingLogicAndPagination:
@@ -998,3 +994,184 @@ class TestRoleSelectionWithDepartmentFilter:
 
         # Should store team role in context for later use by department filter
         assert mock_context.user_data.get("selected_role") == "TEAM"
+
+
+class TestNavigationWithDepartmentContext:
+    """Test navigation handlers with department filtering context."""
+
+    @pytest.fixture
+    def mock_next_update(self):
+        """Create mock update for next page navigation."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_nav:NEXT"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_prev_update(self):
+        """Create mock update for previous page navigation."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_nav:PREV"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_department_context(self):
+        """Create mock context with department filtering state."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            "current_role": "TEAM",
+            "current_department": "Finance",
+            "current_offset": 0
+        }
+        return context
+
+    @pytest.fixture
+    def mock_all_participants_context(self):
+        """Create mock context with 'all participants' filtering state."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {
+            "current_role": "TEAM",
+            "current_department": "all",
+            "current_offset": 20
+        }
+        return context
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_navigation_preserves_department_filter(
+        self, mock_get_service, mock_next_update, mock_department_context
+    ):
+        """Test that navigation preserves department filter when paginating."""
+        # Setup mock service
+        mock_service = Mock()
+        current_data = {
+            "formatted_list": "1\\. **Finance Member 1**\n",
+            "has_prev": False,
+            "has_next": True,
+            "total_count": 50,
+            "current_offset": 0,
+            "next_offset": 20,
+            "prev_offset": None,
+            "actual_displayed": 20,
+        }
+        next_data = {
+            "formatted_list": "21\\. **Finance Member 21**\n",
+            "has_prev": True,
+            "has_next": True,
+            "total_count": 50,
+            "current_offset": 20,
+            "next_offset": 40,
+            "prev_offset": 0,
+            "actual_displayed": 20,
+        }
+        mock_service.get_team_members_list = AsyncMock(side_effect=[current_data, next_data])
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_list_navigation(mock_next_update, mock_department_context)
+
+        # Should call service twice with Finance department filter preserved
+        assert mock_service.get_team_members_list.call_count == 2
+        # First call for current offset
+        mock_service.get_team_members_list.assert_any_call(
+            department="Finance", offset=0, page_size=20
+        )
+        # Second call for new offset
+        mock_service.get_team_members_list.assert_any_call(
+            department="Finance", offset=20, page_size=20
+        )
+
+        # Should update context offset
+        assert mock_department_context.user_data["current_offset"] == 20
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_navigation_preserves_all_participants_filter(
+        self, mock_get_service, mock_prev_update, mock_all_participants_context
+    ):
+        """Test that navigation preserves 'all participants' filter (None department)."""
+        # Setup mock service
+        mock_service = Mock()
+        current_data = {
+            "formatted_list": "21\\. **All Member 21**\n",
+            "has_prev": True,
+            "has_next": True,
+            "total_count": 50,
+            "current_offset": 20,
+            "next_offset": 40,
+            "prev_offset": 0,
+            "actual_displayed": 20,
+        }
+        prev_data = {
+            "formatted_list": "1\\. **All Member 1**\n",
+            "has_prev": False,
+            "has_next": True,
+            "total_count": 50,
+            "current_offset": 0,
+            "next_offset": 20,
+            "prev_offset": None,
+            "actual_displayed": 20,
+        }
+        mock_service.get_team_members_list = AsyncMock(side_effect=[current_data, prev_data])
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_list_navigation(mock_prev_update, mock_all_participants_context)
+
+        # Should call service twice with None department filter (all participants)
+        assert mock_service.get_team_members_list.call_count == 2
+        # First call for current offset
+        mock_service.get_team_members_list.assert_any_call(
+            department=None, offset=20, page_size=20
+        )
+        # Second call for new offset
+        mock_service.get_team_members_list.assert_any_call(
+            department=None, offset=0, page_size=20
+        )
+
+        # Should update context offset
+        assert mock_all_participants_context.user_data["current_offset"] == 0
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_navigation_shows_department_in_title(
+        self, mock_get_service, mock_next_update, mock_department_context
+    ):
+        """Test that navigation displays department filter in list title."""
+        # Setup mock service
+        mock_service = Mock()
+        current_data = {
+            "formatted_list": "1\\. **Finance Member 1**\n",
+            "has_prev": False,
+            "has_next": True,
+            "total_count": 50,
+            "current_offset": 0,
+            "next_offset": 20,
+            "prev_offset": None,
+            "actual_displayed": 20,
+        }
+        next_data = {
+            "formatted_list": "21\\. **Finance Member 21**\n",
+            "has_prev": True,
+            "has_next": True,
+            "total_count": 50,
+            "current_offset": 20,
+            "next_offset": 40,
+            "prev_offset": 0,
+            "actual_displayed": 20,
+        }
+        mock_service.get_team_members_list = AsyncMock(side_effect=[current_data, next_data])
+        mock_get_service.return_value = mock_service
+
+        # Execute
+        await handle_list_navigation(mock_next_update, mock_department_context)
+
+        # Should show department name in title
+        call_args = mock_next_update.callback_query.edit_message_text.call_args
+        message_text = call_args[1]["text"]
+        assert "Finance" in message_text

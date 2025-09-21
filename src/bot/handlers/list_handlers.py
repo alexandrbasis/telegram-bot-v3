@@ -140,6 +140,7 @@ async def handle_list_navigation(
         # Get current state from context
         current_role = context.user_data.get("current_role")
         current_offset = context.user_data.get("current_offset", 0)
+        current_department = context.user_data.get("current_department")
 
         if not current_role:
             # Fallback if state is lost
@@ -154,8 +155,18 @@ async def handle_list_navigation(
         # Get current data to find navigation offsets
         try:
             if current_role == "TEAM":
+                # Determine department filter for team members
+                if current_department == "all":
+                    department_filter = None
+                elif current_department == "none":
+                    department_filter = "unassigned"
+                elif current_department:
+                    department_filter = current_department
+                else:
+                    department_filter = None
+
                 current_data = await list_service.get_team_members_list(
-                    offset=current_offset, page_size=20
+                    department=department_filter, offset=current_offset, page_size=20
                 )
             elif current_role == "CANDIDATE":
                 current_data = await list_service.get_candidates_list(
@@ -191,10 +202,19 @@ async def handle_list_navigation(
         try:
             # Get participant data based on role and new offset
             if current_role == "TEAM":
+                # Use same department filter for new offset
                 data = await list_service.get_team_members_list(
-                    offset=new_offset, page_size=20
+                    department=department_filter, offset=new_offset, page_size=20
                 )
-                title = "**Список участников команды**"
+                # Format title with department filter indication
+                if current_department == "all":
+                    title = "**Список участников команды: Все участники**"
+                elif current_department == "none":
+                    title = "**Список участников команды: Без департамента**"
+                elif current_department:
+                    title = f"**Список участников команды: {current_department}**"
+                else:
+                    title = "**Список участников команды**"
             elif current_role == "CANDIDATE":
                 data = await list_service.get_candidates_list(
                     offset=new_offset, page_size=20
