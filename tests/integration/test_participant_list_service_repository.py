@@ -19,9 +19,10 @@ class TestParticipantListServiceRepositoryIntegration:
 
     @pytest.fixture
     def mock_repository(self):
-        """Create mock repository with role filtering support."""
+        """Create mock repository with department and role filtering support."""
         repository = Mock()
         repository.get_by_role = AsyncMock()
+        repository.get_team_members_by_department = AsyncMock()
         return repository
 
     @pytest.fixture
@@ -30,18 +31,18 @@ class TestParticipantListServiceRepositoryIntegration:
         return ParticipantListService(mock_repository)
 
     @pytest.mark.asyncio
-    async def test_service_calls_repository_with_team_role(
+    async def test_service_calls_repository_with_department_method(
         self, service, mock_repository
     ):
-        """Test that service calls repository with correct TEAM role string."""
+        """Test that service calls repository with new department filtering method."""
         # Setup
-        mock_repository.get_by_role.return_value = []
+        mock_repository.get_team_members_by_department.return_value = []
 
         # Execute
         await service.get_team_members_list()
 
-        # Verify
-        mock_repository.get_by_role.assert_called_once_with("TEAM")
+        # Verify - should call new method with None (default for all team members)
+        mock_repository.get_team_members_by_department.assert_called_once_with(None)
 
     @pytest.mark.asyncio
     async def test_service_calls_repository_with_candidate_role(
@@ -56,6 +57,34 @@ class TestParticipantListServiceRepositoryIntegration:
 
         # Verify
         mock_repository.get_by_role.assert_called_once_with("CANDIDATE")
+
+    @pytest.mark.asyncio
+    async def test_service_calls_repository_with_specific_department(
+        self, service, mock_repository
+    ):
+        """Test that service calls repository with specific department filter."""
+        # Setup
+        mock_repository.get_team_members_by_department.return_value = []
+
+        # Execute
+        await service.get_team_members_list(department="ROE")
+
+        # Verify - should call new method with specific department
+        mock_repository.get_team_members_by_department.assert_called_once_with("ROE")
+
+    @pytest.mark.asyncio
+    async def test_service_calls_repository_with_unassigned_filter(
+        self, service, mock_repository
+    ):
+        """Test that service calls repository with unassigned department filter."""
+        # Setup
+        mock_repository.get_team_members_by_department.return_value = []
+
+        # Execute
+        await service.get_team_members_list(department="unassigned")
+
+        # Verify - should call new method with unassigned filter
+        mock_repository.get_team_members_by_department.assert_called_once_with("unassigned")
 
     @pytest.mark.asyncio
     async def test_service_processes_repository_team_results(
@@ -79,7 +108,7 @@ class TestParticipantListServiceRepositoryIntegration:
                 date_of_birth=date(1990, 12, 31),
             ),
         ]
-        mock_repository.get_by_role.return_value = team_participants
+        mock_repository.get_team_members_by_department.return_value = team_participants
 
         # Execute
         result = await service.get_team_members_list()
@@ -123,6 +152,43 @@ class TestParticipantListServiceRepositoryIntegration:
         assert "Церковь кандидата" in result["formatted_list"]
 
     @pytest.mark.asyncio
+    async def test_service_displays_chief_indicators_in_team_results(
+        self, service, mock_repository
+    ):
+        """Test that service correctly displays crown indicators for department chiefs."""
+        # Setup team participants with one chief and one regular member
+        team_participants = [
+            Participant(
+                full_name_ru="Начальник Департамента",
+                role=Role.TEAM,
+                size="M",
+                church="Церковь руководства",
+                date_of_birth=date(1985, 1, 1),
+                is_department_chief=True,
+            ),
+            Participant(
+                full_name_ru="Обычный Участник",
+                role=Role.TEAM,
+                size="L",
+                church="Церковь участника",
+                date_of_birth=date(1990, 12, 31),
+                is_department_chief=False,
+            ),
+        ]
+        mock_repository.get_team_members_by_department.return_value = team_participants
+
+        # Execute
+        result = await service.get_team_members_list()
+
+        # Verify crown indicator appears for chief
+        assert result["total_count"] == 2
+        assert "👑 **Начальник Департамента**" in result["formatted_list"]
+        # Verify no crown for regular member by checking the line containing their name
+        lines_with_regular_member = [line for line in result["formatted_list"].split('\n') if "Обычный Участник" in line]
+        assert len(lines_with_regular_member) == 1
+        assert "👑" not in lines_with_regular_member[0]
+
+    @pytest.mark.asyncio
     async def test_role_enum_values_match_repository_expectations(self):
         """Test that Role enum values match what repository expects."""
         # This test verifies the enum values are correct
@@ -138,6 +204,7 @@ class TestParticipantListServiceRepositoryIntegration:
     ):
         """Test service handles empty results from repository gracefully."""
         # Setup
+        mock_repository.get_team_members_by_department.return_value = []
         mock_repository.get_by_role.return_value = []
 
         # Execute
