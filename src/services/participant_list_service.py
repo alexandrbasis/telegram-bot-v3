@@ -6,7 +6,7 @@ and Russian date formatting for list display.
 """
 
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from telegram.helpers import escape_markdown
 
@@ -27,19 +27,23 @@ class ParticipantListService:
         self.repository = repository
 
     async def get_team_members_list(
-        self, offset: int = 0, page_size: int = 20
+        self, department: Optional[str] = None, offset: int = 0, page_size: int = 20
     ) -> Dict[str, Any]:
         """
-        Get formatted team members list with offset-based pagination.
+        Get formatted team members list with optional department filtering and offset-based pagination.
 
         Args:
+            department: Optional department filter. Options:
+                       - None: Return all team members (default, backward compatible)
+                       - Department enum value (e.g., "ROE", "Chapel"): Filter by specific department
+                       - "unassigned": Return only participants with no department
             offset: Starting offset in the participants list (0-indexed)
             page_size: Number of participants per page
 
         Returns:
             Dict with formatted_list, pagination info, offsets, and counts
         """
-        participants = await self.repository.get_by_role("TEAM")
+        participants = await self.repository.get_team_members_by_department(department)
         return self._format_participant_list(
             participants, offset, page_size, include_department=True
         )

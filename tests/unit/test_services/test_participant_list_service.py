@@ -541,3 +541,147 @@ class TestTeamListDisplayUpdate:
 
         # Should stay under Telegram message limit even with department field
         assert len(formatted_list) < 4096
+
+
+class TestParticipantListServiceDepartmentFiltering:
+    """Test department filtering functionality in participant list service."""
+
+    @pytest.fixture
+    def mock_repository(self):
+        """Create mock participant repository."""
+        repository = Mock()
+        repository.get_by_role = AsyncMock()
+        repository.get_team_members_by_department = AsyncMock()
+        return repository
+
+    @pytest.fixture
+    def service(self, mock_repository):
+        """Create participant list service with mock repository."""
+        return ParticipantListService(mock_repository)
+
+    @pytest.fixture
+    def sample_team_with_chiefs(self):
+        """Create sample team participants with chiefs for testing."""
+        return [
+            Participant(
+                full_name_ru="Главный ROE",
+                role=Role.TEAM,
+                department=Department.ROE,
+                is_department_chief=True,
+                church="Церковь A",
+            ),
+            Participant(
+                full_name_ru="Участник ROE",
+                role=Role.TEAM,
+                department=Department.ROE,
+                is_department_chief=False,
+                church="Церковь B",
+            ),
+            Participant(
+                full_name_ru="Главный Chapel",
+                role=Role.TEAM,
+                department=Department.CHAPEL,
+                is_department_chief=True,
+                church="Церковь C",
+            ),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_list_with_department_filter(
+        self, service, mock_repository, sample_team_with_chiefs
+    ):
+        """Test team member list with specific department filter."""
+        mock_repository.get_team_members_by_department.return_value = sample_team_with_chiefs[:2]  # Only ROE members
+
+        result = await service.get_team_members_list(department="ROE", offset=0, page_size=20)
+
+        # Should call repository with department parameter
+        mock_repository.get_team_members_by_department.assert_called_once_with("ROE")
+        # Should NOT call the old get_by_role method
+        mock_repository.get_by_role.assert_not_called()
+
+        assert isinstance(result, dict)
+        assert "formatted_list" in result
+        assert len(result["formatted_list"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_list_without_department_filter(
+        self, service, mock_repository, sample_team_with_chiefs
+    ):
+        """Test team member list without department filter (backward compatibility)."""
+        mock_repository.get_team_members_by_department.return_value = sample_team_with_chiefs
+
+        result = await service.get_team_members_list(offset=0, page_size=20)
+
+        # Should call repository with None department parameter
+        mock_repository.get_team_members_by_department.assert_called_once_with(None)
+        # Should NOT call the old get_by_role method
+        mock_repository.get_by_role.assert_not_called()
+
+        assert isinstance(result, dict)
+        assert "formatted_list" in result
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_list_unassigned_department(
+        self, service, mock_repository
+    ):
+        """Test team member list for unassigned participants."""
+        unassigned_participants = [
+            Participant(
+                full_name_ru="Без департамента",
+                role=Role.TEAM,
+                department=None,
+                church="Церковь X",
+            )
+        ]
+        mock_repository.get_team_members_by_department.return_value = unassigned_participants
+
+        result = await service.get_team_members_list(department="unassigned", offset=0, page_size=20)
+
+        # Should call repository with "unassigned" parameter
+        mock_repository.get_team_members_by_department.assert_called_once_with("unassigned")
+
+        assert isinstance(result, dict)
+        assert "formatted_list" in result
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_list_preserves_original_signature(
+        self, service, mock_repository, sample_team_with_chiefs
+    ):
+        """Test that new method preserves backward compatibility with original signature."""
+        mock_repository.get_team_members_by_department.return_value = sample_team_with_chiefs
+
+        # Original signature should still work
+        result = await service.get_team_members_list(offset=0, page_size=5)
+
+        # Should call new repository method with None department
+        mock_repository.get_team_members_by_department.assert_called_once_with(None)
+
+        # Should preserve original pagination behavior
+        assert result["current_offset"] == 0
+        assert "has_prev" in result
+        assert "has_next" in result
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_list_invalid_department_error(
+        self, service, mock_repository
+    ):
+        """Test error handling for invalid department value."""
+        from src.data.repositories.participant_repository import RepositoryError
+
+        mock_repository.get_team_members_by_department.side_effect = ValueError("Invalid department")
+
+        with pytest.raises(ValueError, match="Invalid department"):
+            await service.get_team_members_list(department="InvalidDept", offset=0, page_size=20)
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_list_repository_error(
+        self, service, mock_repository
+    ):
+        """Test error handling when repository fails."""
+        from src.data.repositories.participant_repository import RepositoryError
+
+        mock_repository.get_team_members_by_department.side_effect = RepositoryError("Database error")
+
+        with pytest.raises(RepositoryError, match="Database error"):
+            await service.get_team_members_list(department="ROE", offset=0, page_size=20)
