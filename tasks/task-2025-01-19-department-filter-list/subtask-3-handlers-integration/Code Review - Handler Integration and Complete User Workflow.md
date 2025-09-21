@@ -32,8 +32,8 @@ The branch wires the new department filter entry point into the handlers and exp
 - [ ] **Integration tests require live Airtable credentials**: New tests in `tests/integration/test_participant_list_service_repository.py:227-360` instantiate the real service and hit Airtable, resulting in 401 Unauthorized when credentials are absent → Blocks all local/CI runs and leaks production concerns → Replace with mocked repository/service fixtures or guard with env-based skips; never require live Airtable in automated tests → Observed in `pytest` run (401 error stack trace).
 
 ### ⚠️ Major (Should Fix)  
-- [ ] **Department headers not localized**: `handle_department_filter_selection` and navigation titles use raw enum values (`current_department`) which surface English slugs like `ROE`/`Chapel`, breaking the "Russian interface" requirement (`src/bot/handlers/list_handlers.py:293-317`, `src/bot/handlers/list_handlers.py:205-217`) → Confusing UI and failed acceptance criteria → Use `department_to_russian` (and escape for MarkdownV2) before composing titles.
-- [ ] **No path back to department selection**: After viewing a list, the keyboard only offers pagination and "Главное меню"; there is no control that returns to the department picker as required (`src/bot/keyboards/list_keyboards.py:33-60`, `src/bot/handlers/list_handlers.py:200-217`) → Users must exit to the main menu to change the filter, violating acceptance criteria → Add a callback (e.g., `list_nav:DEPARTMENT`) that re-displays the department keyboard and update handlers/tests accordingly.
+- [ ] **Department headers not localized**: `handle_department_filter_selection` and navigation titles use raw enum values (`current_department`) which surface English slugs like `ROE`/`Chapel`, breaking the "Russian interface" requirement (`src/bot/handlers/list_handlers.py:293-317`, `src/bot/handlers/list_handlers.py:205-217`). In business terms, the list headline shows internal codes instead of the Russian department names people expect, undermining localization promises and confusing end users → Use `department_to_russian` (and escape for MarkdownV2) before composing titles.
+- [ ] **No path back to department selection**: After viewing a list, the keyboard only offers pagination and "Главное меню"; there is no control that returns to the department picker as required (`src/bot/keyboards/list_keyboards.py:33-60`, `src/bot/handlers/list_handlers.py:200-217`). Practically, this forces users to bail out to the main menu just to tweak their filter, adding friction and breaking the promised smooth workflow → Add a callback (e.g., `list_nav:DEPARTMENT`) that re-displays the department keyboard and update handlers/tests accordingly.
 
 ### 💡 Minor (Nice to Fix)
 - [ ] **Task doc completeness**: Populate "Business Context", mark top-level steps as completed, and replace `[Link]` with the actual PR URL in `tasks/.../Handler Integration and Complete User Workflow.md` to satisfy the workflow checklist.
@@ -53,3 +53,7 @@ The branch wires the new department filter entry point into the handlers and exp
 **Execution**: Deviated from plan—left regressions and broken tests unresolved.  
 **Documentation**: Partial—task doc still contains placeholders and unchecked steps.  
 **Verification**: Tests were claimed but fail in practice; manual verification not demonstrated.
+
+## Business Impact Summary
+- Lack of a back-to-department option forces users to exit to the main menu before changing filters, breaking the promised smooth workflow and adding friction to a core task.
+- Department headers display internal codes like "ROE"/"Chapel" instead of Russian labels, undermining localization commitments and confusing end users.

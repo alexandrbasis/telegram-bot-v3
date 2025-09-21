@@ -265,30 +265,34 @@ class TestRoleSelectionWithServiceIntegration:
         }
 
     @pytest.mark.asyncio
-    @patch("src.services.service_factory.get_participant_list_service")
-    async def test_team_role_selection_calls_service(
-        self, mock_get_service, mock_team_update, mock_context, mock_service_data
+    async def test_team_role_selection_shows_department_keyboard(
+        self, mock_team_update, mock_context
     ):
-        """Test that team role selection calls the participant list service."""
-        # Setup
-        mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
-        mock_get_service.return_value = mock_service
-
+        """Test that team role selection shows department filter keyboard."""
         # Execute
         await handle_role_selection(mock_team_update, mock_context)
 
-        # Verify service was called
-        mock_service.get_team_members_list.assert_called_once_with(
-            offset=0, page_size=20
-        )
-
-        # Verify response contains formatted data
+        # Verify department selection keyboard is shown
         mock_team_update.callback_query.edit_message_text.assert_called_once()
         call_args = mock_team_update.callback_query.edit_message_text.call_args
-        message_text = call_args[1]["text"]
 
-        assert "Тестов Тест Тестович" in message_text
+        # Check message text contains department selection prompt
+        message_text = call_args[1]["text"]
+        assert "Выберите департамент для фильтрации участников команды" in message_text
+        assert "🌐 **Все участники**" in message_text
+        assert "🏢 **Департамент**" in message_text
+        assert "❓ **Без департамента**" in message_text
+
+        # Check that MarkdownV2 parsing is used
+        assert call_args[1]["parse_mode"] == "MarkdownV2"
+
+        # Check that user data is set
+        assert mock_context.user_data["selected_role"] == "TEAM"
+
+        # Check that a keyboard is provided
+        assert "reply_markup" in call_args[1]
+        keyboard = call_args[1]["reply_markup"]
+        assert keyboard is not None
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
@@ -314,64 +318,46 @@ class TestRoleSelectionWithServiceIntegration:
         mock_service.get_candidates_list.assert_called_once_with(offset=0, page_size=20)
 
     @pytest.mark.asyncio
-    @patch("src.services.service_factory.get_participant_list_service")
-    async def test_role_selection_includes_pagination_controls(
-        self, mock_get_service, mock_team_update, mock_context, mock_service_data
+    async def test_team_role_selection_keyboard_structure(
+        self, mock_team_update, mock_context
     ):
-        """Test that role selection includes appropriate pagination controls."""
-        # Setup
-        mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(return_value=mock_service_data)
-        mock_get_service.return_value = mock_service
-
+        """Test that team role selection creates proper keyboard structure."""
         # Execute
         await handle_role_selection(mock_team_update, mock_context)
 
-        # Verify pagination keyboard is included
+        # Get the keyboard from the call
         call_args = mock_team_update.callback_query.edit_message_text.call_args
-        assert "reply_markup" in call_args[1]
-
         keyboard = call_args[1]["reply_markup"]
-        # Should have Next button (has_next=True) and Main Menu button
-        buttons = [btn for row in keyboard.inline_keyboard for btn in row]
-        next_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:NEXT"]
-        main_buttons = [
-            btn for btn in buttons if btn.callback_data == "list_nav:MAIN_MENU"
-        ]
 
-        assert len(next_buttons) == 1
-        assert len(main_buttons) == 1
+        # Check that keyboard has expected structure
+        # Should have "All participants" button, department buttons, and "No department" button
+        assert len(keyboard.inline_keyboard) >= 3  # At least all participants, some departments, no department
+
+        # Check first button is "All participants"
+        first_row = keyboard.inline_keyboard[0]
+        assert len(first_row) == 1
+        assert "Все участники" in first_row[0].text
+        assert first_row[0].callback_data == "list:filter:all"
+
+        # Check last button is "No department"
+        last_row = keyboard.inline_keyboard[-1]
+        assert len(last_row) == 1
+        assert "Без департамента" in last_row[0].text
+        assert last_row[0].callback_data == "list:filter:none"
 
     @pytest.mark.asyncio
-    @patch("src.services.service_factory.get_participant_list_service")
-    async def test_role_selection_handles_empty_results(
-        self, mock_get_service, mock_team_update, mock_context
+    async def test_team_role_selection_sets_context(
+        self, mock_team_update, mock_context
     ):
-        """Test role selection handles empty results gracefully."""
-        # Setup
-        empty_data = {
-            "formatted_list": "Участники не найдены.",
-            "has_prev": False,
-            "has_next": False,
-            "total_count": 0,
-            "current_offset": 0,
-            "next_offset": None,
-            "prev_offset": None,
-            "actual_displayed": 0,
-        }
-
-        mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(return_value=empty_data)
-        mock_get_service.return_value = mock_service
-
+        """Test that team role selection properly sets context data."""
         # Execute
         await handle_role_selection(mock_team_update, mock_context)
 
-        # Verify response shows empty message
-        call_args = mock_team_update.callback_query.edit_message_text.call_args
-        message_text = call_args[1]["text"]
+        # Verify context is set correctly
+        assert mock_context.user_data["selected_role"] == "TEAM"
 
-        assert "Участники не найдены" in message_text
+        # Verify callback query was answered
+        mock_team_update.callback_query.answer.assert_called_once()
 
 
 class TestPaginationNavigationHandler:
@@ -644,11 +630,10 @@ class TestTrimmingLogicAndPagination:
         }
 
     @pytest.mark.asyncio
-    @patch("src.services.service_factory.get_participant_list_service")
-    async def test_trimmed_results_maintain_pagination_continuity(
-        self, mock_get_service, mock_service_data_with_trimming
+    async def test_team_role_shows_department_keyboard_not_list(
+        self, mock_service_data_with_trimming
     ):
-        """Test that trimmed results don't break pagination continuity."""
+        """Test that team role shows department keyboard instead of list."""
         # Setup
         update = Mock(spec=Update)
         update.callback_query = Mock(spec=CallbackQuery)
@@ -659,24 +644,24 @@ class TestTrimmingLogicAndPagination:
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {}
 
-        mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(
-            return_value=mock_service_data_with_trimming
-        )
-        mock_get_service.return_value = mock_service
-
         # Execute
         await handle_role_selection(update, context)
 
-        # Should still show has_next=True even with trimmed content
+        # Should show department keyboard, not a list with pagination
         call_args = update.callback_query.edit_message_text.call_args
         keyboard = call_args[1]["reply_markup"]
+        message_text = call_args[1]["text"]
+
+        # Verify it's the department selection message, not a list
+        assert "Выберите департамент для фильтрации участников команды" in message_text
+
+        # Verify there are no pagination buttons (PREV/NEXT) since this is department selection
         buttons = [btn for row in keyboard.inline_keyboard for btn in row]
         next_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:NEXT"]
+        prev_buttons = [btn for btn in buttons if btn.callback_data == "list_nav:PREV"]
 
-        assert (
-            len(next_buttons) == 1
-        ), "Should show NEXT button when has_next=True despite trimming"
+        assert len(next_buttons) == 0, "Department selection should not have pagination"
+        assert len(prev_buttons) == 0, "Department selection should not have pagination"
 
 
 class TestDepartmentSelectionHandler:

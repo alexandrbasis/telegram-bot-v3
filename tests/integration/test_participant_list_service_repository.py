@@ -5,6 +5,7 @@ Tests that the service correctly integrates with the existing Airtable
 repository role filtering functionality.
 """
 
+import os
 from datetime import date
 from unittest.mock import AsyncMock, Mock
 
@@ -224,6 +225,10 @@ class TestParticipantListServiceRepositoryIntegration:
         assert candidate_result["formatted_list"] == "Участники не найдены."
 
 
+@pytest.mark.skipif(
+    not os.getenv("AIRTABLE_API_KEY") or not os.getenv("AIRTABLE_BASE_ID"),
+    reason="Airtable credentials not available - skipping real API integration tests"
+)
 class TestParticipantListServiceAirtableIntegration:
     """Test participant list service with real Airtable repository integration."""
 

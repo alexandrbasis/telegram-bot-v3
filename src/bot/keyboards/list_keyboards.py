@@ -30,17 +30,18 @@ def get_role_selection_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_list_pagination_keyboard(
-    has_prev: bool = False, has_next: bool = False
+    has_prev: bool = False, has_next: bool = False, show_department_back: bool = False
 ) -> InlineKeyboardMarkup:
     """
     Get pagination keyboard for participant list navigation.
 
-    Provides Previous/Next navigation buttons when needed and always
-    includes main menu return button.
+    Provides Previous/Next navigation buttons when needed and includes
+    navigation options based on context.
 
     Args:
         has_prev: Whether previous page is available
         has_next: Whether next page is available
+        show_department_back: Whether to show "back to department selection" button
 
     Returns:
         InlineKeyboardMarkup with pagination controls
@@ -56,6 +57,12 @@ def get_list_pagination_keyboard(
 
     if nav_row:
         keyboard.append(nav_row)
+
+    # Add department selection button if this is a team list
+    if show_department_back:
+        keyboard.append(
+            [InlineKeyboardButton("🔄 Выбор департамента", callback_data="list_nav:DEPARTMENT")]
+        )
 
     # Always add main menu button
     keyboard.append(

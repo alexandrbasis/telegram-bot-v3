@@ -15,6 +15,7 @@ from src.bot.keyboards.list_keyboards import (
     get_role_selection_keyboard,
 )
 from src.services import service_factory
+from src.utils.translations import department_to_russian
 
 
 async def handle_get_list_request(
@@ -119,7 +120,7 @@ async def handle_list_navigation(
     """
     Handle list navigation callbacks.
 
-    Processes list_nav:PREV, list_nav:NEXT, and list_nav:MAIN_MENU callbacks.
+    Processes list_nav:PREV, list_nav:NEXT, list_nav:DEPARTMENT, and list_nav:MAIN_MENU callbacks.
 
     Returns:
         Next conversation state
@@ -132,6 +133,25 @@ async def handle_list_navigation(
     if action == "MAIN_MENU":
         # Return to main menu using proper navigation (main_menu_button handles answer)
         return await main_menu_button(update, context)
+
+    if action == "DEPARTMENT":
+        # Return to department selection for team members
+        await query.answer()
+
+        message_text = (
+            "Выберите департамент для фильтрации участников команды:\n\n"
+            "🌐 **Все участники** \\- показать всех участников команды\n"
+            "🏢 **Департамент** \\- показать участников конкретного департамента\n"
+            "❓ **Без департамента** \\- показать участников без назначенного департамента"
+        )
+
+        keyboard = create_department_filter_keyboard()
+
+        await query.edit_message_text(
+            text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+        )
+
+        return SearchStates.MAIN_MENU
 
     # Only answer for PREV/NEXT navigation
     await query.answer()
@@ -212,7 +232,8 @@ async def handle_list_navigation(
                 elif current_department == "none":
                     title = "**Список участников команды: Без департамента**"
                 elif current_department:
-                    title = f"**Список участников команды: {current_department}**"
+                    dept_name_russian = department_to_russian(current_department)
+                    title = f"**Список участников команды: {dept_name_russian}**"
                 else:
                     title = "**Список участников команды**"
             elif current_role == "CANDIDATE":
@@ -236,8 +257,10 @@ async def handle_list_navigation(
             message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
             # Add pagination keyboard based on data
+            # Show department back button for team lists, not for candidate lists
+            show_dept_back = current_role == "TEAM"
             keyboard = get_list_pagination_keyboard(
-                has_prev=data["has_prev"], has_next=data["has_next"]
+                has_prev=data["has_prev"], has_next=data["has_next"], show_department_back=show_dept_back
             )
 
             await query.edit_message_text(
@@ -291,7 +314,7 @@ async def handle_department_filter_selection(
         current_department = "none"
     elif filter_type == "department" and len(callback_parts) >= 4:
         department_filter = callback_parts[3]
-        department_name = department_filter
+        department_name = department_to_russian(department_filter)
         current_department = department_filter
     else:
         await query.edit_message_text(
@@ -323,9 +346,9 @@ async def handle_department_filter_selection(
         page_info = f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
         message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
-        # Add pagination keyboard based on data
+        # Add pagination keyboard based on data (with department back button for team lists)
         keyboard = get_list_pagination_keyboard(
-            has_prev=data["has_prev"], has_next=data["has_next"]
+            has_prev=data["has_prev"], has_next=data["has_next"], show_department_back=True
         )
 
         await query.edit_message_text(
