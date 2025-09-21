@@ -720,7 +720,7 @@ class TestDepartmentSelectionHandler:
         mock_service = Mock()
         mock_service.get_team_members_list = AsyncMock(
             return_value={
-                "formatted_list": "1\\. 👑 **Finance Chief**\n",
+                "formatted_list": "1\\. Чиф: **Finance Chief**\n",
                 "has_prev": False,
                 "has_next": False,
                 "total_count": 1,
@@ -756,7 +756,7 @@ class TestDepartmentSelectionHandler:
         mock_service = Mock()
         mock_service.get_team_members_list = AsyncMock(
             return_value={
-                "formatted_list": "1\\. 👑 **All Team Members**\n",
+                "formatted_list": "1\\. Чиф: **All Team Members**\n",
                 "has_prev": False,
                 "has_next": False,
                 "total_count": 1,

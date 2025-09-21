@@ -794,13 +794,13 @@ class TestParticipantListServiceChiefIndicators:
         formatted_list = result["formatted_list"]
 
         # Chief should have crown emoji indicator
-        assert "👑" in formatted_list
+        assert "Чиф:" in formatted_list
         assert "Главный ROE" in formatted_list
         # Crown should appear before the name
         chief_line = next(
             line for line in formatted_list.split("\n") if "Главный ROE" in line
         )
-        crown_index = chief_line.find("👑")
+        crown_index = chief_line.find("Чиф:")
         name_index = chief_line.find("Главный ROE")
         assert crown_index < name_index, "Crown emoji should appear before name"
 
@@ -819,7 +819,7 @@ class TestParticipantListServiceChiefIndicators:
         formatted_list = result["formatted_list"]
 
         # Regular member should NOT have crown emoji
-        assert "👑" not in formatted_list
+        assert "Чиф:" not in formatted_list
         assert "Участник ROE" in formatted_list
 
     @pytest.mark.asyncio
@@ -837,7 +837,7 @@ class TestParticipantListServiceChiefIndicators:
         formatted_list = result["formatted_list"]
 
         # Participant with None status should NOT have crown emoji
-        assert "👑" not in formatted_list
+        assert "Чиф:" not in formatted_list
         assert "Без статуса" in formatted_list
 
     @pytest.mark.asyncio
@@ -853,21 +853,21 @@ class TestParticipantListServiceChiefIndicators:
         formatted_list = result["formatted_list"]
 
         # Should have exactly one crown emoji (for the one chief)
-        crown_count = formatted_list.count("👑")
+        crown_count = formatted_list.count("Чиф:")
         assert crown_count == 1
 
         # Chief line should have crown
         lines = formatted_list.split("\n")
         chief_lines = [line for line in lines if "Главный ROE" in line]
         assert len(chief_lines) > 0
-        assert "👑" in chief_lines[0]
+        assert "Чиф:" in chief_lines[0]
 
         # Regular member lines should not have crown
         regular_lines = [
             line for line in lines if "Участник ROE" in line or "Без статуса" in line
         ]
         for line in regular_lines:
-            assert "👑" not in line
+            assert "Чиф:" not in line
 
     @pytest.mark.asyncio
     async def test_chief_indicator_with_candidates_list(self, service, mock_repository):
@@ -885,7 +885,7 @@ class TestParticipantListServiceChiefIndicators:
         formatted_list = result["formatted_list"]
 
         # Candidates should never have crown emoji (no departments for candidates)
-        assert "👑" not in formatted_list
+        assert "Чиф:" not in formatted_list
         assert "Кандидат Иван" in formatted_list
 
     @pytest.mark.asyncio
@@ -908,7 +908,7 @@ class TestParticipantListServiceChiefIndicators:
         formatted_list = result["formatted_list"]
 
         # Should maintain all existing formatting while adding crown
-        assert "👑" in formatted_list
+        assert "Чиф:" in formatted_list
         assert (
             "**Главный Тест**" in formatted_list
         )  # Bold name formatting should be preserved

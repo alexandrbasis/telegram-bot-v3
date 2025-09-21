@@ -185,7 +185,7 @@ class TestParticipantListServiceRepositoryIntegration:
 
         # Verify crown indicator appears for chief
         assert result["total_count"] == 2
-        assert "👑 **Начальник Департамента**" in result["formatted_list"]
+        assert "Чиф: **Начальник Департамента**" in result["formatted_list"]
         # Verify no crown for regular member by checking the line containing their name
         lines_with_regular_member = [
             line
@@ -193,7 +193,7 @@ class TestParticipantListServiceRepositoryIntegration:
             if "Обычный Участник" in line
         ]
         assert len(lines_with_regular_member) == 1
-        assert "👑" not in lines_with_regular_member[0]
+        assert "Чиф:" not in lines_with_regular_member[0]
 
     @pytest.mark.asyncio
     async def test_role_enum_values_match_repository_expectations(self):

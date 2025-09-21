@@ -188,7 +188,7 @@ class ParticipantListService:
         # Add chief indicator if participant is a department chief
         chief_indicator = ""
         if participant.is_department_chief is True:
-            chief_indicator = "👑 "
+            chief_indicator = "Чиф: "
 
         lines = [f"{number}\\. {chief_indicator}**{name_str}**"]
 

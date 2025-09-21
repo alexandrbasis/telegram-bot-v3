@@ -323,7 +323,7 @@ class TestDepartmentFilteringIntegration:
         # Setup mock service
         mock_service = Mock()
         mock_finance_data = {
-            "formatted_list": "1\\. 👑 **Finance Chief**\n   🏢 Департамент: Finance\n   ⛪ Церковь: Test Church",
+            "formatted_list": "1\\. Чиф: **Finance Chief**\n   🏢 Департамент: Finance\n   ⛪ Церковь: Test Church",
             "has_prev": False,
             "has_next": False,
             "total_count": 1,
@@ -401,7 +401,7 @@ class TestDepartmentFilteringIntegration:
         # Setup mock service
         mock_service = Mock()
         mock_all_data = {
-            "formatted_list": "1\\. 👑 **Team Lead**\n2\\. **Team Member**\n",
+            "formatted_list": "1\\. Чиф: **Team Lead**\n2\\. **Team Member**\n",
             "has_prev": False,
             "has_next": True,
             "total_count": 25,
