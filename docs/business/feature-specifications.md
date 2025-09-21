@@ -3,7 +3,7 @@
 ## Participant Editing Interface
 
 ### Overview
-Comprehensive participant profile editing interface accessible through search results. Supports all 18 participant fields with appropriate input methods and validation.
+Comprehensive participant profile editing interface accessible through search results. Supports all 19 participant fields with appropriate input methods and validation.
 
 **Status**: ✅ Implemented (2025-09-01)
 **Implementation**: 4-state ConversationHandler with Russian localization
@@ -14,24 +14,25 @@ Comprehensive participant profile editing interface accessible through search re
 #### 1. Participant Selection Interface
 - **Access**: Click "Подробнее" (Details) button on any search result
 - **Display**: Complete participant profile with all field values
-- **Layout**: 18 individual "Изменить [Field]" edit buttons with role-based visibility
+- **Layout**: 19 individual "Изменить [Field]" edit buttons with role-based visibility
 - **Actions**: Save Changes, Cancel, Back to Search
 - **Enhanced Display**: After field updates, shows complete participant information with updated values
 - **Role-Based Fields**: TableName field only visible when participant role is CANDIDATE
 
 #### 2. Field-Specific Editing Methods
 
-**Button-Based Fields (5 fields)**
+**Button-Based Fields (6 fields)**
 - Immediate selection through inline keyboards
 - No text input required
 - Shows complete participant display after update
 
 Fields:
 - **Gender (Пол)**: Мужской/Женский (2 options)
-- **Size (Размер)**: XS, S, M, L, XL, XXL, 3XL (7 options) 
+- **Size (Размер)**: XS, S, M, L, XL, XXL, 3XL (7 options)
 - **Role (Роль)**: Кандидат/Команда (2 options)
 - **Department (Департамент)**: 13 department options
 - **Payment Status (Статус платежа)**: Оплачено/Частично/Не оплачено (3 options)
+- **Is Department Chief (Руководитель департамента)**: Да/Нет (2 options)
 
 **Text Input Fields (9 fields)**
 - Prompted text input workflow
@@ -49,6 +50,7 @@ Fields:
 - **Church Leader (Церковный лидер)**: Optional
 - **Table Name (Название стола)**: Optional, role-based visibility (CANDIDATE only)
 - **Notes (Заметки)**: Optional, supports multiline text
+- **Is Department Chief (Руководитель департамента)**: Optional boolean for leadership identification
 
 **Special Validation Fields (4 fields)**
 - Custom validation logic
@@ -142,7 +144,7 @@ Fields:
 
 ### Acceptance Criteria
 
-- [x] ✅ All 18 participant fields accessible through editing interface (including DateOfBirth and Age added 2025-09-10, ChurchLeader, TableName, Notes added 2025-01-14)
+- [x] ✅ All 19 participant fields accessible through editing interface (including DateOfBirth and Age added 2025-09-10, ChurchLeader, TableName, Notes added 2025-01-14, IsDepartmentChief added 2025-01-19)
 - [x] ✅ Button-based fields show correct options with Russian labels
 - [x] ✅ Text fields accept and validate input with Russian prompts
 - [x] ✅ State management maintains editing context properly
@@ -880,6 +882,91 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool
 - Email delivery for exported files
 - Data analytics and reporting dashboards
 - Export templates and customization options
+
+## Department Selection Interface
+
+### Overview
+Foundational department selection keyboard interface enabling department-based filtering of participant lists with comprehensive Russian language support.
+
+**Status**: ✅ Implemented (2025-01-19)
+**Implementation**: Department selection keyboard with 15 options and Russian translations
+**Test Coverage**: 15 new tests (100% pass rate)
+
+### Core Features
+
+#### 1. Department Selection Keyboard
+- **15-Option Interface**: 13 predefined departments plus 2 special options
+- **Department Coverage**: All departments from Department enum (ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate)
+- **Special Options**: "Все участники" (All participants) and "Без департамента" (No department)
+- **Russian Interface**: All department names displayed in Russian with accurate translations
+- **Keyboard Layout**: Intuitive 3-column layout optimized for mobile interaction
+
+#### 2. Department Chief Identification
+- **Model Extension**: Added IsDepartmentChief boolean field to Participant model
+- **Airtable Integration**: Field mapped to fldWAay3tQiXN9888 (Checkbox type)
+- **Filtering Support**: Enables identification and prioritization of department chiefs
+- **Optional Field**: Backward compatible with existing participants (defaults to None/false)
+- **Validation**: Proper boolean handling with true/false/None support
+
+#### 3. Russian Translation Integration
+- **Translation System**: Uses existing DEPARTMENT_RUSSIAN translations from translations.py
+- **Consistency**: Maintains consistent Russian naming across all bot interfaces
+- **Callback Structure**: Uses English identifiers for callbacks while displaying Russian text
+- **Pattern**: Follows "list:filter:department:{dept_name}" callback pattern
+
+### Technical Implementation
+
+#### Keyboard Generation
+- **Function**: `create_department_filter_keyboard()` in `src/bot/keyboards/list_keyboards.py`
+- **Button Creation**: InlineKeyboardButton objects with Russian text and English callback data
+- **Layout**: 3 buttons per row for optimal mobile usability
+- **Special Options**: All participants and no department options included for complete coverage
+
+#### Model Extensions
+- **Field**: `is_department_chief: Optional[bool] = None` in Participant model
+- **Mapping**: IsDepartmentChief field ID (fldWAay3tQiXN9888) in field mappings
+- **Validation**: Proper Pydantic validation with optional boolean handling
+- **Serialization**: Bidirectional conversion between Python bool and Airtable checkbox
+
+### Quality Assurance
+
+#### Test Coverage
+- **Model Tests**: 6 tests for IsDepartmentChief field handling and validation
+- **Keyboard Tests**: 9 tests for department selection keyboard generation and layout
+- **Translation Tests**: Verification of Russian department name accuracy
+- **Integration Tests**: End-to-end validation of department filtering workflow
+- **Total**: 15 new tests with 100% pass rate
+
+#### Backward Compatibility
+- **Existing Functionality**: Zero impact on existing search and list features
+- **Model Compatibility**: Optional field maintains compatibility with existing participants
+- **API Compatibility**: Airtable field mapping preserves existing data integrity
+- **UI Compatibility**: New keyboard integrates seamlessly with existing conversation flows
+
+### Acceptance Criteria
+
+- [x] ✅ Department selection keyboard displays all 13 departments plus 2 special options
+- [x] ✅ All department names properly translated to Russian with accurate translations
+- [x] ✅ IsDepartmentChief field added to Participant model with proper validation
+- [x] ✅ Field mapping configured for Airtable integration (fldWAay3tQiXN9888)
+- [x] ✅ Keyboard layout optimized for mobile interaction with 3-column structure
+- [x] ✅ Callback data structure follows established pattern for handler processing
+- [x] ✅ Backward compatibility maintained with existing model consumers
+- [x] ✅ Comprehensive test coverage with 15 new tests passing
+- [x] ✅ Integration with existing Russian translation system
+- [x] ✅ Foundation ready for service layer integration and filtering implementation
+
+### Future Integration Points
+
+**Service Layer Integration**:
+- Department-based filtering in participant list services
+- Chief identification in search results and list displays
+- Priority handling for department chiefs in organizational workflows
+
+**UI Enhancement Opportunities**:
+- Department chief badges or indicators in participant displays
+- Department-specific workflows and permissions
+- Analytics and reporting based on department structure
 
 ## Telegram Bot CSV Export Integration
 

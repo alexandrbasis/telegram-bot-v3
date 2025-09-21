@@ -137,6 +137,11 @@ class Participant(BaseModel):
         description="Accommodation room number (numeric in Airtable; allow alphanumeric upstream)",
     )
 
+    # Department chief field
+    is_department_chief: Optional[bool] = Field(
+        None, description="Whether participant is a department chief"
+    )
+
     # Airtable record ID (for updates)
     record_id: Optional[str] = Field(
         None, description="Airtable record ID for existing records"
@@ -227,6 +232,10 @@ class Participant(BaseModel):
         if self.room_number is not None:
             fields["RoomNumber"] = self.room_number
 
+        # Department chief field
+        if self.is_department_chief is not None:
+            fields["IsDepartmentChief"] = self.is_department_chief
+
         return fields
 
     @classmethod
@@ -284,6 +293,7 @@ class Participant(BaseModel):
             age=fields.get("Age"),
             floor=fields.get("Floor"),
             room_number=fields.get("RoomNumber"),
+            is_department_chief=fields.get("IsDepartmentChief"),
         )
 
     model_config = ConfigDict(use_enum_values=True, validate_assignment=True)

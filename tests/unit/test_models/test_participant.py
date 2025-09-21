@@ -849,3 +849,152 @@ class TestParticipantRoundtrip:
         assert restored.table_name == original.table_name
         assert restored.notes == original.notes
         assert restored.record_id == "rec123456789"
+
+
+class TestParticipantDepartmentChiefField:
+    """Test suite for the IsDepartmentChief field extension."""
+
+    def test_participant_model_chief_field(self):
+        """Verify IsDepartmentChief field exists with correct type."""
+        # Test creation with chief field set to True
+        participant = Participant(
+            full_name_ru="Александр Басис", is_department_chief=True
+        )
+        assert participant.is_department_chief is True
+
+        # Test creation with chief field set to False
+        participant2 = Participant(
+            full_name_ru="Иван Иванов", is_department_chief=False
+        )
+        assert participant2.is_department_chief is False
+
+        # Test creation with chief field set to None (default)
+        participant3 = Participant(full_name_ru="Петр Петров")
+        assert participant3.is_department_chief is None
+
+    def test_chief_field_serialization(self):
+        """Validate chief status preserved during model serialization."""
+        # Test with True value
+        participant = Participant(
+            full_name_ru="Александр Басис", is_department_chief=True
+        )
+        airtable_fields = participant.to_airtable_fields()
+        assert "IsDepartmentChief" in airtable_fields
+        assert airtable_fields["IsDepartmentChief"] is True
+
+        # Test with False value
+        participant2 = Participant(
+            full_name_ru="Иван Иванов", is_department_chief=False
+        )
+        airtable_fields2 = participant2.to_airtable_fields()
+        assert "IsDepartmentChief" in airtable_fields2
+        assert airtable_fields2["IsDepartmentChief"] is False
+
+        # Test with None value (should not be in output)
+        participant3 = Participant(full_name_ru="Петр Петров", is_department_chief=None)
+        airtable_fields3 = participant3.to_airtable_fields()
+        assert "IsDepartmentChief" not in airtable_fields3
+
+    def test_chief_field_deserialization(self):
+        """Confirm chief status correctly loaded from Airtable data."""
+        # Test with True value
+        record_true = {
+            "id": "rec123456789",
+            "fields": {"FullNameRU": "Александр Басис", "IsDepartmentChief": True},
+        }
+        participant = Participant.from_airtable_record(record_true)
+        assert participant.is_department_chief is True
+
+        # Test with False value
+        record_false = {
+            "id": "rec987654321",
+            "fields": {"FullNameRU": "Иван Иванов", "IsDepartmentChief": False},
+        }
+        participant2 = Participant.from_airtable_record(record_false)
+        assert participant2.is_department_chief is False
+
+        # Test with missing field (should default to None)
+        record_none = {"id": "rec111111111", "fields": {"FullNameRU": "Петр Петров"}}
+        participant3 = Participant.from_airtable_record(record_none)
+        assert participant3.is_department_chief is None
+
+    def test_model_backward_compatibility(self):
+        """Ensure existing model functionality unaffected."""
+        # Create a participant with existing fields but without chief field
+        participant = Participant(
+            full_name_ru="Александр Басис",
+            full_name_en="Alexandr Basis",
+            church="Грейс",
+            department=Department.ADMINISTRATION,
+            role=Role.TEAM,
+        )
+
+        # Verify existing fields work as before
+        assert participant.full_name_ru == "Александр Басис"
+        assert participant.full_name_en == "Alexandr Basis"
+        assert participant.church == "Грейс"
+        assert participant.department == Department.ADMINISTRATION
+        assert participant.role == Role.TEAM
+
+        # Verify chief field defaults to None when not specified
+        assert participant.is_department_chief is None
+
+        # Verify serialization doesn't include None chief field
+        airtable_fields = participant.to_airtable_fields()
+        assert "IsDepartmentChief" not in airtable_fields
+        assert "FullNameRU" in airtable_fields
+        assert "Department" in airtable_fields
+
+    def test_boolean_validation(self):
+        """Validate model handles true/false/None values for chief field."""
+        # Test with explicit boolean values
+        participant_true = Participant(
+            full_name_ru="Chief True", is_department_chief=True
+        )
+        assert participant_true.is_department_chief is True
+
+        participant_false = Participant(
+            full_name_ru="Chief False", is_department_chief=False
+        )
+        assert participant_false.is_department_chief is False
+
+        # Test with None value
+        participant_none = Participant(
+            full_name_ru="Chief None", is_department_chief=None
+        )
+        assert participant_none.is_department_chief is None
+
+        # Test with no value provided (should default to None)
+        participant_default = Participant(full_name_ru="Chief Default")
+        assert participant_default.is_department_chief is None
+
+    def test_invalid_chief_field_value(self):
+        """Handle non-boolean values in IsDepartmentChief field."""
+        # Pydantic converts truthy values to boolean, so test with invalid type that can't be converted
+        with pytest.raises(ValidationError) as exc_info:
+            Participant(
+                full_name_ru="Test User",
+                is_department_chief={
+                    "invalid": "dict"
+                },  # Dict cannot be converted to bool
+            )
+        assert "is_department_chief" in str(exc_info.value).lower()
+
+        # Test that truthy values are converted (Pydantic behavior)
+        participant_str = Participant(
+            full_name_ru="Test User",
+            is_department_chief="yes",  # String converts to True
+        )
+        assert participant_str.is_department_chief is True
+
+        participant_int = Participant(
+            full_name_ru="Test User",
+            is_department_chief=1,  # Integer 1 converts to True
+        )
+        assert participant_int.is_department_chief is True
+
+        participant_zero = Participant(
+            full_name_ru="Test User",
+            is_department_chief=0,  # Integer 0 converts to False
+        )
+        assert participant_zero.is_department_chief is False

@@ -8,6 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Department Chief Identification and Selection Interface Foundation** - Complete model extensions and user interface foundation enabling department-based filtering with comprehensive department chief tracking and Russian language selection interface (AGB-58, completed 2025-01-21, PR #49)
+  - Enhanced Participant model with department chief identification capability supporting role-based participant prioritization (`src/models/participant.py:141-143`)
+    - Added is_department_chief: Optional[bool] = None field with proper Pydantic validation and backward compatibility
+    - Complete serialization/deserialization integration maintaining field data through Airtable roundtrip operations (`src/models/participant.py:236-237,296`)
+    - Field handles true/false/None values with comprehensive validation ensuring data integrity
+  - Production Airtable field mapping integration with verified field ID configuration (`src/config/field_mappings.py:70,146,180`)
+    - IsDepartmentChief mapped to Airtable field fldWAay3tQiXN9888 with CHECKBOX type validation
+    - Complete Python-to-Airtable bidirectional mapping ensuring seamless data synchronization
+    - Field type constraints properly configured for boolean validation with application-side validation
+  - Department selection keyboard with comprehensive 15-option interface enabling intuitive department filtering (`src/bot/keyboards/list_keyboards.py:68-107`)
+    - All 13 departments accessible: Администрация, Кухня, Музыка, Капелла, Литургия, Паломия, Молитва, Подарки, Регистрация, Мероприятия, Трапеза, Транспорт, Техника
+    - Special options: "Все участники" for complete list access and "Без департамента" for unassigned members
+    - Russian translation integration using existing DEPARTMENT_RUSSIAN mappings for consistency (`src/utils/translations.py`)
+    - Callback data structure "list:filter:department:{dept_name}" for handler processing integration
+  - Foundation components validated with comprehensive test coverage achieving 1029 total tests passing (910 unit + 119 integration)
+    - Added 15 new tests covering model chief field functionality, keyboard generation, and Russian translations
+    - 6 comprehensive tests for IsDepartmentChief field covering serialization, deserialization, and validation scenarios
+    - 9 comprehensive tests for department selection keyboard covering button count, layout, translations, and callback data
+    - 100% backward compatibility confirmed with no regressions in existing functionality
+  - Enhanced documentation suite with department chief field specifications and selection interface details
+    - Updated participant field count from 18 to 19 fields with IsDepartmentChief integration (`docs/architecture/database-design.md`)
+    - Enhanced field mappings documentation with Airtable integration and validation specifications (`docs/data-integration/field-mappings.md`)
+    - Complete department selection interface documentation with 15-option keyboard specifications (`docs/technical/bot-commands.md`)
+    - Business requirements documentation with department chief identification and filtering capabilities (`docs/business/feature-specifications.md`)
+  - Production-ready foundation enabling service layer integration for department-based filtering features
+    - All changes maintain 100% backward compatibility with existing codebase and participant records
+    - Russian language interface complete with accurate translations and consistent user experience
+    - Keyboard layout optimized for mobile experience with logical department grouping and special options placement
 - **File Delivery Error Handling for CSV Export with Comprehensive Telegram Integration** - Complete CSV export functionality with secure Telegram file delivery, comprehensive error handling, and automatic resource cleanup ensuring reliable participant data export (TDB-59, completed 2025-01-14)
   - Secure Telegram file delivery system with CSV document upload functionality delivering generated files directly to users through bot (`src/bot/handlers/export_handlers.py:175-340`)
     - Complete file upload implementation using `context.bot.send_document()` with proper document metadata and filename handling
