@@ -66,6 +66,8 @@ class AirtableFieldMapping:
         # Accommodation fields (confirmed from live Airtable schema)
         "Floor": "fldlzG1sVg01hsy2g",
         "RoomNumber": "fldJTPjo8AHQaADVu",
+        # Department chief field
+        "IsDepartmentChief": "fldWAay3tQiXN9888",
     }
 
     # Select option value -> Option ID mapping (exact Option IDs from Airtable base)
@@ -140,6 +142,8 @@ class AirtableFieldMapping:
         # Accommodation (exact Airtable field names)
         "floor": "Floor",
         "room_number": "RoomNumber",
+        # Department chief field
+        "is_department_chief": "IsDepartmentChief",
         # Record ID (special field)
         "record_id": "id",
     }
@@ -172,6 +176,8 @@ class AirtableFieldMapping:
         # Accommodation fields
         "Floor": FieldType.NUMBER,
         "RoomNumber": FieldType.NUMBER,
+        # Department chief field
+        "IsDepartmentChief": FieldType.CHECKBOX,
     }
 
     # Formula field reference constants for consistent field naming in Airtable formulas

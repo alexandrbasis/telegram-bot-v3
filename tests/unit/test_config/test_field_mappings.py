@@ -750,3 +750,21 @@ class TestFieldMappingCompleteness:
         gender_options = AirtableFieldMapping.get_select_options("Gender")
         for gender in Gender:
             assert gender.value in gender_options
+
+    def test_field_mapping_configuration(self):
+        """Verify field ID (fldWAay3tQiXN9888) correctly mapped."""
+        # Test that IsDepartmentChief field is correctly mapped
+        field_id = AirtableFieldMapping.get_field_id("IsDepartmentChief")
+        assert field_id == "fldWAay3tQiXN9888"
+
+        # Test Python to Airtable field name mapping for chief field
+        airtable_field_name = AirtableFieldMapping.get_airtable_field_name("is_department_chief")
+        assert airtable_field_name == "IsDepartmentChief"
+
+        # Test reverse mapping
+        python_field_name = AirtableFieldMapping.get_python_field_name("IsDepartmentChief")
+        assert python_field_name == "is_department_chief"
+
+        # Test field type is checkbox (boolean)
+        field_type = AirtableFieldMapping.get_field_type("IsDepartmentChief")
+        assert field_type == FieldType.CHECKBOX
