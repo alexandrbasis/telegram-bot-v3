@@ -22,6 +22,7 @@ class TestParticipantListService:
         """Create mock participant repository."""
         repository = Mock()
         repository.get_by_role = AsyncMock()
+        repository.get_team_members_by_department = AsyncMock()
         return repository
 
     @pytest.fixture
@@ -67,12 +68,12 @@ class TestParticipantListService:
         self, service, mock_repository, sample_team_participants
     ):
         """Test getting team members list."""
-        mock_repository.get_by_role.return_value = sample_team_participants
+        mock_repository.get_team_members_by_department.return_value = sample_team_participants
 
         result = await service.get_team_members_list(offset=0, page_size=20)
 
-        # Should call repository with TEAM role
-        mock_repository.get_by_role.assert_called_once_with("TEAM")
+        # Should call repository with None department (all team members)
+        mock_repository.get_team_members_by_department.assert_called_once_with(None)
 
         # Should return formatted list data
         assert "formatted_list" in result
@@ -111,7 +112,7 @@ class TestParticipantListService:
         self, service, mock_repository, sample_team_participants
     ):
         """Test list formatting includes all required fields (updated format)."""
-        mock_repository.get_by_role.return_value = sample_team_participants
+        mock_repository.get_team_members_by_department.return_value = sample_team_participants
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -162,7 +163,7 @@ class TestParticipantListService:
                 role=Role.TEAM,
             ),
         ]
-        mock_repository.get_by_role.return_value = participants
+        mock_repository.get_team_members_by_department.return_value = participants
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -182,7 +183,7 @@ class TestParticipantListService:
                 role=Role.TEAM,
             ),
         ]
-        mock_repository.get_by_role.return_value = participants
+        mock_repository.get_team_members_by_department.return_value = participants
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -196,7 +197,7 @@ class TestParticipantListService:
         self, service, mock_repository, sample_team_participants
     ):
         """Test pagination for first page."""
-        mock_repository.get_by_role.return_value = sample_team_participants
+        mock_repository.get_team_members_by_department.return_value = sample_team_participants
 
         result = await service.get_team_members_list(offset=0, page_size=1)
 
@@ -210,7 +211,7 @@ class TestParticipantListService:
         self, service, mock_repository, sample_team_participants
     ):
         """Test pagination for last page."""
-        mock_repository.get_by_role.return_value = sample_team_participants
+        mock_repository.get_team_members_by_department.return_value = sample_team_participants
 
         result = await service.get_team_members_list(offset=1, page_size=1)
 
@@ -224,7 +225,7 @@ class TestParticipantListService:
         participants = [
             Participant(full_name_ru=f"Участник {i}", role=Role.TEAM) for i in range(5)
         ]
-        mock_repository.get_by_role.return_value = participants
+        mock_repository.get_team_members_by_department.return_value = participants
 
         result = await service.get_team_members_list(offset=999, page_size=2)
 
@@ -236,7 +237,7 @@ class TestParticipantListService:
     @pytest.mark.asyncio
     async def test_empty_participant_list(self, service, mock_repository):
         """Test handling of empty participant list."""
-        mock_repository.get_by_role.return_value = []
+        mock_repository.get_team_members_by_department.return_value = []
 
         result = await service.get_team_members_list(offset=0, page_size=20)
 
@@ -260,7 +261,7 @@ class TestParticipantListService:
                     role=Role.TEAM,
                 )
             )
-        mock_repository.get_by_role.return_value = many_participants
+        mock_repository.get_team_members_by_department.return_value = many_participants
 
         result = await service.get_team_members_list(offset=0, page_size=100)
         formatted_list = result["formatted_list"]
@@ -279,7 +280,7 @@ class TestParticipantListService:
                 role=Role.TEAM,
             ),
         ]
-        mock_repository.get_by_role.return_value = participants
+        mock_repository.get_team_members_by_department.return_value = participants
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -299,6 +300,7 @@ class TestTeamListDisplayUpdate:
         """Create mock participant repository."""
         repository = Mock()
         repository.get_by_role = AsyncMock()
+        repository.get_team_members_by_department = AsyncMock()
         return repository
 
     @pytest.fixture
@@ -348,7 +350,7 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that team list includes department field."""
-        mock_repository.get_by_role.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = participants_with_department
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -363,7 +365,7 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that team list does NOT include birth date."""
-        mock_repository.get_by_role.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = participants_with_department
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -381,7 +383,7 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that team list does NOT include clothing size."""
-        mock_repository.get_by_role.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = participants_with_department
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -397,7 +399,7 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_empty_department
     ):
         """Test graceful handling when department field is empty or None."""
-        mock_repository.get_by_role.return_value = participants_with_empty_department
+        mock_repository.get_team_members_by_department.return_value = participants_with_empty_department
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -412,7 +414,7 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that department text is properly formatted (escaping, truncation)."""
-        mock_repository.get_by_role.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = participants_with_department
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -436,7 +438,7 @@ class TestTeamListDisplayUpdate:
                 role=Role.TEAM,
             ),
         ]
-        mock_repository.get_by_role.return_value = participants_without_department
+        mock_repository.get_team_members_by_department.return_value = participants_without_department
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -460,7 +462,7 @@ class TestTeamListDisplayUpdate:
                 role=Role.TEAM,
             ),
         ]
-        mock_repository.get_by_role.return_value = participants_malformed
+        mock_repository.get_team_members_by_department.return_value = participants_malformed
 
         result = await service.get_team_members_list(offset=0, page_size=20)
 
@@ -474,7 +476,7 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test full flow from team command to formatted results with department."""
-        mock_repository.get_by_role.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = participants_with_department
 
         result = await service.get_team_members_list(offset=0, page_size=20)
         formatted_list = result["formatted_list"]
@@ -498,7 +500,7 @@ class TestTeamListDisplayUpdate:
         self, service, mock_repository, participants_with_department
     ):
         """Test that department displays correctly across paginated results."""
-        mock_repository.get_by_role.return_value = participants_with_department
+        mock_repository.get_team_members_by_department.return_value = participants_with_department
 
         # Test first page
         result = await service.get_team_members_list(offset=0, page_size=1)
@@ -534,7 +536,7 @@ class TestTeamListDisplayUpdate:
                     role=Role.TEAM,
                 )
             )
-        mock_repository.get_by_role.return_value = many_participants
+        mock_repository.get_team_members_by_department.return_value = many_participants
 
         result = await service.get_team_members_list(offset=0, page_size=50)
         formatted_list = result["formatted_list"]
