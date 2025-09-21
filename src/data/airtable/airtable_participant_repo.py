@@ -1347,3 +1347,96 @@ class AirtableParticipantRepository(ParticipantRepository):
         except Exception as e:
             logger.warning(f"Unexpected error during floor discovery: {e}")
             return []
+
+    async def get_team_members_by_department(
+        self, department: Optional[str] = None
+    ) -> List[Participant]:
+        """
+        Retrieve team members filtered by department with chief-first sorting.
+
+        Retrieves participants with role "TEAM", optionally filtered by department.
+        Results are sorted with department chiefs first, then by church alphabetically.
+        Supports filtering by specific department, all participants, or unassigned only.
+
+        Args:
+            department: Department filter. Options:
+                       - None: Return all team members
+                       - Department enum value (e.g., "ROE", "Chapel"): Filter by specific department
+                       - "unassigned": Return only participants with no department
+
+        Returns:
+            List of team member participants matching the department filter,
+            sorted with chiefs first, then by church name alphabetically.
+            Chiefs (IsDepartmentChief = true) always appear at the top.
+
+        Raises:
+            RepositoryError: If retrieval fails
+            ValueError: If department value is invalid
+        """
+        try:
+            logger.debug(f"Getting team members by department: {department}")
+
+            # Build Airtable formula with role filter
+            base_conditions = ["{Role} = 'TEAM'"]
+
+            if department is None:
+                # No additional filter - all team members
+                pass
+            elif department == "unassigned":
+                # Filter for participants with no department
+                base_conditions.append("IS_BLANK({Department})")
+            else:
+                # Validate department value against enum
+                from src.models.participant import Department
+
+                valid_departments = [dept.value for dept in Department]
+                if department not in valid_departments:
+                    raise ValueError(
+                        f"Invalid department: {department}. Valid options: {valid_departments}"
+                    )
+
+                # Filter for specific department
+                escaped_dept = escape_formula_value(department)
+                base_conditions.append(f"{{Department}} = '{escaped_dept}'")
+
+            # Combine conditions
+            if len(base_conditions) == 1:
+                formula = base_conditions[0]
+            else:
+                formula = f"AND({', '.join(base_conditions)})"
+
+            # Define sorting: chiefs first, then by church alphabetically
+            # Airtable sort format: field names with '-' prefix for descending
+            sort_params = ["-IsDepartmentChief", "Church"]
+
+            # Execute query with sorting using list_records (supports sorting)
+            records = await self.client.list_records(formula=formula, sort=sort_params)
+
+            # Convert to Participant objects
+            participants = []
+            for record in records:
+                try:
+                    participant = Participant.from_airtable_record(record)
+                    participants.append(participant)
+                except Exception as e:
+                    logger.warning(
+                        f"Skipping invalid participant record {record.get('id', 'unknown')}: {e}"
+                    )
+                    continue
+
+            logger.debug(
+                f"Found {len(participants)} team members for department: {department}"
+            )
+            return participants
+
+        except ValueError:
+            # Re-raise validation errors
+            raise
+        except AirtableAPIError as e:
+            raise RepositoryError(
+                f"Failed to get team members by department: {e}", e.original_error
+            )
+        except Exception as e:
+            raise RepositoryError(
+                f"Unexpected error getting team members by department: {e}", e
+            )

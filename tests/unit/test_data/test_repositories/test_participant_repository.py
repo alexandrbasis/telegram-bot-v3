@@ -43,6 +43,7 @@ class TestParticipantRepositoryInterface:
             "search_by_criteria",
             "get_by_role",
             "get_by_department",
+            "get_team_members_by_department",
             "get_by_payment_status",
             "count_total",
             "bulk_create",
@@ -126,6 +127,22 @@ class TestParticipantRepositoryInterface:
         assert inspect.iscoroutinefunction(method) or hasattr(
             method, "__code__"
         ), "get_available_floors should be async"
+
+    def test_get_team_members_by_department_method_signature(self):
+        """Test get_team_members_by_department method has correct signature."""
+        method = getattr(ParticipantRepository, "get_team_members_by_department")
+
+        assert hasattr(method, "__annotations__")
+        annotations = method.__annotations__
+        # Should have return annotation
+        assert "return" in annotations
+
+        # Verify it's an async method
+        import inspect
+
+        assert inspect.iscoroutinefunction(method) or hasattr(
+            method, "__code__"
+        ), "get_team_members_by_department should be async"
 
 
 class TestRepositoryExceptions:
@@ -258,6 +275,9 @@ class TestConcreteImplementationRequirements:
             async def get_available_floors(self):
                 pass
 
+            async def get_team_members_by_department(self, department=None):
+                pass
+
         # Should be able to instantiate complete implementation
         repo = CompleteRepository()
         assert isinstance(repo, ParticipantRepository)
@@ -279,6 +299,7 @@ class TestRepositoryMethodDocstrings:
             "search_by_criteria",
             "get_by_role",
             "get_by_department",
+            "get_team_members_by_department",
             "get_by_payment_status",
             "count_total",
             "bulk_create",
@@ -354,6 +375,7 @@ class TestRepositoryUsageContract:
             "search_by_criteria",
             "get_by_role",
             "get_by_department",
+            "get_team_members_by_department",
             "get_by_payment_status",
             "count_total",
             "bulk_create",

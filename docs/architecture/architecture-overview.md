@@ -78,6 +78,10 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Floor discovery method** (Enhanced 2025-01-21):
   - `get_available_floors()` - Return floors containing participants with 5-minute caching
   - **Interactive Floor Discovery Support**: Powers inline keyboard generation for seamless user experience
+- **Department filtering method** (Enhanced 2025-01-21):
+  - `get_team_members_by_department(department: Optional[Department])` - Filter participants by department with chief-first sorting
+  - **Chief-First Ordering**: Department chiefs (IsDepartmentChief = true) appear first in results
+  - **Optimized Airtable Queries**: Server-side filtering with complex sorting parameters
 - Field mapping between internal models and Airtable schema
 - Rate limiting and error recovery for update operations
 - **Security enhancements** with formula injection prevention
@@ -107,9 +111,13 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Formatted results**: `search_by_room_formatted(room: str)` for UI consumption
 - **Validation utilities**: Comprehensive input validation with `ValidationResult` objects
 
-**Participant List Service** (2025-01-20):
+**Participant List Service** (Enhanced 2025-01-21):
 - **Role-based List Access**: `get_team_members_list()` and `get_candidates_list()` methods
-- **Server-side Filtering**: Leverages existing repository `get_by_role()` methods for efficient Airtable queries
+- **Department Filtering**: Enhanced with optional department parameter for targeted filtering
+- **Chief Indicator Formatting**: Crown emoji (👑) displayed before department chiefs' names
+- **Chief-First Ordering**: Department chiefs automatically appear first in all filtered lists
+- **Server-side Filtering**: Leverages repository `get_team_members_by_department()` method for efficient Airtable queries
+- **Backward Compatibility**: Optional department parameter maintains existing API contracts
 - **Advanced Pagination**: Offset-based pagination with continuity guarantee preventing participant skipping
 - **Dynamic Message Length Handling**: Iterative participant removal to stay under 4096-character Telegram limit
 - **Russian Formatting**: Complete Russian localization with DD.MM.YYYY date format and numbered list display

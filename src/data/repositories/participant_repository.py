@@ -369,6 +369,34 @@ class ParticipantRepository(ABC):
         """
         pass
 
+    @abstractmethod
+    async def get_team_members_by_department(
+        self, department: Optional[str] = None
+    ) -> List[Participant]:
+        """
+        Retrieve team members filtered by department with chief-first sorting.
+
+        Retrieves participants with role "TEAM", optionally filtered by department.
+        Results are sorted with department chiefs first, then by church alphabetically.
+        Supports filtering by specific department, all participants, or unassigned only.
+
+        Args:
+            department: Department filter. Options:
+                       - None: Return all team members
+                       - Department enum value (e.g., "ROE", "Chapel"): Filter by specific department
+                       - "unassigned": Return only participants with no department
+
+        Returns:
+            List of team member participants matching the department filter,
+            sorted with chiefs first, then by church name alphabetically.
+            Chiefs (IsDepartmentChief = true) always appear at the top.
+
+        Raises:
+            RepositoryError: If retrieval fails
+            ValueError: If department value is invalid
+        """
+        pass
+
 
 class RepositoryError(Exception):
     """Base exception for repository operations."""

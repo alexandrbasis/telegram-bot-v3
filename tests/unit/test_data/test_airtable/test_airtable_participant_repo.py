@@ -523,6 +523,150 @@ class TestAirtableParticipantRepositorySearch:
         assert len(result) == 1
         assert isinstance(result[0], Participant)
 
+    @pytest.mark.asyncio
+    async def test_get_team_members_by_department_all(
+        self, repository, mock_airtable_client
+    ):
+        """Test getting all team members when no department filter is specified."""
+        # Mock multiple team members with different departments and chief status
+        mock_records = [
+            {
+                "id": "rec_chief_roe",
+                "fields": {
+                    "FullNameRU": "Главный ROE",
+                    "Role": "TEAM",
+                    "Department": "ROE",
+                    "IsDepartmentChief": True,
+                    "Church": "Церковь A",
+                },
+            },
+            {
+                "id": "rec_regular_chapel",
+                "fields": {
+                    "FullNameRU": "Обычный Chapel",
+                    "Role": "TEAM",
+                    "Department": "Chapel",
+                    "IsDepartmentChief": False,
+                    "Church": "Церковь B",
+                },
+            },
+            {
+                "id": "rec_chief_setup",
+                "fields": {
+                    "FullNameRU": "Главный Setup",
+                    "Role": "TEAM",
+                    "Department": "Setup",
+                    "IsDepartmentChief": True,
+                    "Church": "Церковь C",
+                },
+            },
+        ]
+        mock_airtable_client.list_records.return_value = mock_records
+
+        result = await repository.get_team_members_by_department()
+
+        # Should call list_records with role filter and chief-first sorting
+        mock_airtable_client.list_records.assert_called_once()
+        call_kwargs = mock_airtable_client.list_records.call_args[1]
+        assert "{Role} = 'TEAM'" in call_kwargs.get("formula", "")
+
+        # Check sorting parameter was passed
+        sort_param = call_kwargs.get("sort", [])
+        expected_sort = ["-IsDepartmentChief", "Church"]
+        assert sort_param == expected_sort
+
+        assert isinstance(result, list)
+        assert len(result) == 3
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_by_department_specific(
+        self, repository, mock_airtable_client
+    ):
+        """Test getting team members filtered by specific department."""
+        mock_records = [
+            {
+                "id": "rec_roe_member",
+                "fields": {
+                    "FullNameRU": "ROE участник",
+                    "Role": "TEAM",
+                    "Department": "ROE",
+                    "IsDepartmentChief": False,
+                    "Church": "Церковь X",
+                },
+            }
+        ]
+        mock_airtable_client.list_records.return_value = mock_records
+
+        result = await repository.get_team_members_by_department("ROE")
+
+        # Should call list_records with both role and department filters
+        mock_airtable_client.list_records.assert_called_once()
+        call_kwargs = mock_airtable_client.list_records.call_args[1]
+        call_args = call_kwargs.get("formula", "")
+        assert "AND(" in call_args
+        assert "{Role} = 'TEAM'" in call_args
+        assert "{Department} = 'ROE'" in call_args
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0].department == Department.ROE
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_by_department_unassigned(
+        self, repository, mock_airtable_client
+    ):
+        """Test getting team members with no department assignment."""
+        mock_records = [
+            {
+                "id": "rec_unassigned",
+                "fields": {
+                    "FullNameRU": "Без департамента",
+                    "Role": "TEAM",
+                    "Church": "Церковь Y",
+                },
+            }
+        ]
+        mock_airtable_client.list_records.return_value = mock_records
+
+        result = await repository.get_team_members_by_department("unassigned")
+
+        # Should call list_records with role filter and null department check
+        mock_airtable_client.list_records.assert_called_once()
+        call_kwargs = mock_airtable_client.list_records.call_args[1]
+        call_args = call_kwargs.get("formula", "")
+        assert "AND(" in call_args
+        assert "{Role} = 'TEAM'" in call_args
+        assert (
+            "IS_BLANK({Department})" in call_args
+            or "{Department} = BLANK()" in call_args
+        )
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0].department is None
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_by_department_invalid_department(
+        self, repository, mock_airtable_client
+    ):
+        """Test error handling for invalid department value."""
+        with pytest.raises(ValueError, match="Invalid department"):
+            await repository.get_team_members_by_department("InvalidDepartment")
+
+    @pytest.mark.asyncio
+    async def test_get_team_members_by_department_airtable_error(
+        self, repository, mock_airtable_client
+    ):
+        """Test error handling when Airtable API fails."""
+        mock_airtable_client.list_records.side_effect = AirtableAPIError(
+            "API Error", 500
+        )
+
+        with pytest.raises(
+            RepositoryError, match="Failed to get team members by department"
+        ):
+            await repository.get_team_members_by_department("ROE")
+
 
 class TestParticipantCacheBehavior:
     """Test caching invalidation logic for participant list."""
