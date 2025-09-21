@@ -110,38 +110,21 @@ class TestRoleSelectionHandler:
         return context
 
     @pytest.mark.asyncio
-    @patch("src.services.service_factory.get_participant_list_service")
     async def test_handle_team_role_selection(
-        self, mock_get_service, mock_team_update, mock_context
+        self, mock_team_update, mock_context
     ):
-        """Test team role selection triggers team list display."""
-        # Setup mock service
-        mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(
-            return_value={
-                "formatted_list": "1\\. **Тестов Тест**\n",
-                "has_prev": False,
-                "has_next": False,
-                "total_count": 1,
-                "current_offset": 0,
-                "next_offset": None,
-                "prev_offset": None,
-                "actual_displayed": 1,
-            }
-        )
-        mock_get_service.return_value = mock_service
-
+        """Test team role selection triggers department selection display."""
         await handle_role_selection(mock_team_update, mock_context)
 
         # Should answer the callback query
         mock_team_update.callback_query.answer.assert_called_once()
 
-        # Should edit message with team list (placeholder for now)
+        # Should edit message with department selection keyboard
         mock_team_update.callback_query.edit_message_text.assert_called_once()
         call_args = mock_team_update.callback_query.edit_message_text.call_args
 
         message_text = call_args[1]["text"]
-        assert "Список участников команды" in message_text
+        assert "Выберите департамент" in message_text
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
@@ -178,41 +161,24 @@ class TestRoleSelectionHandler:
         assert "Список кандидатов" in message_text
 
     @pytest.mark.asyncio
-    @patch("src.services.service_factory.get_participant_list_service")
-    async def test_role_selection_includes_pagination(
-        self, mock_get_service, mock_team_update, mock_context
+    async def test_role_selection_includes_department_keyboard(
+        self, mock_team_update, mock_context
     ):
-        """Test that role selection includes pagination controls."""
-        # Setup mock service with pagination data
-        mock_service = Mock()
-        mock_service.get_team_members_list = AsyncMock(
-            return_value={
-                "formatted_list": "1\\. **Тестов Тест**\n",
-                "has_prev": False,
-                "has_next": True,
-                "total_count": 50,
-                "current_offset": 0,
-                "next_offset": 20,
-                "prev_offset": None,
-                "actual_displayed": 20,
-            }
-        )
-        mock_get_service.return_value = mock_service
-
+        """Test that team role selection includes department filter keyboard."""
         await handle_role_selection(mock_team_update, mock_context)
 
         call_args = mock_team_update.callback_query.edit_message_text.call_args
 
-        # Should include pagination keyboard
+        # Should include department filter keyboard
         assert "reply_markup" in call_args[1]
         keyboard = call_args[1]["reply_markup"]
 
-        # Should have main menu button at minimum
+        # Should have department filter buttons
         buttons = [btn for row in keyboard.inline_keyboard for btn in row]
-        main_menu_buttons = [
-            btn for btn in buttons if btn.callback_data == "list_nav:MAIN_MENU"
-        ]
-        assert len(main_menu_buttons) == 1
+
+        # Should have "All participants" button
+        all_buttons = [btn for btn in buttons if "Все участники" in btn.text]
+        assert len(all_buttons) == 1
 
 
 class TestListNavigationHandler:
@@ -920,3 +886,115 @@ class TestDepartmentSelectionHandler:
         call_args = mock_department_update.callback_query.edit_message_text.call_args
         message_text = call_args[1]["text"]
         assert "Finance" in message_text
+
+
+class TestRoleSelectionWithDepartmentFilter:
+    """Test role selection handler with department filter integration."""
+
+    @pytest.fixture
+    def mock_team_update(self):
+        """Create mock update for team selection."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_role:TEAM"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_candidate_update(self):
+        """Create mock update for candidate selection."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_role:CANDIDATE"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_context(self):
+        """Create mock context."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.mark.asyncio
+    async def test_team_role_selection_shows_department_filter_keyboard(
+        self, mock_team_update, mock_context
+    ):
+        """Test that team role selection now shows department filter keyboard instead of direct list."""
+        await handle_role_selection(mock_team_update, mock_context)
+
+        # Should answer the callback query
+        mock_team_update.callback_query.answer.assert_called_once()
+
+        # Should edit message with department selection keyboard, not participant list
+        mock_team_update.callback_query.edit_message_text.assert_called_once()
+        call_args = mock_team_update.callback_query.edit_message_text.call_args
+
+        message_text = call_args[1]["text"]
+        # Should ask for department selection
+        assert "Выберите департамент" in message_text or "департамент" in message_text.lower()
+
+        # Should include department filter keyboard
+        assert "reply_markup" in call_args[1]
+        keyboard = call_args[1]["reply_markup"]
+
+        # Should have department selection buttons
+        buttons = [btn for row in keyboard.inline_keyboard for btn in row]
+
+        # Should have "All participants" button
+        all_buttons = [btn for btn in buttons if "Все участники" in btn.text]
+        assert len(all_buttons) == 1
+        assert all_buttons[0].callback_data == "list:filter:all"
+
+        # Should have "No department" button
+        none_buttons = [btn for btn in buttons if "Без департамента" in btn.text]
+        assert len(none_buttons) == 1
+        assert none_buttons[0].callback_data == "list:filter:none"
+
+        # Should have at least one department button
+        dept_buttons = [btn for btn in buttons if btn.callback_data.startswith("list:filter:department:")]
+        assert len(dept_buttons) > 0
+
+    @pytest.mark.asyncio
+    @patch("src.services.service_factory.get_participant_list_service")
+    async def test_candidate_role_selection_still_shows_direct_list(
+        self, mock_get_service, mock_candidate_update, mock_context
+    ):
+        """Test that candidate role selection still shows direct list (no department filtering)."""
+        # Setup mock service for candidates
+        mock_service = Mock()
+        mock_service.get_candidates_list = AsyncMock(
+            return_value={
+                "formatted_list": "1\\. **Candidate Test**\n",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 1,
+                "current_offset": 0,
+                "next_offset": None,
+                "prev_offset": None,
+                "actual_displayed": 1,
+            }
+        )
+        mock_get_service.return_value = mock_service
+
+        await handle_role_selection(mock_candidate_update, mock_context)
+
+        # Should call candidate service directly
+        mock_service.get_candidates_list.assert_called_once_with(offset=0, page_size=20)
+
+        # Should show candidate list, not department selection
+        call_args = mock_candidate_update.callback_query.edit_message_text.call_args
+        message_text = call_args[1]["text"]
+        assert "Список кандидатов" in message_text
+
+    @pytest.mark.asyncio
+    async def test_team_role_selection_stores_role_state(
+        self, mock_team_update, mock_context
+    ):
+        """Test that team role selection stores role state for department filtering."""
+        await handle_role_selection(mock_team_update, mock_context)
+
+        # Should store team role in context for later use by department filter
+        assert mock_context.user_data.get("selected_role") == "TEAM"

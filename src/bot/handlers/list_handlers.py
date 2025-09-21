@@ -46,6 +46,8 @@ async def handle_role_selection(
     Handle role selection callback for displaying participant lists.
 
     Processes list_role:TEAM or list_role:CANDIDATE callbacks.
+    For TEAM role, shows department selection keyboard.
+    For CANDIDATE role, shows direct list.
     """
     query = update.callback_query
     await query.answer()
@@ -53,49 +55,61 @@ async def handle_role_selection(
     # Extract role from callback data
     role = query.data.split(":")[1]
 
-    # Store role and offset in context for pagination
-    context.user_data["current_role"] = role
-    context.user_data["current_offset"] = 0
+    if role == "TEAM":
+        # For team members, show department selection keyboard instead of direct list
+        context.user_data["selected_role"] = "TEAM"
 
-    # Get participant list service
-    list_service = service_factory.get_participant_list_service()
-
-    try:
-        # Get participant data based on role
-        if role == "TEAM":
-            data = await list_service.get_team_members_list(offset=0, page_size=20)
-            title = "**Список участников команды**"
-        elif role == "CANDIDATE":
-            data = await list_service.get_candidates_list(offset=0, page_size=20)
-            title = "**Список кандидатов**"
-        else:
-            await query.edit_message_text(
-                text="Неизвестный тип списка", parse_mode="MarkdownV2"
-            )
-            return
-
-        # Format message with title and participant data
-        start_pos = data["current_offset"] + 1
-        end_pos = data["current_offset"] + data["actual_displayed"]
-        # Escape '-' in range for MarkdownV2
-        # Escape parentheses and '-' for MarkdownV2
-        page_info = f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
-        message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
-
-        # Add pagination keyboard based on data
-        keyboard = get_list_pagination_keyboard(
-            has_prev=data["has_prev"], has_next=data["has_next"]
+        message_text = (
+            "Выберите департамент для фильтрации участников команды:\n\n"
+            "🌐 **Все участники** \\- показать всех участников команды\n"
+            "🏢 **Департамент** \\- показать участников конкретного департамента\n"
+            "❓ **Без департамента** \\- показать участников без назначенного департамента"
         )
+
+        keyboard = create_department_filter_keyboard()
 
         await query.edit_message_text(
             text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
         )
 
-    except Exception as e:
-        # Handle errors gracefully
+    elif role == "CANDIDATE":
+        # For candidates, show direct list (no department filtering)
+        context.user_data["current_role"] = role
+        context.user_data["current_offset"] = 0
+
+        # Get participant list service
+        list_service = service_factory.get_participant_list_service()
+
+        try:
+            data = await list_service.get_candidates_list(offset=0, page_size=20)
+            title = "**Список кандидатов**"
+
+            # Format message with title and participant data
+            start_pos = data["current_offset"] + 1
+            end_pos = data["current_offset"] + data["actual_displayed"]
+            # Escape parentheses and '-' for MarkdownV2
+            page_info = f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
+            message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
+
+            # Add pagination keyboard based on data
+            keyboard = get_list_pagination_keyboard(
+                has_prev=data["has_prev"], has_next=data["has_next"]
+            )
+
+            await query.edit_message_text(
+                text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+            )
+
+        except Exception as e:
+            # Handle errors gracefully
+            await query.edit_message_text(
+                text=f"Произошла ошибка при получении списка участников: {str(e)}",
+                parse_mode="MarkdownV2",
+            )
+
+    else:
         await query.edit_message_text(
-            text=f"Произошла ошибка при получении списка участников: {str(e)}",
-            parse_mode="MarkdownV2",
+            text="Неизвестный тип списка", parse_mode="MarkdownV2"
         )
 
 
