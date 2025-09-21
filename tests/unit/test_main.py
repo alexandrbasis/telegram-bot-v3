@@ -120,6 +120,7 @@ class TestMainFileLoggingIntegration:
             # Mock the application builder chain
             mock_builder = Mock()
             mock_builder.token.return_value = mock_builder
+            mock_builder.request.return_value = mock_builder
             # Create mock app with real dictionary for bot_data
             mock_app = Mock()
             mock_app.bot_data = {}  # Real dictionary, not Mock
@@ -144,7 +145,7 @@ class TestMainFileLoggingIntegration:
 
         with (
             patch.dict(os.environ, env_vars, clear=True),
-            patch("src.main.Application.builder"),
+            patch("src.main.Application.builder") as mock_app_builder,
             patch("src.main.get_search_conversation_handler"),
             patch("src.main.FileLoggingService") as mock_file_service,
             patch("src.main.logging.getLogger") as mock_get_logger,
@@ -152,6 +153,10 @@ class TestMainFileLoggingIntegration:
 
             mock_file_service_instance = Mock()
             mock_file_service.return_value = mock_file_service_instance
+
+            mock_app_builder.return_value.request.return_value = (
+                mock_app_builder.return_value
+            )
 
             create_application()
 
@@ -175,7 +180,7 @@ class TestFileLoggingServiceIntegration:
 
         with (
             patch.dict(os.environ, env_vars, clear=True),
-            patch("src.main.Application.builder"),
+            patch("src.main.Application.builder") as mock_app_builder,
             patch("src.main.get_search_conversation_handler"),
             patch(
                 "src.services.file_logging_service.logging.handlers.RotatingFileHandler"
@@ -184,6 +189,10 @@ class TestFileLoggingServiceIntegration:
 
             mock_handler_instance = Mock()
             mock_handler.return_value = mock_handler_instance
+
+            mock_app_builder.return_value.request.return_value = (
+                mock_app_builder.return_value
+            )
 
             app = create_application()
 
@@ -203,10 +212,14 @@ class TestFileLoggingServiceIntegration:
 
         with (
             patch.dict(os.environ, env_vars, clear=True),
-            patch("src.main.Application.builder"),
+            patch("src.main.Application.builder") as mock_app_builder,
             patch("src.main.get_search_conversation_handler"),
             patch("pathlib.Path.mkdir") as mock_mkdir,
         ):
+
+            mock_app_builder.return_value.request.return_value = (
+                mock_app_builder.return_value
+            )
 
             create_application()
 
@@ -223,10 +236,14 @@ class TestFileLoggingServiceIntegration:
 
         with (
             patch.dict(os.environ, env_vars, clear=True),
-            patch("src.main.Application.builder"),
+            patch("src.main.Application.builder") as mock_app_builder,
             patch("src.main.get_search_conversation_handler"),
             patch("src.main.FileLoggingService", side_effect=Exception("Disk full")),
         ):
+
+            mock_app_builder.return_value.request.return_value = (
+                mock_app_builder.return_value
+            )
 
             # Should not crash even if file logging fails
             app = create_application()

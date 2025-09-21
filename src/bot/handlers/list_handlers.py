@@ -1,11 +1,9 @@
-"""
-Handlers for participant list functionality.
+"""Handlers for participant list functionality."""
 
-Provides conversation handlers for list access workflow:
-Get List → Role Selection → List Display
-"""
+import logging
 
 from telegram import Update
+from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
@@ -17,6 +15,31 @@ from src.bot.keyboards.list_keyboards import (
 )
 from src.services import service_factory
 from src.utils.translations import department_to_russian
+
+
+logger = logging.getLogger(__name__)
+
+_MESSAGE_NOT_MODIFIED = "Message is not modified"
+
+
+async def _safe_edit_message_text(
+    query,
+    *,
+    text: str,
+    reply_markup=None,
+    parse_mode: str | None = None,
+) -> None:
+    """Edit message while suppressing harmless "message is not modified" errors."""
+
+    try:
+        await query.edit_message_text(
+            text=text, reply_markup=reply_markup, parse_mode=parse_mode
+        )
+    except BadRequest as exc:
+        if _MESSAGE_NOT_MODIFIED in str(exc):
+            logger.debug("List handler ignored message-not-modified for callback %s", query.data)
+            return
+        raise
 
 
 async def handle_get_list_request(
@@ -71,8 +94,11 @@ async def handle_role_selection(
 
         keyboard = create_department_filter_keyboard()
 
-        await query.edit_message_text(
-            text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+        await _safe_edit_message_text(
+            query,
+            text=message_text,
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2",
         )
 
     elif role == "CANDIDATE":
@@ -101,21 +127,25 @@ async def handle_role_selection(
                 has_prev=data["has_prev"], has_next=data["has_next"]
             )
 
-            await query.edit_message_text(
-                text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+            await _safe_edit_message_text(
+                query,
+                text=message_text,
+                reply_markup=keyboard,
+                parse_mode="MarkdownV2",
             )
 
         except Exception as e:
             # Handle errors gracefully
             error_text = escape_markdown(str(e), version=2)
-            await query.edit_message_text(
+            await _safe_edit_message_text(
+                query,
                 text=f"Произошла ошибка при получении списка участников: {error_text}",
                 parse_mode="MarkdownV2",
             )
 
     else:
-        await query.edit_message_text(
-            text="Неизвестный тип списка", parse_mode="MarkdownV2"
+        await _safe_edit_message_text(
+            query, text="Неизвестный тип списка", parse_mode="MarkdownV2"
         )
 
 
@@ -154,8 +184,11 @@ async def handle_list_navigation(
 
         keyboard = create_department_filter_keyboard()
 
-        await query.edit_message_text(
-            text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+        await _safe_edit_message_text(
+            query,
+            text=message_text,
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2",
         )
 
         return SearchStates.MAIN_MENU
@@ -171,7 +204,8 @@ async def handle_list_navigation(
 
         if not current_role:
             # Fallback if state is lost
-            await query.edit_message_text(
+            await _safe_edit_message_text(
+                query,
                 text="Произошла ошибка\\. Пожалуйста, выберите список заново\\.",
                 parse_mode="MarkdownV2",
             )
@@ -200,8 +234,8 @@ async def handle_list_navigation(
                     offset=current_offset, page_size=20
                 )
             else:
-                await query.edit_message_text(
-                    text="Неизвестный тип списка", parse_mode="MarkdownV2"
+                await _safe_edit_message_text(
+                    query, text="Неизвестный тип списка", parse_mode="MarkdownV2"
                 )
                 return SearchStates.MAIN_MENU
 
@@ -221,7 +255,8 @@ async def handle_list_navigation(
             context.user_data["current_offset"] = new_offset
         except Exception as e:
             error_text = escape_markdown(str(e), version=2)
-            await query.edit_message_text(
+            await _safe_edit_message_text(
+                query,
                 text=f"Произошла ошибка при навигации: {error_text}",
                 parse_mode="MarkdownV2",
             )
@@ -251,8 +286,8 @@ async def handle_list_navigation(
                 )
                 title = "**Список кандидатов**"
             else:
-                await query.edit_message_text(
-                    text="Неизвестный тип списка", parse_mode="MarkdownV2"
+                await _safe_edit_message_text(
+                    query, text="Неизвестный тип списка", parse_mode="MarkdownV2"
                 )
                 return SearchStates.MAIN_MENU
 
@@ -274,8 +309,11 @@ async def handle_list_navigation(
                 show_department_back=show_dept_back,
             )
 
-            await query.edit_message_text(
-                text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+            await _safe_edit_message_text(
+                query,
+                text=message_text,
+                reply_markup=keyboard,
+                parse_mode="MarkdownV2",
             )
 
             return SearchStates.MAIN_MENU
@@ -283,7 +321,8 @@ async def handle_list_navigation(
         except Exception as e:
             # Handle errors gracefully
             error_text = escape_markdown(str(e), version=2)
-            await query.edit_message_text(
+            await _safe_edit_message_text(
+                query,
                 text=f"Произошла ошибка при навигации: {error_text}",
                 parse_mode="MarkdownV2",
             )
@@ -308,8 +347,8 @@ async def handle_department_filter_selection(
     callback_parts = query.data.split(":")
 
     if len(callback_parts) < 3:
-        await query.edit_message_text(
-            text="Неизвестный фильтр", parse_mode="MarkdownV2"
+        await _safe_edit_message_text(
+            query, text="Неизвестный фильтр", parse_mode="MarkdownV2"
         )
         return
 
@@ -329,8 +368,8 @@ async def handle_department_filter_selection(
         department_name = department_to_russian(department_filter)
         current_department = department_filter
     else:
-        await query.edit_message_text(
-            text="Неизвестный фильтр департамента", parse_mode="MarkdownV2"
+        await _safe_edit_message_text(
+            query, text="Неизвестный фильтр департамента", parse_mode="MarkdownV2"
         )
         return
 
@@ -368,14 +407,18 @@ async def handle_department_filter_selection(
             show_department_back=True,
         )
 
-        await query.edit_message_text(
-            text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+        await _safe_edit_message_text(
+            query,
+            text=message_text,
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2",
         )
 
     except Exception as e:
         # Handle errors gracefully
         error_text = escape_markdown(str(e), version=2)
-        await query.edit_message_text(
+        await _safe_edit_message_text(
+            query,
             text=f"Произошла ошибка при получении списка участников: {error_text}",
             parse_mode="MarkdownV2",
         )

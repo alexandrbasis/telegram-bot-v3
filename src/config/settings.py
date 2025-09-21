@@ -152,6 +152,41 @@ class TelegramSettings:
             os.getenv("TELEGRAM_CONVERSATION_TIMEOUT_MINUTES", "30")
         )
     )
+    request_connect_timeout: float = field(
+        default_factory=lambda: float(
+            os.getenv("TELEGRAM_REQUEST_CONNECT_TIMEOUT", "5.0")
+        )
+    )
+    request_read_timeout: float = field(
+        default_factory=lambda: float(
+            os.getenv("TELEGRAM_REQUEST_READ_TIMEOUT", "20.0")
+        )
+    )
+    request_write_timeout: float = field(
+        default_factory=lambda: float(
+            os.getenv("TELEGRAM_REQUEST_WRITE_TIMEOUT", "5.0")
+        )
+    )
+    request_pool_timeout: float = field(
+        default_factory=lambda: float(
+            os.getenv("TELEGRAM_REQUEST_POOL_TIMEOUT", "5.0")
+        )
+    )
+    request_connection_pool_size: int = field(
+        default_factory=lambda: int(
+            os.getenv("TELEGRAM_REQUEST_CONNECTION_POOL_SIZE", "10")
+        )
+    )
+    startup_retry_attempts: int = field(
+        default_factory=lambda: int(
+            os.getenv("TELEGRAM_STARTUP_RETRY_ATTEMPTS", "3")
+        )
+    )
+    startup_retry_delay_seconds: float = field(
+        default_factory=lambda: float(
+            os.getenv("TELEGRAM_STARTUP_RETRY_DELAY_SECONDS", "5.0")
+        )
+    )
 
     # Admin settings
     admin_user_ids: list[int] = field(default_factory=lambda: _parse_admin_ids())
@@ -179,6 +214,46 @@ class TelegramSettings:
             raise ValueError(
                 "Conversation timeout must be between 1 and 1440 minutes (24 hours)"
             )
+
+        if self.request_connect_timeout <= 0:
+            raise ValueError("Telegram connect timeout must be positive")
+
+        if self.request_read_timeout <= 0:
+            raise ValueError("Telegram read timeout must be positive")
+
+        if self.request_write_timeout <= 0:
+            raise ValueError("Telegram write timeout must be positive")
+
+        if self.request_pool_timeout <= 0:
+            raise ValueError("Telegram pool timeout must be positive")
+
+        if self.request_connection_pool_size <= 0:
+            raise ValueError("Telegram connection pool size must be positive")
+
+        if self.startup_retry_attempts <= 0:
+            raise ValueError("Telegram startup retry attempts must be positive")
+
+        if self.startup_retry_delay_seconds < 0:
+            raise ValueError("Telegram startup retry delay cannot be negative")
+
+    def get_request_config(self) -> Dict[str, float | int]:
+        """Get HTTPX request configuration values for PTB."""
+
+        return {
+            "connect_timeout": self.request_connect_timeout,
+            "read_timeout": self.request_read_timeout,
+            "write_timeout": self.request_write_timeout,
+            "pool_timeout": self.request_pool_timeout,
+            "connection_pool_size": self.request_connection_pool_size,
+        }
+
+    def get_startup_retry_config(self) -> Dict[str, float | int]:
+        """Get startup retry settings for bot initialization."""
+
+        return {
+            "attempts": self.startup_retry_attempts,
+            "delay_seconds": self.startup_retry_delay_seconds,
+        }
 
 
 @dataclass
@@ -388,6 +463,15 @@ class Settings:
                 "max_message_length": self.telegram.max_message_length,
                 "command_timeout": self.telegram.command_timeout,
                 "admin_count": len(self.telegram.admin_user_ids),
+                "startup_retry_attempts": self.telegram.startup_retry_attempts,
+                "startup_retry_delay_seconds": self.telegram.startup_retry_delay_seconds,
+                "request_timeouts": {
+                    "connect": self.telegram.request_connect_timeout,
+                    "read": self.telegram.request_read_timeout,
+                    "write": self.telegram.request_write_timeout,
+                    "pool": self.telegram.request_pool_timeout,
+                },
+                "request_pool_size": self.telegram.request_connection_pool_size,
             },
             "logging": {
                 "level": self.logging.log_level,

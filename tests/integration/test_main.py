@@ -10,6 +10,7 @@ import logging
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
+from telegram.error import Conflict
 from telegram.ext import Application, CommandHandler, ConversationHandler
 
 
@@ -33,6 +34,17 @@ class TestMainBotApplication:
             # Mock settings with proper structure
             mock_settings = Mock()
             mock_settings.telegram.bot_token = "test_token"
+            mock_settings.telegram.get_request_config.return_value = {
+                "connect_timeout": 5.0,
+                "read_timeout": 20.0,
+                "write_timeout": 5.0,
+                "pool_timeout": 5.0,
+                "connection_pool_size": 10,
+            }
+            mock_settings.telegram.get_startup_retry_config.return_value = {
+                "attempts": 1,
+                "delay_seconds": 0.0,
+            }
             mock_settings.logging.log_level = (
                 "INFO"  # Fixed: was .level, should be .log_level
             )
@@ -55,12 +67,24 @@ class TestMainBotApplication:
             # Mock settings with proper structure
             mock_settings = Mock()
             mock_settings.telegram.bot_token = "test_bot_token_123"
+            mock_settings.telegram.get_request_config.return_value = {
+                "connect_timeout": 5.0,
+                "read_timeout": 20.0,
+                "write_timeout": 5.0,
+                "pool_timeout": 5.0,
+                "connection_pool_size": 10,
+            }
+            mock_settings.telegram.get_startup_retry_config.return_value = {
+                "attempts": 1,
+                "delay_seconds": 0.0,
+            }
             mock_settings.logging.log_level = "INFO"
             mock_get_settings.return_value = mock_settings
 
             # Mock builder chain
             mock_builder_instance = Mock()
             mock_builder_instance.token.return_value = mock_builder_instance
+            mock_builder_instance.request.return_value = mock_builder_instance
             # Create mock app with real dictionary for bot_data
             mock_app = Mock(spec=Application)
             mock_app.bot_data = {}  # Real dictionary, not Mock
@@ -87,6 +111,17 @@ class TestMainBotApplication:
             # Mock settings with proper structure
             mock_settings = Mock()
             mock_settings.telegram.bot_token = "test_token"
+            mock_settings.telegram.get_request_config.return_value = {
+                "connect_timeout": 5.0,
+                "read_timeout": 20.0,
+                "write_timeout": 5.0,
+                "pool_timeout": 5.0,
+                "connection_pool_size": 10,
+            }
+            mock_settings.telegram.get_startup_retry_config.return_value = {
+                "attempts": 1,
+                "delay_seconds": 0.0,
+            }
             mock_settings.logging.log_level = "INFO"
             mock_get_settings.return_value = mock_settings
 
@@ -101,6 +136,7 @@ class TestMainBotApplication:
 
             mock_builder_instance = Mock()
             mock_builder_instance.token.return_value = mock_builder_instance
+            mock_builder_instance.request.return_value = mock_builder_instance
             mock_builder_instance.build.return_value = mock_app
             mock_builder.return_value = mock_builder_instance
 
@@ -135,6 +171,17 @@ class TestMainBotApplication:
 
             mock_settings = Mock()
             mock_settings.telegram.bot_token = "test_token"
+            mock_settings.telegram.get_request_config.return_value = {
+                "connect_timeout": 5.0,
+                "read_timeout": 20.0,
+                "write_timeout": 5.0,
+                "pool_timeout": 5.0,
+                "connection_pool_size": 10,
+            }
+            mock_settings.telegram.get_startup_retry_config.return_value = {
+                "attempts": 1,
+                "delay_seconds": 0.0,
+            }
             mock_get_settings.return_value = mock_settings
 
             from src.main import create_application
@@ -189,6 +236,81 @@ class TestMainBotRunning:
             # Should create application and run polling
             mock_create_app.assert_called_once()
             mock_app.run_polling.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_run_bot_retries_on_conflict(self):
+        """Test that run_bot retries startup when Telegram reports a conflict."""
+        settings_mock = Mock()
+        settings_mock.telegram.get_startup_retry_config.return_value = {
+            "attempts": 2,
+            "delay_seconds": 0.1,
+        }
+
+        # First application instance raises Conflict during start_polling
+        first_app = Mock(spec=Application)
+        first_app.bot_data = {"settings": settings_mock}
+        first_app.initialize = AsyncMock()
+        first_app.start = AsyncMock()
+        first_app.stop = AsyncMock()
+        first_app.shutdown = AsyncMock()
+        first_app.run_polling = None
+
+        first_updater = Mock()
+        first_updater.initialize = AsyncMock()
+        first_updater.start_polling = AsyncMock(
+            side_effect=Conflict("conflict test")
+        )
+        first_updater.stop = AsyncMock()
+        first_updater.shutdown = AsyncMock()
+        first_app.updater = first_updater
+
+        # Second application instance starts successfully
+        second_app = Mock(spec=Application)
+        second_app.bot_data = {"settings": settings_mock}
+        second_app.initialize = AsyncMock()
+        second_app.start = AsyncMock()
+        second_app.stop = AsyncMock()
+        second_app.shutdown = AsyncMock()
+        second_app.run_polling = None
+
+        second_updater = Mock()
+        second_updater.initialize = AsyncMock()
+        second_updater.start_polling = AsyncMock(return_value=None)
+        second_updater.stop = AsyncMock()
+        second_updater.shutdown = AsyncMock()
+        second_app.updater = second_updater
+
+        import src.main as main_module
+
+        started_event = asyncio.Event()
+
+        async def mark_started(*args, **kwargs):
+            started_event.set()
+            return None
+
+        second_updater.start_polling = AsyncMock(side_effect=mark_started)
+
+        with (
+            patch.object(main_module, "create_application", side_effect=[first_app, second_app]) as mock_create,
+            patch.object(main_module.asyncio, "sleep", new_callable=AsyncMock) as mock_sleep,
+        ):
+
+            task = asyncio.create_task(main_module.run_bot())
+
+            await asyncio.wait_for(started_event.wait(), timeout=0.1)
+
+            assert mock_create.call_count == 2
+            first_updater.start_polling.assert_awaited()
+            first_updater.stop.assert_awaited()
+            second_updater.start_polling.assert_awaited()
+
+            mock_sleep.assert_awaited_with(0.1)
+
+            task.cancel()
+            await task
+
+            second_updater.stop.assert_awaited()
+            second_updater.shutdown.assert_awaited()
 
 
 class TestLoggingConfiguration:
@@ -252,6 +374,17 @@ class TestErrorHandling:
             # Mock settings with no token but proper logging structure
             mock_settings = Mock()
             mock_settings.telegram.bot_token = None
+            mock_settings.telegram.get_request_config.return_value = {
+                "connect_timeout": 5.0,
+                "read_timeout": 20.0,
+                "write_timeout": 5.0,
+                "pool_timeout": 5.0,
+                "connection_pool_size": 10,
+            }
+            mock_settings.telegram.get_startup_retry_config.return_value = {
+                "attempts": 1,
+                "delay_seconds": 0.0,
+            }
             mock_settings.logging.log_level = "INFO"  # Proper string value
             mock_get_settings.return_value = mock_settings
 
@@ -295,6 +428,17 @@ class TestBotIntegration:
             # Mock all dependencies
             mock_settings = Mock()
             mock_settings.telegram.bot_token = "test_token"
+            mock_settings.telegram.get_request_config.return_value = {
+                "connect_timeout": 5.0,
+                "read_timeout": 20.0,
+                "write_timeout": 5.0,
+                "pool_timeout": 5.0,
+                "connection_pool_size": 10,
+            }
+            mock_settings.telegram.get_startup_retry_config.return_value = {
+                "attempts": 1,
+                "delay_seconds": 0.0,
+            }
             mock_settings.logging.log_level = "INFO"  # Proper string value
             mock_get_settings.return_value = mock_settings
 
@@ -324,6 +468,17 @@ class TestBotIntegration:
 
             mock_settings = Mock()
             mock_settings.telegram.bot_token = "test_token"
+            mock_settings.telegram.get_request_config.return_value = {
+                "connect_timeout": 5.0,
+                "read_timeout": 20.0,
+                "write_timeout": 5.0,
+                "pool_timeout": 5.0,
+                "connection_pool_size": 10,
+            }
+            mock_settings.telegram.get_startup_retry_config.return_value = {
+                "attempts": 1,
+                "delay_seconds": 0.0,
+            }
             mock_settings.logging.log_level = "INFO"  # Proper string value
             mock_get_settings.return_value = mock_settings
 

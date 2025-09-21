@@ -26,6 +26,17 @@ class TestExportCommandIntegration:
         settings = Mock(spec=Settings)
         settings.telegram = Mock()
         settings.telegram.bot_token = "test_bot_token"
+        settings.telegram.get_request_config.return_value = {
+            "connect_timeout": 5.0,
+            "read_timeout": 20.0,
+            "write_timeout": 5.0,
+            "pool_timeout": 5.0,
+            "connection_pool_size": 10,
+        }
+        settings.telegram.get_startup_retry_config.return_value = {
+            "attempts": 1,
+            "delay_seconds": 0.0,
+        }
         settings.telegram.admin_user_ids = [123456]
         settings.logging = Mock()
         settings.logging.log_level = "INFO"

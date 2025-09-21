@@ -8,12 +8,14 @@ proper error handling, and logging configuration including persistent file loggi
 import asyncio
 import logging
 import tempfile
+from contextlib import suppress
 from pathlib import Path
 from typing import Optional
 
 from telegram import Update
 from telegram.error import Conflict, NetworkError, RetryAfter, TimedOut
 from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.request import HTTPXRequest
 
 from src.bot.handlers.admin_handlers import handle_logging_toggle_command
 from src.bot.handlers.export_handlers import handle_export_command
@@ -110,6 +112,11 @@ def create_application() -> Application:
     logger.info("Building Telegram Application")
     builder = Application.builder()
     builder = builder.token(settings.telegram.bot_token)
+
+    # Configure HTTPX request with custom timeouts to prevent startup hangs
+    request = HTTPXRequest(**settings.telegram.get_request_config())
+    builder = builder.request(request)
+
     app = builder.build()
 
     # Add conversation handler for search functionality
@@ -182,6 +189,27 @@ def create_application() -> Application:
     return app
 
 
+async def _shutdown_application(app: Optional[Application]) -> None:
+    """Safely stop and shut down the Telegram application."""
+
+    if app is None:
+        return
+
+    updater = app.updater
+
+    if updater is not None:
+        with suppress(Exception):
+            await updater.stop()
+        with suppress(Exception):
+            await updater.shutdown()
+
+    with suppress(Exception):
+        await app.stop()
+
+    with suppress(Exception):
+        await app.shutdown()
+
+
 async def run_bot() -> None:
     """
     Run the Telegram bot with an async-friendly lifecycle.
@@ -193,31 +221,98 @@ async def run_bot() -> None:
     """
     logger.info("Starting Telegram bot")
 
+    app: Optional[Application] = None
+    max_attempts: Optional[int] = None
+    retry_delay: float = 0.0
+    attempt = 1
+
     try:
-        app = create_application()
+        while True:
+            if max_attempts is not None and attempt > max_attempts:
+                raise RuntimeError("Failed to start bot after retry attempts")
 
-        # If tests patched run_polling as AsyncMock, await it to satisfy expectations
-        run_polling_attr = getattr(app, "run_polling", None)
-        if (
-            run_polling_attr is not None
-            and "AsyncMock" in type(run_polling_attr).__name__
-        ):
-            logger.info("Bot starting with mocked polling (test mode)")
-            from typing import Any, cast
+            try:
+                app = create_application()
+            except Exception:
+                # If we cannot create the application, abort startup entirely
+                raise
 
-            await cast(Any, run_polling_attr)(drop_pending_updates=True)
-            return
+            # If tests patched run_polling as AsyncMock, await it to satisfy expectations
+            run_polling_attr = getattr(app, "run_polling", None)
+            if (
+                run_polling_attr is not None
+                and "AsyncMock" in type(run_polling_attr).__name__
+            ):
+                logger.info("Bot starting with mocked polling (test mode)")
+                from typing import Any, cast
 
-        # Production path: explicit async lifecycle to avoid nested event loops
-        logger.info("Bot starting with async lifecycle (polling)")
-        await app.initialize()
-        await app.start()
-        # Updater handles receiving updates in PTB
-        updater = app.updater
-        if updater is None:
-            raise RuntimeError("Application.updater is not available")
-        await updater.initialize()
-        await updater.start_polling(drop_pending_updates=True)
+                await cast(Any, run_polling_attr)(drop_pending_updates=True)
+                return
+
+            if max_attempts is None:
+                settings: Optional[Settings] = app.bot_data.get("settings")
+                retry_config = (
+                    settings.telegram.get_startup_retry_config()
+                    if settings is not None
+                    else {"attempts": 1, "delay_seconds": 0.0}
+                )
+                max_attempts = max(int(retry_config.get("attempts", 1)), 1)
+                retry_delay = max(float(retry_config.get("delay_seconds", 0.0)), 0.0)
+
+            try:
+                logger.info(
+                    "Bot starting with async lifecycle (polling) [attempt %s/%s]",
+                    attempt,
+                    max_attempts,
+                )
+
+                await app.initialize()
+                await app.start()
+
+                updater = app.updater
+                if updater is None:
+                    raise RuntimeError("Application.updater is not available")
+
+                await updater.initialize()
+                await updater.start_polling(drop_pending_updates=True)
+                break
+
+            except (TimedOut, Conflict) as err:
+                if isinstance(err, Conflict):
+                    logger.warning(
+                        "Telegram reported a polling conflict (attempt %s/%s). "
+                        "Another bot instance may still be running.",
+                        attempt,
+                        max_attempts,
+                    )
+                else:
+                    logger.warning(
+                        "Telegram API timed out during startup (attempt %s/%s): %s",
+                        attempt,
+                        max_attempts,
+                        err,
+                    )
+
+                await _shutdown_application(app)
+                app = None
+
+                attempt += 1
+
+                if max_attempts is not None and attempt > max_attempts:
+                    raise
+
+                if retry_delay > 0:
+                    logger.info(
+                        "Retrying bot startup in %.1f seconds", retry_delay
+                    )
+                    await asyncio.sleep(retry_delay)
+
+                continue
+
+            except Exception:
+                await _shutdown_application(app)
+                app = None
+                raise
 
         try:
             # Block until cancellation (e.g., SIGINT)
@@ -225,18 +320,6 @@ async def run_bot() -> None:
             await stop_event.wait()
         except asyncio.CancelledError:
             logger.info("Cancellation received; stopping bot")
-        finally:
-            # Graceful shutdown
-            try:
-                await updater.stop()
-                await updater.shutdown()
-            except Exception as e:
-                logger.warning(f"Error stopping updater: {e}")
-            try:
-                await app.stop()
-                await app.shutdown()
-            except Exception as e:
-                logger.warning(f"Error during application shutdown: {e}")
 
     except KeyboardInterrupt:
         logger.info("Bot stopped by user interrupt")
@@ -244,6 +327,7 @@ async def run_bot() -> None:
         logger.error(f"Critical error running bot: {e}")
         raise
     finally:
+        await _shutdown_application(app)
         logger.info("Bot shutdown complete")
 
 
