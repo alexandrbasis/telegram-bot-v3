@@ -33,6 +33,7 @@ from src.bot.handlers.floor_search_handlers import (
     process_floor_search,
 )
 from src.bot.handlers.list_handlers import (
+    handle_department_filter_selection,
     handle_get_list_request,
     handle_list_navigation,
     handle_role_selection,
@@ -121,8 +122,11 @@ def get_search_conversation_handler() -> ConversationHandler:
                 ),
                 # Backward compat (if any inline button remains)
                 CallbackQueryHandler(search_button, pattern="^search$"),
-                # List callback handlers for role selection and navigation
+                # List callback handlers for role selection, department filtering, and navigation
                 CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
+                CallbackQueryHandler(
+                    handle_department_filter_selection, pattern="^list:filter:"
+                ),
                 CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
             ],
             SearchStates.SEARCH_MODE_SELECTION: [
@@ -142,8 +146,11 @@ def get_search_conversation_handler() -> ConversationHandler:
                 MessageHandler(
                     filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
                 ),
-                # List handlers for role selection and navigation
+                # List handlers for role selection, department filtering, and navigation
                 CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
+                CallbackQueryHandler(
+                    handle_department_filter_selection, pattern="^list:filter:"
+                ),
                 CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
             ],
             SearchStates.WAITING_FOR_NAME: [

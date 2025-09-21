@@ -46,12 +46,17 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Russian localization across all states
 - Field-specific validation and error handling
 
-**Participant Lists Handler** (New - 2025-01-20):
-- Role-based bulk participant list access via "📋 Получить список" main menu button
+**Participant Lists Handler** (Enhanced 2025-01-21):
+- Role-based bulk participant list access via "📋 Получить список" main menu button with department filtering
+- **Department Filtering Integration**: Complete workflow from team selection to department-specific lists
 - **List Navigation States**: Integrated with existing SearchStates for seamless conversation flow
+- **Department Context Preservation**: Department filter state maintained through pagination and navigation
+- **Enhanced Navigation**: "🔄 Выбор департамента" button returns users to department selection
+- **Chief-First Sorting**: Department chiefs automatically appear at top of filtered lists
+- **Russian Localization**: All department names translated and displayed in Russian
 - **Offset-based Pagination**: Advanced pagination system prevents participant skipping during message length trimming
 - **Dynamic Page Sizing**: Automatically adjusts participants per page to stay under Telegram's 4096-character limit
-- **State Management**: Maintains current role and navigation offset in user context
+- **State Management**: Maintains current role, department filter, and navigation offset in user context
 - **MarkdownV2 Escaping**: Safe rendering of user-generated content preventing formatting injection attacks
 - Integration with existing main menu and conversation patterns without breaking changes
 
@@ -113,17 +118,20 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 
 **Participant List Service** (Enhanced 2025-01-21):
 - **Role-based List Access**: `get_team_members_list()` and `get_candidates_list()` methods
-- **Department Filtering**: Enhanced with optional department parameter for targeted filtering
+- **Complete Department Filtering**: Enhanced with optional department parameter for targeted filtering
+- **Department Selection Integration**: Supports full workflow from role selection to department-specific lists
 - **Chief Indicator Formatting**: Crown emoji (👑) displayed before department chiefs' names
 - **Chief-First Ordering**: Department chiefs automatically appear first in all filtered lists
 - **Server-side Filtering**: Leverages repository `get_team_members_by_department()` method for efficient Airtable queries
+- **Russian Department Translation**: Integrates department_to_russian function for consistent localization
+- **Navigation Context Support**: Department filter information included in pagination metadata
 - **Backward Compatibility**: Optional department parameter maintains existing API contracts
 - **Advanced Pagination**: Offset-based pagination with continuity guarantee preventing participant skipping
 - **Dynamic Message Length Handling**: Iterative participant removal to stay under 4096-character Telegram limit
 - **Russian Formatting**: Complete Russian localization with DD.MM.YYYY date format and numbered list display
 - **MarkdownV2 Support**: Safe content escaping preventing formatting injection from user-generated data
 - **Pagination Metadata**: Returns navigation information (current_offset, next_offset, prev_offset, actual_displayed)
-- **Empty Result Handling**: Graceful "Участники не найдены." messaging for empty role categories
+- **Empty Result Handling**: Graceful "Участники не найдены." messaging for empty role categories and departments
 
 **Validation Strategies**:
 - **Required Fields**: Russian name (min length 1)
@@ -175,16 +183,20 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 8. Changes committed via repository `update_by_id()` method with retry mechanism
 9. User returns to search results with context preserved
 
-### Get List → Navigation → Main Menu Workflow (New - 2025-01-20)
+### Get List → Department Filtering → Navigation → Main Menu Workflow (Enhanced 2025-01-21)
 1. User clicks "📋 Получить список" from main menu
-2. Bot displays role selection: "👥 Команда" (Team) or "🎯 Кандидаты" (Candidates) 
-3. User selects role → Bot displays paginated numbered list with complete participant information
-4. **Advanced Pagination Navigation**: User can navigate pages using "◀️ Назад" and "▶️ Далее" buttons
+2. Bot displays role selection: "👥 Команда" (Team) or "🎯 Кандидаты" (Candidates)
+3. **Team Selection Path**: User selects "👥 Команда" → Bot displays department filtering interface with 15 options
+4. **Department Selection**: User selects specific department or "Все участники" → Bot displays filtered list
+5. **Candidate Selection Path**: User selects "🎯 Кандидаты" → Bot displays all candidates directly (bypasses department filtering)
+6. **Enhanced Navigation**: User can navigate pages using "◀️ Назад", "▶️ Далее", "🔄 Выбор департамента" buttons
+   - Department filter context preserved through pagination
    - Offset-based navigation ensures no participants are skipped during message length trimming
    - Dynamic page sizing automatically adjusts to stay under 4096-character limit
-   - State management maintains current role and navigation position across page transitions
-5. **Main Menu Return**: "🏠 Главное меню" button provides clean return to main menu with proper state reset
-6. **Coexistence**: List functionality operates alongside existing search without interference or state conflicts
+   - State management maintains current role, department filter, and navigation position across transitions
+7. **Department Navigation**: "🔄 Выбор департамента" returns to department selection for easy filter changes
+8. **Main Menu Return**: "🏠 Главное меню" button provides clean return to main menu with proper state reset
+9. **Coexistence**: List functionality with department filtering operates alongside existing search without interference
 
 **Main Menu Start Command Equivalence** (Enhanced 2025-09-09):
 - **Shared Initialization**: Both `/start` command and Main Menu button use shared helpers (`initialize_main_menu_session()` and `get_welcome_message()`) ensuring identical functionality

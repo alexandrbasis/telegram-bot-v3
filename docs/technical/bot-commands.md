@@ -52,17 +52,21 @@ Search for participants on a specific floor with room-by-room breakdown. Feature
 - `/search_floor Ground` - Find participants on ground floor
 
 ### Department-Based Filtering (Enhanced 2025-01-21)
-Enhanced filtering capabilities for participant lists based on department assignments with chief identification and prioritization.
+Complete department filtering feature enabling users to navigate from team selection to department-specific participant lists with enhanced navigation and Russian localization.
 
-**Features:**
+**Complete Workflow Features:**
+- **Team Selection Integration**: Users navigate from "Team members" selection to department filtering interface
 - **Department Selection Interface**: 15-option keyboard (13 departments + "All participants" + "No department")
+- **Filtered Results**: Department-specific participant lists with chief-first sorting
+- **Navigation Context**: Department filter state preserved through pagination and navigation
+- **Back Navigation**: Returns to department selection (not role selection) for intuitive workflow
 - **Russian Interface**: All department names displayed in Russian with accurate translations
 - **Chief Identification**: Department chiefs marked with crown emoji (👑) for visual recognition
 - **Chief-First Ordering**: Department chiefs automatically appear at top of all filtered lists
 - **Complete Coverage**: All 13 predefined departments accessible through intuitive selection
 - **Special Options**: "Все участники" for complete lists, "Без департамента" for unassigned members
 - **Server-Side Filtering**: Efficient Airtable queries reduce response times and data transfer
-- **Backward Compatibility**: Existing list functionality preserved with optional department parameter
+- **Error Handling**: Graceful handling of empty departments and invalid callbacks
 
 **Enhanced Interactive Features (2025-01-21):**
 - **Interactive Floor Discovery**: "Показать доступные этажи" button reveals available floors without guessing
@@ -103,23 +107,29 @@ Access pre-filtered participant lists by role for quick bulk viewing. Available 
 
 **Main Menu Integration**: The Get List button provides instant access to categorized participant lists without requiring search queries, ideal for administrative tasks and logistics planning.
 
-**Enhanced Usage Flow:**
+**Enhanced Usage Flow with Department Filtering:**
 1. User clicks "📋 Получить список" from main menu
 2. Bot displays role selection: "👥 Команда" (Team) or "🎯 Кандидаты" (Candidates)
-3. User selects desired role
-4. Bot displays department filtering options with 15-button keyboard
-5. User selects specific department or "All participants" option
-6. Bot displays paginated numbered list with filtered participants (chiefs highlighted)
-7. Navigation with "◀️ Назад", "▶️ Далее", and "🏠 Главное меню" buttons
+3. User selects "👥 Команда" (Team) → Bot displays department filtering options with 15-button keyboard
+4. User selects specific department or "Все участники" (All participants) option
+5. Bot displays paginated numbered list with filtered participants (chiefs highlighted with 👑)
+6. Navigation with "◀️ Назад", "▶️ Далее", "🔄 Выбор департамента", and "🏠 Главное меню" buttons
+7. **Context Preservation**: Department filter maintained through pagination
+8. **Back Navigation**: "🔄 Выбор департамента" returns to department selection for easy filtering changes
+9. **Direct Candidate Access**: Selecting "🎯 Кандидаты" bypasses department filtering and shows all candidates directly
 
 ### Team Members List
-View complete list of all team members with organizational details for logistics and planning.
+View complete list of all team members with organizational details and department filtering for logistics and planning.
 
-**Features:**
+**Enhanced Department Filtering Features:**
+- **Department Selection Workflow**: Navigate from team selection to 15-option department filtering interface
 - **Server-side Role Filtering**: Efficient Airtable filtering by role="TEAM"
-- **Department-Based Filtering**: Enhanced filtering with department selection keyboard (15 options)
+- **Department-Specific Lists**: Filter by any of 13 departments or view all participants
 - **Chief Identification**: Department chiefs marked with crown emoji (👑) for organizational structure
-- **Chief-First Ordering**: Department chiefs automatically appear first in filtered lists
+- **Chief-First Ordering**: Department chiefs automatically appear first in all filtered lists
+- **Russian Department Names**: All departments displayed in Russian with accurate translations
+- **Special Filtering Options**: "Все участники" (all team members) and "Без департамента" (unassigned)
+- **Navigation Context**: Department filter preserved through pagination and navigation
 - **Numbered List Format**: Sequential numbering (1., 2., 3.) for easy reference
 - **Organizational Information**: Full name (Russian), department, church affiliation
 - **Pagination**: Dynamic page size with Telegram 4096-character message limit handling

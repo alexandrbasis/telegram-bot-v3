@@ -10,10 +10,12 @@ from telegram.ext import ContextTypes
 
 from src.bot.handlers.search_handlers import SearchStates, main_menu_button
 from src.bot.keyboards.list_keyboards import (
+    create_department_filter_keyboard,
     get_list_pagination_keyboard,
     get_role_selection_keyboard,
 )
 from src.services import service_factory
+from src.utils.translations import department_to_russian
 
 
 async def handle_get_list_request(
@@ -45,6 +47,8 @@ async def handle_role_selection(
     Handle role selection callback for displaying participant lists.
 
     Processes list_role:TEAM or list_role:CANDIDATE callbacks.
+    For TEAM role, shows department selection keyboard.
+    For CANDIDATE role, shows direct list.
     """
     query = update.callback_query
     await query.answer()
@@ -52,49 +56,64 @@ async def handle_role_selection(
     # Extract role from callback data
     role = query.data.split(":")[1]
 
-    # Store role and offset in context for pagination
-    context.user_data["current_role"] = role
-    context.user_data["current_offset"] = 0
+    if role == "TEAM":
+        # For team members, show department selection keyboard instead of direct list
+        context.user_data["selected_role"] = "TEAM"
 
-    # Get participant list service
-    list_service = service_factory.get_participant_list_service()
-
-    try:
-        # Get participant data based on role
-        if role == "TEAM":
-            data = await list_service.get_team_members_list(offset=0, page_size=20)
-            title = "**Список участников команды**"
-        elif role == "CANDIDATE":
-            data = await list_service.get_candidates_list(offset=0, page_size=20)
-            title = "**Список кандидатов**"
-        else:
-            await query.edit_message_text(
-                text="Неизвестный тип списка", parse_mode="MarkdownV2"
-            )
-            return
-
-        # Format message with title and participant data
-        start_pos = data["current_offset"] + 1
-        end_pos = data["current_offset"] + data["actual_displayed"]
-        # Escape '-' in range for MarkdownV2
-        # Escape parentheses and '-' for MarkdownV2
-        page_info = f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
-        message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
-
-        # Add pagination keyboard based on data
-        keyboard = get_list_pagination_keyboard(
-            has_prev=data["has_prev"], has_next=data["has_next"]
+        message_text = (
+            "Выберите департамент для фильтрации участников команды:\n\n"
+            "🌐 **Все участники** \\- показать всех участников команды\n"
+            "🏢 **Департамент** \\- показать участников конкретного департамента\n"
+            "❓ **Без департамента** \\- показать участников "
+            "без назначенного департамента"
         )
+
+        keyboard = create_department_filter_keyboard()
 
         await query.edit_message_text(
             text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
         )
 
-    except Exception as e:
-        # Handle errors gracefully
+    elif role == "CANDIDATE":
+        # For candidates, show direct list (no department filtering)
+        context.user_data["current_role"] = role
+        context.user_data["current_offset"] = 0
+
+        # Get participant list service
+        list_service = service_factory.get_participant_list_service()
+
+        try:
+            data = await list_service.get_candidates_list(offset=0, page_size=20)
+            title = "**Список кандидатов**"
+
+            # Format message with title and participant data
+            start_pos = data["current_offset"] + 1
+            end_pos = data["current_offset"] + data["actual_displayed"]
+            # Escape parentheses and '-' for MarkdownV2
+            page_info = (
+                f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
+            )
+            message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
+
+            # Add pagination keyboard based on data
+            keyboard = get_list_pagination_keyboard(
+                has_prev=data["has_prev"], has_next=data["has_next"]
+            )
+
+            await query.edit_message_text(
+                text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+            )
+
+        except Exception as e:
+            # Handle errors gracefully
+            await query.edit_message_text(
+                text=f"Произошла ошибка при получении списка участников: {str(e)}",
+                parse_mode="MarkdownV2",
+            )
+
+    else:
         await query.edit_message_text(
-            text=f"Произошла ошибка при получении списка участников: {str(e)}",
-            parse_mode="MarkdownV2",
+            text="Неизвестный тип списка", parse_mode="MarkdownV2"
         )
 
 
@@ -104,7 +123,8 @@ async def handle_list_navigation(
     """
     Handle list navigation callbacks.
 
-    Processes list_nav:PREV, list_nav:NEXT, and list_nav:MAIN_MENU callbacks.
+    Processes list_nav:PREV, list_nav:NEXT, list_nav:DEPARTMENT, and
+    list_nav:MAIN_MENU callbacks.
 
     Returns:
         Next conversation state
@@ -118,6 +138,26 @@ async def handle_list_navigation(
         # Return to main menu using proper navigation (main_menu_button handles answer)
         return await main_menu_button(update, context)
 
+    if action == "DEPARTMENT":
+        # Return to department selection for team members
+        await query.answer()
+
+        message_text = (
+            "Выберите департамент для фильтрации участников команды:\n\n"
+            "🌐 **Все участники** \\- показать всех участников команды\n"
+            "🏢 **Департамент** \\- показать участников конкретного департамента\n"
+            "❓ **Без департамента** \\- показать участников "
+            "без назначенного департамента"
+        )
+
+        keyboard = create_department_filter_keyboard()
+
+        await query.edit_message_text(
+            text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+        )
+
+        return SearchStates.MAIN_MENU
+
     # Only answer for PREV/NEXT navigation
     await query.answer()
 
@@ -125,6 +165,7 @@ async def handle_list_navigation(
         # Get current state from context
         current_role = context.user_data.get("current_role")
         current_offset = context.user_data.get("current_offset", 0)
+        current_department = context.user_data.get("current_department")
 
         if not current_role:
             # Fallback if state is lost
@@ -139,8 +180,18 @@ async def handle_list_navigation(
         # Get current data to find navigation offsets
         try:
             if current_role == "TEAM":
+                # Determine department filter for team members
+                if current_department == "all":
+                    department_filter = None
+                elif current_department == "none":
+                    department_filter = "unassigned"
+                elif current_department:
+                    department_filter = current_department
+                else:
+                    department_filter = None
+
                 current_data = await list_service.get_team_members_list(
-                    offset=current_offset, page_size=20
+                    department=department_filter, offset=current_offset, page_size=20
                 )
             elif current_role == "CANDIDATE":
                 current_data = await list_service.get_candidates_list(
@@ -176,10 +227,20 @@ async def handle_list_navigation(
         try:
             # Get participant data based on role and new offset
             if current_role == "TEAM":
+                # Use same department filter for new offset
                 data = await list_service.get_team_members_list(
-                    offset=new_offset, page_size=20
+                    department=department_filter, offset=new_offset, page_size=20
                 )
-                title = "**Список участников команды**"
+                # Format title with department filter indication
+                if current_department == "all":
+                    title = "**Список участников команды: Все участники**"
+                elif current_department == "none":
+                    title = "**Список участников команды: Без департамента**"
+                elif current_department:
+                    dept_name_russian = department_to_russian(current_department)
+                    title = f"**Список участников команды: {dept_name_russian}**"
+                else:
+                    title = "**Список участников команды**"
             elif current_role == "CANDIDATE":
                 data = await list_service.get_candidates_list(
                     offset=new_offset, page_size=20
@@ -201,8 +262,12 @@ async def handle_list_navigation(
             message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
 
             # Add pagination keyboard based on data
+            # Show department back button for team lists, not for candidate lists
+            show_dept_back = current_role == "TEAM"
             keyboard = get_list_pagination_keyboard(
-                has_prev=data["has_prev"], has_next=data["has_next"]
+                has_prev=data["has_prev"],
+                has_next=data["has_next"],
+                show_department_back=show_dept_back,
             )
 
             await query.edit_message_text(
@@ -220,3 +285,89 @@ async def handle_list_navigation(
             return SearchStates.MAIN_MENU
 
     return SearchStates.MAIN_MENU
+
+
+async def handle_department_filter_selection(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """
+    Handle department filter selection for team member lists.
+
+    Processes list:filter:* callbacks to show filtered participant lists
+    based on department selection.
+    """
+    query = update.callback_query
+    await query.answer()
+
+    # Parse callback data to extract filter type and value
+    callback_parts = query.data.split(":")
+
+    if len(callback_parts) < 3:
+        await query.edit_message_text(
+            text="Неизвестный фильтр", parse_mode="MarkdownV2"
+        )
+        return
+
+    filter_type = callback_parts[2]  # "all", "none", or "department"
+
+    # Determine department filter value
+    if filter_type == "all":
+        department_filter = None
+        department_name = "Все участники"
+        current_department = "all"
+    elif filter_type == "none":
+        department_filter = "unassigned"
+        department_name = "Без департамента"
+        current_department = "none"
+    elif filter_type == "department" and len(callback_parts) >= 4:
+        department_filter = callback_parts[3]
+        department_name = department_to_russian(department_filter)
+        current_department = department_filter
+    else:
+        await query.edit_message_text(
+            text="Неизвестный фильтр департамента", parse_mode="MarkdownV2"
+        )
+        return
+
+    # Store filter state in context for pagination
+    context.user_data["current_role"] = "TEAM"
+    context.user_data["current_department"] = current_department
+    context.user_data["current_offset"] = 0
+
+    # Get participant list service
+    list_service = service_factory.get_participant_list_service()
+
+    try:
+        # Get filtered participant data
+        data = await list_service.get_team_members_list(
+            department=department_filter, offset=0, page_size=20
+        )
+
+        # Format title with department filter indication
+        title = f"**Список участников команды: {department_name}**"
+
+        # Format message with title and participant data
+        start_pos = data["current_offset"] + 1
+        end_pos = data["current_offset"] + data["actual_displayed"]
+        # Escape parentheses and '-' for MarkdownV2
+        page_info = f" \\(элементы {start_pos}\\-{end_pos} из {data['total_count']}\\)"
+        message_text = f"{title}{page_info}\n\n{data['formatted_list']}"
+
+        # Add pagination keyboard based on data
+        # (with department back button for team lists)
+        keyboard = get_list_pagination_keyboard(
+            has_prev=data["has_prev"],
+            has_next=data["has_next"],
+            show_department_back=True,
+        )
+
+        await query.edit_message_text(
+            text=message_text, reply_markup=keyboard, parse_mode="MarkdownV2"
+        )
+
+    except Exception as e:
+        # Handle errors gracefully
+        await query.edit_message_text(
+            text=f"Произошла ошибка при получении списка участников: {str(e)}",
+            parse_mode="MarkdownV2",
+        )
