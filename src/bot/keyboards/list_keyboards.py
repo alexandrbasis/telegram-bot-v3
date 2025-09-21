@@ -7,6 +7,9 @@ with callback data patterns for list navigation.
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+from src.models.participant import Department
+from src.utils.translations import DEPARTMENT_RUSSIAN
+
 
 def get_role_selection_keyboard() -> InlineKeyboardMarkup:
     """
@@ -58,5 +61,47 @@ def get_list_pagination_keyboard(
     keyboard.append(
         [InlineKeyboardButton("🏠 Главное меню", callback_data="list_nav:MAIN_MENU")]
     )
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def create_department_filter_keyboard() -> InlineKeyboardMarkup:
+    """
+    Create department filter keyboard for participant filtering.
+
+    Creates a keyboard with all 13 departments plus special options
+    for "All participants" and "No department" filtering.
+    Uses Russian translations for all department names.
+
+    Returns:
+        InlineKeyboardMarkup with 3x5 layout (15 buttons total)
+    """
+    keyboard = []
+
+    # First row: Special "All participants" button
+    keyboard.append([
+        InlineKeyboardButton("🌐 Все участники", callback_data="list:filter:all")
+    ])
+
+    # Department buttons - organize in rows of 3
+    department_buttons = []
+    for department in Department:
+        # Get Russian translation for department name
+        russian_name = DEPARTMENT_RUSSIAN.get(department.value, department.value)
+        button = InlineKeyboardButton(
+            russian_name,
+            callback_data=f"list:filter:department:{department.value}"
+        )
+        department_buttons.append(button)
+
+    # Arrange department buttons in rows of 3
+    for i in range(0, len(department_buttons), 3):
+        row = department_buttons[i:i+3]
+        keyboard.append(row)
+
+    # Last row: Special "No department" button
+    keyboard.append([
+        InlineKeyboardButton("❓ Без департамента", callback_data="list:filter:none")
+    ])
 
     return InlineKeyboardMarkup(keyboard)
