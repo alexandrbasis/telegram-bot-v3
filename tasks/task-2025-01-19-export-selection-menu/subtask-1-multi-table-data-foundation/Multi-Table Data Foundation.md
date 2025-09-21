@@ -50,22 +50,29 @@ Enabling multi-table data export capabilities by establishing consistent data mo
 - [ ] Establish foundation for dependency injection
 
 ## Implementation Steps & Change Log
-- [ ] Step 0: Extend multi-table settings and documentation
-  - [ ] Sub-step 0.1: Update Airtable settings for additional tables
+- [x] ✅ Step 0: Extend multi-table settings and documentation — Completed 2025-01-21
+  - [x] Sub-step 0.1: Update Airtable settings for additional tables
     - **Directory**: `src/config/`
     - **Files to create/modify**: `src/config/settings.py`, `.env.example`
     - **Accept**: `DatabaseSettings`/`AirtableConfig` expose participants, BibleReaders, and ROE table metadata with defaults
-    - **Tests**: `tests/unit/test_config/test_settings.py`
+    - **Tests**: `tests/unit/test_config/test_multi_table_settings.py`
     - **Done**: New environment variables validated with defaults and error cases
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `src/config/settings.py:64-78` - Added BibleReaders and ROE table configuration fields
+      - `src/config/settings.py:121-133` - Added validation for new table configurations
+      - `src/config/settings.py:144-175` - Added get_table_config method
+      - `src/config/settings.py:177-201` - Updated to_airtable_config to support table_type parameter
+      - `tests/unit/test_config/test_multi_table_settings.py` - Created comprehensive tests for multi-table configuration
+      - `.env.example:18-28` - Added environment variables for all three tables
 
-  - [ ] Sub-step 0.2: Update Airtable structure documentation
+  - [x] Sub-step 0.2: Update Airtable structure documentation
     - **Directory**: `docs/data-integration/`
     - **Files to create/modify**: `docs/data-integration/airtable_database_structure.md`
     - **Accept**: Documentation lists table IDs/field references for BibleReaders and ROE exports
     - **Tests**: Documentation review checklist
     - **Done**: Docs reflect new configuration variables and schemas
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `docs/data-integration/airtable_database_structure.md:13-32` - Added Configuration section with environment variables
 
 - [ ] Step 1: Create BibleReaders data model
   - [ ] Sub-step 1.1: Create BibleReaders Pydantic model
