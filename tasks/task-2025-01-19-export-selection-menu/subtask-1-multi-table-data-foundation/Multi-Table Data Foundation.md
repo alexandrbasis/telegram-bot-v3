@@ -1,5 +1,5 @@
 # Task: Multi-Table Data Foundation
-**Created**: 2025-01-19 | **Status**: Business Review
+**Created**: 2025-01-19 | **Status**: In Progress (2025-01-21)
 
 ## Business Requirements (Gate 1 - Approval Required)
 ### Primary Objective
@@ -33,12 +33,12 @@ Establish the foundational data layer infrastructure to support multi-table expo
 - **Status Flow**: Business Review → Ready for Implementation → In Progress → In Review → Testing → Done
 
 ### PR Details
-- **Branch**: [Name]
+- **Branch**: feature/TDB-66-multi-table-data-foundation
 - **PR URL**: [Link]
 - **Status**: [Draft/Review/Merged]
 
 ## Business Context
-[One-line user value statement after approval]
+Enabling multi-table data export capabilities by establishing consistent data models and repository patterns for BibleReaders and ROE tables.
 
 ## Technical Requirements
 - [ ] Extend Airtable configuration to expose BibleReaders/ROE table identifiers and reusable client settings
