@@ -302,9 +302,7 @@ async def run_bot() -> None:
                     raise
 
                 if retry_delay > 0:
-                    logger.info(
-                        "Retrying bot startup in %.1f seconds", retry_delay
-                    )
+                    logger.info("Retrying bot startup in %.1f seconds", retry_delay)
                     await asyncio.sleep(retry_delay)
 
                 continue

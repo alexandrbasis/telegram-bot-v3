@@ -16,7 +16,6 @@ from src.bot.keyboards.list_keyboards import (
 from src.services import service_factory
 from src.utils.translations import department_to_russian
 
-
 logger = logging.getLogger(__name__)
 
 _MESSAGE_NOT_MODIFIED = "Message is not modified"
@@ -37,7 +36,9 @@ async def _safe_edit_message_text(
         )
     except BadRequest as exc:
         if _MESSAGE_NOT_MODIFIED in str(exc):
-            logger.debug("List handler ignored message-not-modified for callback %s", query.data)
+            logger.debug(
+                "List handler ignored message-not-modified for callback %s", query.data
+            )
             return
         raise
 

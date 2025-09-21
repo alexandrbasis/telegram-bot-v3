@@ -168,9 +168,7 @@ class TelegramSettings:
         )
     )
     request_pool_timeout: float = field(
-        default_factory=lambda: float(
-            os.getenv("TELEGRAM_REQUEST_POOL_TIMEOUT", "5.0")
-        )
+        default_factory=lambda: float(os.getenv("TELEGRAM_REQUEST_POOL_TIMEOUT", "5.0"))
     )
     request_connection_pool_size: int = field(
         default_factory=lambda: int(
@@ -178,9 +176,7 @@ class TelegramSettings:
         )
     )
     startup_retry_attempts: int = field(
-        default_factory=lambda: int(
-            os.getenv("TELEGRAM_STARTUP_RETRY_ATTEMPTS", "3")
-        )
+        default_factory=lambda: int(os.getenv("TELEGRAM_STARTUP_RETRY_ATTEMPTS", "3"))
     )
     startup_retry_delay_seconds: float = field(
         default_factory=lambda: float(
@@ -236,7 +232,7 @@ class TelegramSettings:
         if self.startup_retry_delay_seconds < 0:
             raise ValueError("Telegram startup retry delay cannot be negative")
 
-    def get_request_config(self) -> Dict[str, float | int]:
+    def get_request_config(self) -> Dict[str, Any]:
         """Get HTTPX request configuration values for PTB."""
 
         return {
@@ -464,7 +460,9 @@ class Settings:
                 "command_timeout": self.telegram.command_timeout,
                 "admin_count": len(self.telegram.admin_user_ids),
                 "startup_retry_attempts": self.telegram.startup_retry_attempts,
-                "startup_retry_delay_seconds": self.telegram.startup_retry_delay_seconds,
+                "startup_retry_delay_seconds": (
+                    self.telegram.startup_retry_delay_seconds
+                ),
                 "request_timeouts": {
                     "connect": self.telegram.request_connect_timeout,
                     "read": self.telegram.request_read_timeout,

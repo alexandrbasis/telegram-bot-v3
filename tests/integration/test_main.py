@@ -257,9 +257,7 @@ class TestMainBotRunning:
 
         first_updater = Mock()
         first_updater.initialize = AsyncMock()
-        first_updater.start_polling = AsyncMock(
-            side_effect=Conflict("conflict test")
-        )
+        first_updater.start_polling = AsyncMock(side_effect=Conflict("conflict test"))
         first_updater.stop = AsyncMock()
         first_updater.shutdown = AsyncMock()
         first_app.updater = first_updater
@@ -291,8 +289,12 @@ class TestMainBotRunning:
         second_updater.start_polling = AsyncMock(side_effect=mark_started)
 
         with (
-            patch.object(main_module, "create_application", side_effect=[first_app, second_app]) as mock_create,
-            patch.object(main_module.asyncio, "sleep", new_callable=AsyncMock) as mock_sleep,
+            patch.object(
+                main_module, "create_application", side_effect=[first_app, second_app]
+            ) as mock_create,
+            patch.object(
+                main_module.asyncio, "sleep", new_callable=AsyncMock
+            ) as mock_sleep,
         ):
 
             task = asyncio.create_task(main_module.run_bot())
