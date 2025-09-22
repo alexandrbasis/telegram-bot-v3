@@ -8,6 +8,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Enhanced Export Services and Filtering for Multi-Table Data Export** – Complete implementation of role/department filtering for participants plus dedicated BibleReaders and ROE export services with participant relationship hydration enabling targeted ministry data exports (TDB-68, completed 2025-09-22, PR #55, branch `feature/TDB-68-export-services-and-filtering`)
+  - Enhanced ParticipantExportService with role and department filtering capabilities (`src/services/participant_export_service.py:239-365`)
+    - Role-based filtering supporting TEAM and CANDIDATE filtering with null value exclusion for targeted participant exports
+    - Department-based filtering supporting all 13 departments with comprehensive validation and actionable subset generation
+    - Both filtering methods maintain existing CSV format, progress tracking, and error handling patterns
+    - Reduces export file sizes by targeting specific participant subsets for improved ministry coordination efficiency
+  - Complete BibleReadersExportService with participant name hydration (`src/services/bible_readers_export_service.py`)
+    - Dedicated export service for BibleReaders table with CSV generation and participant relationship resolution
+    - Participant name hydration from linked participant IDs providing actionable assignment data with complete contact details
+    - Custom ParticipantNames field formatting with proper CSV structure and comprehensive error handling
+    - Progress tracking integration and file management following established service patterns
+  - Complete ROEExportService with multi-relationship hydration (`src/services/roe_export_service.py`)
+    - Dedicated export service for ROE table with complex presenter, assistant, and prayer partner relationship handling
+    - Multi-relationship hydration resolving roista, assistant, and prayer partner participant IDs to names
+    - Scheduling metadata export including date, time, duration, and topic information for complete session coordination
+    - Comprehensive error handling for missing relationships and null value scenarios
+  - Extended ServiceFactory with table-specific client caching and export service factories (`src/services/service_factory.py:18-210`)
+    - Table-specific client caching maintaining singleton pattern while supporting multi-table operations
+    - Factory methods for all export services with proper dependency injection and backward compatibility
+    - Centralized service creation enabling efficient client reuse across BibleReaders, ROE, and Participants tables
+    - Integration with existing service patterns maintaining consistency and performance optimization
+  - Enhanced Settings configuration with table-type parameter support (`src/config/settings.py:504-515`)
+    - Extended `Settings.get_airtable_config()` to accept optional table_type parameter for multi-table configuration
+    - Resolved critical API contract mismatch preventing ServiceFactory runtime operation
+    - Maintains backward compatibility while enabling table-specific configuration retrieval
+  - Comprehensive test coverage with 35+ new test cases achieving 87-91% coverage across all export services
+    - TestRoleBasedFiltering and TestDepartmentBasedFiltering classes with 9 comprehensive test cases for ParticipantExportService
+    - Complete BibleReadersExportService test suite with 12 test cases covering hydration, edge cases, and file operations
+    - Complete ROEExportService test suite with 14 test cases covering multi-relationship hydration and scheduling
+    - ServiceFactory integration tests with 8 test cases covering table-specific caching and dependency injection
+    - All 272 tests passing with regression test coverage for Settings configuration fixes
+  - Enhanced documentation with comprehensive Export Services and Filtering specifications
+    - Updated Data Export API section with new filtering capabilities and multi-table support documentation
+    - Added BibleReaders and ROE export services documentation with field mapping and hydration specifications
+    - Extended CSV Export Service API documentation with participant hydration and relationship handling details
+    - Enhanced Multi-Table Repository Support documentation with service factory pattern integration
+    - Comprehensive Enhanced Export Services and Filtering section in feature specifications
 - **Airtable Repository Implementation for Multi-Table Support** – Complete implementation of concrete Airtable repository classes for BibleReaders and ROE tables with comprehensive field mapping, validation, and multi-table coordination (TDB-67, completed 2025-09-22, PR #54, branch `feature/TDB-67-airtable-repository-implementation`)
   - BibleReaders field mapping helper with complete field ID mappings and date formatting utilities (`src/config/field_mappings/bible_readers.py:1-133`)
   - ROE field mapping helper with presenter relationship validation and prayer/scheduling field support (`src/config/field_mappings/roe.py:1-198`)
