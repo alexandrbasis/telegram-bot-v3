@@ -174,8 +174,11 @@ class DatabaseSettings:
         }
 
         if table_type not in table_configs:
+            supported = list(table_configs.keys())
             raise ValueError(
-                f"Invalid table type: {table_type}. Must be one of: {list(table_configs.keys())}"
+                "Invalid table type: {table}. Must be one of: {supported}".format(
+                    table=table_type, supported=supported
+                )
             )
 
         return table_configs[table_type]

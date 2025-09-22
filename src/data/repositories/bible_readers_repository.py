@@ -26,10 +26,12 @@ class BibleReadersRepository(ABC):
         Create a new BibleReader record.
 
         Args:
-            bible_reader: BibleReader instance to create (id should be None for new records)
+            bible_reader: BibleReader instance to create (id should be None for
+                new records)
 
         Returns:
-            BibleReader instance with assigned record_id and any server-generated fields
+            BibleReader instance with assigned record_id and any
+            server-generated fields
 
         Raises:
             RepositoryError: If creation fails

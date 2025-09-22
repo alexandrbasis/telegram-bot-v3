@@ -23,9 +23,12 @@ class ROE(BaseModel):
         roista_room: Room numbers of the main Roista (lookup from participants)
         roista_notes: Notes about the main Roista (lookup from participants)
         assistant: List of participant record IDs for assistant(s)
-        assistant_church: Churches of the assistant Roista (lookup from participants)
-        assistant_department: Departments of the assistant Roista (lookup from participants)
-        assistant_room: Room numbers of the assistant Roista (lookup from participants)
+        assistant_church: Churches of the assistant Roista (lookup from
+            participants)
+        assistant_department: Departments of the assistant Roista (lookup from
+            participants)
+        assistant_room: Room numbers of the assistant Roista (lookup from
+            participants)
     """
 
     model_config = ConfigDict(str_strip_whitespace=True, populate_by_name=True)
