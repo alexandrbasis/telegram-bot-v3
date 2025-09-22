@@ -8,6 +8,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Multi-Table Data Foundation for Export Functionality** - Complete foundational data layer infrastructure supporting multi-table export capabilities with BibleReaders and ROE table integration, comprehensive data models, repository interfaces, and factory pattern implementation (TDB-66, completed 2025-01-22, PR #52, feature/TDB-66-multi-table-data-foundation)
+  - Multi-table Airtable configuration with comprehensive table metadata support (`src/config/settings.py:64-201`)
+    - Extended DatabaseSettings with BibleReaders and ROE table configuration fields supporting table IDs and field mappings
+    - Added get_table_config method for table-specific configuration retrieval with proper validation
+    - Updated to_airtable_config to support table_type parameter enabling factory pattern client creation
+    - Added 6 new environment variables for multi-table support with sensible defaults and comprehensive validation
+  - Complete BibleReader data model with field validation and Airtable integration (`src/models/bible_readers.py`)
+    - Pydantic v2 model with all BibleReaders table fields (Where, Participants, When, Bible, Church, RoomNumber)
+    - Added lookup fields support for read-only Church and RoomNumber data with proper serialization
+    - from_airtable_record and to_airtable_fields methods following established API integration patterns
+    - Comprehensive field validation with proper date handling and relationship field management
+  - Complete ROE data model with presenter relationships and lookup fields (`src/models/roe.py`)
+    - Pydantic v2 model with all ROE table fields (RoeTopic, Roista, Assistant) and 7 lookup fields
+    - Advanced relationship handling for presenter data (roista_church, roista_department, assistant_church, etc.)
+    - Preserved Airtable field name compatibility including "AssistantChuch" typo for production consistency
+    - Proper serialization methods excluding lookup fields from write operations while supporting read access
+  - Repository interface consistency with abstract base class pattern (`src/data/repositories/bible_readers_repository.py`, `src/data/repositories/roe_repository.py`)
+    - BibleReaders repository interface with 7 methods (create, get_by_id, get_by_where, update, delete, list_all, get_by_participant_id)
+    - ROE repository interface with 8 methods adding topic-specific and presenter-specific retrieval methods
+    - Consistent API design following existing ParticipantRepository patterns enabling dependency injection
+    - Abstract base classes supporting future concrete implementations and service layer expansion
+  - Airtable client factory for table-specific client creation (`src/data/airtable/airtable_client_factory.py`)
+    - Factory pattern supporting Participants, BibleReaders, and ROE table clients with dependency injection
+    - Uses DatabaseSettings.to_airtable_config() for table-specific configuration with proper environment variable support
+    - Maintains single-table client pattern while enabling multi-table applications through factory abstraction
+  - Comprehensive documentation updates across 5 key documentation files
+    - Updated architecture-overview.md with multi-table repository pattern documentation and factory pattern integration
+    - Extended database-design.md with BibleReaders/ROE table support and data access patterns
+    - Enhanced field-mappings.md with comprehensive field reference documentation for all three tables
+    - Updated configuration.md with new environment variables and multi-table configuration management
+    - Extended testing-strategy.md with comprehensive multi-table testing section covering all 64 tests
+  - Environment configuration with backward compatibility (`.env.example:18-28`)
+    - Added environment variables for BibleReaders table (AIRTABLE_BIBLE_READERS_TABLE_NAME, AIRTABLE_BIBLE_READERS_TABLE_ID)
+    - Added environment variables for ROE table (AIRTABLE_ROE_TABLE_NAME, AIRTABLE_ROE_TABLE_ID)
+    - Added shared base configuration variables (AIRTABLE_BASE_ID_BIBLE_READERS, AIRTABLE_BASE_ID_ROE)
+    - Comprehensive defaults ensuring existing single-table usage remains unaffected
+  - Comprehensive test coverage with 64 tests achieving 100% coverage on new components
+    - Settings validation tests covering multi-table configuration scenarios and error cases (7 tests)
+    - Data model validation tests for both BibleReader (13 tests) and ROE (14 tests) models
+    - Repository interface validation tests ensuring consistent API across all table types (9 tests)
+    - Client factory tests covering all table types and configuration scenarios (6 tests)
+    - Code review fixes applied with comprehensive verification ensuring production readiness
 - **Complete Department Filtering User Workflow with Handler Integration** - Full end-to-end department filtering experience with integrated conversation handlers, navigation context preservation, and comprehensive Russian localization enabling seamless team member browsing by department (AGB-60, completed 2025-09-21, PR #51, SHA 74e3df8, merged 2025-09-21)
   - Department selection handler with comprehensive filtering workflow (`src/bot/handlers/list_handlers.py:226-307`)
     - Added handle_department_filter_selection function supporting all 15 filter options (13 departments + "Все участники" + "Без департамента")

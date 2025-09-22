@@ -299,7 +299,7 @@ class TestAirtableFieldMapping:
             "PaymentDate": "2025-08-27",
             "Floor": 3,
             "RoomNumber": "101A",
-            "DateOfBirth": "1990-05-15",
+            "DateOfBirth": "15/5/1990",
             "Age": 35,
             "ChurchLeader": "Пастор Иванов",
             "TableName": "Стол 1",
@@ -374,7 +374,7 @@ class TestAirtableFieldMapping:
             full_name_ru="Test User", date_of_birth=birth_date, age=39
         )
         fields = participant.to_airtable_fields()
-        assert fields["DateOfBirth"] == "1985-12-25"
+        assert fields["DateOfBirth"] == "25/12/1985"
         assert fields["Age"] == 39
 
         # Only DateOfBirth
@@ -382,7 +382,7 @@ class TestAirtableFieldMapping:
             full_name_ru="Test User", date_of_birth=birth_date, age=None
         )
         fields = participant.to_airtable_fields()
-        assert fields["DateOfBirth"] == "1985-12-25"
+        assert fields["DateOfBirth"] == "25/12/1985"
         assert "Age" not in fields
 
         # Only Age
@@ -498,7 +498,7 @@ class TestAirtableRecordCreation:
                 "PaymentDate": "2025-08-27",
                 "Floor": 3,
                 "RoomNumber": "301A",
-                "DateOfBirth": "1990-05-15",
+                "DateOfBirth": "15/5/1990",
                 "Age": 35,
                 "ChurchLeader": "Протоиерей Сидоров",
                 "TableName": "Почетный стол",
@@ -619,7 +619,7 @@ class TestAirtableRecordCreation:
             "id": "rec123456789",
             "fields": {
                 "FullNameRU": "Test User",
-                "DateOfBirth": "1985-12-25",
+                "DateOfBirth": "25/12/1985",
                 "Age": 39,
             },
         }

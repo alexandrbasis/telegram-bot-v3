@@ -1,5 +1,18 @@
 # Database Design
 
+## Multi-Table Data Architecture (Updated 2025-01-21)
+
+### Overview
+The Tres Dias Telegram Bot v3 now supports multi-table data management with three primary tables:
+- **Participants**: Core participant information and event management
+- **BibleReaders**: Bible reading session assignments and scheduling
+- **ROE**: Rollo of Encouragement session management with presenter assignments
+
+### Table Relationships
+- Participants table serves as the central hub with relationships to both BibleReaders and ROE tables
+- Cross-table relationships enable comprehensive activity tracking across events
+- Lookup fields provide automated data synchronization between related tables
+
 ## Participant Data Model
 
 ### Extended Participant Schema (Updated 2025-01-14)
@@ -158,11 +171,135 @@ def validate_table_name_access(participant: Participant) -> bool:
 - All new fields are optional to maintain compatibility with existing data
 - Existing participant records work without modification
 - API responses include new fields with null/empty values for legacy data
+- Multi-table architecture maintains backward compatibility with single-table operations
 
 #### Data Population
 - New fields can be populated gradually through the editing interface
 - Bulk import functionality can be extended to include new fields
 - Search functionality automatically includes new fields in results
+- Multi-table data can be managed independently without affecting existing participant workflows
+
+## BibleReaders Data Model (New 2025-01-21)
+
+### Schema Definition
+```python
+class BibleReader(BaseModel):
+    record_id: Optional[str]  # Airtable record ID
+    where: str  # Primary field - location/context (required)
+    participants: Optional[List[str]]  # Linked participant record IDs
+    when: Optional[date]  # Date of reading session
+    bible: Optional[str]  # Bible passage reference
+
+    # Lookup fields (read-only)
+    churches: Optional[List[str]]  # From linked participants
+    room_numbers: Optional[List[Union[int, str]]]  # From linked participants
+```
+
+### Key Features
+- **Session Management**: Tracks Bible reading sessions with location and timing
+- **Participant Linking**: Multiple participants can be assigned to each session
+- **Lookup Fields**: Automatically displays participant churches and room numbers
+- **Scheduling Support**: Date field enables conflict detection and schedule generation
+
+### Airtable Integration
+- **Table ID**: `tblGEnSfpPOuPLXcm`
+- **Primary Field**: `Where` (fldsSNHSXJBhewCxq)
+- **Relationship Fields**: Links to Participants table for reader assignments
+- **Validation**: Required `where` field, optional scheduling and reference fields
+
+## ROE Data Model (New 2025-01-21)
+
+### Schema Definition
+```python
+class ROE(BaseModel):
+    record_id: Optional[str]  # Airtable record ID
+    roe_topic: str  # Primary field - ROE session topic (required)
+    roista: Optional[List[str]]  # Main presenter participant record IDs
+    assistant: Optional[List[str]]  # Assistant presenter participant record IDs
+
+    # Lookup fields (read-only)
+    roista_church: Optional[List[str]]  # From main presenter
+    roista_department: Optional[List[str]]  # From main presenter
+    roista_room: Optional[List[Union[int, str]]]  # From main presenter
+    roista_notes: Optional[List[str]]  # From main presenter
+    assistant_church: Optional[List[str]]  # From assistant presenter
+    assistant_department: Optional[List[str]]  # From assistant presenter
+    assistant_room: Optional[List[Union[int, str]]]  # From assistant presenter
+```
+
+### Key Features
+- **Session Topic Management**: Tracks ROE topics and presenter assignments
+- **Dual Presenter Support**: Separate fields for main and assistant presenters
+- **Comprehensive Lookup Fields**: Displays detailed presenter information automatically
+- **Organizational Context**: Shows department and location data for planning
+
+### Airtable Integration
+- **Table ID**: `tbl0j8bcgkV3lVAdc`
+- **Primary Field**: `RoeTopic` (fldSniGvfWpmkpc1r)
+- **Relationship Fields**: Links to Participants table for presenter assignments
+- **Validation**: Required `roe_topic` field, optional presenter assignments
+
+## Multi-Table Repository Architecture
+
+### Repository Interface Pattern
+All table repositories follow consistent abstract interface patterns:
+
+```python
+# Abstract repository interfaces
+class BibleReadersRepository(ABC):
+    @abstractmethod
+    async def create(self, bible_reader: BibleReader) -> str: ...
+    @abstractmethod
+    async def get_by_id(self, record_id: str) -> Optional[BibleReader]: ...
+    @abstractmethod
+    async def get_by_where(self, where: str) -> List[BibleReader]: ...
+    @abstractmethod
+    async def update(self, record_id: str, bible_reader: BibleReader) -> bool: ...
+    @abstractmethod
+    async def delete(self, record_id: str) -> bool: ...
+    @abstractmethod
+    async def list_all(self) -> List[BibleReader]: ...
+    @abstractmethod
+    async def get_by_participant_id(self, participant_id: str) -> List[BibleReader]: ...
+
+class ROERepository(ABC):
+    @abstractmethod
+    async def create(self, roe: ROE) -> str: ...
+    @abstractmethod
+    async def get_by_id(self, record_id: str) -> Optional[ROE]: ...
+    @abstractmethod
+    async def get_by_topic(self, topic: str) -> List[ROE]: ...
+    @abstractmethod
+    async def update(self, record_id: str, roe: ROE) -> bool: ...
+    @abstractmethod
+    async def delete(self, record_id: str) -> bool: ...
+    @abstractmethod
+    async def list_all(self) -> List[ROE]: ...
+    @abstractmethod
+    async def get_by_roista_id(self, participant_id: str) -> List[ROE]: ...
+    @abstractmethod
+    async def get_by_assistant_id(self, participant_id: str) -> List[ROE]: ...
+```
+
+### Client Factory Pattern
+AirtableClientFactory provides table-specific client creation:
+
+```python
+class AirtableClientFactory:
+    def __init__(self, settings: DatabaseSettings):
+        self.settings = settings
+
+    def create_client(self, table_type: str) -> AirtableClient:
+        """Create Airtable client for specific table type."""
+        config = self.settings.to_airtable_config(table_type)
+        return AirtableClient(config)
+```
+
+### Data Model Validation
+- **Pydantic v2 Integration**: All models use modern Pydantic patterns
+- **Field Validation**: Comprehensive validation for required and optional fields
+- **API Serialization**: `from_airtable_record` and `to_airtable_fields` methods
+- **Lookup Field Handling**: Read-only lookup fields excluded from write operations
 
 ### Performance Considerations
 
@@ -187,3 +324,5 @@ def validate_table_name_access(participant: Participant) -> bool:
 - Extended fields follow same privacy patterns as existing fields
 - Notes field can contain sensitive information - handled with appropriate care
 - Church leader information treated as administrative data
+- Multi-table relationships maintain data privacy across linked records
+- Lookup fields provide controlled access to related participant information

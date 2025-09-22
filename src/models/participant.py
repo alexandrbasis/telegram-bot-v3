@@ -217,7 +217,7 @@ class Participant(BaseModel):
 
         # New fields
         if self.date_of_birth:
-            fields["DateOfBirth"] = self.date_of_birth.isoformat()
+            fields["DateOfBirth"] = self._format_date_of_birth(self.date_of_birth)
         if self.age is not None:
             fields["Age"] = self.age
 
@@ -258,7 +258,8 @@ class Participant(BaseModel):
 
         date_of_birth = None
         if fields.get("DateOfBirth"):
-            date_of_birth = date.fromisoformat(fields["DateOfBirth"])
+            raw_date = fields["DateOfBirth"]
+            date_of_birth = cls._parse_date_of_birth(raw_date)
 
         # Ensure we have the required field
         full_name_ru = fields.get("FullNameRU", "")
@@ -297,3 +298,23 @@ class Participant(BaseModel):
         )
 
     model_config = ConfigDict(use_enum_values=True, validate_assignment=True)
+
+    @staticmethod
+    def _format_date_of_birth(value: date) -> str:
+        """Return DateOfBirth string in Airtable's European format (D/M/YYYY)."""
+        return f"{value.day}/{value.month}/{value.year}"
+
+    @classmethod
+    def _parse_date_of_birth(cls, value: str) -> date:
+        """Parse DateOfBirth strings coming from Airtable (European D/M/YYYY)."""
+        normalized = value.strip()
+
+        # Accept both European D/M/YYYY and legacy ISO formats for backward compatibility
+        try:
+            day_str, month_str, year_str = normalized.split("/")
+            day = int(day_str)
+            month = int(month_str)
+            year = int(year_str)
+            return date(year, month, day)
+        except (ValueError, AttributeError):
+            return date.fromisoformat(normalized)

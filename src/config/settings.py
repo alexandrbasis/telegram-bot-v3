@@ -52,11 +52,29 @@ class DatabaseSettings:
     airtable_base_id: str = field(
         default_factory=lambda: os.getenv("AIRTABLE_BASE_ID", "appRp7Vby2JMzN0mC")
     )
+
+    # Participants table configuration (original/backward compatible)
     airtable_table_name: str = field(
         default_factory=lambda: os.getenv("AIRTABLE_TABLE_NAME", "Participants")
     )
     airtable_table_id: str = field(
         default_factory=lambda: os.getenv("AIRTABLE_TABLE_ID", "tbl8ivwOdAUvMi3Jy")
+    )
+
+    # BibleReaders table configuration
+    bible_readers_table_name: str = field(
+        default_factory=lambda: os.getenv("AIRTABLE_BIBLE_READERS_TABLE_NAME", "BibleReaders")
+    )
+    bible_readers_table_id: str = field(
+        default_factory=lambda: os.getenv("AIRTABLE_BIBLE_READERS_TABLE_ID", "tblGEnSfpPOuPLXcm")
+    )
+
+    # ROE table configuration
+    roe_table_name: str = field(
+        default_factory=lambda: os.getenv("AIRTABLE_ROE_TABLE_NAME", "ROE")
+    )
+    roe_table_id: str = field(
+        default_factory=lambda: os.getenv("AIRTABLE_ROE_TABLE_ID", "tbl0j8bcgkV3lVAdc")
     )
 
     # Rate limiting and performance
@@ -100,6 +118,20 @@ class DatabaseSettings:
         if not self.airtable_table_id:
             raise ValueError("AIRTABLE_TABLE_ID must be specified")
 
+        # Validate BibleReaders table configuration
+        if not self.bible_readers_table_id:
+            raise ValueError("AIRTABLE_BIBLE_READERS_TABLE_ID must be specified")
+
+        if not self.bible_readers_table_name:
+            raise ValueError("AIRTABLE_BIBLE_READERS_TABLE_NAME must be specified")
+
+        # Validate ROE table configuration
+        if not self.roe_table_id:
+            raise ValueError("AIRTABLE_ROE_TABLE_ID must be specified")
+
+        if not self.roe_table_name:
+            raise ValueError("AIRTABLE_ROE_TABLE_NAME must be specified")
+
         if self.rate_limit_per_second <= 0 or self.rate_limit_per_second > 100:
             raise ValueError("Rate limit must be between 1 and 100 requests per second")
 
@@ -109,18 +141,59 @@ class DatabaseSettings:
         if self.max_retries < 0:
             raise ValueError("Max retries cannot be negative")
 
-    def to_airtable_config(self) -> AirtableConfig:
+    def get_table_config(self, table_type: str) -> Dict[str, Any]:
         """
-        Convert database settings to AirtableConfig instance.
+        Get configuration for a specific table type.
+
+        Args:
+            table_type: The type of table ('participants', 'bible_readers', 'roe')
 
         Returns:
-            AirtableConfig instance with current settings
+            Dictionary with table_id and table_name for the specified table
+
+        Raises:
+            ValueError: If table_type is invalid
         """
+        table_configs = {
+            "participants": {
+                "table_id": self.airtable_table_id,
+                "table_name": self.airtable_table_name,
+            },
+            "bible_readers": {
+                "table_id": self.bible_readers_table_id,
+                "table_name": self.bible_readers_table_name,
+            },
+            "roe": {
+                "table_id": self.roe_table_id,
+                "table_name": self.roe_table_name,
+            },
+        }
+
+        if table_type not in table_configs:
+            raise ValueError(f"Invalid table type: {table_type}. Must be one of: {list(table_configs.keys())}")
+
+        return table_configs[table_type]
+
+    def to_airtable_config(self, table_type: str = "participants") -> AirtableConfig:
+        """
+        Convert database settings to AirtableConfig instance for a specific table.
+
+        Args:
+            table_type: The type of table to get config for (default: 'participants')
+
+        Returns:
+            AirtableConfig instance with current settings for the specified table
+        """
+        table_config = self.get_table_config(table_type) if table_type != "participants" else {
+            "table_id": self.airtable_table_id,
+            "table_name": self.airtable_table_name,
+        }
+
         return AirtableConfig(
             api_key=self.airtable_api_key,
             base_id=self.airtable_base_id,
-            table_name=self.airtable_table_name,
-            table_id=self.airtable_table_id,
+            table_name=table_config["table_name"],
+            table_id=table_config["table_id"],
             rate_limit_per_second=self.rate_limit_per_second,
             timeout_seconds=self.timeout_seconds,
             max_retries=self.max_retries,

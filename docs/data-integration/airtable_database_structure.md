@@ -10,6 +10,27 @@
 - **Base Type**: Airtable
 - **Environment**: Development
 
+## Configuration (Environment Variables)
+
+### Base Configuration
+- `AIRTABLE_API_KEY`: Your Airtable personal access token
+- `AIRTABLE_BASE_ID`: appRp7Vby2JMzN0mC
+
+### Table-Specific Configuration
+```bash
+# Participants table (default/primary)
+AIRTABLE_TABLE_NAME=Participants
+AIRTABLE_TABLE_ID=tbl8ivwOdAUvMi3Jy
+
+# BibleReaders table
+AIRTABLE_BIBLE_READERS_TABLE_NAME=BibleReaders
+AIRTABLE_BIBLE_READERS_TABLE_ID=tblGEnSfpPOuPLXcm
+
+# ROE table
+AIRTABLE_ROE_TABLE_NAME=ROE
+AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
+```
+
 ## Tables Overview
 
 ### 1. Participants Table

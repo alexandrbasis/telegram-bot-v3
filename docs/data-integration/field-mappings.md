@@ -250,6 +250,80 @@ The department field is now prominently displayed in team list results, providin
 #### Usage in Room Search Results
 These translations are also used by the `format_room_results_russian()` function to display all participant information in Russian, providing a consistent and user-friendly experience.
 
+### Multi-Table Field Mappings (Added 2025-01-21)
+
+#### BibleReaders Table Field Mappings
+The BibleReaders table uses the following field mappings for session management:
+
+```python
+# BibleReaders table field mappings
+BIBLE_READERS_FIELD_MAPPINGS = {
+    "where": "fldsSNHSXJBhewCxq",         # Where (Primary field)
+    "participants": "fldVBlRvv295QhBlX",   # Participants (Link to Participants)
+    "when": "fld6WfIcctT2WZnNO",          # When (Date)
+    "bible": "fldi18WKRAa7iUXBQ",         # Bible (Single line text)
+
+    # Lookup fields (read-only)
+    "churches": "fldadEnWickpmcDCE",       # Church (from Participants)
+    "room_numbers": "fldOGZxVkpFycVs38",   # RoomNumber (from Participants)
+}
+```
+
+**Field Usage Guidelines**:
+- **Where**: Required primary field for session location/context
+- **Participants**: Multiple record links to Participants table for reader assignments
+- **When**: Optional date field for scheduling Bible reading sessions
+- **Bible**: Optional text field for Scripture passage references
+- **Lookup Fields**: Automatically populated from linked participant records
+
+#### ROE Table Field Mappings
+The ROE table uses the following field mappings for Rollo session management:
+
+```python
+# ROE table field mappings
+ROE_FIELD_MAPPINGS = {
+    "roe_topic": "fldSniGvfWpmkpc1r",       # RoeTopic (Primary field)
+    "roista": "fldLWsfnGvJ26GwMI",         # Roista (Link to Participants)
+    "assistant": "fldtTUTsJy6oCg1sE",      # Assistant (Link to Participants)
+
+    # Roista lookup fields (read-only)
+    "roista_church": "flday5BYiQsP8njau",    # RoistaChurch
+    "roista_department": "fldomNR0M0AHolSmj", # RoistaDepartment
+    "roista_room": "fldNlkZv2bktVqFDl",     # RoistaRoom
+    "roista_notes": "fldHa1gyW60Dz9wfC",    # RoistaNotes
+
+    # Assistant lookup fields (read-only)
+    "assistant_church": "fldsDcqcSfilntPws",     # AssistantChuch (preserves Airtable typo)
+    "assistant_department": "fldgDVWQNFeooDRo7",  # AssistantDepartment
+    "assistant_room": "fldBlcyDcW0NcUVcX",      # AssistantRoom
+}
+```
+
+**Field Usage Guidelines**:
+- **RoeTopic**: Required primary field for ROE session topic
+- **Roista**: Multiple record links to main presenters from Participants table
+- **Assistant**: Multiple record links to assistant presenters from Participants table
+- **Lookup Fields**: Automatically display presenter details for planning purposes
+- **Typo Preservation**: "AssistantChuch" maintains Airtable compatibility
+
+#### Multi-Table Configuration Integration
+The field mappings integrate with the multi-table configuration system:
+
+```python
+# Environment variable configuration
+AIRTABLE_BIBLE_READERS_TABLE_NAME=BibleReaders
+AIRTABLE_BIBLE_READERS_TABLE_ID=tblGEnSfpPOuPLXcm
+AIRTABLE_ROE_TABLE_NAME=ROE
+AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
+
+# Usage in data models
+class BibleReader(BaseModel):
+    # Uses BIBLE_READERS_FIELD_MAPPINGS for Airtable integration
+
+class ROE(BaseModel):
+    # Uses ROE_FIELD_MAPPINGS for Airtable integration
+```
+
 ### Extended Fields Testing and Validation (2025-01-14)
 
 #### Comprehensive Field Testing
@@ -303,6 +377,38 @@ FIELD_MAPPINGS = {
 }
 ```
 
+### Multi-Table Integration Testing (Added 2025-01-21)
+
+#### BibleReaders Model Testing
+**Test Coverage**: 13 comprehensive tests covering all model scenarios
+- **Field Validation**: Required `where` field and optional fields validation
+- **Relationship Handling**: Participant ID list serialization and validation
+- **Date Handling**: ISO date serialization for `when` field
+- **Lookup Fields**: Read-only lookup field exclusion from write operations
+- **API Integration**: Complete `from_airtable_record` and `to_airtable_fields` testing
+
+#### ROE Model Testing
+**Test Coverage**: 14 comprehensive tests covering all model scenarios
+- **Field Validation**: Required `roe_topic` field and optional presenter fields
+- **Presenter Relationships**: Roista and Assistant ID list handling
+- **Lookup Field Management**: Seven lookup fields properly excluded from writes
+- **Typo Compatibility**: "AssistantChuch" field name preserved for Airtable compatibility
+- **API Integration**: Complete round-trip serialization testing
+
+#### Repository Interface Testing
+**Test Coverage**: Interface compliance validation for both new repositories
+- **BibleReadersRepository**: 7 abstract methods validated
+- **ROERepository**: 8 abstract methods validated
+- **Method Signatures**: Consistent async patterns across all repository interfaces
+- **Dependency Injection**: Factory pattern integration testing
+
+#### Client Factory Testing
+**Test Coverage**: 6 comprehensive tests for multi-table client creation
+- **Table Type Support**: Participants, BibleReaders, ROE client creation
+- **Configuration Integration**: Environment variable and settings integration
+- **Dependency Injection**: Service integration with factory pattern
+- **Error Handling**: Invalid table type validation
+
 #### Integration Points
 
 #### Repository Layer Integration (Tested)
@@ -328,3 +434,7 @@ FIELD_MAPPINGS = {
 - **Alphanumeric Room Support**: Tested with rooms like "101", "A1", "Conference"
 - **Multi-Room Floor Processing**: Tested floor search with participant grouping and sorting
 - **Error Message Standardization**: Centralized templates provide consistent UX
+- **Multi-Table Schema Validation**: BibleReaders and ROE table structures verified
+- **Cross-Table Relationships**: Participant linking tested across all table types
+- **Lookup Field Validation**: Read-only lookup fields properly excluded from write operations
+- **API Integration**: Complete multi-table API integration tested with 64 tests (100% pass rate)

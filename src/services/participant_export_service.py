@@ -281,7 +281,10 @@ class ParticipantExportService:
             if value is None:
                 row[airtable_field] = ""
             elif isinstance(value, (date, datetime)):
-                row[airtable_field] = value.isoformat()[:10]  # YYYY-MM-DD format
+                if airtable_field == "DateOfBirth":
+                    row[airtable_field] = Participant._format_date_of_birth(value)
+                else:
+                    row[airtable_field] = value.isoformat()[:10]  # YYYY-MM-DD format
             elif hasattr(value, "value"):  # Enum
                 row[airtable_field] = str(value.value)
             else:
