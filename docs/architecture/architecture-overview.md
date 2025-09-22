@@ -74,6 +74,11 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - `ParticipantRepository` abstract interface
 - `AirtableParticipantRepo` concrete implementation
 - Support for search, retrieval, and **selective field updates**
+- **Multi-Table Repository Support** (2025-01-21):
+  - `BibleReadersRepository` abstract interface for Bible reading session management
+  - `ROERepository` abstract interface for ROE (Rollo of Encouragement) session management
+  - Repository interfaces follow consistent patterns across all table types
+  - Factory pattern for table-specific client creation
 
 **New Capabilities**:
 - `update_by_id()` method for partial field updates (2025-08-29)
@@ -91,6 +96,8 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Rate limiting and error recovery for update operations
 - **Security enhancements** with formula injection prevention
 - **Service factory pattern** for centralized dependency injection (2025-09-04)
+- **Multi-Table Configuration**: Extended DatabaseSettings with BibleReaders and ROE table support
+- **Airtable Client Factory**: Table-specific client creation with dependency injection support
 
 ### Service Layer Architecture
 
@@ -222,6 +229,13 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 User Input → Handler → Service (validation) → Repository → Airtable API
      ↓                                                        ↓
 UI Response ← Keyboard ← Error/Success ← Update Result ← API Response
+```
+
+**Multi-Table Data Access Flow** (New 2025-01-21):
+```
+Export Request → Service → Repository Factory → Table-Specific Client → Airtable API (Multi-Table)
+        ↓              ↓              ↓                    ↓                      ↓
+Progress Tracking ← Data Models ← Client Factory ← AirtableConfig ← Multi-Table Response
 ```
 
 **Room/Floor Search Flow** (Enhanced 2025-01-21):
