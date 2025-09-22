@@ -1,5 +1,5 @@
 # Task: Airtable Repository Implementation
-**Created**: 2025-01-19 | **Status**: Business Review
+**Created**: 2025-01-19 | **Status**: In Progress
 
 ## Business Requirements (Gate 1 - Approval Required)
 ### Primary Objective
@@ -33,12 +33,12 @@ Implement concrete Airtable repository classes for BibleReaders and ROE tables t
 - **Status Flow**: Business Review → Ready for Implementation → In Progress → In Review → Testing → Done
 
 ### PR Details
-- **Branch**: [Name]
+- **Branch**: feature/TDB-67-airtable-repository-implementation
 - **PR URL**: [Link]
 - **Status**: [Draft/Review/Merged]
 
 ## Business Context
-[One-line user value statement after approval]
+Enable administrators to export BibleReaders and ROE data by implementing concrete Airtable repositories with proper field mapping and multi-table client management.
 
 ## Technical Requirements
 - [ ] Provide BibleReaders/ROE field ID and option mapping utilities
