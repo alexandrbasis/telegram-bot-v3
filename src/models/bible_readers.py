@@ -6,7 +6,7 @@ including validation and serialization methods.
 """
 
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
@@ -16,20 +16,32 @@ class BibleReader(BaseModel):
     Data model for BibleReaders table records.
 
     Attributes:
-        id: Airtable record ID
+        record_id: Airtable record ID for existing records
         where: Location/session description (primary field)
         participants: List of participant record IDs
+        churches: Churches of the Bible readers (lookup from participants)
+        room_numbers: Room numbers of the Bible readers (lookup from participants)
         when: Date of the reading session
         bible: Bible passage or reference
     """
 
-    model_config = ConfigDict(str_strip_whitespace=True)
+    model_config = ConfigDict(str_strip_whitespace=True, populate_by_name=True)
 
-    id: str = Field(..., description="Airtable record ID")
+    record_id: Optional[str] = Field(None, description="Airtable record ID for existing records")
     where: str = Field(..., description="Location or session description")
     participants: List[str] = Field(
         default_factory=list,
         description="List of participant record IDs"
+    )
+    churches: Optional[List[str]] = Field(
+        None,
+        description="Churches of the Bible readers (lookup from participants)",
+        alias="Church"
+    )
+    room_numbers: Optional[List[Union[int, str]]] = Field(
+        None,
+        description="Room numbers of the Bible readers (lookup from participants)",
+        alias="RoomNumber"
     )
     when: Optional[date] = Field(None, description="Date of the reading session")
     bible: Optional[str] = Field(None, description="Bible passage or reference")
@@ -53,9 +65,11 @@ class BibleReader(BaseModel):
         fields = record.get("fields", {})
 
         return cls(
-            id=record["id"],
+            record_id=record.get("id"),
             where=fields.get("Where", ""),
             participants=fields.get("Participants", []),
+            churches=fields.get("Church"),
+            room_numbers=fields.get("RoomNumber"),
             when=fields.get("When"),
             bible=fields.get("Bible")
         )
