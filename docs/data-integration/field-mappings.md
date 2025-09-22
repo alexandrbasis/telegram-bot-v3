@@ -253,10 +253,10 @@ These translations are also used by the `format_room_results_russian()` function
 ### Multi-Table Field Mappings (Added 2025-01-21)
 
 #### BibleReaders Table Field Mappings
-The BibleReaders table uses the following field mappings for session management:
+The BibleReaders table uses the following field mappings for session management with complete repository implementation:
 
 ```python
-# BibleReaders table field mappings
+# BibleReaders table field mappings (src/config/field_mappings/bible_readers.py)
 BIBLE_READERS_FIELD_MAPPINGS = {
     "where": "fldsSNHSXJBhewCxq",         # Where (Primary field)
     "participants": "fldVBlRvv295QhBlX",   # Participants (Link to Participants)
@@ -272,15 +272,22 @@ BIBLE_READERS_FIELD_MAPPINGS = {
 **Field Usage Guidelines**:
 - **Where**: Required primary field for session location/context
 - **Participants**: Multiple record links to Participants table for reader assignments
-- **When**: Optional date field for scheduling Bible reading sessions
+- **When**: Optional date field for scheduling Bible reading sessions with localized date formatting (`format = l`)
 - **Bible**: Optional text field for Scripture passage references
 - **Lookup Fields**: Automatically populated from linked participant records
 
+**Repository Implementation** (Added 2025-01-21):
+- **File**: `src/data/airtable/airtable_bible_readers_repo.py` (267 lines)
+- **Methods**: Complete CRUD operations (create, get_by_id, get_by_where, update, delete, list_all, get_by_participant_id)
+- **Features**: Writable field filtering, date formatting utilities, comprehensive error handling
+- **Test Coverage**: 25 unit tests with 80% coverage
+- **Field Mapping Helper**: 133 lines with comprehensive field ID mappings and utilities
+
 #### ROE Table Field Mappings
-The ROE table uses the following field mappings for Rollo session management:
+The ROE table uses the following field mappings for Rollo session management with presenter validation:
 
 ```python
-# ROE table field mappings
+# ROE table field mappings (src/config/field_mappings/roe.py)
 ROE_FIELD_MAPPINGS = {
     "roe_topic": "fldSniGvfWpmkpc1r",       # RoeTopic (Primary field)
     "roista": "fldLWsfnGvJ26GwMI",         # Roista (Link to Participants)
@@ -305,6 +312,13 @@ ROE_FIELD_MAPPINGS = {
 - **Assistant**: Multiple record links to assistant presenters from Participants table
 - **Lookup Fields**: Automatically display presenter details for planning purposes
 - **Typo Preservation**: "AssistantChuch" maintains Airtable compatibility
+
+**Repository Implementation** (Added 2025-01-21):
+- **File**: `src/data/airtable/airtable_roe_repo.py` (310 lines)
+- **Methods**: Complete CRUD operations (create, get_by_id, get_by_topic, update, delete, list_all, get_by_roista_id, get_by_assistant_id)
+- **Features**: Presenter relationship validation (Roista OR Assistant required, not both), duration formatting utilities
+- **Business Logic**: Create/update operations validate presenter relationships to ensure data integrity
+- **Field Mapping Helper**: 198 lines with comprehensive field ID mappings and presenter validation logic
 
 #### Multi-Table Configuration Integration
 The field mappings integrate with the multi-table configuration system:

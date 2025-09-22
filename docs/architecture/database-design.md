@@ -206,6 +206,8 @@ class BibleReader(BaseModel):
 - **Primary Field**: `Where` (fldsSNHSXJBhewCxq)
 - **Relationship Fields**: Links to Participants table for reader assignments
 - **Validation**: Required `where` field, optional scheduling and reference fields
+- **Repository Implementation**: AirtableBibleReadersRepo with full CRUD operations
+- **Field Mapping Helper**: `src/config/field_mappings/bible_readers.py` with comprehensive field ID mappings
 
 ## ROE Data Model (New 2025-01-21)
 
@@ -238,6 +240,8 @@ class ROE(BaseModel):
 - **Primary Field**: `RoeTopic` (fldSniGvfWpmkpc1r)
 - **Relationship Fields**: Links to Participants table for presenter assignments
 - **Validation**: Required `roe_topic` field, optional presenter assignments
+- **Repository Implementation**: AirtableROERepo with full CRUD operations and presenter validation
+- **Field Mapping Helper**: `src/config/field_mappings/roe.py` with presenter relationship validation
 
 ## Multi-Table Repository Architecture
 
@@ -282,7 +286,7 @@ class ROERepository(ABC):
 ```
 
 ### Client Factory Pattern
-AirtableClientFactory provides table-specific client creation:
+AirtableClientFactory provides table-specific client creation with complete multi-table support:
 
 ```python
 class AirtableClientFactory:
@@ -295,11 +299,24 @@ class AirtableClientFactory:
         return AirtableClient(config)
 ```
 
+**Supported Table Types**:
+- `participants`: Participants table (tbl8ivwOdAUvMi3Jy)
+- `bible_readers`: BibleReaders table (tblGEnSfpPOuPLXcm)
+- `roe`: ROE table (tbl0j8bcgkV3lVAdc)
+
+**Repository Implementations** (Added 2025-01-21):
+- **AirtableBibleReadersRepo**: Complete CRUD operations with 7 methods (create, get_by_id, get_by_where, update, delete, list_all, get_by_participant_id)
+- **AirtableROERepo**: Complete CRUD operations with 8 methods including presenter-specific queries (get_by_roista_id, get_by_assistant_id)
+- **Multi-table Coordination**: Integration tests verify repositories use separate clients without connection conflicts
+
 ### Data Model Validation
 - **Pydantic v2 Integration**: All models use modern Pydantic patterns
 - **Field Validation**: Comprehensive validation for required and optional fields
 - **API Serialization**: `from_airtable_record` and `to_airtable_fields` methods
 - **Lookup Field Handling**: Read-only lookup fields excluded from write operations
+- **Business Logic Validation**: ROE repository includes presenter relationship validation (Roista OR Assistant required, not both)
+- **Date Formatting**: BibleReaders field mapping includes localized date formatting utilities
+- **Field Mapping Helpers**: Dedicated helpers for each table type with field ID translations and validation logic
 
 ### Performance Considerations
 

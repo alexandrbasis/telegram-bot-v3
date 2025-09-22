@@ -113,6 +113,21 @@ bible_readers_client = factory.create_client("bible_readers")
 roe_client = factory.create_client("roe")
 ```
 
+**Repository Implementation Integration:**
+```python
+# Use repositories with factory-created clients
+from src.data.airtable.airtable_bible_readers_repo import AirtableBibleReadersRepo
+from src.data.airtable.airtable_roe_repo import AirtableROERepo
+
+# Create repositories with dependency injection
+bible_readers_repo = AirtableBibleReadersRepo(factory.create_client("bible_readers"))
+roe_repo = AirtableROERepo(factory.create_client("roe"))
+
+# Repositories provide full CRUD operations
+bible_reader = await bible_readers_repo.get_by_id("rec123...")
+roe_sessions = await roe_repo.get_by_roista_id("rec456...")
+```
+
 ### Validation Rules
 
 - **Timeout Minutes**: Must be between 1 and 1440 minutes
@@ -122,6 +137,8 @@ roe_client = factory.create_client("roe")
 - **Admin User IDs**: Must be valid integer user IDs if provided
 - **Multi-Table Configuration**: All table configurations validated with defaults and error cases
 - **Table Type Validation**: Factory validates supported table types (participants, bible_readers, roe)
+- **Field Mapping Validation**: Each table has dedicated field mapping helpers with comprehensive field ID validation
+- **Repository Pattern**: All repositories follow consistent interface patterns with async operations and proper error handling
 
 ## Configuration Loading
 
