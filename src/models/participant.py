@@ -301,8 +301,8 @@ class Participant(BaseModel):
 
     @staticmethod
     def _format_date_of_birth(value: date) -> str:
-        """Return DateOfBirth string in Airtable's European format (D/M/YYYY)."""
-        return f"{value.day}/{value.month}/{value.year}"
+        """Return DateOfBirth string in Airtable's European format (DD/MM/YYYY)."""
+        return value.strftime("%d/%m/%Y")
 
     @classmethod
     def _parse_date_of_birth(cls, value: str) -> date:

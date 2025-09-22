@@ -264,8 +264,8 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
 - **Type**: `date`
 - **Purpose**: Participant's date of birth
 - **Required**: No
-- **Format**: Localized Airtable date (`format = l`)
-- **Example**: Locale-specific (e.g., "15.05.1990")
+- **Format**: European format (`DD/MM/YYYY`)
+- **Example**: `22/09/2025`
 
 ## Views Available
 

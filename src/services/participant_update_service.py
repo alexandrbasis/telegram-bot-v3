@@ -9,7 +9,14 @@ import logging
 from datetime import date
 from typing import Any, Optional, Union
 
-from src.models.participant import Department, Gender, PaymentStatus, Role, Size
+from src.models.participant import (
+    Department,
+    Gender,
+    Participant,
+    PaymentStatus,
+    Role,
+    Size,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -212,37 +219,48 @@ class ParticipantUpdateService:
         return value
 
     def _validate_date_of_birth(self, user_input: str) -> date | None:
-        """Validate date of birth field in YYYY-MM-DD format."""
+        """Validate date of birth field in D/M/YYYY format (European)."""
         # Handle clearing behavior: whitespace-only input clears the field
         if not user_input or user_input.strip() == "":
             return None
 
-        try:
-            # Expected format: YYYY-MM-DD
-            year, month, day = user_input.split("-")
-            if len(year) != 4 or len(month) != 2 or len(day) != 2:
-                raise ValueError("Wrong format")
-            parsed_date = date(int(year), int(month), int(day))
-            return parsed_date
-        except ValueError as e:
-            if (
-                "invalid literal" in str(e)
-                or len(user_input.split("-")) != 3
-                or "Wrong format" in str(e)
-            ):
-                from src.bot.messages import InfoMessages
+        normalized = user_input.strip()
 
+        try:
+            return Participant._parse_date_of_birth(normalized)
+        except ValueError:
+            from src.bot.messages import InfoMessages
+
+            parts = normalized.split("/")
+            if len(parts) == 3 and all(part.strip().isdigit() for part in parts):
+                day, month, year = (int(part) for part in parts)
+
+                if year < 1000 or year > 9999:
+                    raise ValidationError(
+                        f"❌ Неверный формат даты. {InfoMessages.ENTER_DATE_OF_BIRTH}"
+                    )
+
+                if month < 1 or month > 12:
+                    raise ValidationError(
+                        f"❌ Некорректная дата. {InfoMessages.ENTER_DATE_OF_BIRTH}"
+                    )
+
+                if day < 1 or day > 31:
+                    raise ValidationError(
+                        f"❌ Некорректная дата. {InfoMessages.ENTER_DATE_OF_BIRTH}"
+                    )
+
+                try:
+                    _ = date(year, month, day)
+                except ValueError:
+                    raise ValidationError(
+                        f"❌ Некорректная дата. {InfoMessages.ENTER_DATE_OF_BIRTH}"
+                    )
+
+                # Remaining slash-based values imply incorrect ordering (e.g. YYYY/MM/DD)
                 raise ValidationError(
                     f"❌ Неверный формат даты. {InfoMessages.ENTER_DATE_OF_BIRTH}"
                 )
-            else:
-                from src.bot.messages import InfoMessages
-
-                raise ValidationError(
-                    f"❌ Некорректная дата. {InfoMessages.ENTER_DATE_OF_BIRTH}"
-                )
-        except Exception:
-            from src.bot.messages import InfoMessages
 
             raise ValidationError(
                 f"❌ Неверный формат даты. {InfoMessages.ENTER_DATE_OF_BIRTH}"

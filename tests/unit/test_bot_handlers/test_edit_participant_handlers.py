@@ -135,7 +135,7 @@ class TestShowParticipantEditMenu:
         message_text = call_args[1]["text"]
 
         # Should include date_of_birth and age fields
-        assert "🎂 Дата рождения: 1990-05-15" in message_text
+        assert "🎂 Дата рождения: 15/05/1990" in message_text
         assert "🔢 Возраст: 33" in message_text
 
     @pytest.mark.asyncio
@@ -743,9 +743,9 @@ class TestSaveConfirmation:
         call_args = mock_update.callback_query.message.edit_text.call_args
         message_text = call_args[1]["text"]
 
-        # Should show date_of_birth in ISO format and age as number
+        # Should show date_of_birth in European format and age as number
         assert "Дата рождения" in message_text
-        assert "1995-08-20" in message_text  # Updated date_of_birth
+        assert "20/08/1995" in message_text  # Updated date_of_birth
         assert "Возраст" in message_text
         assert "28" in message_text  # Updated age
 
@@ -1171,10 +1171,10 @@ class TestDisplayUpdatedParticipant:
         result = display_updated_participant(participant, context)
 
         # Should display updated date_of_birth and age values
-        assert "1995-08-20" in result  # Updated date_of_birth
+        assert "20/08/1995" in result  # Updated date_of_birth
         assert "28" in result  # Updated age
         # Original values should not appear
-        assert "1990-05-15" not in result
+        assert "15/05/1990" not in result
         assert "33" not in result
 
 

@@ -192,7 +192,7 @@ def reconstruct_participant_from_changes(
         if field in field_labels:
             # Format date_of_birth if it's a date object
             if field == "date_of_birth" and hasattr(value, "isoformat"):
-                formatted_value = value.isoformat()
+                formatted_value = Participant._format_date_of_birth(value)
             else:
                 formatted_value = value
             display_parts.append(f"{field_labels[field]}: **{formatted_value}**")
@@ -306,7 +306,7 @@ async def show_participant_edit_menu(
 
     # Date of birth and age fields
     date_of_birth_display = (
-        participant.date_of_birth.isoformat()
+        Participant._format_date_of_birth(participant.date_of_birth)
         if participant.date_of_birth
         else "Не указано"
     )
@@ -1269,17 +1269,27 @@ async def show_save_confirmation(
             getattr(participant, field, "Не задано") if participant else "Не задано"
         )
 
-        # Format value display
+        # Format current value for display
+        if field == "date_of_birth" and hasattr(current_value, "isoformat"):
+            current_display = Participant._format_date_of_birth(current_value)
+        elif hasattr(current_value, "value"):
+            current_display = current_value.value
+        else:
+            current_display = current_value
+
+        # Format new value display
         if isinstance(new_value, str):
             display_value = new_value
         elif hasattr(new_value, "value"):  # Enum values
             display_value = new_value.value
         elif field == "date_of_birth" and hasattr(new_value, "isoformat"):
-            display_value = new_value.isoformat()
+            display_value = Participant._format_date_of_birth(new_value)
         else:
             display_value = str(new_value)
 
-        changes_text += f"• **{field_name}**: {current_value} → **{display_value}**\n"
+        changes_text += (
+            f"• **{field_name}**: {current_display} → **{display_value}**\n"
+        )
 
     changes_text += f"\n💾 Подтвердить сохранение {len(changes)} изменений?"
 

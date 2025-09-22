@@ -299,7 +299,7 @@ class TestAirtableFieldMapping:
             "PaymentDate": "2025-08-27",
             "Floor": 3,
             "RoomNumber": "101A",
-            "DateOfBirth": "15/5/1990",
+            "DateOfBirth": "15/05/1990",
             "Age": 35,
             "ChurchLeader": "Пастор Иванов",
             "TableName": "Стол 1",
@@ -630,7 +630,7 @@ class TestAirtableRecordCreation:
         # Only DateOfBirth present
         record = {
             "id": "rec987654321",
-            "fields": {"FullNameRU": "Test User 2", "DateOfBirth": "15/6/1990"},
+            "fields": {"FullNameRU": "Test User 2", "DateOfBirth": "15/06/1990"},
         }
         participant = Participant.from_airtable_record(record)
         assert participant.date_of_birth == date(1990, 6, 15)
@@ -813,7 +813,7 @@ class TestParticipantRoundtrip:
         airtable_fields = original.to_airtable_fields()
 
         # Verify Airtable format includes new fields
-        assert airtable_fields["DateOfBirth"] == "1992-08-20"
+        assert airtable_fields["DateOfBirth"] == "20/08/1992"
         assert airtable_fields["Age"] == 32
 
         # Create mock Airtable record
