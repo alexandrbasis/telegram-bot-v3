@@ -9,7 +9,10 @@ This bot serves as a centralized participant management system for Tres Dias spi
 ### Key Capabilities
 - **Multi-language Search**: Advanced fuzzy matching across Russian/English names with transliteration support
 - **Interactive Editing**: In-place participant profile editing with validation and change confirmation workflows
-- **Bulk Operations**: Admin-only CSV export with progress tracking and direct file delivery
+- **Enhanced Export Services**: Multi-table CSV export with filtering and participant hydration
+  - **Participant Filtering**: Role-based (TEAM/CANDIDATE) and department-based export filtering
+  - **BibleReaders Export**: Bible reading assignments with participant name resolution
+  - **ROE Export**: Session data with presenter/assistant/prayer partner details
 - **Location-based Search**: Room and floor-based participant discovery with interactive UI
 - **Role-based Access**: Team member and candidate list views with pagination
 
@@ -31,7 +34,8 @@ The project implements a strict separation of concerns through a 3-layer archite
 │         Service Layer (src/services/)           │
 │  • Business Logic & Validation                  │
 │  • Data Transformation & Formatting             │
-│  • Export Services & Progress Tracking          │
+│  • Multi-Table Export Services with Filtering   │
+│  • Participant Hydration & Progress Tracking    │
 └──────────────────┬──────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────────┐

@@ -871,7 +871,8 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool
 
 **Potential Improvements**:
 - ✅ **Telegram bot integration for admin-triggered exports** (Implemented 2025-09-15)
-- Filtered export options (by role, department, date range)
+- ✅ **Filtered export options implemented** (by role, department) - 2025-09-22
+- Date range filtering for export operations
 - Multiple export formats (Excel, JSON, XML)
 - Scheduled automatic exports
 - Export history and audit logging
@@ -1144,3 +1145,103 @@ Complete Telegram bot integration for CSV export functionality enabling authoriz
 - Export templates with custom field selection
 - Integration with external reporting systems
 - Email delivery for exported files to multiple administrators
+
+## Enhanced Export Services and Filtering
+
+### Overview
+Comprehensive export system with filtering capabilities and dedicated export services for BibleReaders and ROE data, enabling ministry coordinators to access targeted, actionable data subsets.
+
+**Status**: ✅ Implemented (2025-09-22)
+**Implementation**: Extended export services with filtering and multi-table support
+**Test Coverage**: 35+ new tests across all export services (87-91% coverage)
+
+### Core Features
+
+#### 1. Participant Export Service Filtering
+- **Role-Based Filtering**: Export only TEAM members or CANDIDATES with proper null value exclusion
+- **Department-Based Filtering**: Export participants from specific departments (13 departments supported)
+- **Complete Export**: Full participant database export (existing functionality maintained)
+- **Consistent Format**: All filtering methods maintain existing CSV format and progress tracking
+
+#### 2. BibleReaders Export Service
+- **Dedicated Export Service**: Complete export service for Bible reading assignments
+- **Participant Hydration**: Resolves participant IDs to names using repository lookups
+- **CSV Generation**: Proper CSV formatting with custom ParticipantNames field
+- **Progress Integration**: Uses ExportProgressTracker and UserInteractionLogger for telemetry
+- **File Management**: Secure temporary file creation with automatic cleanup
+
+#### 3. ROE Export Service
+- **Multi-Relationship Handling**: Complex relationship hydration for presenters (roista), assistants, and prayer partners
+- **Scheduling Metadata**: Includes date/time/duration information for session coordination
+- **Presenter Information**: Comprehensive presenter details for ministry coordination
+- **Error Handling**: Robust error handling and graceful empty result set management
+
+#### 4. Service Factory Integration
+- **Centralized Access**: All export services accessible through ServiceFactory pattern
+- **Table-Specific Caching**: Efficient client reuse across multiple table types
+- **Dependency Injection**: Proper dependency injection for export service factories
+- **Backward Compatibility**: No breaking changes to existing service patterns
+
+### Technical Implementation
+
+#### Export Service Architecture
+- **Files**:
+  - `src/services/participant_export_service.py` (Extended with filtering methods)
+  - `src/services/bible_readers_export_service.py` (New dedicated service)
+  - `src/services/roe_export_service.py` (New dedicated service)
+  - `src/services/service_factory.py` (Extended with export service factories)
+- **Design Patterns**: Repository pattern, dependency injection, factory pattern
+- **Error Handling**: Comprehensive exception handling with resource cleanup
+
+#### Quality Assurance
+- **Test Coverage**: 87-91% coverage for new export services
+- **Test Categories**: Unit tests, integration tests, edge case coverage
+- **Performance**: Tested with large datasets, memory-efficient implementation
+- **Security**: Admin-only access, secure file management, resource cleanup
+
+### Acceptance Criteria
+
+- [x] ✅ ParticipantExportService supports role-based filtering (TEAM/CANDIDATE)
+- [x] ✅ ParticipantExportService supports department-based filtering (13 departments)
+- [x] ✅ BibleReaders export service produces CSV with participant hydration
+- [x] ✅ ROE export service handles multi-relationship data and scheduling metadata
+- [x] ✅ All export services integrate with service factory pattern
+- [x] ✅ Consistent CSV formatting and error handling across services
+- [x] ✅ Progress tracking and telemetry integration maintained
+- [x] ✅ Comprehensive test coverage (35+ new tests, 87-91% coverage)
+- [x] ✅ No breaking changes to existing export functionality
+- [x] ✅ Proper participant hydration for actionable CSV output
+
+### Integration Points
+
+**Service Layer Integration**:
+- Extended existing ParticipantExportService with filtering methods
+- Created dedicated BibleReaders and ROE export services
+- Service factory pattern for centralized service creation
+- Maintains existing progress tracking and error handling patterns
+
+**Repository Pattern Integration**:
+- Uses existing repository interfaces for data access
+- Table-specific repositories for BibleReaders and ROE data
+- Client factory pattern for efficient multi-table access
+- Proper dependency injection throughout service layer
+
+**Data Integrity**:
+- Participant hydration ensures actionable CSV output with names instead of IDs
+- Multi-relationship handling for complex ROE session data
+- Consistent field mapping and CSV format across all services
+- Graceful handling of empty result sets and null data
+
+### Future Enhancement Opportunities
+
+**Advanced Filtering**:
+- Combined filtering options (role + department)
+- Date range filtering for export operations
+- Custom field selection for targeted exports
+- Export templates with predefined filter combinations
+
+**UI Integration**:
+- Bot command integration for filtered exports
+- Interactive filtering selection through bot interface
+- Export scheduling and automation capabilities
+- Multi-format export options (Excel, JSON)

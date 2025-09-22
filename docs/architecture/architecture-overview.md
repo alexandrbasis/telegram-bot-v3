@@ -74,11 +74,13 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - `ParticipantRepository` abstract interface
 - `AirtableParticipantRepo` concrete implementation
 - Support for search, retrieval, and **selective field updates**
-- **Multi-Table Repository Support** (2025-01-21):
+- **Multi-Table Repository Support** (2025-09-22):
   - `BibleReadersRepository` abstract interface for Bible reading session management
   - `ROERepository` abstract interface for ROE (Rollo of Encouragement) session management
   - Repository interfaces follow consistent patterns across all table types
-  - Factory pattern for table-specific client creation
+  - Factory pattern for table-specific client creation with cached client reuse
+  - Table-specific export services with repository integration
+  - Multi-table data access for export operations with participant hydration
 
 **New Capabilities**:
 - `update_by_id()` method for partial field updates (2025-08-29)
@@ -107,13 +109,25 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
 
-**Participant Export Service** (2025-01-15):
-- CSV export functionality with repository pattern integration
-- Progress tracking and file size estimation capabilities
+**Enhanced Export Services** (2025-09-22):
+- **Participant Export Service**: Extended with role and department filtering capabilities
+  - Role-based filtering: Export TEAM members or CANDIDATES specifically
+  - Department-based filtering: Export participants from specific departments
+  - Complete export: Full participant database export (existing functionality)
+- **BibleReaders Export Service**: Dedicated export service for Bible reading assignments
+  - Participant name hydration from linked participant IDs
+  - CSV generation with custom ParticipantNames field
+  - Progress tracking and file management integration
+- **ROE Export Service**: Dedicated export service for ROE session data
+  - Multi-relationship hydration (presenters, assistants, prayer partners)
+  - Scheduling metadata inclusion (date/time/duration)
+  - Complex presenter information handling
+- **Service Factory Integration**: All export services accessible through centralized factory pattern
 - UTF-8 encoding support for Russian text content
 - Telegram file size limit validation (50MB)
 - Secure temporary file management with automatic cleanup
 - AirtableFieldMapping integration for accurate column headers
+- Consistent CSV formatting across all export services
 
 **Search Service Extensions** (Enhanced 2025-01-21):
 - **Room-based search**: `search_by_room(room: str)` with input validation

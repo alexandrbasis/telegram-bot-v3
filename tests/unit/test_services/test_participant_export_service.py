@@ -566,3 +566,283 @@ class TestExportToCsvInterface:
 
         assert "FullNameRU" in csv_data
         repo.list_all.assert_awaited()
+
+
+class TestRoleBasedFiltering:
+    """Test role-based filtering functionality."""
+
+    @pytest.fixture
+    def mixed_role_participants(self):
+        """Create participants with different roles for filtering tests."""
+        return [
+            Participant(
+                record_id="rec001",
+                full_name_ru="TEAM Участник 1",
+                role=Role.TEAM,
+                department=Department.WORSHIP,
+            ),
+            Participant(
+                record_id="rec002",
+                full_name_ru="CANDIDATE Участник 1",
+                role=Role.CANDIDATE,
+                department=Department.KITCHEN,
+            ),
+            Participant(
+                record_id="rec003",
+                full_name_ru="TEAM Участник 2",
+                role=Role.TEAM,
+                department=Department.MEDIA,
+            ),
+            Participant(
+                record_id="rec004",
+                full_name_ru="CANDIDATE Участник 2",
+                role=Role.CANDIDATE,
+                department=Department.SETUP,
+            ),
+            Participant(
+                record_id="rec005",
+                full_name_ru="Участник без роли",
+                role=None,
+                department=Department.ADMINISTRATION,
+            ),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_get_participants_by_role_team_only(
+        self, mock_repository, mixed_role_participants
+    ):
+        """Test filtering participants by TEAM role only."""
+        # Arrange
+        mock_repository.list_all.return_value = mixed_role_participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_role_as_csv(Role.TEAM)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Should only contain TEAM participants
+        assert len(rows) == 2
+        team_names = {row["FullNameRU"] for row in rows}
+        assert team_names == {"TEAM Участник 1", "TEAM Участник 2"}
+
+    @pytest.mark.asyncio
+    async def test_get_participants_by_role_candidate_only(
+        self, mock_repository, mixed_role_participants
+    ):
+        """Test filtering participants by CANDIDATE role only."""
+        # Arrange
+        mock_repository.list_all.return_value = mixed_role_participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_role_as_csv(Role.CANDIDATE)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Should only contain CANDIDATE participants
+        assert len(rows) == 2
+        candidate_names = {row["FullNameRU"] for row in rows}
+        assert candidate_names == {"CANDIDATE Участник 1", "CANDIDATE Участник 2"}
+
+    @pytest.mark.asyncio
+    async def test_get_participants_by_role_excludes_null_roles(
+        self, mock_repository, mixed_role_participants
+    ):
+        """Test that role filtering excludes participants with null roles."""
+        # Arrange
+        mock_repository.list_all.return_value = mixed_role_participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        team_csv = await service.get_participants_by_role_as_csv(Role.TEAM)
+        candidate_csv = await service.get_participants_by_role_as_csv(Role.CANDIDATE)
+
+        # Assert
+        team_reader = csv.DictReader(io.StringIO(team_csv))
+        candidate_reader = csv.DictReader(io.StringIO(candidate_csv))
+
+        team_names = {row["FullNameRU"] for row in team_reader}
+        candidate_names = {row["FullNameRU"] for row in candidate_reader}
+
+        # Participant with null role should not appear in either export
+        assert "Участник без роли" not in team_names
+        assert "Участник без роли" not in candidate_names
+
+    @pytest.mark.asyncio
+    async def test_get_participants_by_role_empty_result(self, mock_repository):
+        """Test role filtering with no matching participants."""
+        # Arrange - only participants without the target role
+        participants = [
+            Participant(
+                record_id="rec001",
+                full_name_ru="Только CANDIDATE",
+                role=Role.CANDIDATE,
+            )
+        ]
+        mock_repository.list_all.return_value = participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_role_as_csv(Role.TEAM)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+        assert len(rows) == 0  # Should return empty result set
+
+    @pytest.mark.asyncio
+    async def test_role_filtering_maintains_csv_format(
+        self, mock_repository, mixed_role_participants
+    ):
+        """Test that role filtering maintains proper CSV headers and format."""
+        # Arrange
+        mock_repository.list_all.return_value = mixed_role_participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_role_as_csv(Role.TEAM)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        actual_headers = reader.fieldnames
+
+        # Should have same headers as regular export
+        expected_headers = service._get_csv_headers()
+        assert actual_headers == expected_headers
+
+
+class TestDepartmentBasedFiltering:
+    """Test department-based filtering functionality."""
+
+    @pytest.fixture
+    def mixed_department_participants(self):
+        """Create participants with different departments for filtering tests."""
+        return [
+            Participant(
+                record_id="rec001",
+                full_name_ru="Worship Участник 1",
+                role=Role.TEAM,
+                department=Department.WORSHIP,
+            ),
+            Participant(
+                record_id="rec002",
+                full_name_ru="Kitchen Участник 1",
+                role=Role.CANDIDATE,
+                department=Department.KITCHEN,
+            ),
+            Participant(
+                record_id="rec003",
+                full_name_ru="Worship Участник 2",
+                role=Role.TEAM,
+                department=Department.WORSHIP,
+            ),
+            Participant(
+                record_id="rec004",
+                full_name_ru="Media Участник 1",
+                role=Role.CANDIDATE,
+                department=Department.MEDIA,
+            ),
+            Participant(
+                record_id="rec005",
+                full_name_ru="Участник без департамента",
+                role=Role.TEAM,
+                department=None,
+            ),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_get_participants_by_department(
+        self, mock_repository, mixed_department_participants
+    ):
+        """Test filtering participants by specific department."""
+        # Arrange
+        mock_repository.list_all.return_value = mixed_department_participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_department_as_csv(Department.WORSHIP)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Should only contain WORSHIP department participants
+        assert len(rows) == 2
+        worship_names = {row["FullNameRU"] for row in rows}
+        assert worship_names == {"Worship Участник 1", "Worship Участник 2"}
+
+    @pytest.mark.asyncio
+    async def test_department_filtering_all_departments(
+        self, mock_repository
+    ):
+        """Test that all 13 departments can be filtered correctly."""
+        # Arrange - create one participant for each department
+        all_departments = list(Department)
+        participants = [
+            Participant(
+                record_id=f"rec{i:03d}",
+                full_name_ru=f"{dept.value} Участник",
+                role=Role.TEAM,
+                department=dept,
+            )
+            for i, dept in enumerate(all_departments, 1)
+        ]
+
+        mock_repository.list_all.return_value = participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act & Assert - test each department
+        for dept in all_departments:
+            csv_data = await service.get_participants_by_department_as_csv(dept)
+            reader = csv.DictReader(io.StringIO(csv_data))
+            rows = list(reader)
+
+            assert len(rows) == 1
+            assert rows[0]["FullNameRU"] == f"{dept.value} Участник"
+
+    @pytest.mark.asyncio
+    async def test_department_filtering_excludes_null_departments(
+        self, mock_repository, mixed_department_participants
+    ):
+        """Test that department filtering excludes participants with null departments."""
+        # Arrange
+        mock_repository.list_all.return_value = mixed_department_participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        worship_csv = await service.get_participants_by_department_as_csv(Department.WORSHIP)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(worship_csv))
+        names = {row["FullNameRU"] for row in reader}
+
+        # Participant with null department should not appear
+        assert "Участник без департамента" not in names
+
+    @pytest.mark.asyncio
+    async def test_department_filtering_empty_result(self, mock_repository):
+        """Test department filtering with no matching participants."""
+        # Arrange - no participants in target department
+        participants = [
+            Participant(
+                record_id="rec001",
+                full_name_ru="Kitchen Участник",
+                role=Role.TEAM,
+                department=Department.KITCHEN,
+            )
+        ]
+        mock_repository.list_all.return_value = participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_department_as_csv(Department.MEDIA)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+        assert len(rows) == 0  # Should return empty result set

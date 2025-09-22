@@ -260,7 +260,26 @@ Display: Fixed participant reconstruction to include age field in all contexts
 ## Data Export API
 
 ### /export Command API
-**Purpose**: Administrative CSV export of complete participant database
+**Purpose**: Administrative CSV export with filtering capabilities for participant database
+
+#### Enhanced Export Services (2025-09-22)
+**Export Service Extensions**: Extended export capabilities with role-based and department-based filtering for targeted data subsets
+
+**Participant Export Service Filtering**:
+- **Role-Based Filtering**: `get_participants_by_role_as_csv(role: Role)` - Export only TEAM members or CANDIDATES
+- **Department-Based Filtering**: `get_participants_by_department_as_csv(department: Department)` - Export participants from specific departments
+- **Complete Export**: `get_all_participants_as_csv()` - Full participant database export (existing functionality)
+
+**New Export Services**:
+- **BibleReaders Export**: `BibleReadersExportService.get_bible_readers_as_csv()` - Exports Bible reading assignments with participant details
+- **ROE Export**: `ROEExportService.get_roe_sessions_as_csv()` - Exports ROE session data with presenter information
+
+**Export Service Features**:
+- **Participant Hydration**: BibleReaders and ROE exports include hydrated participant names from linked participant IDs
+- **Multi-Relationship Handling**: ROE service handles complex relationships (presenters, assistants, prayer partners)
+- **Consistent CSV Format**: All export services maintain uniform CSV formatting with proper field headers
+- **Progress Tracking**: All services integrate with ExportProgressTracker for real-time progress updates
+- **Error Handling**: Comprehensive error handling and graceful empty result set handling
 
 **Authorization**:
 - **Admin Validation**: Uses `auth_utils.is_admin_user()` for access control
@@ -339,12 +358,21 @@ Display: Fixed participant reconstruction to include age field in all contexts
 }
 ```
 
-**CSV Export Service API**:
-- **Method**: `ParticipantExportService.get_all_participants_as_csv(progress_callback)`
+**Enhanced CSV Export Service API**:
+- **Participant Service Methods**:
+  - `get_all_participants_as_csv(progress_callback)` - Complete database export
+  - `get_participants_by_role_as_csv(role: Role, progress_callback)` - Role-filtered export (TEAM/CANDIDATE)
+  - `get_participants_by_department_as_csv(department: Department, progress_callback)` - Department-filtered export
+- **BibleReaders Service Methods**:
+  - `get_bible_readers_as_csv(progress_callback)` - Bible reading assignments with participant names
+- **ROE Service Methods**:
+  - `get_roe_sessions_as_csv(progress_callback)` - ROE sessions with presenter/assistant/prayer partner details
+- **Service Factory Integration**: All export services available through ServiceFactory pattern
 - **Progress Callbacks**: Optional callback for UI updates (every 10 records)
 - **Field Mapping**: Uses AirtableFieldMapping for accurate column headers
 - **UTF-8 Encoding**: Proper Russian text support
 - **File Management**: Secure temporary file creation with automatic cleanup
+- **Participant Hydration**: Linked participant data resolved to names for actionable CSV output
 
 **File Delivery API with Comprehensive Error Handling**:
 - **Format**: CSV with exact Airtable field names as headers

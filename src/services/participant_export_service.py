@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, Optional
 
 from src.config.field_mappings import AirtableFieldMapping
 from src.data.repositories.participant_repository import ParticipantRepository
-from src.models.participant import Participant
+from src.models.participant import Participant, Role, Department
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +235,134 @@ class ParticipantExportService:
             )
 
         return within_limit
+
+    async def get_participants_by_role_as_csv(self, role: Role) -> str:
+        """
+        Export participants filtered by role to CSV format.
+
+        Retrieves all participants from the repository, filters by the specified role,
+        and formats them as CSV with Airtable field names as headers.
+
+        Args:
+            role: The role to filter by (TEAM or CANDIDATE)
+
+        Returns:
+            CSV formatted string with filtered participant data
+
+        Raises:
+            Exception: If repository access fails
+        """
+        logger.info(f"Starting participant CSV export filtered by role: {role.value}")
+
+        # Retrieve all participants
+        all_participants = await self.repository.list_all()
+
+        # Filter by role (exclude participants with None role)
+        filtered_participants = [
+            p for p in all_participants
+            if p.role is not None and p.role == role
+        ]
+
+        total_count = len(filtered_participants)
+        logger.info(f"Filtered {total_count} participants with role {role.value}")
+
+        # Report initial progress
+        if self.progress_callback:
+            self.progress_callback(0, total_count)
+
+        # Create CSV in memory
+        output = io.StringIO()
+
+        # Define CSV headers using Airtable field names
+        headers = self._get_csv_headers()
+
+        # Create CSV writer
+        writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
+
+        # Write headers
+        writer.writeheader()
+
+        # Process filtered participants
+        for index, participant in enumerate(filtered_participants):
+            # Convert participant to CSV row
+            row = self._participant_to_csv_row(participant)
+            writer.writerow(row)
+
+            # Report progress at intervals (every 10 records or at end)
+            if self.progress_callback:
+                if (index + 1) % 10 == 0 or (index + 1) == total_count:
+                    self.progress_callback(index + 1, total_count)
+
+        # Get CSV string
+        csv_string = output.getvalue()
+        output.close()
+
+        logger.info(f"Role-filtered CSV export completed with {total_count} records")
+        return csv_string
+
+    async def get_participants_by_department_as_csv(self, department: Department) -> str:
+        """
+        Export participants filtered by department to CSV format.
+
+        Retrieves all participants from the repository, filters by the specified department,
+        and formats them as CSV with Airtable field names as headers.
+
+        Args:
+            department: The department to filter by
+
+        Returns:
+            CSV formatted string with filtered participant data
+
+        Raises:
+            Exception: If repository access fails
+        """
+        logger.info(f"Starting participant CSV export filtered by department: {department.value}")
+
+        # Retrieve all participants
+        all_participants = await self.repository.list_all()
+
+        # Filter by department (exclude participants with None department)
+        filtered_participants = [
+            p for p in all_participants
+            if p.department is not None and p.department == department
+        ]
+
+        total_count = len(filtered_participants)
+        logger.info(f"Filtered {total_count} participants with department {department.value}")
+
+        # Report initial progress
+        if self.progress_callback:
+            self.progress_callback(0, total_count)
+
+        # Create CSV in memory
+        output = io.StringIO()
+
+        # Define CSV headers using Airtable field names
+        headers = self._get_csv_headers()
+
+        # Create CSV writer
+        writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
+
+        # Write headers
+        writer.writeheader()
+
+        # Process filtered participants
+        for index, participant in enumerate(filtered_participants):
+            # Convert participant to CSV row
+            row = self._participant_to_csv_row(participant)
+            writer.writerow(row)
+
+            # Report progress at intervals (every 10 records or at end)
+            if self.progress_callback:
+                if (index + 1) % 10 == 0 or (index + 1) == total_count:
+                    self.progress_callback(index + 1, total_count)
+
+        # Get CSV string
+        csv_string = output.getvalue()
+        output.close()
+
+        logger.info(f"Department-filtered CSV export completed with {total_count} records")
+        return csv_string
 
     def _get_csv_headers(self) -> List[str]:
         """

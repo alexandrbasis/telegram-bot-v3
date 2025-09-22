@@ -101,7 +101,7 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
 **Factory Pattern Usage:**
 ```python
 # Create table-specific clients
-from src.config.settings import get_database_settings
+from src.config.settings import get_database_settings, Settings
 from src.data.airtable.airtable_client_factory import AirtableClientFactory
 
 settings = get_database_settings()
@@ -111,6 +111,14 @@ factory = AirtableClientFactory(settings)
 participants_client = factory.create_client("participants")
 bible_readers_client = factory.create_client("bible_readers")
 roe_client = factory.create_client("roe")
+
+# Enhanced Settings API (2025-09-22)
+# Settings.get_airtable_config() now supports table_type parameter
+from src.config.settings import Settings
+app_settings = Settings()
+participants_config = app_settings.get_airtable_config("participants")
+bible_readers_config = app_settings.get_airtable_config("bible_readers")
+roe_config = app_settings.get_airtable_config("roe")
 ```
 
 **Repository Implementation Integration:**
