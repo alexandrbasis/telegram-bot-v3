@@ -5,19 +5,19 @@ Tests complete conversation flow from /export command through selection
 menus to actual export processing with service integration.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from telegram import CallbackQuery, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.export_conversation_handlers import (
-    start_export_selection,
-    handle_export_type_selection,
-    handle_department_selection,
     cancel_export,
+    handle_department_selection,
+    handle_export_type_selection,
+    start_export_selection,
 )
-from src.bot.handlers.export_states import ExportStates, ExportCallbackData
+from src.bot.handlers.export_states import ExportCallbackData, ExportStates
 
 
 class TestExportSelectionWorkflow:
@@ -36,7 +36,10 @@ class TestExportSelectionWorkflow:
         context.bot_data = {"settings": MagicMock()}
 
         # Mock admin validation
-        with patch('src.bot.handlers.export_conversation_handlers.is_admin_user', return_value=True):
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.is_admin_user",
+            return_value=True,
+        ):
             # Start export selection
             result = await start_export_selection(update, context)
 
@@ -47,7 +50,7 @@ class TestExportSelectionWorkflow:
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
         assert "🔧 Выберите тип экспорта" in call_args[0][0]
-        assert call_args[1]['reply_markup'] is not None
+        assert call_args[1]["reply_markup"] is not None
 
         # Now simulate user selecting "Export All"
         query_update = MagicMock(spec=Update)
@@ -59,14 +62,23 @@ class TestExportSelectionWorkflow:
 
         # Mock export service
         mock_export_service = AsyncMock()
-        mock_export_service.export_to_csv_async = AsyncMock(return_value="participant1,data\nparticipant2,data")
+        mock_export_service.export_to_csv_async = AsyncMock(
+            return_value="participant1,data\nparticipant2,data"
+        )
 
-        with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
-            with patch('src.bot.handlers.export_conversation_handlers._send_export_file') as mock_send_file:
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file"
+            ) as mock_send_file:
                 result = await handle_export_type_selection(query_update, context)
 
-        # Should transition to PROCESSING_EXPORT state
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should end conversation after processing export
+        from telegram.ext import ConversationHandler
+
+        assert result == ConversationHandler.END
 
         # Should call export service
         mock_export_service.export_to_csv_async.assert_called_once()
@@ -97,13 +109,15 @@ class TestExportSelectionWorkflow:
         update.callback_query.edit_message_text.assert_called_once()
         call_args = update.callback_query.edit_message_text.call_args
         assert "🏢 Выберите отдел" in call_args[0][0]
-        assert call_args[1]['reply_markup'] is not None
+        assert call_args[1]["reply_markup"] is not None
 
         # Now simulate user selecting Kitchen department
         dept_update = MagicMock(spec=Update)
         dept_update.effective_user = User(id=123, first_name="Admin", is_bot=False)
         dept_update.callback_query = AsyncMock(spec=CallbackQuery)
-        dept_update.callback_query.data = ExportCallbackData.department_callback("Kitchen")
+        dept_update.callback_query.data = ExportCallbackData.department_callback(
+            "Kitchen"
+        )
         dept_update.callback_query.answer = AsyncMock()
         dept_update.callback_query.edit_message_text = AsyncMock()
 
@@ -111,19 +125,31 @@ class TestExportSelectionWorkflow:
 
         # Mock export service for department filtering
         mock_export_service = AsyncMock()
-        mock_export_service.export_filtered_to_csv_async = AsyncMock(return_value="kitchen_participant,data")
+        mock_export_service.get_participants_by_department_as_csv = AsyncMock(
+            return_value="kitchen_participant,data"
+        )
 
-        with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
-            with patch('src.bot.handlers.export_conversation_handlers._send_export_file') as mock_send_file:
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file"
+            ) as mock_send_file:
                 result = await handle_department_selection(dept_update, context)
 
-        # Should transition to PROCESSING_EXPORT state
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should end conversation after processing export
+        from telegram.ext import ConversationHandler
+
+        assert result == ConversationHandler.END
 
         # Should call export service with department filter
-        mock_export_service.export_filtered_to_csv_async.assert_called_once()
-        call_args = mock_export_service.export_filtered_to_csv_async.call_args
-        assert call_args[1]['department'] == "Kitchen"
+        mock_export_service.get_participants_by_department_as_csv.assert_called_once()
+        call_args = mock_export_service.get_participants_by_department_as_csv.call_args
+        # Should be called with Department enum value
+        from src.models.participant import Department
+
+        call_args[0][0] == Department("Kitchen")
 
     @pytest.mark.asyncio
     async def test_bible_readers_export_workflow(self):
@@ -141,14 +167,23 @@ class TestExportSelectionWorkflow:
 
         # Mock Bible Readers export service
         mock_bible_service = AsyncMock()
-        mock_bible_service.export_to_csv_async = AsyncMock(return_value="reader1,scripture,location")
+        mock_bible_service.export_to_csv_async = AsyncMock(
+            return_value="reader1,scripture,location"
+        )
 
-        with patch('src.services.service_factory.get_bible_readers_export_service', return_value=mock_bible_service):
-            with patch('src.bot.handlers.export_conversation_handlers._send_export_file') as mock_send_file:
+        with patch(
+            "src.services.service_factory.get_bible_readers_export_service",
+            return_value=mock_bible_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file"
+            ) as mock_send_file:
                 result = await handle_export_type_selection(update, context)
 
-        # Should transition to PROCESSING_EXPORT state
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should end conversation after processing export
+        from telegram.ext import ConversationHandler
+
+        assert result == ConversationHandler.END
 
         # Should call Bible Readers export service
         mock_bible_service.export_to_csv_async.assert_called_once()
@@ -169,14 +204,23 @@ class TestExportSelectionWorkflow:
 
         # Mock ROE export service
         mock_roe_service = AsyncMock()
-        mock_roe_service.export_to_csv_async = AsyncMock(return_value="topic1,presenter,schedule")
+        mock_roe_service.export_to_csv_async = AsyncMock(
+            return_value="topic1,presenter,schedule"
+        )
 
-        with patch('src.services.service_factory.get_roe_export_service', return_value=mock_roe_service):
-            with patch('src.bot.handlers.export_conversation_handlers._send_export_file') as mock_send_file:
+        with patch(
+            "src.services.service_factory.get_roe_export_service",
+            return_value=mock_roe_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file"
+            ) as mock_send_file:
                 result = await handle_export_type_selection(update, context)
 
-        # Should transition to PROCESSING_EXPORT state
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should end conversation after processing export
+        from telegram.ext import ConversationHandler
+
+        assert result == ConversationHandler.END
 
         # Should call ROE export service
         mock_roe_service.export_to_csv_async.assert_called_once()
@@ -236,7 +280,9 @@ class TestExportSelectionWorkflow:
 
         # Mock export service
         mock_export_service = AsyncMock()
-        mock_export_service.export_filtered_to_csv_async = AsyncMock(return_value="filtered,participants")
+        mock_export_service.get_participants_by_role_as_csv = AsyncMock(
+            return_value="filtered,participants"
+        )
 
         # Test Team export
         team_update = MagicMock(spec=Update)
@@ -246,30 +292,51 @@ class TestExportSelectionWorkflow:
         team_update.callback_query.answer = AsyncMock()
         team_update.callback_query.edit_message_text = AsyncMock()
 
-        with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
-            with patch('src.bot.handlers.export_conversation_handlers._send_export_file'):
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file"
+            ):
                 result = await handle_export_type_selection(team_update, context)
 
-        # Should call with role=TEAM
-        mock_export_service.export_filtered_to_csv_async.assert_called_with(role="TEAM")
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should call with Role.TEAM
+        from src.models.participant import Role
+
+        mock_export_service.get_participants_by_role_as_csv.assert_called_with(
+            Role.TEAM
+        )
+        # Should end conversation after processing export
+        from telegram.ext import ConversationHandler
+
+        assert result == ConversationHandler.END
 
         # Test Candidates export
         mock_export_service.reset_mock()
         candidates_update = MagicMock(spec=Update)
-        candidates_update.effective_user = User(id=123, first_name="Admin", is_bot=False)
+        candidates_update.effective_user = User(
+            id=123, first_name="Admin", is_bot=False
+        )
         candidates_update.callback_query = AsyncMock(spec=CallbackQuery)
         candidates_update.callback_query.data = ExportCallbackData.EXPORT_CANDIDATES
         candidates_update.callback_query.answer = AsyncMock()
         candidates_update.callback_query.edit_message_text = AsyncMock()
 
-        with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
-            with patch('src.bot.handlers.export_conversation_handlers._send_export_file'):
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file"
+            ):
                 result = await handle_export_type_selection(candidates_update, context)
 
-        # Should call with role=CANDIDATE
-        mock_export_service.export_filtered_to_csv_async.assert_called_with(role="CANDIDATE")
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should call with Role.CANDIDATE
+        mock_export_service.get_participants_by_role_as_csv.assert_called_with(
+            Role.CANDIDATE
+        )
+        assert result == ConversationHandler.END
 
     @pytest.mark.asyncio
     async def test_error_handling_during_export(self):
@@ -287,13 +354,20 @@ class TestExportSelectionWorkflow:
 
         # Mock export service to raise exception
         mock_export_service = AsyncMock()
-        mock_export_service.export_to_csv_async = AsyncMock(side_effect=Exception("Export failed"))
+        mock_export_service.export_to_csv_async = AsyncMock(
+            side_effect=Exception("Export failed")
+        )
 
-        with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
             result = await handle_export_type_selection(update, context)
 
-        # Should still transition to PROCESSING_EXPORT state
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should still end conversation even with error
+        from telegram.ext import ConversationHandler
+
+        assert result == ConversationHandler.END
 
         # Should send error message
         update.callback_query.edit_message_text.assert_called()

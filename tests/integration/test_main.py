@@ -105,6 +105,9 @@ class TestMainBotApplication:
         with (
             patch("src.main.get_settings") as mock_get_settings,
             patch("src.main.get_search_conversation_handler") as mock_get_handler,
+            patch(
+                "src.main.get_export_conversation_handler"
+            ) as mock_get_export_handler,
             patch("telegram.ext.Application.builder") as mock_builder,
         ):
 
@@ -125,9 +128,16 @@ class TestMainBotApplication:
             mock_settings.logging.log_level = "INFO"
             mock_get_settings.return_value = mock_settings
 
-            # Mock conversation handler
+            # Mock search conversation handler
             mock_conversation_handler = Mock(spec=ConversationHandler)
             mock_get_handler.return_value = mock_conversation_handler
+
+            # Mock export conversation handler with proper entry_points
+            mock_export_conversation_handler = Mock(spec=ConversationHandler)
+            mock_export_entry_point = Mock(spec=CommandHandler)
+            mock_export_entry_point.commands = ["export"]
+            mock_export_conversation_handler.entry_points = [mock_export_entry_point]
+            mock_get_export_handler.return_value = mock_export_conversation_handler
 
             # Mock application with real bot_data dictionary
             mock_app = Mock(spec=Application)
@@ -144,21 +154,32 @@ class TestMainBotApplication:
 
             app = create_application()
 
-            # Should add conversation handler and both command handlers
-            assert mock_app.add_handler.call_count == 3
+            # Should add search conversation handler, export conversation handler, legacy export command handler, and logging command handler
+            assert mock_app.add_handler.call_count == 4
 
             # First call should be the search conversation handler
             mock_app.add_handler.assert_any_call(mock_conversation_handler)
 
-            # Subsequent calls should include the export and logging command handlers
+            # Subsequent calls should include export conversation, legacy export, and logging command handlers
             calls = mock_app.add_handler.call_args_list
+
+            # Collect commands from direct CommandHandlers
             command_handlers = [
                 call[0][0] for call in calls if isinstance(call[0][0], CommandHandler)
             ]
             command_commands = {
                 cmd for handler in command_handlers for cmd in handler.commands
             }
+
+            # Check specifically for export conversation handler
+            mock_app.add_handler.assert_any_call(mock_export_conversation_handler)
+            command_commands.update(
+                ["export"]
+            )  # We know export conversation handler provides "export" command
+
+            # Should have export (from conversation), export_direct (legacy), and logging commands
             assert "export" in command_commands
+            assert "export_direct" in command_commands
             assert "logging" in command_commands
 
     @pytest.mark.asyncio

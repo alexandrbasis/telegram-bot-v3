@@ -20,12 +20,12 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-from src.bot.handlers.export_states import ExportStates, ExportCallbackData
+from src.bot.handlers.export_states import ExportCallbackData, ExportStates
 from src.bot.keyboards.export_keyboards import (
-    get_export_selection_keyboard,
     get_department_selection_keyboard,
+    get_export_selection_keyboard,
 )
-from src.models.participant import Role, Department
+from src.models.participant import Department, Role
 from src.services import service_factory
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
@@ -33,9 +33,9 @@ from src.utils.auth_utils import is_admin_user
 logger = logging.getLogger(__name__)
 
 
-
-
-async def start_export_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+async def start_export_selection(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> str:
     """
     Start export selection conversation.
 
@@ -101,18 +101,20 @@ async def start_export_selection(update: Update, context: ContextTypes.DEFAULT_T
         "🏢 *По отделу* - участники конкретного отдела\n"
         "📖 *Bible Readers* - экспорт таблицы Bible Readers\n"
         "🎯 *ROE* - экспорт таблицы ROE",
-        parse_mode='Markdown',
-        reply_markup=keyboard
+        parse_mode="Markdown",
+        reply_markup=keyboard,
     )
 
     return ExportStates.SELECTING_EXPORT_TYPE
 
 
-async def handle_export_type_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+async def handle_export_type_selection(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> str:
     """
     Handle export type selection from inline keyboard.
 
-    Processes different export types and either starts export or shows department selection.
+    Processes export types and either starts export or shows department selection.
 
     Args:
         update: Telegram update object
@@ -145,14 +147,13 @@ async def handle_export_type_selection(update: Update, context: ContextTypes.DEF
         await query.edit_message_text(
             "🏢 Выберите отдел для экспорта:\n\n"
             "Будут экспортированы только участники выбранного отдела.",
-            reply_markup=keyboard
+            reply_markup=keyboard,
         )
         return ExportStates.SELECTING_DEPARTMENT
 
     # Handle direct export types
     await query.edit_message_text(
-        "🔄 Начинаю экспорт данных...\n"
-        "Это может занять некоторое время."
+        "🔄 Начинаю экспорт данных...\n" "Это может занять некоторое время."
     )
 
     # Process the export based on type
@@ -161,7 +162,9 @@ async def handle_export_type_selection(update: Update, context: ContextTypes.DEF
     return ConversationHandler.END
 
 
-async def handle_department_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+async def handle_department_selection(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> str:
     """
     Handle department selection from department keyboard.
 
@@ -194,8 +197,8 @@ async def handle_department_selection(update: Update, context: ContextTypes.DEFA
             "🏢 *По отделу* - участники конкретного отдела\n"
             "📖 *Bible Readers* - экспорт таблицы Bible Readers\n"
             "🎯 *ROE* - экспорт таблицы ROE",
-            parse_mode='Markdown',
-            reply_markup=keyboard
+            parse_mode="Markdown",
+            reply_markup=keyboard,
         )
         return ExportStates.SELECTING_EXPORT_TYPE
 
@@ -264,10 +267,7 @@ async def cancel_export(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 
 async def _process_export_by_type(
-    export_type: str,
-    query,
-    context: ContextTypes.DEFAULT_TYPE,
-    user_id: Optional[int]
+    export_type: str, query, context: ContextTypes.DEFAULT_TYPE, user_id: Optional[int]
 ) -> None:
     """
     Process export based on selected type.
@@ -295,35 +295,47 @@ async def _process_export_by_type(
         # Get appropriate export service based on type
         if export_type == ExportCallbackData.EXPORT_ALL:
             export_service = service_factory.get_export_service(
-                progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
+                progress_callback=lambda c, t: asyncio.create_task(
+                    progress_callback(c, t)
+                )
             )
             csv_data = await export_service.export_to_csv_async()
             filename_prefix = "participants_all"
 
         elif export_type == ExportCallbackData.EXPORT_TEAM:
             export_service = service_factory.get_export_service(
-                progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
+                progress_callback=lambda c, t: asyncio.create_task(
+                    progress_callback(c, t)
+                )
             )
             csv_data = await export_service.get_participants_by_role_as_csv(Role.TEAM)
             filename_prefix = "participants_team"
 
         elif export_type == ExportCallbackData.EXPORT_CANDIDATES:
             export_service = service_factory.get_export_service(
-                progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
+                progress_callback=lambda c, t: asyncio.create_task(
+                    progress_callback(c, t)
+                )
             )
-            csv_data = await export_service.get_participants_by_role_as_csv(Role.CANDIDATE)
+            csv_data = await export_service.get_participants_by_role_as_csv(
+                Role.CANDIDATE
+            )
             filename_prefix = "participants_candidates"
 
         elif export_type == ExportCallbackData.EXPORT_BIBLE_READERS:
             export_service = service_factory.get_bible_readers_export_service(
-                progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
+                progress_callback=lambda c, t: asyncio.create_task(
+                    progress_callback(c, t)
+                )
             )
             csv_data = await export_service.export_to_csv_async()
             filename_prefix = "bible_readers"
 
         elif export_type == ExportCallbackData.EXPORT_ROE:
             export_service = service_factory.get_roe_export_service(
-                progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
+                progress_callback=lambda c, t: asyncio.create_task(
+                    progress_callback(c, t)
+                )
             )
             csv_data = await export_service.export_to_csv_async()
             filename_prefix = "roe_sessions"
@@ -344,10 +356,7 @@ async def _process_export_by_type(
 
 
 async def _process_department_export(
-    department: str,
-    query,
-    context: ContextTypes.DEFAULT_TYPE,
-    user_id: Optional[int]
+    department: str, query, context: ContextTypes.DEFAULT_TYPE, user_id: Optional[int]
 ) -> None:
     """
     Process department-specific export.
@@ -361,7 +370,9 @@ async def _process_department_export(
     try:
         # Create progress callback
         async def progress_callback(current: int, total: int):
-            if total > 0 and current % 25 == 0:  # Update every 25 items for smaller datasets
+            if (
+                total > 0 and current % 25 == 0
+            ):  # Update every 25 items for smaller datasets
                 percentage = int((current / total) * 100)
                 try:
                     await query.edit_message_text(
@@ -375,7 +386,9 @@ async def _process_department_export(
         export_service = service_factory.get_export_service(
             progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
         )
-        csv_data = await export_service.get_participants_by_department_as_csv(Department(department))
+        csv_data = await export_service.get_participants_by_department_as_csv(
+            Department(department)
+        )
 
         # Send the file
         filename_prefix = f"participants_{department.lower()}"
@@ -390,10 +403,7 @@ async def _process_department_export(
 
 
 async def _send_export_file(
-    csv_data: str,
-    filename_prefix: str,
-    query,
-    user_id: Optional[int]
+    csv_data: str, filename_prefix: str, query, user_id: Optional[int]
 ) -> None:
     """
     Send CSV file to user via Telegram.
@@ -407,8 +417,7 @@ async def _send_export_file(
     # Check if data is empty
     if not csv_data or csv_data.strip() == "":
         await query.edit_message_text(
-            "📭 Нет данных для экспорта.\n"
-            "Попробуйте выбрать другой тип экспорта."
+            "📭 Нет данных для экспорта.\n" "Попробуйте выбрать другой тип экспорта."
         )
         return
 
@@ -419,8 +428,7 @@ async def _send_export_file(
             mode="w",
             suffix=".csv",
             prefix=(
-                f"{filename_prefix}_"
-                f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_"
+                f"{filename_prefix}_" f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_"
             ),
             delete=False,
             encoding="utf-8-sig",
@@ -449,8 +457,7 @@ async def _send_export_file(
 
         # Update final message
         await query.edit_message_text(
-            "✅ Экспорт завершён!\n"
-            "📁 Файл отправлен выше."
+            "✅ Экспорт завершён!\n" "📁 Файл отправлен выше."
         )
 
         # Log successful export
@@ -473,8 +480,7 @@ async def _send_export_file(
     except Exception as e:
         logger.error(f"Failed to send export file for user {user_id}: {e}")
         await query.edit_message_text(
-            "❌ Ошибка при отправке файла.\n"
-            "Попробуйте повторить экспорт."
+            "❌ Ошибка при отправке файла.\n" "Попробуйте повторить экспорт."
         )
 
     finally:
@@ -503,17 +509,20 @@ def get_export_conversation_handler() -> ConversationHandler:
                 CallbackQueryHandler(
                     handle_export_type_selection,
                     pattern=f"^({ExportCallbackData.EXPORT_ALL}|"
-                            f"{ExportCallbackData.EXPORT_TEAM}|"
-                            f"{ExportCallbackData.EXPORT_CANDIDATES}|"
-                            f"{ExportCallbackData.EXPORT_BY_DEPARTMENT}|"
-                            f"{ExportCallbackData.EXPORT_BIBLE_READERS}|"
-                            f"{ExportCallbackData.EXPORT_ROE})$"
+                    f"{ExportCallbackData.EXPORT_TEAM}|"
+                    f"{ExportCallbackData.EXPORT_CANDIDATES}|"
+                    f"{ExportCallbackData.EXPORT_BY_DEPARTMENT}|"
+                    f"{ExportCallbackData.EXPORT_BIBLE_READERS}|"
+                    f"{ExportCallbackData.EXPORT_ROE})$",
                 ),
             ],
             ExportStates.SELECTING_DEPARTMENT: [
                 CallbackQueryHandler(
                     handle_department_selection,
-                    pattern=f"^(export:department:.+|{ExportCallbackData.BACK_TO_EXPORT_SELECTION})$"
+                    pattern=(
+                        f"^(export:department:.+|"
+                        f"{ExportCallbackData.BACK_TO_EXPORT_SELECTION})$"
+                    ),
                 ),
             ],
             ExportStates.PROCESSING_EXPORT: [
@@ -522,6 +531,8 @@ def get_export_conversation_handler() -> ConversationHandler:
             ],
         },
         fallbacks=[
-            CallbackQueryHandler(cancel_export, pattern=f"^{ExportCallbackData.CANCEL}$"),
+            CallbackQueryHandler(
+                cancel_export, pattern=f"^{ExportCallbackData.CANCEL}$"
+            ),
         ],
     )

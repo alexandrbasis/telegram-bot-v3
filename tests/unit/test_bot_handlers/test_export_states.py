@@ -6,7 +6,7 @@ Validates enum-based states and callback data patterns for export selection work
 
 import pytest
 
-from src.bot.handlers.export_states import ExportStates, ExportCallbackData
+from src.bot.handlers.export_states import ExportCallbackData, ExportStates
 
 
 class TestExportStates:
@@ -15,9 +15,9 @@ class TestExportStates:
     def test_export_states_enum_values(self):
         """Test that all required export states are defined."""
         # Test that the enum has all required states for conversation flow
-        assert hasattr(ExportStates, 'SELECTING_EXPORT_TYPE')
-        assert hasattr(ExportStates, 'SELECTING_DEPARTMENT')
-        assert hasattr(ExportStates, 'PROCESSING_EXPORT')
+        assert hasattr(ExportStates, "SELECTING_EXPORT_TYPE")
+        assert hasattr(ExportStates, "SELECTING_DEPARTMENT")
+        assert hasattr(ExportStates, "PROCESSING_EXPORT")
 
         # Test that states have string values for telegram-python-bot compatibility
         assert isinstance(ExportStates.SELECTING_EXPORT_TYPE, str)
@@ -29,7 +29,7 @@ class TestExportStates:
         states = [
             ExportStates.SELECTING_EXPORT_TYPE,
             ExportStates.SELECTING_DEPARTMENT,
-            ExportStates.PROCESSING_EXPORT
+            ExportStates.PROCESSING_EXPORT,
         ]
         assert len(states) == len(set(states)), "All state values must be unique"
 
@@ -56,7 +56,7 @@ class TestExportCallbackData:
     def test_department_callback_patterns(self):
         """Test callback data patterns for department selection."""
         # Test pattern for department selection (should include department name)
-        assert hasattr(ExportCallbackData, 'department_callback')
+        assert hasattr(ExportCallbackData, "department_callback")
 
         # Test that department callback generates proper format
         department_callback = ExportCallbackData.department_callback("Kitchen")
@@ -64,9 +64,19 @@ class TestExportCallbackData:
 
         # Test with all 13 departments
         departments = [
-            "ROE", "Chapel", "Setup", "Palanka", "Administration",
-            "Kitchen", "Decoration", "Bell", "Refreshment",
-            "Worship", "Media", "Clergy", "Rectorate"
+            "ROE",
+            "Chapel",
+            "Setup",
+            "Palanka",
+            "Administration",
+            "Kitchen",
+            "Decoration",
+            "Bell",
+            "Refreshment",
+            "Worship",
+            "Media",
+            "Clergy",
+            "Rectorate",
         ]
 
         for dept in departments:
@@ -89,10 +99,12 @@ class TestExportCallbackData:
             ExportCallbackData.EXPORT_BIBLE_READERS,
             ExportCallbackData.EXPORT_ROE,
             ExportCallbackData.CANCEL,
-            ExportCallbackData.BACK_TO_EXPORT_SELECTION
+            ExportCallbackData.BACK_TO_EXPORT_SELECTION,
         ]
 
-        assert len(callbacks) == len(set(callbacks)), "All callback patterns must be unique"
+        assert len(callbacks) == len(
+            set(callbacks)
+        ), "All callback patterns must be unique"
 
     def test_callback_pattern_parsing(self):
         """Test that callback patterns can be parsed correctly."""
@@ -102,7 +114,10 @@ class TestExportCallbackData:
         assert ExportCallbackData.parse_export_type("export:candidates") == "candidates"
 
         # Test department parsing
-        assert ExportCallbackData.parse_department("export:department:Kitchen") == "Kitchen"
+        assert (
+            ExportCallbackData.parse_department("export:department:Kitchen")
+            == "Kitchen"
+        )
         assert ExportCallbackData.parse_department("export:department:ROE") == "ROE"
 
         # Test invalid patterns return None

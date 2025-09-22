@@ -7,11 +7,11 @@ with proper Russian labels and callback data integration.
 
 import pytest
 
-from src.bot.keyboards.export_keyboards import (
-    get_export_selection_keyboard,
-    get_department_selection_keyboard,
-)
 from src.bot.handlers.export_states import ExportCallbackData
+from src.bot.keyboards.export_keyboards import (
+    get_department_selection_keyboard,
+    get_export_selection_keyboard,
+)
 
 
 class TestExportSelectionKeyboard:
@@ -22,7 +22,7 @@ class TestExportSelectionKeyboard:
         keyboard = get_export_selection_keyboard()
 
         # Should be an InlineKeyboardMarkup
-        assert hasattr(keyboard, 'inline_keyboard')
+        assert hasattr(keyboard, "inline_keyboard")
 
         # Should have 4 rows (6 export options + cancel arranged in rows)
         # Row 1: Export All, Export Team
@@ -52,7 +52,7 @@ class TestExportSelectionKeyboard:
             "🏢 Экспорт по отделу",
             "📖 Экспорт Bible Readers",
             "🎯 Экспорт ROE",
-            "❌ Отмена"
+            "❌ Отмена",
         ]
 
         for expected_label in expected_labels:
@@ -78,7 +78,7 @@ class TestExportSelectionKeyboard:
             ExportCallbackData.EXPORT_BY_DEPARTMENT,
             ExportCallbackData.EXPORT_BIBLE_READERS,
             ExportCallbackData.EXPORT_ROE,
-            ExportCallbackData.CANCEL
+            ExportCallbackData.CANCEL,
         ]
 
         for expected_callback in expected_callbacks:
@@ -112,7 +112,7 @@ class TestDepartmentSelectionKeyboard:
         keyboard = get_department_selection_keyboard()
 
         # Should be an InlineKeyboardMarkup
-        assert hasattr(keyboard, 'inline_keyboard')
+        assert hasattr(keyboard, "inline_keyboard")
 
         # Should have multiple rows for 13 departments + navigation
         # Expect 7 rows: 6 rows of 2 departments each + 1 row with last dept + navigation
@@ -133,9 +133,19 @@ class TestDepartmentSelectionKeyboard:
         # Check all departments are present
         button_texts = [btn.text for btn in department_buttons]
         expected_departments = [
-            "ROE", "Chapel", "Setup", "Palanka", "Administration",
-            "Kitchen", "Decoration", "Bell", "Refreshment",
-            "Worship", "Media", "Clergy", "Rectorate"
+            "ROE",
+            "Chapel",
+            "Setup",
+            "Palanka",
+            "Administration",
+            "Kitchen",
+            "Decoration",
+            "Bell",
+            "Refreshment",
+            "Worship",
+            "Media",
+            "Clergy",
+            "Rectorate",
         ]
 
         for dept in expected_departments:
@@ -182,7 +192,9 @@ class TestDepartmentSelectionKeyboard:
         keyboard = get_department_selection_keyboard()
 
         # Most rows should have 2 buttons for better mobile experience
-        row_lengths = [len(row) for row in keyboard.inline_keyboard[:-1]]  # Exclude nav row
+        row_lengths = [
+            len(row) for row in keyboard.inline_keyboard[:-1]
+        ]  # Exclude nav row
 
         # Most rows should have 2 buttons (some may have 1 if odd total)
         assert all(length <= 2 for length in row_lengths)

@@ -18,8 +18,8 @@ from telegram.ext import ContextTypes
 
 from src.bot.handlers.export_handlers import (
     handle_export_command,
-    handle_export_selection_redirect,
     handle_export_progress,
+    handle_export_selection_redirect,
 )
 from src.config.settings import Settings
 from src.models.participant import Participant, Role
@@ -41,9 +41,11 @@ class TestExportSelectionRedirect:
         context.bot_data = {"settings": Mock()}
 
         # Mock admin validation to return True
-        with patch('src.bot.handlers.export_handlers.is_admin_user', return_value=True):
+        with patch("src.bot.handlers.export_handlers.is_admin_user", return_value=True):
             # Mock the conversation handler start function
-            with patch('src.bot.handlers.export_handlers.start_export_selection') as mock_start:
+            with patch(
+                "src.bot.handlers.export_handlers.start_export_selection"
+            ) as mock_start:
                 mock_start.return_value = "selecting_export_type"
 
                 result = await handle_export_selection_redirect(update, context)
@@ -67,8 +69,12 @@ class TestExportSelectionRedirect:
         context.bot_data = {"settings": Mock()}
 
         # Mock admin validation to return False
-        with patch('src.bot.handlers.export_handlers.is_admin_user', return_value=False):
-            with patch('src.bot.handlers.export_handlers.start_export_selection') as mock_start:
+        with patch(
+            "src.bot.handlers.export_handlers.is_admin_user", return_value=False
+        ):
+            with patch(
+                "src.bot.handlers.export_handlers.start_export_selection"
+            ) as mock_start:
                 mock_start.return_value = -1  # ConversationHandler.END
 
                 result = await handle_export_selection_redirect(update, context)
@@ -94,12 +100,18 @@ class TestExportSelectionRedirect:
         context.bot_data = {"settings": Mock()}
 
         # Mock admin validation
-        with patch('src.bot.handlers.export_handlers.is_admin_user', return_value=True):
+        with patch("src.bot.handlers.export_handlers.is_admin_user", return_value=True):
             # Mock service factory to prevent actual export
-            with patch('src.services.service_factory.get_export_service') as mock_service:
+            with patch(
+                "src.services.service_factory.get_export_service"
+            ) as mock_service:
                 mock_export_service = AsyncMock()
-                mock_export_service.export_to_csv_async = AsyncMock(return_value="test,csv,data")
-                mock_export_service.is_within_telegram_limit = AsyncMock(return_value=True)
+                mock_export_service.export_to_csv_async = AsyncMock(
+                    return_value="test,csv,data"
+                )
+                mock_export_service.is_within_telegram_limit = AsyncMock(
+                    return_value=True
+                )
                 mock_service.return_value = mock_export_service
 
                 # Call the legacy handler

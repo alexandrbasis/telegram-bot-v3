@@ -5,20 +5,20 @@ Validates conversation flow, state transitions, admin validation,
 and integration with export services through service factory.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from telegram import CallbackQuery, Message, Update, User
 from telegram.ext import ContextTypes, ConversationHandler
 
 from src.bot.handlers.export_conversation_handlers import (
-    start_export_selection,
-    handle_export_type_selection,
-    handle_department_selection,
     cancel_export,
     get_export_conversation_handler,
+    handle_department_selection,
+    handle_export_type_selection,
+    start_export_selection,
 )
-from src.bot.handlers.export_states import ExportStates, ExportCallbackData
+from src.bot.handlers.export_states import ExportCallbackData, ExportStates
 
 
 class TestExportConversationEntryPoint:
@@ -37,7 +37,10 @@ class TestExportConversationEntryPoint:
         context.bot_data = {"settings": MagicMock()}
 
         # Mock admin validation to return True
-        with patch('src.bot.handlers.export_conversation_handlers.is_admin_user', return_value=True):
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.is_admin_user",
+            return_value=True,
+        ):
             result = await start_export_selection(update, context)
 
         # Should return the SELECTING_EXPORT_TYPE state
@@ -47,7 +50,7 @@ class TestExportConversationEntryPoint:
         update.message.reply_text.assert_called_once()
         call_args = update.message.reply_text.call_args
         assert "🔧 Выберите тип экспорта" in call_args[0][0]  # Russian text
-        assert call_args[1]['reply_markup'] is not None  # Keyboard provided
+        assert call_args[1]["reply_markup"] is not None  # Keyboard provided
 
     @pytest.mark.asyncio
     async def test_start_export_selection_non_admin_denied(self):
@@ -62,7 +65,10 @@ class TestExportConversationEntryPoint:
         context.bot_data = {"settings": MagicMock()}
 
         # Mock admin validation to return False
-        with patch('src.bot.handlers.export_conversation_handlers.is_admin_user', return_value=False):
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.is_admin_user",
+            return_value=False,
+        ):
             result = await start_export_selection(update, context)
 
         # Should end conversation
@@ -95,9 +101,14 @@ class TestExportTypeSelection:
 
         # Mock export service
         mock_export_service = AsyncMock()
-        mock_export_service.export_to_csv_async = AsyncMock(return_value="test,csv,data")
+        mock_export_service.export_to_csv_async = AsyncMock(
+            return_value="test,csv,data"
+        )
 
-        with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
             result = await handle_export_type_selection(update, context)
 
         # Should end the conversation
@@ -134,7 +145,7 @@ class TestExportTypeSelection:
         # Should show department selection keyboard
         query.edit_message_text.assert_called_once()
         call_args = query.edit_message_text.call_args
-        assert call_args[1]['reply_markup'] is not None  # Department keyboard
+        assert call_args[1]["reply_markup"] is not None  # Department keyboard
 
     @pytest.mark.asyncio
     async def test_handle_bible_readers_export(self):
@@ -153,9 +164,14 @@ class TestExportTypeSelection:
 
         # Mock Bible Readers export service
         mock_export_service = AsyncMock()
-        mock_export_service.export_to_csv_async = AsyncMock(return_value="bible,readers,data")
+        mock_export_service.export_to_csv_async = AsyncMock(
+            return_value="bible,readers,data"
+        )
 
-        with patch('src.services.service_factory.get_bible_readers_export_service', return_value=mock_export_service):
+        with patch(
+            "src.services.service_factory.get_bible_readers_export_service",
+            return_value=mock_export_service,
+        ):
             result = await handle_export_type_selection(update, context)
 
         # Should end the conversation
@@ -185,9 +201,14 @@ class TestDepartmentSelection:
 
         # Mock participant export service with department filtering
         mock_export_service = AsyncMock()
-        mock_export_service.get_participants_by_department_as_csv = AsyncMock(return_value="kitchen,participants,data")
+        mock_export_service.get_participants_by_department_as_csv = AsyncMock(
+            return_value="kitchen,participants,data"
+        )
 
-        with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
             result = await handle_department_selection(update, context)
 
         # Should end the conversation
@@ -258,9 +279,9 @@ class TestConversationHandlerSetup:
         handler = get_export_conversation_handler()
 
         # Should be a ConversationHandler
-        assert hasattr(handler, 'states')
-        assert hasattr(handler, 'entry_points')
-        assert hasattr(handler, 'fallbacks')
+        assert hasattr(handler, "states")
+        assert hasattr(handler, "entry_points")
+        assert hasattr(handler, "fallbacks")
 
         # Should have all required states
         assert ExportStates.SELECTING_EXPORT_TYPE in handler.states
@@ -279,21 +300,22 @@ class TestConversationHandlerSetup:
 
         # Should have CommandHandler for /export
         entry_point = handler.entry_points[0]
-        assert hasattr(entry_point, 'callback')
+        assert hasattr(entry_point, "callback")
         # Should be a CommandHandler (checking type name)
-        assert entry_point.__class__.__name__ == 'CommandHandler'
+        assert entry_point.__class__.__name__ == "CommandHandler"
 
     def test_conversation_handler_state_transitions(self):
         """Test that state handlers are properly mapped."""
         handler = get_export_conversation_handler()
 
         # Each state should have callback query handlers
-        for state in [ExportStates.SELECTING_EXPORT_TYPE, ExportStates.SELECTING_DEPARTMENT]:
+        for state in [
+            ExportStates.SELECTING_EXPORT_TYPE,
+            ExportStates.SELECTING_DEPARTMENT,
+        ]:
             state_handlers = handler.states.get(state, [])
             assert len(state_handlers) > 0
 
             # Should have at least one CallbackQueryHandler
-            has_callback_handler = any(
-                hasattr(h, 'pattern') for h in state_handlers
-            )
+            has_callback_handler = any(hasattr(h, "pattern") for h in state_handlers)
             assert has_callback_handler
