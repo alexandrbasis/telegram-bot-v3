@@ -60,8 +60,21 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **MarkdownV2 Escaping**: Safe rendering of user-generated content preventing formatting injection attacks
 - Integration with existing main menu and conversation patterns without breaking changes
 
+**Export Conversation Handler** (New - 2025-09-22):
+- Interactive export conversation flow converting `/export` command to selection-based workflow
+- 6 export options with Russian localization: Export All, Export Team, Export Candidates, Export by Department, Export Bible Readers, Export ROE
+- Department selection submenu with all 13 departments for targeted filtering
+- ConversationHandler-based state management with proper conversation flow
+- Service factory integration for all export types without service layer modifications
+- Admin authentication validation at conversation entry point
+- Progress tracking integration with ExportProgressTracker for real-time user feedback
+- Mobile-optimized inline keyboards with 2-column and 3-column layouts
+- Complete error handling with user-friendly Russian error messages
+- Cancel and navigation support with clean state management
+- File delivery integration with automatic cleanup and resource management
+
 **Conversation Timeout Handler** (2025-01-09):
-- Automatic timeout handling for all conversation states including new list functionality
+- Automatic timeout handling for all conversation states including export and list functionality
 - Configurable timeout period via `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` environment variable
 - Russian timeout message display: "Сессия истекла, начните заново"
 - Main menu recovery button for seamless user experience
@@ -204,6 +217,19 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 8. Changes committed via repository `update_by_id()` method with retry mechanism
 9. User returns to search results with context preserved
 
+### Export Conversation Workflow (New 2025-09-22)
+1. User (admin) types `/export` command
+2. Bot validates admin access using auth utilities
+3. **Export Selection Menu**: Bot displays 6 export options with Russian labels in mobile-optimized 2-column layout
+4. **Direct Export Path**: User selects "Export All", "Export Team", "Export Candidates", "Export Bible Readers", or "Export ROE" → Bot begins processing immediately
+5. **Department Export Path**: User selects "Export by Department" → Bot displays department selection submenu with all 13 departments in 3-column layout
+6. **Department Selection**: User selects specific department → Bot begins department-filtered export processing
+7. **Export Processing**: Selected export type processed through service factory with progress notifications
+8. **Progress Updates**: Real-time progress tracking with throttled notifications (2-second intervals) displaying percentage and participant counts
+9. **File Delivery**: CSV file generated and delivered via Telegram document upload with automatic cleanup
+10. **Navigation & Cancel**: Cancel options at each step return to main menu, back navigation between selection screens
+11. **Error Handling**: Comprehensive error scenarios with user-friendly Russian messages and recovery options
+
 ### Get List → Department Filtering → Navigation → Main Menu Workflow (Enhanced 2025-01-21)
 1. User clicks "📋 Получить список" from main menu
 2. Bot displays role selection: "👥 Команда" (Team) or "🎯 Кандидаты" (Candidates)
@@ -245,11 +271,20 @@ User Input → Handler → Service (validation) → Repository → Airtable API
 UI Response ← Keyboard ← Error/Success ← Update Result ← API Response
 ```
 
-**Multi-Table Data Access Flow** (New 2025-01-21):
+**Export Conversation Flow** (New 2025-09-22):
 ```
-Export Request → Service → Repository Factory → Table-Specific Client → Airtable API (Multi-Table)
-        ↓              ↓              ↓                    ↓                      ↓
-Progress Tracking ← Data Models ← Client Factory ← AirtableConfig ← Multi-Table Response
+/export Command → Admin Validation → Export Selection Menu → Department Selection (if needed) → Service Factory → Export Processing
+       ↓                ↓                    ↓                        ↓                        ↓                ↓
+Conversation State ← Auth Check ← Inline Keyboard ← Department Filter ← Service Selection ← Progress Updates
+       ↓                                                                                                      ↓
+File Delivery ← CSV Generation ← Repository Access ← Table-Specific Client ← Multi-Table Data ← Progress Completion
+```
+
+**Multi-Table Data Access Flow** (Enhanced 2025-09-22):
+```
+Export Request → Service Factory → Repository Factory → Table-Specific Client → Airtable API (Multi-Table)
+        ↓              ↓                   ↓                    ↓                      ↓
+Progress Tracking ← Service Selection ← Data Models ← Client Factory ← AirtableConfig ← Multi-Table Response
 ```
 
 **Room/Floor Search Flow** (Enhanced 2025-01-21):
@@ -273,6 +308,10 @@ Floor Discovery Button Click → Callback Handler → get_available_floors() →
 - Selective field updates reduce API call overhead
 - In-memory state management for conversation context
 - **Floor discovery caching**: 5-minute TTL reduces API load by up to 12x during active usage
+- **Interactive Export Conversation**: Conversation-based export with state management optimized for user experience
+- **Export Selection Optimization**: Mobile-optimized keyboards reduce interaction time and improve usability
+- **Service Factory Efficiency**: Centralized service access reduces initialization overhead across export types
+- **Department Selection Caching**: Department list generation optimized for quick secondary menu display
 - **CSV Export Capabilities**: Admin-only data export with progress tracking and file management
 - **Authentication Utilities**: Admin user validation with robust type handling and settings integration
 - **Export Progress Throttling**: 2-second minimum intervals prevent Telegram rate limit violations during long exports

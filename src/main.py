@@ -18,6 +18,9 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from telegram.request import HTTPXRequest
 
 from src.bot.handlers.admin_handlers import handle_logging_toggle_command
+from src.bot.handlers.export_conversation_handlers import (
+    get_export_conversation_handler,
+)
 from src.bot.handlers.export_handlers import handle_export_command
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
@@ -124,10 +127,15 @@ def create_application() -> Application:
     search_handler = get_search_conversation_handler()
     app.add_handler(search_handler)
 
-    # Add export command handler (admin-only)
-    logger.info("Adding export command handler")
-    export_handler = CommandHandler("export", handle_export_command)
-    app.add_handler(export_handler)
+    # Add export conversation handler (admin-only)
+    logger.info("Adding export conversation handler")
+    export_conversation_handler = get_export_conversation_handler()
+    app.add_handler(export_conversation_handler)
+
+    # Keep legacy export command handler for backward compatibility
+    logger.info("Adding legacy export command handler")
+    legacy_export_handler = CommandHandler("export_direct", handle_export_command)
+    app.add_handler(legacy_export_handler)
 
     # Add admin logging toggle command handler
     logger.info("Adding logging toggle command handler")

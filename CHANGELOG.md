@@ -8,6 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Interactive Export Conversation UI with 6-Option Selection Menu** – Complete conversion of `/export` command from direct file generation to interactive conversation flow with department filtering, Russian localization, and mobile optimization enabling targeted admin workflows (TDB-69, completed 2025-09-22, PR #56, branch `feature/TDB-69-conversation-ui-integration`)
+  - Complete conversation handler with admin validation and state management (`src/bot/handlers/export_conversation_handlers.py:523`)
+    - 6 export options: Export All, Export Team, Export Candidates, Export by Department, Export Bible Readers, Export ROE
+    - Department selection submenu with all 13 departments (ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate)
+    - Progress tracking integration with ExportProgressTracker and comprehensive error handling with retry mechanisms
+    - Service factory integration for all export types maintaining existing export service functionality
+  - Mobile-optimized interactive keyboards with Russian localization (`src/bot/keyboards/export_keyboards.py:125`)
+    - Main export selection keyboard with 6 clear options in intuitive 2-column layout for mobile devices
+    - Department selection keyboard with navigation options and cancel workflow support
+    - Callback data integration with ExportCallbackData patterns for robust state management
+  - Conversation state management and callback data structure (`src/bot/handlers/export_states.py:74`)
+    - String-based conversation states for telegram-python-bot compatibility (EXPORT_SELECTION, DEPARTMENT_SELECTION, EXPORT_PROCESSING)
+    - ExportCallbackData class with patterns for all export types and department selection workflow
+    - Complete state transition validation and callback parsing for conversation flow management
+  - Seamless integration bridge from legacy `/export` command (`src/bot/handlers/export_handlers.py:+23`)
+    - handle_export_selection_redirect() function maintaining backward compatibility while transitioning to conversation flow
+    - Admin validation preservation and conversation initialization for existing workflows
+  - Application registration with ConversationHandler priority management (`src/main.py:+4`)
+    - Proper handler registration order replacing CommandHandler with ConversationHandler for `/export` command
+    - Integration with existing bot architecture without breaking changes or regression
+  - Comprehensive documentation updates covering interactive export workflow
+    - Enhanced `docs/technical/bot-commands.md` with new interactive `/export` conversation flow and state transitions
+    - Updated `docs/business/feature-specifications.md` with Interactive Export Conversation UI section including all 6 export options and department filtering
+    - Extended `docs/architecture/architecture-overview.md` with Export Conversation Handler integration and workflow diagrams
+  - Complete test coverage with 36 tests achieving 97% success rate across unit and integration testing
+    - Unit tests for conversation states, handlers, and keyboard components (`tests/unit/test_bot_handlers/`, `tests/unit/test_bot_keyboards/`)
+    - End-to-end integration tests covering all export workflows and user interaction scenarios (`tests/integration/test_export_selection_workflow.py:305`)
+    - Conversation registration and handler priority validation (`tests/integration/test_export_conversation_registration.py`)
 - **Enhanced Export Services and Filtering for Multi-Table Data Export** – Complete implementation of role/department filtering for participants plus dedicated BibleReaders and ROE export services with participant relationship hydration enabling targeted ministry data exports (TDB-68, completed 2025-09-22, PR #55, branch `feature/TDB-68-export-services-and-filtering`)
   - Enhanced ParticipantExportService with role and department filtering capabilities (`src/services/participant_export_service.py:239-365`)
     - Role-based filtering supporting TEAM and CANDIDATE filtering with null value exclusion for targeted participant exports

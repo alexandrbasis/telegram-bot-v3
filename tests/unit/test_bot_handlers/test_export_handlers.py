@@ -19,9 +19,112 @@ from telegram.ext import ContextTypes
 from src.bot.handlers.export_handlers import (
     handle_export_command,
     handle_export_progress,
+    handle_export_selection_redirect,
 )
 from src.config.settings import Settings
 from src.models.participant import Participant, Role
+
+
+class TestExportSelectionRedirect:
+    """Test export command redirection to conversation flow."""
+
+    @pytest.mark.asyncio
+    async def test_export_command_redirects_to_selection(self):
+        """Test that /export command now redirects to conversation flow."""
+        # Create mock update and context
+        update = Mock(spec=Update)
+        update.effective_user = User(id=123, first_name="Test", is_bot=False)
+        update.message = AsyncMock(spec=Message)
+        update.message.reply_text = AsyncMock()
+
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.bot_data = {"settings": Mock()}
+
+        # Mock admin validation to return True
+        with patch("src.bot.handlers.export_handlers.is_admin_user", return_value=True):
+            # Mock the conversation handler start function
+            with patch(
+                "src.bot.handlers.export_handlers.start_export_selection"
+            ) as mock_start:
+                mock_start.return_value = "selecting_export_type"
+
+                result = await handle_export_selection_redirect(update, context)
+
+        # Should call the conversation start function
+        mock_start.assert_called_once_with(update, context)
+
+        # Should return the conversation state
+        assert result == "selecting_export_type"
+
+    @pytest.mark.asyncio
+    async def test_export_command_maintains_admin_validation(self):
+        """Test that export redirect still validates admin access."""
+        # Create mock update and context
+        update = Mock(spec=Update)
+        update.effective_user = User(id=456, first_name="NonAdmin", is_bot=False)
+        update.message = AsyncMock(spec=Message)
+        update.message.reply_text = AsyncMock()
+
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.bot_data = {"settings": Mock()}
+
+        # Mock admin validation to return False
+        with patch(
+            "src.bot.handlers.export_handlers.is_admin_user", return_value=False
+        ):
+            with patch(
+                "src.bot.handlers.export_handlers.start_export_selection"
+            ) as mock_start:
+                mock_start.return_value = -1  # ConversationHandler.END
+
+                result = await handle_export_selection_redirect(update, context)
+
+        # Should still call start_export_selection (which handles access denial)
+        mock_start.assert_called_once_with(update, context)
+
+        # Should return END state
+        assert result == -1
+
+    @pytest.mark.asyncio
+    async def test_legacy_export_command_compatibility(self):
+        """Test that old export command still works for backward compatibility."""
+        # This test ensures we don't break existing functionality during transition
+
+        # Create mock update and context
+        update = Mock(spec=Update)
+        update.effective_user = User(id=123, first_name="Test", is_bot=False)
+        update.message = AsyncMock(spec=Message)
+        update.message.reply_text = AsyncMock()
+
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.bot_data = {"settings": Mock()}
+
+        # Mock admin validation
+        with patch("src.bot.handlers.export_handlers.is_admin_user", return_value=True):
+            # Mock service factory to prevent actual export
+            with patch(
+                "src.services.service_factory.get_export_service"
+            ) as mock_service:
+                mock_export_service = AsyncMock()
+                mock_export_service.export_to_csv_async = AsyncMock(
+                    return_value="test,csv,data"
+                )
+                mock_export_service.is_within_telegram_limit = AsyncMock(
+                    return_value=True
+                )
+                mock_service.return_value = mock_export_service
+
+                # Call the legacy handler
+                await handle_export_command(update, context)
+
+        # Should still send initial processing message
+        update.message.reply_text.assert_called()
+        call_args = update.message.reply_text.call_args_list
+
+        # Should contain the processing message
+        processing_call = call_args[0][0][0]
+        assert "🔄" in processing_call
+        assert "экспорт" in processing_call.lower()
 
 
 class TestExportCommandHandler:

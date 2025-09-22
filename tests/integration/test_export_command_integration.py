@@ -10,9 +10,9 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from telegram import Bot, Chat, Message, Update, User
-from telegram.ext import Application, CommandHandler
+from telegram.ext import Application, CommandHandler, ConversationHandler
 
-from src.bot.handlers.export_handlers import handle_export_command
+from src.bot.handlers.export_conversation_handlers import start_export_selection
 from src.config.settings import Settings
 from src.main import create_application
 
@@ -61,16 +61,34 @@ class TestExportCommandIntegration:
             ):
                 app = create_application()
 
-                # Find export command handler
-                export_handler = None
+                # Find export conversation handler
+                export_conversation_handler = None
                 for handler in app.handlers[0]:  # handlers[0] is the default group
-                    if isinstance(handler, CommandHandler):
-                        if "export" in handler.commands:
-                            export_handler = handler
+                    if isinstance(handler, ConversationHandler):
+                        # Check if this conversation handler has export entry point
+                        for entry_point in handler.entry_points:
+                            if (
+                                isinstance(entry_point, CommandHandler)
+                                and "export" in entry_point.commands
+                            ):
+                                export_conversation_handler = handler
+                                break
+                        if export_conversation_handler:
                             break
 
-                assert export_handler is not None, "/export command not registered"
-                assert export_handler.callback == handle_export_command
+                assert (
+                    export_conversation_handler is not None
+                ), "/export conversation handler not registered"
+                # Verify the entry point callback
+                export_entry_point = None
+                for entry_point in export_conversation_handler.entry_points:
+                    if (
+                        isinstance(entry_point, CommandHandler)
+                        and "export" in entry_point.commands
+                    ):
+                        export_entry_point = entry_point
+                        break
+                assert export_entry_point.callback == start_export_selection
 
     @pytest.mark.asyncio
     async def test_export_command_execution(self, mock_settings, mock_bot):
@@ -112,17 +130,21 @@ class TestExportCommandIntegration:
         mock_export_service.estimate_file_size = AsyncMock(return_value=1000)
 
         with patch(
-            "src.bot.handlers.export_handlers.service_factory.get_export_service",
-            return_value=mock_export_service,
+            "src.bot.handlers.export_conversation_handlers.is_admin_user",
+            return_value=True,
         ):
-            # Execute command
-            await handle_export_command(update, context)
+            # Execute conversation entry point
+            result = await start_export_selection(update, context)
 
-            # Verify command was executed
+            # Verify conversation started
             assert update.message.reply_text.called
-            # Should send initial message
+            # Should send export selection menu
             first_call = update.message.reply_text.call_args_list[0]
-            assert "экспорт" in first_call[0][0].lower()
+            assert "выберите тип экспорта" in first_call[0][0].lower()
+            # Should return first conversation state
+            from src.bot.handlers.export_states import ExportStates
+
+            assert result == ExportStates.SELECTING_EXPORT_TYPE
 
     @pytest.mark.asyncio
     async def test_export_command_in_help(self, mock_settings):
@@ -134,12 +156,17 @@ class TestExportCommandIntegration:
             ):
                 app = create_application()
 
-                # Get all registered commands
+                # Get all registered commands (including those in conversation handlers)
                 commands = []
                 for handler_group in app.handlers.values():
                     for handler in handler_group:
                         if isinstance(handler, CommandHandler):
                             commands.extend(handler.commands)
+                        elif isinstance(handler, ConversationHandler):
+                            # Check entry points for command handlers
+                            for entry_point in handler.entry_points:
+                                if isinstance(entry_point, CommandHandler):
+                                    commands.extend(entry_point.commands)
 
                 assert "export" in commands, "/export not in command list"
 
@@ -174,8 +201,8 @@ class TestExportCommandIntegration:
         context.bot_data = {"settings": mock_settings}
         context.user_data = {}
 
-        # Execute command
-        await handle_export_command(update, context)
+        # Execute conversation entry point
+        result = await start_export_selection(update, context)
 
         # Verify access denied
         update.message.reply_text.assert_called_once()
@@ -184,8 +211,10 @@ class TestExportCommandIntegration:
             "нет прав" in call_args[0][0] or "администратор" in call_args[0][0].lower()
         )
 
-        # Should not send document
-        update.message.reply_document.assert_not_called()
+        # Should end conversation immediately for non-admin
+        from telegram.ext import ConversationHandler
+
+        assert result == ConversationHandler.END
 
     @pytest.mark.asyncio
     async def test_export_command_with_settings_in_context(self, mock_settings):
@@ -201,15 +230,22 @@ class TestExportCommandIntegration:
                 # This is typically done during application initialization
                 # For our export command, we need to ensure settings are available
 
-                # Find export handler
-                export_handler = None
+                # Find export conversation handler
+                export_conversation_handler = None
                 for handler in app.handlers[0]:
-                    if isinstance(handler, CommandHandler):
-                        if "export" in handler.commands:
-                            export_handler = handler
+                    if isinstance(handler, ConversationHandler):
+                        # Check if this conversation handler has export entry point
+                        for entry_point in handler.entry_points:
+                            if (
+                                isinstance(entry_point, CommandHandler)
+                                and "export" in entry_point.commands
+                            ):
+                                export_conversation_handler = handler
+                                break
+                        if export_conversation_handler:
                             break
 
-                assert export_handler is not None
+                assert export_conversation_handler is not None
 
                 # Create test context
                 from telegram.ext import ContextTypes
@@ -218,5 +254,13 @@ class TestExportCommandIntegration:
                 context.bot_data = {}
 
                 # Settings should be added to context during app initialization
-                # We'll verify this pattern is followed
-                assert export_handler.callback == handle_export_command
+                # Verify the entry point callback
+                export_entry_point = None
+                for entry_point in export_conversation_handler.entry_points:
+                    if (
+                        isinstance(entry_point, CommandHandler)
+                        and "export" in entry_point.commands
+                    ):
+                        export_entry_point = entry_point
+                        break
+                assert export_entry_point.callback == start_export_selection
