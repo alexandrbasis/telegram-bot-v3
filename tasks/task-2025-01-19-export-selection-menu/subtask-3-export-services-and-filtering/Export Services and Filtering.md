@@ -38,8 +38,8 @@ Create export services for BibleReaders and ROE tables while extending the exist
 
 ### PR Details
 - **Branch**: feature/TDB-68-export-services-and-filtering
-- **PR URL**: [Link]
-- **Status**: [Draft/Review/Merged]
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/55
+- **Status**: In Review
 
 ## Business Context
 **APPROVED**: Enhanced export capabilities with selective filtering and dedicated BibleReaders/ROE exports enable ministry coordinators to access targeted, actionable data subsets for improved event management efficiency.
@@ -146,3 +146,51 @@ Create export services for BibleReaders and ROE tables while extending the exist
 - [x] ✅ Service factory properly instantiates all export services
 - [x] ✅ All tests pass (100% required)
 - [ ] Code review approved
+
+## PR Traceability & Code Review Preparation
+- **PR Created**: 2025-09-22
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/55
+- **Branch**: feature/TDB-68-export-services-and-filtering
+- **Status**: In Review
+- **Linear Issue**: TDB-68 - Updated to "In Review"
+
+### Implementation Summary for Code Review
+- **Total Steps Completed**: 4 of 4 steps
+- **Test Coverage**: 87-91% for new export services (BibleReaders: 87%, ROE: 88%, ParticipantExport: 91%, ServiceFactory: 91%)
+- **Total Tests**: 272 tests passing with 35+ new test cases across all export services
+- **Key Files Modified**:
+  - `src/services/participant_export_service.py:239-365` - Added role and department filtering methods
+  - `src/services/bible_readers_export_service.py` - Complete export service with participant hydration
+  - `src/services/roe_export_service.py` - Complete export service with multi-relationship hydration
+  - `src/services/service_factory.py:18-210` - Extended factory with table-specific client caching
+  - `tests/unit/test_services/test_*_export_service.py` - Comprehensive test suites for all services
+- **Breaking Changes**: None - All changes are additive and maintain backward compatibility
+- **Dependencies Added**: None - Uses existing dependencies
+
+### Step-by-Step Completion Status
+- [x] ✅ Step 1: Extend ParticipantExportService with filtering - Completed 2025-09-22
+  - [x] ✅ Sub-step 1.1: Add role-based filtering methods (TEAM/CANDIDATE filtering with null exclusion)
+  - [x] ✅ Sub-step 1.2: Add department-based filtering methods (All 13 departments with validation)
+- [x] ✅ Step 2: Create BibleReaders export service - Completed 2025-09-22
+  - [x] ✅ Sub-step 2.1: Implement BibleReadersExportService (CSV generation with participant hydration)
+- [x] ✅ Step 3: Create ROE export service - Completed 2025-09-22
+  - [x] ✅ Sub-step 3.1: Implement ROEExportService (Multi-relationship hydration with scheduling metadata)
+- [x] ✅ Step 4: Update service factory integration - Completed 2025-09-22
+  - [x] ✅ Sub-step 4.1: Extend ServiceFactory (Table-specific client caching and export service factories)
+
+### Code Review Checklist
+- [ ] **Functionality**: All acceptance criteria met (4 use cases fully implemented)
+- [ ] **Testing**: Test coverage adequate (87-91% for new services, 272 total tests passing)
+- [ ] **Code Quality**: Follows project conventions (proper error handling, progress tracking, CSV formatting)
+- [ ] **Documentation**: Code comments and task documentation updated with implementation details
+- [ ] **Security**: No sensitive data exposed (uses existing patterns)
+- [ ] **Performance**: No obvious performance issues (efficient repository caching, proper hydration)
+- [ ] **Integration**: Works with existing codebase (service factory pattern, backward compatibility)
+
+### Implementation Notes for Reviewer
+- **Role/Department Filtering**: Both filtering methods exclude participants with null values for the respective fields, ensuring clean filtered exports
+- **Participant Hydration**: BibleReaders service resolves participant IDs to names using repository lookups for actionable CSV output
+- **Multi-Relationship Hydration**: ROE service handles complex relationships (presenters, assistants, prayer partners) with proper null handling
+- **Service Factory Pattern**: Extended factory maintains singleton client caching while supporting multiple table types without config reuse
+- **Error Handling**: All services maintain existing patterns for progress tracking, file management, and graceful error recovery
+- **CSV Formatting**: Consistent field ordering and formatting across all export services for uniform user experience
