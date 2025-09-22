@@ -20,6 +20,9 @@ from src.services import service_factory
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
 
+# Import conversation handler for redirection
+from src.bot.handlers.export_conversation_handlers import start_export_selection
+
 logger = logging.getLogger(__name__)
 
 
@@ -420,3 +423,23 @@ async def handle_export_progress(message: Message, current: int, total: int) -> 
         await message.reply_text(progress_text)
     except Exception as e:
         logger.warning(f"Failed to send progress notification: {e}")
+
+
+async def handle_export_selection_redirect(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> str:
+    """
+    Redirect export command to conversation flow.
+
+    This function serves as a bridge between the old /export command handler
+    and the new conversation-based export selection flow.
+
+    Args:
+        update: Telegram update object
+        context: Telegram context object
+
+    Returns:
+        Conversation state from start_export_selection
+    """
+    # Simply delegate to the conversation handler
+    return await start_export_selection(update, context)
