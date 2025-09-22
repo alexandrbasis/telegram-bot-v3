@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Airtable Repository Implementation for Multi-Table Support** – Complete implementation of concrete Airtable repository classes for BibleReaders and ROE tables with comprehensive field mapping, validation, and multi-table coordination (TDB-67, completed 2025-09-22, PR #54, branch `feature/TDB-67-airtable-repository-implementation`)
+  - BibleReaders field mapping helper with complete field ID mappings and date formatting utilities (`src/config/field_mappings/bible_readers.py:1-133`)
+  - ROE field mapping helper with presenter relationship validation and prayer/scheduling field support (`src/config/field_mappings/roe.py:1-198`)
+  - Complete BibleReaders repository implementation with CRUD operations and participant relationship queries (`src/data/airtable/airtable_bible_readers_repo.py:1-267`)
+  - Complete ROE repository implementation with presenter validation and prayer/scheduling field handling (`src/data/airtable/airtable_roe_repo.py:1-310`)
+  - Comprehensive test suite with 65 tests and 100% pass rate: field mappings (36 tests, 100% coverage), repository implementations (25 tests, 80% coverage), and integration tests (4 tests, 100% coverage)
+  - Multi-table coordination testing with client isolation validation (`tests/integration/test_multi_table_repositories.py:1-130`)
+  - Factory pattern integration for dependency injection and proper client management
+  - Updated documentation with BibleReaders/ROE repository implementation details, field mappings, multi-table configuration, testing strategy (65 tests), and technical configuration examples
 - **Multi-Table Data Foundation for Export Functionality** - Complete foundational data layer infrastructure supporting multi-table export capabilities with BibleReaders and ROE table integration, comprehensive data models, repository interfaces, and factory pattern implementation (TDB-66, completed 2025-01-22, PR #52 merged at SHA 37a5854, feature/TDB-66-multi-table-data-foundation)
   - Multi-table Airtable configuration with comprehensive table metadata support (`src/config/settings.py:64-201`)
     - Extended DatabaseSettings with BibleReaders and ROE table configuration fields supporting table IDs and field mappings
