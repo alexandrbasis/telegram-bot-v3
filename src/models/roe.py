@@ -143,14 +143,14 @@ class ROE(BaseModel):
 
         return cls(**roe_data)
 
-    def to_airtable_fields(self) -> dict:
+    def to_airtable_fields(self) -> Dict[str, Any]:
         """
         Convert the model to Airtable fields format.
 
         Returns:
             Dictionary of field names to values for Airtable API
         """
-        fields = {
+        fields: Dict[str, Any] = {
             "RoeTopic": self.roe_topic,
             "Roista": self.roista,
             "Assistant": self.assistant,
