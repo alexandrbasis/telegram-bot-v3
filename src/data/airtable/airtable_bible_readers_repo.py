@@ -244,7 +244,8 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
                     bible_readers.append(bible_reader)
                 except Exception as e:
                     logger.warning(
-                        f"Skipping invalid BibleReader record {record.get('id', 'unknown')}: {e}"
+                        f"Skipping invalid BibleReader record "
+                        f"{record.get('id', 'unknown')}: {e}"
                     )
 
             return bible_readers
@@ -276,7 +277,10 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
             )
             # Use FIND function to search within the array field
             escaped_participant_id = escape_formula_value(participant_id)
-            formula = f"FIND('{escaped_participant_id}', ARRAYJOIN({{{participants_field}}})) > 0"
+            formula = (
+                f"FIND('{escaped_participant_id}', "
+                f"ARRAYJOIN({{{participants_field}}})) > 0"
+            )
 
             records = await self.client.list_records(formula=formula)
 
@@ -287,21 +291,24 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
                     bible_readers.append(bible_reader)
                 except Exception as e:
                     logger.warning(
-                        f"Skipping invalid BibleReader record {record.get('id', 'unknown')}: {e}"
+                        f"Skipping invalid BibleReader record "
+                        f"{record.get('id', 'unknown')}: {e}"
                     )
 
             return bible_readers
 
         except AirtableAPIError as e:
             logger.error(
-                f"Airtable API error searching BibleReaders by participant {participant_id}: {e}"
+                f"Airtable API error searching BibleReaders by participant "
+                f"{participant_id}: {e}"
             )
             raise RepositoryError(
                 f"Failed to search BibleReaders by participant {participant_id}: {e}"
             ) from e
         except Exception as e:
             logger.error(
-                f"Unexpected error searching BibleReaders by participant {participant_id}: {e}"
+                f"Unexpected error searching BibleReaders by participant "
+                f"{participant_id}: {e}"
             )
             raise RepositoryError(
                 f"Failed to search BibleReaders by participant {participant_id}: {e}"

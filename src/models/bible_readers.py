@@ -53,7 +53,7 @@ class BibleReader(BaseModel):
         return value.isoformat() if value else None
 
     @classmethod
-    def from_airtable_record(cls, record: dict) -> "BibleReader":
+    def from_airtable_record(cls, record) -> "BibleReader":
         """
         Create a BibleReader instance from an Airtable record.
 

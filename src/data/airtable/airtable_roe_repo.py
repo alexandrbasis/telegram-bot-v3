@@ -235,7 +235,8 @@ class AirtableROERepository(ROERepository):
                     roes.append(roe)
                 except Exception as e:
                     logger.warning(
-                        f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}"
+                        f"Skipping invalid ROE record "
+                        f"{record.get('id', 'unknown')}: {e}"
                     )
 
             return roes
@@ -275,7 +276,8 @@ class AirtableROERepository(ROERepository):
                     roes.append(roe)
                 except Exception as e:
                     logger.warning(
-                        f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}"
+                        f"Skipping invalid ROE record "
+                        f"{record.get('id', 'unknown')}: {e}"
                     )
 
             return roes
@@ -323,7 +325,8 @@ class AirtableROERepository(ROERepository):
                     roes.append(roe)
                 except Exception as e:
                     logger.warning(
-                        f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}"
+                        f"Skipping invalid ROE record "
+                        f"{record.get('id', 'unknown')}: {e}"
                     )
 
             return roes

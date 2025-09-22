@@ -103,7 +103,7 @@ class ROE(BaseModel):
     )
 
     @classmethod
-    def from_airtable_record(cls, record: dict) -> "ROE":
+    def from_airtable_record(cls, record) -> "ROE":
         """
         Create a ROE instance from an Airtable record.
 
