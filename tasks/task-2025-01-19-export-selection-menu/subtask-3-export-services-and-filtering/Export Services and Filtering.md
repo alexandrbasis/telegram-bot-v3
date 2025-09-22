@@ -1,5 +1,5 @@
 # Task: Export Services and Filtering
-**Created**: 2025-01-19 | **Status**: Ready for Review | **Updated**: 2025-09-22
+**Created**: 2025-01-19 | **Status**: Ready for Re-Review | **Updated**: 2025-09-22
 
 ## Business Requirements (Gate 1 - Approval Required)
 ### Primary Objective
@@ -194,3 +194,18 @@ Create export services for BibleReaders and ROE tables while extending the exist
 - **Service Factory Pattern**: Extended factory maintains singleton client caching while supporting multiple table types without config reuse
 - **Error Handling**: All services maintain existing patterns for progress tracking, file management, and graceful error recovery
 - **CSV Formatting**: Consistent field ordering and formatting across all export services for uniform user experience
+
+## Code Review Fixes - 2025-09-22
+
+### Critical Issue Resolved
+- **Issue**: ServiceFactory called `Settings.get_airtable_config()` with a `table_type` argument that the method didn't accept, causing TypeError at runtime
+- **Root Cause**: API contract mismatch - `DatabaseSettings.to_airtable_config()` supported table_type but `Settings.get_airtable_config()` wrapper didn't
+- **Fix Applied**: Extended `Settings.get_airtable_config()` to accept optional `table_type` parameter and pass it through to `DatabaseSettings.to_airtable_config()`
+- **Files Modified**:
+  - `src/config/settings.py:504-515` - Added table_type parameter support
+  - `tests/unit/test_config/test_settings.py:512-547` - Added regression test for table-specific config
+  - `tests/unit/test_services/test_service_factory.py:286-340` - Added real Settings integration tests
+- **Testing**: All 1251 tests passing with 87% coverage (exceeds 80% requirement)
+- **Commits**:
+  - `bd3465b` - fix: add table_type parameter support to Settings.get_airtable_config
+  - `faa87b4` - docs: add code review feedback document for tracking fixes
