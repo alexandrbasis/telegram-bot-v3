@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Interactive Export Conversation UI with 6-Option Selection Menu** – Complete conversion of `/export` command from direct file generation to interactive conversation flow with department filtering, Russian localization, and mobile optimization enabling targeted admin workflows (TDB-69, completed 2025-09-22, PR #56, branch `feature/TDB-69-conversation-ui-integration`)
+- **Interactive Export Conversation UI with 6-Option Selection Menu** – Complete conversion of `/export` command from direct file generation to interactive conversation flow with department filtering, Russian localization, and mobile optimization enabling targeted admin workflows (TDB-69, completed 2025-09-22, PR #56 merged at SHA 67fb1ac, branch `feature/TDB-69-conversation-ui-integration`)
   - Complete conversation handler with admin validation and state management (`src/bot/handlers/export_conversation_handlers.py:523`)
     - 6 export options: Export All, Export Team, Export Candidates, Export by Department, Export Bible Readers, Export ROE
     - Department selection submenu with all 13 departments (ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate)
