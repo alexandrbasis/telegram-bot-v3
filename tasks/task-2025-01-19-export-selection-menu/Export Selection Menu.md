@@ -23,7 +23,7 @@ Provide an interactive selection menu when using the `/export` command that allo
    - **Acceptance Criteria**: User can select "Export Bible Readers" and receive CSV with reading assignments, locations, and participant details
 
 5. **Export ROE Sessions**: Ministry coordinator needs to export data from the ROE table (ID: `tbl0j8bcgkV3lVAdc`)
-   - **Acceptance Criteria**: User can select "Export ROE Sessions" and receive CSV with ROE topics, presenters, and assistant assignments
+   - **Acceptance Criteria**: User can select "Export ROE Sessions" and receive CSV with ROE topics, presenters, assistants, prayer partners, and schedule metadata (date/time/duration)
 
 6. **Quick Full Export**: Admin still needs ability to export all participants when needed
    - **Acceptance Criteria**: User can select "Export All Participants" to maintain current functionality
@@ -54,6 +54,8 @@ Target: 90%+ coverage across all implementation areas
 - [ ] Role-based filtering logic for TEAM vs CANDIDATE exports
 - [ ] Department-based filtering with all 13 departments (ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate)
 - [ ] Multi-table export service for BibleReaders and ROE tables
+- [ ] ROE scheduling metadata (date, time, duration) parsed and exported accurately
+- [ ] ROE prayer support assignments included with presenter/assistant data
 - [ ] CSV field mapping for different export types (participants vs Bible readers vs ROE)
 - [ ] Export selection validation and user input processing
 
@@ -74,6 +76,7 @@ Target: 90%+ coverage across all implementation areas
 #### Integration Tests
 - [ ] BibleReaders table API access using table ID `tblGEnSfpPOuPLXcm`
 - [ ] ROE table API access using table ID `tbl0j8bcgkV3lVAdc`
+- [ ] ROE schedule and prayer metadata propagated through repository + export layers
 - [ ] Multi-table relationship data export (participants linked to Bible readings)
 - [ ] Airtable client configuration for accessing multiple tables
 - [ ] Service factory integration for new export types
@@ -90,7 +93,7 @@ Target: 90%+ coverage across all implementation areas
 - **Export Candidates** → Role-based filtering tests, CANDIDATE role validation tests
 - **Department Export** → Department filtering tests, all 13 department validation tests
 - **Bible Readers Export** → BibleReaders table access tests, multi-table API tests
-- **ROE Sessions Export** → ROE table access tests, relationship data export tests
+- **ROE Sessions Export** → ROE table access tests, relationship + schedule/prayer export tests
 - **Full Export** → Backwards compatibility tests, existing functionality preservation tests
 
 ## Tracking & Progress

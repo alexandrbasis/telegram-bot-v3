@@ -22,9 +22,7 @@ class TestBibleReaderModel:
 
     def test_create_bible_reader_with_required_fields(self):
         """Test creating a BibleReader with only required fields."""
-        reader = BibleReader(
-            where="Morning Session"
-        )
+        reader = BibleReader(where="Morning Session")
 
         assert reader.record_id is None  # Optional field
         assert reader.where == "Morning Session"
@@ -48,7 +46,7 @@ class TestBibleReaderModel:
             churches=churches,
             room_numbers=room_numbers,
             when=test_date,
-            bible="John 3:16"
+            bible="John 3:16",
         )
 
         assert reader.record_id == "rec123"
@@ -62,8 +60,7 @@ class TestBibleReaderModel:
     def test_participants_field_is_list(self):
         """Test that participants field accepts list of record IDs."""
         reader = BibleReader(
-            where="Evening Session",
-            participants=["recA", "recB", "recC"]
+            where="Evening Session", participants=["recA", "recB", "recC"]
         )
 
         assert isinstance(reader.participants, list)
@@ -72,10 +69,7 @@ class TestBibleReaderModel:
 
     def test_when_field_date_parsing(self):
         """Test that when field correctly parses date strings."""
-        reader = BibleReader(
-            where="Afternoon Session",
-            when="2025-01-20"
-        )
+        reader = BibleReader(where="Afternoon Session", when="2025-01-20")
 
         assert isinstance(reader.when, date)
         assert reader.when.year == 2025
@@ -94,10 +88,7 @@ class TestBibleReaderModel:
     def test_invalid_date_format_raises_error(self):
         """Test that invalid date format raises validation error."""
         with pytest.raises(ValidationError) as exc_info:
-            BibleReader(
-                where="Session",
-                when="invalid-date"
-            )
+            BibleReader(where="Session", when="invalid-date")
 
         errors = exc_info.value.errors()
         assert any(e["loc"] == ("when",) for e in errors)
@@ -111,7 +102,7 @@ class TestBibleReaderModel:
             churches=["Church A"],
             room_numbers=[101],
             when=date(2025, 1, 20),
-            bible="Psalm 23"
+            bible="Psalm 23",
         )
 
         # Test raw Python data (no serialization)
@@ -130,9 +121,7 @@ class TestBibleReaderModel:
 
     def test_model_dict_exclude_none(self):
         """Test model serialization excludes None values."""
-        reader = BibleReader(
-            where="Session"
-        )
+        reader = BibleReader(where="Session")
 
         data = reader.model_dump(exclude_none=True)
 
@@ -153,8 +142,8 @@ class TestBibleReaderModel:
                 "Church": ["Church A", "Church B"],
                 "RoomNumber": [101, "102A"],
                 "When": "2025-01-20",
-                "Bible": "Genesis 1:1"
-            }
+                "Bible": "Genesis 1:1",
+            },
         }
 
         reader = BibleReader.from_airtable_record(airtable_record)
@@ -174,9 +163,9 @@ class TestBibleReaderModel:
             where="Evening Session",
             participants=["recP1"],
             churches=["Church A"],  # Lookup fields
-            room_numbers=[101],      # Should not appear in output
+            room_numbers=[101],  # Should not appear in output
             when=date(2025, 1, 20),
-            bible="Romans 8:28"
+            bible="Romans 8:28",
         )
 
         fields = reader.to_airtable_fields()
@@ -191,19 +180,14 @@ class TestBibleReaderModel:
 
     def test_empty_participants_list_default(self):
         """Test that participants defaults to empty list."""
-        reader = BibleReader(
-            where="Session"
-        )
+        reader = BibleReader(where="Session")
 
         assert reader.participants == []
         assert isinstance(reader.participants, list)
 
     def test_lookup_fields_are_optional(self):
         """Test that lookup fields (churches, room_numbers) are optional."""
-        reader = BibleReader(
-            where="Session",
-            participants=["recP1"]
-        )
+        reader = BibleReader(where="Session", participants=["recP1"])
 
         assert reader.churches is None
         assert reader.room_numbers is None
@@ -211,9 +195,7 @@ class TestBibleReaderModel:
     def test_create_without_record_id(self):
         """Test creating a BibleReader without record_id (for new records)."""
         reader = BibleReader(
-            where="New Session",
-            participants=["recP1"],
-            bible="Matthew 5:1-12"
+            where="New Session", participants=["recP1"], bible="Matthew 5:1-12"
         )
 
         assert reader.record_id is None

@@ -11,9 +11,9 @@ Create export services for BibleReaders and ROE tables while extending the exist
 2. **Department-Based Participant Filtering**: Admin can export participants from specific departments
    - **Acceptance Criteria**: Service supports all 13 departments with accurate filtering results
 3. **BibleReaders Export**: Admin can export Bible reading assignments with participant details
-   - **Acceptance Criteria**: BibleReaders export service produces CSV with reading locations, assignments, and participant relationships
+   - **Acceptance Criteria**: BibleReaders export service produces CSV with locations, schedule, scripture reference, and hydrated participant details
 4. **ROE Export**: Admin can export ROE session data with presenter information
-   - **Acceptance Criteria**: ROE export service produces CSV with topics, presenters, and assistant assignments
+   - **Acceptance Criteria**: ROE export service produces CSV with topics, presenters, assistants, prayer partners, and scheduled date/time/duration metadata
 
 ### Success Metrics
 - [ ] Filtered participant exports reduce file sizes by targeting specific subsets
@@ -49,6 +49,7 @@ Create export services for BibleReaders and ROE tables while extending the exist
 - [ ] Extend ParticipantExportService with role and department filtering
 - [ ] Create BibleReadersExportService with proper CSV generation
 - [ ] Create ROEExportService with relationship data handling
+- [ ] Hydrate linked participant data (names, churches, rooms) within export services since lookup fields were removed upstream
 - [ ] Update service factory to provide all export services
 - [ ] Maintain consistent error handling and progress tracking
 
@@ -74,18 +75,18 @@ Create export services for BibleReaders and ROE tables while extending the exist
   - [ ] Sub-step 2.1: Implement BibleReadersExportService
     - **Directory**: `src/services/`
     - **Files to create/modify**: `src/services/bible_readers_export_service.py`
-    - **Accept**: Service exports BibleReaders table data with proper CSV formatting using factory-created repository
+    - **Accept**: Service exports BibleReaders table data with proper CSV formatting, hydrating participant details via repository lookups
     - **Tests**: `tests/unit/test_services/test_bible_readers_export_service.py`
-    - **Done**: BibleReaders table access and CSV generation working with dependency injection
+    - **Done**: BibleReaders table access and CSV generation working with dependency injection and participant hydration tests
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 - [ ] Step 3: Create ROE export service
   - [ ] Sub-step 3.1: Implement ROEExportService
     - **Directory**: `src/services/`
     - **Files to create/modify**: `src/services/roe_export_service.py`
-    - **Accept**: Service exports ROE table data with presenter relationships using factory-created repository
+    - **Accept**: Service exports ROE table data with presenter, assistant, prayer, and scheduling metadata using factory-created repository
     - **Tests**: `tests/unit/test_services/test_roe_export_service.py`
-    - **Done**: ROE table access and relationship data export working with dependency injection
+    - **Done**: ROE table access and relationship/schedule data export working with dependency injection
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 - [ ] Step 4: Update service factory integration
@@ -107,7 +108,7 @@ Create export services for BibleReaders and ROE tables while extending the exist
 - [ ] Service factory delivers all export services using table-specific repositories
 - [ ] All filtering methods produce accurate participant subsets
 - [ ] BibleReaders export service generates proper CSV with all required fields
-- [ ] ROE export service handles presenter relationships correctly
+- [ ] ROE export service handles presenter/assistant/prayer relationships and schedule fields correctly
 - [ ] Service factory properly instantiates all export services
 - [ ] All tests pass (100% required)
 - [ ] Code review approved

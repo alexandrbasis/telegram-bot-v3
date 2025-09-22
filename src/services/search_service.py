@@ -151,7 +151,7 @@ def format_participant_result(participant: Participant, language: str = "ru") ->
         if language == "ru":
             date_of_birth_display = date_of_birth_val.strftime("%d.%m.%Y")
         else:
-            date_of_birth_display = date_of_birth_val.isoformat()
+            date_of_birth_display = Participant._format_date_of_birth(date_of_birth_val)
     else:
         date_of_birth_display = not_available
 
@@ -337,7 +337,9 @@ def format_participant_full(participant: Participant, language: str = "ru") -> s
     # Demographic info
     date_of_birth_val = getattr(participant, "date_of_birth", None)
     date_of_birth_display = (
-        date_of_birth_val.isoformat() if date_of_birth_val is not None else "Не указано"
+        Participant._format_date_of_birth(date_of_birth_val)
+        if date_of_birth_val is not None
+        else "Не указано"
     )
     lines.append(f"{labels['date_of_birth']}: {date_of_birth_display}")
 

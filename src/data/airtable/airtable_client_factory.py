@@ -6,8 +6,10 @@ configured for different tables while maintaining consistency and
 supporting dependency injection.
 """
 
-from src.data.airtable.airtable_client import AirtableClient
+from typing import Optional
+
 from src.config.settings import DatabaseSettings
+from src.data.airtable.airtable_client import AirtableClient
 
 
 class AirtableClientFactory:
@@ -18,7 +20,7 @@ class AirtableClientFactory:
     and creates appropriately configured AirtableClient instances.
     """
 
-    def __init__(self, database_settings: DatabaseSettings = None):
+    def __init__(self, database_settings: Optional[DatabaseSettings] = None):
         """
         Initialize the factory.
 

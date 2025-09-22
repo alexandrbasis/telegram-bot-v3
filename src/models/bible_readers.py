@@ -6,7 +6,7 @@ including validation and serialization methods.
 """
 
 from datetime import date
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
@@ -27,21 +27,22 @@ class BibleReader(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True, populate_by_name=True)
 
-    record_id: Optional[str] = Field(None, description="Airtable record ID for existing records")
+    record_id: Optional[str] = Field(
+        None, description="Airtable record ID for existing records"
+    )
     where: str = Field(..., description="Location or session description")
     participants: List[str] = Field(
-        default_factory=list,
-        description="List of participant record IDs"
+        default_factory=list, description="List of participant record IDs"
     )
     churches: Optional[List[str]] = Field(
         None,
         description="Churches of the Bible readers (lookup from participants)",
-        alias="Church"
+        alias="Church",
     )
     room_numbers: Optional[List[Union[int, str]]] = Field(
         None,
         description="Room numbers of the Bible readers (lookup from participants)",
-        alias="RoomNumber"
+        alias="RoomNumber",
     )
     when: Optional[date] = Field(None, description="Date of the reading session")
     bible: Optional[str] = Field(None, description="Bible passage or reference")
@@ -64,15 +65,22 @@ class BibleReader(BaseModel):
         """
         fields = record.get("fields", {})
 
-        return cls(
-            record_id=record.get("id"),
-            where=fields.get("Where", ""),
-            participants=fields.get("Participants", []),
-            churches=fields.get("Church"),
-            room_numbers=fields.get("RoomNumber"),
-            when=fields.get("When"),
-            bible=fields.get("Bible")
-        )
+        reader_data: Dict[str, Any] = {
+            "record_id": record.get("id"),
+            "where": fields.get("Where", ""),
+            "participants": fields.get("Participants", []),
+        }
+
+        if "Church" in fields:
+            reader_data["churches"] = fields["Church"]
+        if "RoomNumber" in fields:
+            reader_data["room_numbers"] = fields["RoomNumber"]
+        if "When" in fields:
+            reader_data["when"] = fields["When"]
+        if "Bible" in fields:
+            reader_data["bible"] = fields["Bible"]
+
+        return cls(**reader_data)
 
     def to_airtable_fields(self) -> dict:
         """
@@ -81,10 +89,7 @@ class BibleReader(BaseModel):
         Returns:
             Dictionary of field names to values for Airtable API
         """
-        fields = {
-            "Where": self.where,
-            "Participants": self.participants
-        }
+        fields = {"Where": self.where, "Participants": self.participants}
 
         if self.when is not None:
             fields["When"] = self.when.isoformat()

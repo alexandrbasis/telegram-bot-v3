@@ -786,7 +786,7 @@ class TestFullParticipantFormatting:
         assert "👤 Имя (русское): Анна Петрова" in result
         assert "⛪ Церковь: Храм Христа Спасителя" in result
         # Demographic fields should be included
-        assert "🎂 Дата рождения: 1985-03-20" in result
+        assert "🎂 Дата рождения: 20/03/1985" in result
         assert "🔢 Возраст: 39" in result
 
     def test_format_participant_full_demographic_fields_with_na_fallbacks(self):

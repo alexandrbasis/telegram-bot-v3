@@ -26,7 +26,9 @@ class TestMultiTableConfiguration:
 
             # Should have BibleReaders table configuration
             assert hasattr(settings, "bible_readers_table_id")
-            assert settings.bible_readers_table_id == "tblGEnSfpPOuPLXcm"  # Actual table ID from database
+            assert (
+                settings.bible_readers_table_id == "tblGEnSfpPOuPLXcm"
+            )  # Actual table ID from database
             assert hasattr(settings, "bible_readers_table_name")
             assert settings.bible_readers_table_name == "BibleReaders"
 
@@ -34,7 +36,7 @@ class TestMultiTableConfiguration:
         """Test that BibleReaders table can be configured via environment variables."""
         env_vars = {
             "AIRTABLE_BIBLE_READERS_TABLE_ID": "tblCustomBibleReaders123",
-            "AIRTABLE_BIBLE_READERS_TABLE_NAME": "CustomBibleReaders"
+            "AIRTABLE_BIBLE_READERS_TABLE_NAME": "CustomBibleReaders",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -50,7 +52,9 @@ class TestMultiTableConfiguration:
 
             # Should have ROE table configuration
             assert hasattr(settings, "roe_table_id")
-            assert settings.roe_table_id == "tbl0j8bcgkV3lVAdc"  # Actual table ID from database
+            assert (
+                settings.roe_table_id == "tbl0j8bcgkV3lVAdc"
+            )  # Actual table ID from database
             assert hasattr(settings, "roe_table_name")
             assert settings.roe_table_name == "ROE"
 
@@ -58,7 +62,7 @@ class TestMultiTableConfiguration:
         """Test that ROE table can be configured via environment variables."""
         env_vars = {
             "AIRTABLE_ROE_TABLE_ID": "tblCustomROE456",
-            "AIRTABLE_ROE_TABLE_NAME": "CustomROE"
+            "AIRTABLE_ROE_TABLE_NAME": "CustomROE",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -120,7 +124,7 @@ class TestMultiTableConfiguration:
             "AIRTABLE_API_KEY": "test_key",
             "AIRTABLE_BASE_ID": "test_base",
             "AIRTABLE_TABLE_ID": "tbl8ivwOdAUvMi3Jy",
-            "AIRTABLE_TABLE_NAME": "Participants"
+            "AIRTABLE_TABLE_NAME": "Participants",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):

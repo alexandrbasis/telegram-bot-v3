@@ -318,7 +318,7 @@ class TestFieldValidation:
 
         # Test valid DateOfBirth as string
         is_valid, error = AirtableFieldMapping.validate_field_value(
-            "DateOfBirth", "1990-05-15"
+            "DateOfBirth", "15/05/1990"
         )
         assert is_valid is True
         assert error == ""

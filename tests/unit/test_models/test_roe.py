@@ -21,9 +21,7 @@ class TestROEModel:
 
     def test_create_roe_with_required_fields(self):
         """Test creating a ROE with only required fields."""
-        roe = ROE(
-            roe_topic="Prayer and Meditation"
-        )
+        roe = ROE(roe_topic="Prayer and Meditation")
 
         assert roe.record_id is None  # Optional field
         assert roe.roe_topic == "Prayer and Meditation"
@@ -61,7 +59,7 @@ class TestROEModel:
             assistant=assistant,
             assistant_church=assistant_churches,
             assistant_department=assistant_depts,
-            assistant_room=assistant_rooms
+            assistant_room=assistant_rooms,
         )
 
         assert roe.record_id == "rec123"
@@ -78,10 +76,7 @@ class TestROEModel:
 
     def test_roista_field_is_list(self):
         """Test that roista field accepts list of record IDs."""
-        roe = ROE(
-            roe_topic="Christian Living",
-            roista=["recA", "recB"]
-        )
+        roe = ROE(roe_topic="Christian Living", roista=["recA", "recB"])
 
         assert isinstance(roe.roista, list)
         assert len(roe.roista) == 2
@@ -89,10 +84,7 @@ class TestROEModel:
 
     def test_assistant_field_is_list(self):
         """Test that assistant field accepts list of record IDs."""
-        roe = ROE(
-            roe_topic="Grace",
-            assistant=["recC", "recD", "recE"]
-        )
+        roe = ROE(roe_topic="Grace", assistant=["recC", "recD", "recE"])
 
         assert isinstance(roe.assistant, list)
         assert len(roe.assistant) == 3
@@ -115,7 +107,7 @@ class TestROEModel:
             roista=["recR1"],
             roista_church=["Church A"],
             assistant=["recA1"],
-            assistant_church=["Church B"]
+            assistant_church=["Church B"],
         )
 
         data = roe.model_dump(mode="python")
@@ -129,9 +121,7 @@ class TestROEModel:
 
     def test_model_dict_exclude_none(self):
         """Test model serialization excludes None values."""
-        roe = ROE(
-            roe_topic="Love and Forgiveness"
-        )
+        roe = ROE(roe_topic="Love and Forgiveness")
 
         data = roe.model_dump(exclude_none=True)
 
@@ -158,8 +148,8 @@ class TestROEModel:
                 "Assistant": ["recA1"],
                 "AssistantChuch": ["Church C"],  # Note typo in Airtable
                 "AssistantDepartment": ["Kitchen"],
-                "AssistantRoom": ["201"]
-            }
+                "AssistantRoom": ["201"],
+            },
         }
 
         roe = ROE.from_airtable_record(airtable_record)
@@ -184,7 +174,7 @@ class TestROEModel:
             roista=["recR1"],
             roista_church=["Church A"],  # Lookup fields
             assistant=["recA1", "recA2"],
-            assistant_church=["Church B", "Church C"]  # Should not appear in output
+            assistant_church=["Church B", "Church C"],  # Should not appear in output
         )
 
         fields = roe.to_airtable_fields()
@@ -198,9 +188,7 @@ class TestROEModel:
 
     def test_empty_relationship_lists_default(self):
         """Test that relationship fields default to empty lists."""
-        roe = ROE(
-            roe_topic="Service"
-        )
+        roe = ROE(roe_topic="Service")
 
         assert roe.roista == []
         assert roe.assistant == []
@@ -212,7 +200,7 @@ class TestROEModel:
         roe = ROE(
             roe_topic="Leadership",
             roista=["recMainRoista"],
-            assistant=["recA1", "recA2", "recA3"]
+            assistant=["recA1", "recA2", "recA3"],
         )
 
         assert len(roe.roista) == 1
@@ -225,7 +213,7 @@ class TestROEModel:
             "fields": {
                 "RoeTopic": "Hope"
                 # No Roista or Assistant fields
-            }
+            },
         }
 
         roe = ROE.from_airtable_record(airtable_record)
@@ -240,10 +228,7 @@ class TestROEModel:
 
     def test_lookup_fields_are_optional(self):
         """Test that all lookup fields are optional."""
-        roe = ROE(
-            roe_topic="Fellowship",
-            roista=["recR1"]
-        )
+        roe = ROE(roe_topic="Fellowship", roista=["recR1"])
 
         assert roe.roista_church is None
         assert roe.roista_department is None
@@ -255,11 +240,7 @@ class TestROEModel:
 
     def test_create_without_record_id(self):
         """Test creating a ROE without record_id (for new records)."""
-        roe = ROE(
-            roe_topic="New Topic",
-            roista=["recR1"],
-            assistant=["recA1"]
-        )
+        roe = ROE(roe_topic="New Topic", roista=["recR1"], assistant=["recA1"])
 
         assert roe.record_id is None
         assert roe.roe_topic == "New Topic"

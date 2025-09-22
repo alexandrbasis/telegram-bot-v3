@@ -6,8 +6,8 @@ def test_enter_room_number_russian():
 
 
 def test_enter_date_of_birth_prompt_russian():
-    """Test that date of birth prompt provides clear YYYY-MM-DD format guidance."""
-    expected = "📅 Введите дату рождения в формате ГГГГ-ММ-ДД (например: 1990-05-15):"
+    """Test that date of birth prompt provides clear DD/MM/YYYY format guidance."""
+    expected = "📅 Введите дату рождения в формате ДД/ММ/ГГГГ (например: 22/09/2025):"
     assert InfoMessages.ENTER_DATE_OF_BIRTH == expected
 
 

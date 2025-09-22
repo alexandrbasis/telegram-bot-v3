@@ -158,26 +158,32 @@ class TestValidateFieldInput:
             self.service.validate_field_input("unknown_field", "value")
 
     def test_validate_date_of_birth_field_valid_date(self):
-        """Test validation of date_of_birth field with valid YYYY-MM-DD format."""
-        result = self.service.validate_field_input("date_of_birth", "1990-05-15")
+        """Test validation of date_of_birth field with valid DD/MM/YYYY format."""
+        result = self.service.validate_field_input("date_of_birth", "15/05/1990")
 
         expected_date = date(1990, 5, 15)
         assert result == expected_date
         assert isinstance(result, date)
+
+    def test_validate_date_of_birth_field_accepts_legacy_iso(self):
+        """Ensure legacy YYYY-MM-DD input remains supported for backwards compatibility."""
+        result = self.service.validate_field_input("date_of_birth", "1990-05-15")
+
+        assert result == date(1990, 5, 15)
 
     def test_validate_date_of_birth_field_invalid_format(self):
         """Test validation of date_of_birth field with invalid format raises error."""
         with pytest.raises(
             ValidationError, match="❌ Неверный формат даты.*Введите дату рождения"
         ):
-            self.service.validate_field_input("date_of_birth", "15/05/1990")
+            self.service.validate_field_input("date_of_birth", "1990/05/15")
 
         with pytest.raises(
             ValidationError, match="❌ Неверный формат даты.*Введите дату рождения"
         ):
             self.service.validate_field_input(
-                "date_of_birth", "1990-5-15"
-            )  # No zero padding
+                "date_of_birth", "15-05-1990"
+            )  # Wrong separator order (should be D/M/Y)
 
     def test_validate_date_of_birth_field_invalid_date(self):
         """Test validation of date_of_birth field with invalid date values."""
@@ -185,14 +191,14 @@ class TestValidateFieldInput:
             ValidationError, match="❌ Некорректная дата.*Введите дату рождения"
         ):
             self.service.validate_field_input(
-                "date_of_birth", "1990-13-01"
-            )  # Invalid month
+                "date_of_birth", "32/01/1990"
+            )  # Invalid day (exceeds days in month)
 
         with pytest.raises(
             ValidationError, match="❌ Некорректная дата.*Введите дату рождения"
         ):
             self.service.validate_field_input(
-                "date_of_birth", "1990-02-30"
+                "date_of_birth", "31/02/1990"
             )  # Invalid day
 
     def test_validate_age_field_valid_range(self):

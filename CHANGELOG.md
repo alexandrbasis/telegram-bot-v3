@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Multi-Table Data Foundation for Export Functionality** - Complete foundational data layer infrastructure supporting multi-table export capabilities with BibleReaders and ROE table integration, comprehensive data models, repository interfaces, and factory pattern implementation (TDB-66, completed 2025-01-22, PR #52, feature/TDB-66-multi-table-data-foundation)
+- **Multi-Table Data Foundation for Export Functionality** - Complete foundational data layer infrastructure supporting multi-table export capabilities with BibleReaders and ROE table integration, comprehensive data models, repository interfaces, and factory pattern implementation (TDB-66, completed 2025-01-22, PR #52 merged at SHA 37a5854, feature/TDB-66-multi-table-data-foundation)
   - Multi-table Airtable configuration with comprehensive table metadata support (`src/config/settings.py:64-201`)
     - Extended DatabaseSettings with BibleReaders and ROE table configuration fields supporting table IDs and field mappings
     - Added get_table_config method for table-specific configuration retrieval with proper validation

@@ -5,8 +5,9 @@ Tests ensure the abstract base class defines proper contracts
 for data operations following the repository pattern.
 """
 
-import pytest
 from abc import ABC
+
+import pytest
 
 from src.data.repositories.bible_readers_repository import BibleReadersRepository
 from src.models.bible_readers import BibleReader
@@ -32,7 +33,7 @@ class TestBibleReadersRepositoryInterface:
             "update",
             "delete",
             "list_all",
-            "get_by_participant_id"
+            "get_by_participant_id",
         ]
 
         for method_name in required_methods:
@@ -42,6 +43,7 @@ class TestBibleReadersRepositoryInterface:
 
     def test_abstract_methods_are_properly_marked(self):
         """Test that abstract methods raise TypeError when not implemented."""
+
         # Create a concrete class that doesn't implement required methods
         class IncompleteRepository(BibleReadersRepository):
             pass
@@ -56,8 +58,13 @@ class TestBibleReadersRepositoryInterface:
 
         methods = BibleReadersRepository.__abstractmethods__
         expected_methods = {
-            "create", "get_by_id", "get_by_where", "update",
-            "delete", "list_all", "get_by_participant_id"
+            "create",
+            "get_by_id",
+            "get_by_where",
+            "update",
+            "delete",
+            "list_all",
+            "get_by_participant_id",
         }
 
         assert methods == expected_methods

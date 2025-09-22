@@ -63,10 +63,14 @@ class DatabaseSettings:
 
     # BibleReaders table configuration
     bible_readers_table_name: str = field(
-        default_factory=lambda: os.getenv("AIRTABLE_BIBLE_READERS_TABLE_NAME", "BibleReaders")
+        default_factory=lambda: os.getenv(
+            "AIRTABLE_BIBLE_READERS_TABLE_NAME", "BibleReaders"
+        )
     )
     bible_readers_table_id: str = field(
-        default_factory=lambda: os.getenv("AIRTABLE_BIBLE_READERS_TABLE_ID", "tblGEnSfpPOuPLXcm")
+        default_factory=lambda: os.getenv(
+            "AIRTABLE_BIBLE_READERS_TABLE_ID", "tblGEnSfpPOuPLXcm"
+        )
     )
 
     # ROE table configuration
@@ -170,7 +174,12 @@ class DatabaseSettings:
         }
 
         if table_type not in table_configs:
-            raise ValueError(f"Invalid table type: {table_type}. Must be one of: {list(table_configs.keys())}")
+            supported = list(table_configs.keys())
+            raise ValueError(
+                "Invalid table type: {table}. Must be one of: {supported}".format(
+                    table=table_type, supported=supported
+                )
+            )
 
         return table_configs[table_type]
 
@@ -184,10 +193,14 @@ class DatabaseSettings:
         Returns:
             AirtableConfig instance with current settings for the specified table
         """
-        table_config = self.get_table_config(table_type) if table_type != "participants" else {
-            "table_id": self.airtable_table_id,
-            "table_name": self.airtable_table_name,
-        }
+        table_config = (
+            self.get_table_config(table_type)
+            if table_type != "participants"
+            else {
+                "table_id": self.airtable_table_id,
+                "table_name": self.airtable_table_name,
+            }
+        )
 
         return AirtableConfig(
             api_key=self.airtable_api_key,
