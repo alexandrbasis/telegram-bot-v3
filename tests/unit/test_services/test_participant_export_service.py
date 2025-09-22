@@ -765,7 +765,9 @@ class TestDepartmentBasedFiltering:
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
-        csv_data = await service.get_participants_by_department_as_csv(Department.WORSHIP)
+        csv_data = await service.get_participants_by_department_as_csv(
+            Department.WORSHIP
+        )
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
@@ -777,9 +779,7 @@ class TestDepartmentBasedFiltering:
         assert worship_names == {"Worship Участник 1", "Worship Участник 2"}
 
     @pytest.mark.asyncio
-    async def test_department_filtering_all_departments(
-        self, mock_repository
-    ):
+    async def test_department_filtering_all_departments(self, mock_repository):
         """Test that all 13 departments can be filtered correctly."""
         # Arrange - create one participant for each department
         all_departments = list(Department)
@@ -815,7 +815,9 @@ class TestDepartmentBasedFiltering:
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
-        worship_csv = await service.get_participants_by_department_as_csv(Department.WORSHIP)
+        worship_csv = await service.get_participants_by_department_as_csv(
+            Department.WORSHIP
+        )
 
         # Assert
         reader = csv.DictReader(io.StringIO(worship_csv))

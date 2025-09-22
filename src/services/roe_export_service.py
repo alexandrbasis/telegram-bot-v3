@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 from src.config.field_mappings.roe import ROEFieldMapping
-from src.data.repositories.roe_repository import ROERepository
 from src.data.repositories.participant_repository import ParticipantRepository
+from src.data.repositories.roe_repository import ROERepository
 from src.models.roe import ROE
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,8 @@ class ROEExportService:
         Export all ROE sessions to CSV format string.
 
         Retrieves all ROE sessions from the repository, hydrates participant names
-        for all relationship fields, and formats them as CSV with Airtable field names as headers.
+        for all relationship fields, and formats them as CSV with Airtable field
+        names as headers.
 
         Returns:
             CSV formatted string with all ROE data
@@ -286,7 +287,9 @@ class ROEExportService:
                     row[airtable_field] = "; ".join(value) if value else ""
                 else:
                     # Format other list fields (lookup fields)
-                    row[airtable_field] = "; ".join(str(item) for item in value) if value else ""
+                    row[airtable_field] = (
+                        "; ".join(str(item) for item in value) if value else ""
+                    )
             else:
                 row[airtable_field] = str(value)
 

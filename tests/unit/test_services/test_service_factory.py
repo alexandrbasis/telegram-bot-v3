@@ -233,9 +233,7 @@ class TestNewExportServiceFactories:
 
     @patch("src.services.service_factory.get_roe_repository")
     @patch("src.services.service_factory.get_participant_repository")
-    def test_get_roe_export_service(
-        self, mock_get_participant_repo, mock_get_roe_repo
-    ):
+    def test_get_roe_export_service(self, mock_get_participant_repo, mock_get_roe_repo):
         """Test ROE export service factory method."""
         mock_roe_repo = Mock()
         mock_participant_repo = Mock()
@@ -299,19 +297,25 @@ class TestSettingsIntegration:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            with patch("src.services.service_factory.get_settings") as mock_get_settings:
+            with patch(
+                "src.services.service_factory.get_settings"
+            ) as mock_get_settings:
                 # Use real Settings object instead of mock
                 real_settings = Settings()
                 mock_get_settings.return_value = real_settings
 
                 # This should not raise TypeError anymore
-                client_bible = service_factory.get_airtable_client_for_table("bible_readers")
+                client_bible = service_factory.get_airtable_client_for_table(
+                    "bible_readers"
+                )
                 assert client_bible is not None
 
                 client_roe = service_factory.get_airtable_client_for_table("roe")
                 assert client_roe is not None
 
-                client_participants = service_factory.get_airtable_client_for_table("participants")
+                client_participants = service_factory.get_airtable_client_for_table(
+                    "participants"
+                )
                 assert client_participants is not None
 
     def test_export_service_factories_with_real_settings(self):
@@ -327,7 +331,9 @@ class TestSettingsIntegration:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            with patch("src.services.service_factory.get_settings") as mock_get_settings:
+            with patch(
+                "src.services.service_factory.get_settings"
+            ) as mock_get_settings:
                 # Use real Settings object
                 real_settings = Settings()
                 mock_get_settings.return_value = real_settings

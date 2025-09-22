@@ -38,7 +38,9 @@ class BibleReadersExportService:
     TELEGRAM_FILE_LIMIT = 50 * 1024 * 1024  # 50MB in bytes
 
     # Average bytes per record estimate (conservative)
-    BYTES_PER_RECORD_ESTIMATE = 300  # Bible readers typically have less data than participants
+    BYTES_PER_RECORD_ESTIMATE = (
+        300  # Bible readers typically have less data than participants
+    )
 
     def __init__(
         self,
@@ -250,7 +252,9 @@ class BibleReadersExportService:
 
         return headers
 
-    async def _bible_reader_to_csv_row(self, bible_reader: BibleReader) -> Dict[str, str]:
+    async def _bible_reader_to_csv_row(
+        self, bible_reader: BibleReader
+    ) -> Dict[str, str]:
         """
         Convert a BibleReader object to a CSV row dictionary with participant hydration.
 
@@ -285,12 +289,18 @@ class BibleReadersExportService:
                     row[airtable_field] = "; ".join(value) if value else ""
                 else:
                     # Format other list fields (churches, room_numbers)
-                    row[airtable_field] = "; ".join(str(item) for item in value) if value else ""
+                    row[airtable_field] = (
+                        "; ".join(str(item) for item in value) if value else ""
+                    )
             else:
                 row[airtable_field] = str(value)
 
         # Hydrate participant names
-        participant_names = await self._hydrate_participant_names(bible_reader.participants)
-        row["ParticipantNames"] = "; ".join(participant_names) if participant_names else ""
+        participant_names = await self._hydrate_participant_names(
+            bible_reader.participants
+        )
+        row["ParticipantNames"] = (
+            "; ".join(participant_names) if participant_names else ""
+        )
 
         return row

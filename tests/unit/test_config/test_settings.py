@@ -527,7 +527,9 @@ class TestSettings:
             # Test participants table (default)
             config = settings.get_airtable_config("participants")
             assert isinstance(config, AirtableConfig)
-            assert config.table_id == "tbl8ivwOdAUvMi3Jy"  # default participants table ID
+            assert (
+                config.table_id == "tbl8ivwOdAUvMi3Jy"
+            )  # default participants table ID
             assert config.table_name == "Participants"
 
             # Test bible_readers table
@@ -543,8 +545,12 @@ class TestSettings:
             assert config_roe.table_name == "ROE"
 
             # All configs should share the same base settings
-            assert config.api_key == config_br.api_key == config_roe.api_key == "test_key"
-            assert config.base_id == config_br.base_id == config_roe.base_id == "test_base"
+            assert (
+                config.api_key == config_br.api_key == config_roe.api_key == "test_key"
+            )
+            assert (
+                config.base_id == config_br.base_id == config_roe.base_id == "test_base"
+            )
 
     def test_to_dict(self):
         """Test converting settings to dictionary."""

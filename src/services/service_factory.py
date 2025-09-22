@@ -4,15 +4,14 @@ from dataclasses import asdict
 from typing import Callable, Dict, Optional, Tuple
 
 from src.config.settings import get_settings
-from src.data.airtable.airtable_client import AirtableClient
-from src.data.airtable.airtable_client_factory import AirtableClientFactory
-from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.data.airtable.airtable_bible_readers_repo import AirtableBibleReadersRepository
+from src.data.airtable.airtable_client import AirtableClient
+from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.data.airtable.airtable_roe_repo import AirtableROERepository
-from src.services.participant_export_service import ParticipantExportService
 from src.services.bible_readers_export_service import BibleReadersExportService
-from src.services.roe_export_service import ROEExportService
+from src.services.participant_export_service import ParticipantExportService
 from src.services.participant_list_service import ParticipantListService
+from src.services.roe_export_service import ROEExportService
 from src.services.search_service import SearchService
 
 # Cache for table-specific clients
@@ -50,14 +49,14 @@ def get_airtable_client_for_table(table_type: str) -> AirtableClient:
     Returns:
         Cached AirtableClient instance for the specified table
     """
-    global _AIRTABLE_CLIENTS, _AIRTABLE_CLIENT_SIGNATURES
-
     settings = get_settings()
     config = settings.get_airtable_config(table_type)
     signature = tuple(sorted(asdict(config).items()))
 
-    if (table_type in _AIRTABLE_CLIENTS and
-        _AIRTABLE_CLIENT_SIGNATURES.get(table_type) == signature):
+    if (
+        table_type in _AIRTABLE_CLIENTS
+        and _AIRTABLE_CLIENT_SIGNATURES.get(table_type) == signature
+    ):
         return _AIRTABLE_CLIENTS[table_type]
 
     _AIRTABLE_CLIENTS[table_type] = AirtableClient(config)
@@ -68,7 +67,6 @@ def get_airtable_client_for_table(table_type: str) -> AirtableClient:
 def reset_airtable_client_cache() -> None:
     """Reset cached Airtable clients (useful for testing or config reloads)."""
     global _AIRTABLE_CLIENT, _AIRTABLE_CLIENT_SIGNATURE
-    global _AIRTABLE_CLIENTS, _AIRTABLE_CLIENT_SIGNATURES
 
     # Reset legacy cache
     _AIRTABLE_CLIENT = None
@@ -169,7 +167,8 @@ def get_bible_readers_export_service(
     """
     Get BibleReaders export service instance.
 
-    Centralized factory method for BibleReaders export service creation with repositories.
+    Centralized factory method for BibleReaders export service creation with
+    repositories.
 
     Args:
         progress_callback: Optional callback for progress updates
@@ -182,7 +181,7 @@ def get_bible_readers_export_service(
     return BibleReadersExportService(
         bible_readers_repository=bible_readers_repository,
         participant_repository=participant_repository,
-        progress_callback=progress_callback
+        progress_callback=progress_callback,
     )
 
 
@@ -205,5 +204,5 @@ def get_roe_export_service(
     return ROEExportService(
         roe_repository=roe_repository,
         participant_repository=participant_repository,
-        progress_callback=progress_callback
+        progress_callback=progress_callback,
     )

@@ -21,10 +21,10 @@ from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 import pytest
 
 from src.config.field_mappings.roe import ROEFieldMapping
-from src.data.repositories.roe_repository import ROERepository
 from src.data.repositories.participant_repository import ParticipantRepository
+from src.data.repositories.roe_repository import ROERepository
+from src.models.participant import Department, Participant, Role
 from src.models.roe import ROE
-from src.models.participant import Participant, Role, Department
 from src.services.roe_export_service import ROEExportService
 
 
@@ -117,18 +117,20 @@ def export_service(mock_roe_repository, mock_participant_repository):
     """Create a ROEExportService instance with mock repositories."""
     return ROEExportService(
         roe_repository=mock_roe_repository,
-        participant_repository=mock_participant_repository
+        participant_repository=mock_participant_repository,
     )
 
 
 class TestROEExportServiceInit:
     """Test ROEExportService initialization."""
 
-    def test_init_with_repositories(self, mock_roe_repository, mock_participant_repository):
+    def test_init_with_repositories(
+        self, mock_roe_repository, mock_participant_repository
+    ):
         """Test service initialization with repository dependencies."""
         service = ROEExportService(
             roe_repository=mock_roe_repository,
-            participant_repository=mock_participant_repository
+            participant_repository=mock_participant_repository,
         )
         assert service.roe_repository == mock_roe_repository
         assert service.participant_repository == mock_participant_repository
@@ -144,8 +146,12 @@ class TestGetAllROEAsCSV:
 
     @pytest.mark.asyncio
     async def test_export_roe_with_hydration(
-        self, export_service, mock_roe_repository, mock_participant_repository,
-        sample_roe_sessions, sample_participants
+        self,
+        export_service,
+        mock_roe_repository,
+        mock_participant_repository,
+        sample_roe_sessions,
+        sample_participants,
     ):
         """Test CSV export with participant data hydration."""
         # Arrange
@@ -289,7 +295,7 @@ class TestGetAllROEAsCSV:
         service = ROEExportService(
             roe_repository=mock_roe_repository,
             participant_repository=mock_participant_repository,
-            progress_callback=progress_callback
+            progress_callback=progress_callback,
         )
 
         mock_roe_repository.list_all.return_value = sample_roe_sessions
@@ -301,7 +307,7 @@ class TestGetAllROEAsCSV:
         # Assert
         assert len(progress_calls) > 0
         assert progress_calls[0] == (0, 2)  # Initial progress
-        assert progress_calls[-1][0] == 2   # Final progress
+        assert progress_calls[-1][0] == 2  # Final progress
 
 
 class TestParticipantHydration:
@@ -436,8 +442,11 @@ class TestCSVFormattingAndFileOperations:
 
     @pytest.mark.asyncio
     async def test_save_to_file(
-        self, export_service, mock_roe_repository, mock_participant_repository,
-        sample_roe_sessions
+        self,
+        export_service,
+        mock_roe_repository,
+        mock_participant_repository,
+        sample_roe_sessions,
     ):
         """Test saving CSV export to file."""
         # Arrange
@@ -461,14 +470,11 @@ class TestCSVFormattingAndFileOperations:
         Path(file_path).unlink()
 
     @pytest.mark.asyncio
-    async def test_estimate_file_size(
-        self, export_service, mock_roe_repository
-    ):
+    async def test_estimate_file_size(self, export_service, mock_roe_repository):
         """Test file size estimation."""
         # Arrange
         sample_roe_sessions = [
-            ROE(record_id=f"rec{i}", roe_topic=f"Topic {i}")
-            for i in range(50)
+            ROE(record_id=f"rec{i}", roe_topic=f"Topic {i}") for i in range(50)
         ]
         mock_roe_repository.list_all.return_value = sample_roe_sessions
 

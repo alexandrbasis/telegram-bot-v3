@@ -23,7 +23,7 @@ from src.config.field_mappings.bible_readers import BibleReadersFieldMapping
 from src.data.repositories.bible_readers_repository import BibleReadersRepository
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.bible_readers import BibleReader
-from src.models.participant import Participant, Role, Department
+from src.models.participant import Department, Participant, Role
 from src.services.bible_readers_export_service import BibleReadersExportService
 
 
@@ -96,18 +96,20 @@ def export_service(mock_bible_readers_repository, mock_participant_repository):
     """Create a BibleReadersExportService instance with mock repositories."""
     return BibleReadersExportService(
         bible_readers_repository=mock_bible_readers_repository,
-        participant_repository=mock_participant_repository
+        participant_repository=mock_participant_repository,
     )
 
 
 class TestBibleReadersExportServiceInit:
     """Test BibleReadersExportService initialization."""
 
-    def test_init_with_repositories(self, mock_bible_readers_repository, mock_participant_repository):
+    def test_init_with_repositories(
+        self, mock_bible_readers_repository, mock_participant_repository
+    ):
         """Test service initialization with repository dependencies."""
         service = BibleReadersExportService(
             bible_readers_repository=mock_bible_readers_repository,
-            participant_repository=mock_participant_repository
+            participant_repository=mock_participant_repository,
         )
         assert service.bible_readers_repository == mock_bible_readers_repository
         assert service.participant_repository == mock_participant_repository
@@ -123,8 +125,12 @@ class TestGetAllBibleReadersAsCSV:
 
     @pytest.mark.asyncio
     async def test_export_bible_readers_with_hydration(
-        self, export_service, mock_bible_readers_repository, mock_participant_repository,
-        sample_bible_readers, sample_participants
+        self,
+        export_service,
+        mock_bible_readers_repository,
+        mock_participant_repository,
+        sample_bible_readers,
+        sample_participants,
     ):
         """Test CSV export with participant data hydration."""
         # Arrange
@@ -235,7 +241,10 @@ class TestGetAllBibleReadersAsCSV:
 
     @pytest.mark.asyncio
     async def test_export_with_progress_callback(
-        self, mock_bible_readers_repository, mock_participant_repository, sample_bible_readers
+        self,
+        mock_bible_readers_repository,
+        mock_participant_repository,
+        sample_bible_readers,
     ):
         """Test CSV export with progress tracking."""
         # Arrange
@@ -247,7 +256,7 @@ class TestGetAllBibleReadersAsCSV:
         service = BibleReadersExportService(
             bible_readers_repository=mock_bible_readers_repository,
             participant_repository=mock_participant_repository,
-            progress_callback=progress_callback
+            progress_callback=progress_callback,
         )
 
         mock_bible_readers_repository.list_all.return_value = sample_bible_readers
@@ -259,7 +268,7 @@ class TestGetAllBibleReadersAsCSV:
         # Assert
         assert len(progress_calls) > 0
         assert progress_calls[0] == (0, 2)  # Initial progress
-        assert progress_calls[-1][0] == 2   # Final progress
+        assert progress_calls[-1][0] == 2  # Final progress
 
 
 class TestParticipantHydration:
@@ -326,8 +335,11 @@ class TestCSVFormattingAndFileOperations:
 
     @pytest.mark.asyncio
     async def test_save_to_file(
-        self, export_service, mock_bible_readers_repository, mock_participant_repository,
-        sample_bible_readers
+        self,
+        export_service,
+        mock_bible_readers_repository,
+        mock_participant_repository,
+        sample_bible_readers,
     ):
         """Test saving CSV export to file."""
         # Arrange
@@ -357,8 +369,7 @@ class TestCSVFormattingAndFileOperations:
         """Test file size estimation."""
         # Arrange
         sample_bible_readers = [
-            BibleReader(record_id=f"rec{i}", where=f"Service {i}")
-            for i in range(100)
+            BibleReader(record_id=f"rec{i}", where=f"Service {i}") for i in range(100)
         ]
         mock_bible_readers_repository.list_all.return_value = sample_bible_readers
 
