@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from src.config.field_mappings.bible_readers import BibleReadersFieldMapping
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
+from src.data.airtable.formula_utils import escape_formula_value
 from src.data.repositories.bible_readers_repository import BibleReadersRepository
 from src.data.repositories.participant_repository import (
     NotFoundError,
@@ -119,7 +120,8 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
         try:
             # Build Airtable formula to search by Where field
             where_field = self.field_mapping.python_to_airtable_field("where")
-            formula = f"{{{where_field}}} = '{where}'"
+            escaped_where = escape_formula_value(where)
+            formula = f"{{{where_field}}} = '{escaped_where}'"
 
             records = await self.client.list_records(formula=formula, max_records=1)
 
@@ -245,7 +247,8 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
             # Build Airtable formula to search for participant in Participants field
             participants_field = self.field_mapping.python_to_airtable_field("participants")
             # Use FIND function to search within the array field
-            formula = f"FIND('{participant_id}', ARRAYJOIN({{{participants_field}}})) > 0"
+            escaped_participant_id = escape_formula_value(participant_id)
+            formula = f"FIND('{escaped_participant_id}', ARRAYJOIN({{{participants_field}}})) > 0"
 
             records = await self.client.list_records(formula=formula)
 

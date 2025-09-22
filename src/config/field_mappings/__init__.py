@@ -8,10 +8,10 @@ enabling proper field name translation and validation.
 from .bible_readers import BibleReadersFieldMapping
 from .roe import ROEFieldMapping
 
-# Re-export the original AirtableFieldMapping for backward compatibility
+# Re-export all symbols from the original field_mappings.py for backward compatibility
 # Import from the parent level to avoid circular import
-import sys
 from pathlib import Path
+import importlib.util
 
 # Add parent directory to path temporarily to import field_mappings.py
 current_dir = Path(__file__).parent
@@ -20,15 +20,30 @@ field_mappings_file = parent_dir / "field_mappings.py"
 
 if field_mappings_file.exists():
     # Use importlib to load the module dynamically
-    import importlib.util
     spec = importlib.util.spec_from_file_location("field_mappings_module", field_mappings_file)
     field_mappings_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(field_mappings_module)
 
-    # Extract AirtableFieldMapping class
+    # Extract all required symbols for backward compatibility
     AirtableFieldMapping = field_mappings_module.AirtableFieldMapping
+    FieldType = field_mappings_module.FieldType
+    SearchFieldMapping = field_mappings_module.SearchFieldMapping
+    field_mapping = field_mappings_module.field_mapping
+    search_mapping = field_mappings_module.search_mapping
 else:
     # Fallback if file doesn't exist
     AirtableFieldMapping = None
+    FieldType = None
+    SearchFieldMapping = None
+    field_mapping = None
+    search_mapping = None
 
-__all__ = ["BibleReadersFieldMapping", "ROEFieldMapping", "AirtableFieldMapping"]
+__all__ = [
+    "BibleReadersFieldMapping",
+    "ROEFieldMapping",
+    "AirtableFieldMapping",
+    "FieldType",
+    "SearchFieldMapping",
+    "field_mapping",
+    "search_mapping"
+]

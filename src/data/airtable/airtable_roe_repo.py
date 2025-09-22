@@ -10,6 +10,7 @@ from typing import List, Optional
 
 from src.config.field_mappings.roe import ROEFieldMapping
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
+from src.data.airtable.formula_utils import escape_formula_value
 from src.data.repositories.participant_repository import (
     NotFoundError,
     RepositoryError,
@@ -122,7 +123,8 @@ class AirtableROERepository(ROERepository):
         try:
             # Build Airtable formula to search by RoeTopic field
             topic_field = self.field_mapping.python_to_airtable_field("roe_topic")
-            formula = f"{{{topic_field}}} = '{topic}'"
+            escaped_topic = escape_formula_value(topic)
+            formula = f"{{{topic_field}}} = '{escaped_topic}'"
 
             records = await self.client.list_records(formula=formula, max_records=1)
 
@@ -251,7 +253,8 @@ class AirtableROERepository(ROERepository):
         try:
             # Build Airtable formula to search for participant in Roista field
             roista_field = self.field_mapping.python_to_airtable_field("roista")
-            formula = f"FIND('{roista_id}', ARRAYJOIN({{{roista_field}}})) > 0"
+            escaped_roista_id = escape_formula_value(roista_id)
+            formula = f"FIND('{escaped_roista_id}', ARRAYJOIN({{{roista_field}}})) > 0"
 
             records = await self.client.list_records(formula=formula)
 
@@ -288,7 +291,8 @@ class AirtableROERepository(ROERepository):
         try:
             # Build Airtable formula to search for participant in Assistant field
             assistant_field = self.field_mapping.python_to_airtable_field("assistant")
-            formula = f"FIND('{assistant_id}', ARRAYJOIN({{{assistant_field}}})) > 0"
+            escaped_assistant_id = escape_formula_value(assistant_id)
+            formula = f"FIND('{escaped_assistant_id}', ARRAYJOIN({{{assistant_field}}})) > 0"
 
             records = await self.client.list_records(formula=formula)
 

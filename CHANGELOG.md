@@ -8,12 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **European DateOfBirth Format Synchronization** – Participant model, export services, search flows, and Telegram prompts now use the Airtable `DD/MM/YYYY` format with legacy ISO fallback plus comprehensive test/documentation updates (TDB-88, completed 2025-09-22, PR #53 merged at SHA efa8627, branch `feature/eu-date-of-birth`)
-  - Shared helpers normalize DateOfBirth serialization/deserialization while preserving backward compatibility (`src/models/participant.py:218-320`)
-  - Validation prompts and error handling updated to enforce the European format across user input flows (`src/services/participant_update_service.py:221-267`, `src/bot/messages.py:108-111`)
-  - Search results, edit confirmations, and CSV exports render European-formatted dates consistently (`src/services/search_service.py:149-170`, `src/bot/handlers/edit_participant_handlers.py:300-334`, `src/services/participant_export_service.py:281-287`)
-  - Unit tests realigned with the new expectations and client factory tests explicitly configure table environment variables for deterministic behaviour (`tests/unit/test_models/test_participant.py`, `tests/unit/test_services/test_participant_update_service.py`, `tests/unit/test_services/test_search_service.py`, `tests/unit/test_data/test_airtable/test_airtable_client_factory.py`)
-  - Airtable schema documentation and export task plans refreshed with latest ROE prayer support links and participant views (`docs/data-integration/airtable_database_structure.md`, `tasks/task-2025-01-19-export-selection-menu/...`)
+- **Airtable Repository Implementation for Multi-Table Support** – Complete implementation of concrete Airtable repository classes for BibleReaders and ROE tables with comprehensive field mapping, validation, and multi-table coordination (TDB-67, completed 2025-09-22, PR #54, branch `feature/TDB-67-airtable-repository-implementation`)
+  - BibleReaders field mapping helper with complete field ID mappings and date formatting utilities (`src/config/field_mappings/bible_readers.py`)
+  - ROE field mapping helper with presenter relationship validation and prayer/scheduling field support (`src/config/field_mappings/roe.py`)
+  - Complete BibleReaders repository implementation with CRUD operations and participant relationship queries (`src/data/airtable/airtable_bible_readers_repo.py`)
+  - Complete ROE repository implementation with presenter validation and prayer/scheduling field handling (`src/data/airtable/airtable_roe_repo.py`, `src/models/roe.py`)
+  - Comprehensive unit tests for field mappings and repository implementations with 100% coverage (`tests/unit/test_config/test_field_mapping_helpers/`, `tests/unit/test_data/test_airtable/test_airtable_roe_repo.py`)
+  - Integration tests for multi-table repository coordination and client isolation (`tests/integration/test_multi_table_repositories.py`)
+  - Formula injection security fixes with proper value escaping across all repository operations
 - **Multi-Table Data Foundation for Export Functionality** - Complete foundational data layer infrastructure supporting multi-table export capabilities with BibleReaders and ROE table integration, comprehensive data models, repository interfaces, and factory pattern implementation (TDB-66, completed 2025-01-22, PR #52 merged at SHA 37a5854, feature/TDB-66-multi-table-data-foundation)
   - Multi-table Airtable configuration with comprehensive table metadata support (`src/config/settings.py:64-201`)
     - Extended DatabaseSettings with BibleReaders and ROE table configuration fields supporting table IDs and field mappings

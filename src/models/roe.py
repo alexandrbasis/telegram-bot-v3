@@ -5,6 +5,7 @@ This module defines the Pydantic model for ROE table records,
 including validation and serialization methods.
 """
 
+from datetime import date
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -18,11 +19,15 @@ class ROE(BaseModel):
         record_id: Airtable record ID for existing records
         roe_topic: The topic of the ROE (primary field)
         roista: List of participant record IDs for the main presenter(s)
+        assistant: List of participant record IDs for assistant(s)
+        prayer: List of participant record IDs for prayer support
+        roe_date: Scheduled date of the ROE talk
+        roe_timing: Time slot or schedule marker
+        roe_duration: Allocated duration for the ROE talk (in minutes)
         roista_church: Churches of the main Roista (lookup from participants)
         roista_department: Departments of the main Roista (lookup from participants)
         roista_room: Room numbers of the main Roista (lookup from participants)
         roista_notes: Notes about the main Roista (lookup from participants)
-        assistant: List of participant record IDs for assistant(s)
         assistant_church: Churches of the assistant Roista (lookup from
             participants)
         assistant_department: Departments of the assistant Roista (lookup from
@@ -40,6 +45,26 @@ class ROE(BaseModel):
     roista: List[str] = Field(
         default_factory=list,
         description="List of participant record IDs for the main presenter(s)",
+    )
+    assistant: List[str] = Field(
+        default_factory=list,
+        description="List of participant record IDs for assistant(s)",
+    )
+    prayer: List[str] = Field(
+        default_factory=list,
+        description="List of participant record IDs for prayer support",
+    )
+    roe_date: Optional[date] = Field(
+        None,
+        description="Scheduled date of the ROE talk",
+    )
+    roe_timing: Optional[str] = Field(
+        None,
+        description="Time slot or schedule marker",
+    )
+    roe_duration: Optional[int] = Field(
+        None,
+        description="Allocated duration for the ROE talk (in minutes)",
     )
     roista_church: Optional[List[str]] = Field(
         None,
@@ -60,10 +85,6 @@ class ROE(BaseModel):
         None,
         description="Notes about the main Roista (lookup from participants)",
         alias="RoistaNotes",
-    )
-    assistant: List[str] = Field(
-        default_factory=list,
-        description="List of participant record IDs for assistant(s)",
     )
     assistant_church: Optional[List[str]] = Field(
         None,
@@ -99,6 +120,10 @@ class ROE(BaseModel):
             "roe_topic": fields.get("RoeTopic", ""),
             "roista": fields.get("Roista", []),
             "assistant": fields.get("Assistant", []),
+            "prayer": fields.get("Prayer", []),
+            "roe_date": fields.get("RoeDate"),
+            "roe_timing": fields.get("RoeTiming"),
+            "roe_duration": fields.get("RoeDuration"),
         }
 
         if "RoistaChurch" in fields:
@@ -125,8 +150,19 @@ class ROE(BaseModel):
         Returns:
             Dictionary of field names to values for Airtable API
         """
-        return {
+        fields = {
             "RoeTopic": self.roe_topic,
             "Roista": self.roista,
             "Assistant": self.assistant,
+            "Prayer": self.prayer,
         }
+
+        # Add optional scheduling fields if they have values
+        if self.roe_date is not None:
+            fields["RoeDate"] = self.roe_date.isoformat()
+        if self.roe_timing is not None:
+            fields["RoeTiming"] = self.roe_timing
+        if self.roe_duration is not None:
+            fields["RoeDuration"] = self.roe_duration
+
+        return fields
