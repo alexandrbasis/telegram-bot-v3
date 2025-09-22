@@ -6,7 +6,7 @@ including validation and serialization methods.
 """
 
 from datetime import date
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
@@ -64,15 +64,22 @@ class BibleReader(BaseModel):
         """
         fields = record.get("fields", {})
 
-        return cls(
-            record_id=record.get("id"),
-            where=fields.get("Where", ""),
-            participants=fields.get("Participants", []),
-            churches=fields.get("Church"),
-            room_numbers=fields.get("RoomNumber"),
-            when=fields.get("When"),
-            bible=fields.get("Bible")
-        )
+        reader_data: Dict[str, Any] = {
+            "record_id": record.get("id"),
+            "where": fields.get("Where", ""),
+            "participants": fields.get("Participants", []),
+        }
+
+        if "Church" in fields:
+            reader_data["churches"] = fields["Church"]
+        if "RoomNumber" in fields:
+            reader_data["room_numbers"] = fields["RoomNumber"]
+        if "When" in fields:
+            reader_data["when"] = fields["When"]
+        if "Bible" in fields:
+            reader_data["bible"] = fields["Bible"]
+
+        return cls(**reader_data)
 
     def to_airtable_fields(self) -> dict:
         """

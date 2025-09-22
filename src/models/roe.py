@@ -5,7 +5,7 @@ This module defines the Pydantic model for ROE table records,
 including validation and serialization methods.
 """
 
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -89,19 +89,29 @@ class ROE(BaseModel):
         """
         fields = record.get("fields", {})
 
-        return cls(
-            record_id=record.get("id"),
-            roe_topic=fields.get("RoeTopic", ""),
-            roista=fields.get("Roista", []),
-            roista_church=fields.get("RoistaChurch"),
-            roista_department=fields.get("RoistaDepartment"),
-            roista_room=fields.get("RoistaRoom"),
-            roista_notes=fields.get("RoistaNotes"),
-            assistant=fields.get("Assistant", []),
-            assistant_church=fields.get("AssistantChuch"),  # Airtable has typo
-            assistant_department=fields.get("AssistantDepartment"),
-            assistant_room=fields.get("AssistantRoom")
-        )
+        roe_data: Dict[str, Any] = {
+            "record_id": record.get("id"),
+            "roe_topic": fields.get("RoeTopic", ""),
+            "roista": fields.get("Roista", []),
+            "assistant": fields.get("Assistant", []),
+        }
+
+        if "RoistaChurch" in fields:
+            roe_data["roista_church"] = fields["RoistaChurch"]
+        if "RoistaDepartment" in fields:
+            roe_data["roista_department"] = fields["RoistaDepartment"]
+        if "RoistaRoom" in fields:
+            roe_data["roista_room"] = fields["RoistaRoom"]
+        if "RoistaNotes" in fields:
+            roe_data["roista_notes"] = fields["RoistaNotes"]
+        if "AssistantChuch" in fields:
+            roe_data["assistant_church"] = fields["AssistantChuch"]
+        if "AssistantDepartment" in fields:
+            roe_data["assistant_department"] = fields["AssistantDepartment"]
+        if "AssistantRoom" in fields:
+            roe_data["assistant_room"] = fields["AssistantRoom"]
+
+        return cls(**roe_data)
 
     def to_airtable_fields(self) -> dict:
         """
