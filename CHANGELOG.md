@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **European DateOfBirth Format Synchronization** – Participant model, export services, search flows, and Telegram prompts now use the Airtable `DD/MM/YYYY` format with legacy ISO fallback plus comprehensive test/documentation updates (TDB-88, completed 2025-09-22, PR #53 merged at SHA efa8627, branch `feature/eu-date-of-birth`)
+  - Shared helpers normalize DateOfBirth serialization/deserialization while preserving backward compatibility (`src/models/participant.py:218-320`)
+  - Validation prompts and error handling updated to enforce the European format across user input flows (`src/services/participant_update_service.py:221-267`, `src/bot/messages.py:108-111`)
+  - Search results, edit confirmations, and CSV exports render European-formatted dates consistently (`src/services/search_service.py:149-170`, `src/bot/handlers/edit_participant_handlers.py:300-334`, `src/services/participant_export_service.py:281-287`)
+  - Unit tests realigned with the new expectations and client factory tests explicitly configure table environment variables for deterministic behaviour (`tests/unit/test_models/test_participant.py`, `tests/unit/test_services/test_participant_update_service.py`, `tests/unit/test_services/test_search_service.py`, `tests/unit/test_data/test_airtable/test_airtable_client_factory.py`)
+  - Airtable schema documentation and export task plans refreshed with latest ROE prayer support links and participant views (`docs/data-integration/airtable_database_structure.md`, `tasks/task-2025-01-19-export-selection-menu/...`)
 - **Multi-Table Data Foundation for Export Functionality** - Complete foundational data layer infrastructure supporting multi-table export capabilities with BibleReaders and ROE table integration, comprehensive data models, repository interfaces, and factory pattern implementation (TDB-66, completed 2025-01-22, PR #52 merged at SHA 37a5854, feature/TDB-66-multi-table-data-foundation)
   - Multi-table Airtable configuration with comprehensive table metadata support (`src/config/settings.py:64-201`)
     - Extended DatabaseSettings with BibleReaders and ROE table configuration fields supporting table IDs and field mappings
