@@ -8,8 +8,8 @@ supporting dependency injection.
 
 from typing import Optional
 
-from src.data.airtable.airtable_client import AirtableClient
 from src.config.settings import DatabaseSettings
+from src.data.airtable.airtable_client import AirtableClient
 
 
 class AirtableClientFactory:

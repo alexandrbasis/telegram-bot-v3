@@ -1287,9 +1287,7 @@ async def show_save_confirmation(
         else:
             display_value = str(new_value)
 
-        changes_text += (
-            f"• **{field_name}**: {current_display} → **{display_value}**\n"
-        )
+        changes_text += f"• **{field_name}**: {current_display} → **{display_value}**\n"
 
     changes_text += f"\n💾 Подтвердить сохранение {len(changes)} изменений?"
 

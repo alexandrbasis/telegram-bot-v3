@@ -27,21 +27,22 @@ class BibleReader(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True, populate_by_name=True)
 
-    record_id: Optional[str] = Field(None, description="Airtable record ID for existing records")
+    record_id: Optional[str] = Field(
+        None, description="Airtable record ID for existing records"
+    )
     where: str = Field(..., description="Location or session description")
     participants: List[str] = Field(
-        default_factory=list,
-        description="List of participant record IDs"
+        default_factory=list, description="List of participant record IDs"
     )
     churches: Optional[List[str]] = Field(
         None,
         description="Churches of the Bible readers (lookup from participants)",
-        alias="Church"
+        alias="Church",
     )
     room_numbers: Optional[List[Union[int, str]]] = Field(
         None,
         description="Room numbers of the Bible readers (lookup from participants)",
-        alias="RoomNumber"
+        alias="RoomNumber",
     )
     when: Optional[date] = Field(None, description="Date of the reading session")
     bible: Optional[str] = Field(None, description="Bible passage or reference")
@@ -88,10 +89,7 @@ class BibleReader(BaseModel):
         Returns:
             Dictionary of field names to values for Airtable API
         """
-        fields = {
-            "Where": self.where,
-            "Participants": self.participants
-        }
+        fields = {"Where": self.where, "Participants": self.participants}
 
         if self.when is not None:
             fields["When"] = self.when.isoformat()

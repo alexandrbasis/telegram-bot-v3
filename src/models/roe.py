@@ -30,50 +30,52 @@ class ROE(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True, populate_by_name=True)
 
-    record_id: Optional[str] = Field(None, description="Airtable record ID for existing records")
+    record_id: Optional[str] = Field(
+        None, description="Airtable record ID for existing records"
+    )
     roe_topic: str = Field(..., description="The topic of the ROE")
     roista: List[str] = Field(
         default_factory=list,
-        description="List of participant record IDs for the main presenter(s)"
+        description="List of participant record IDs for the main presenter(s)",
     )
     roista_church: Optional[List[str]] = Field(
         None,
         description="Churches of the main Roista (lookup from participants)",
-        alias="RoistaChurch"
+        alias="RoistaChurch",
     )
     roista_department: Optional[List[str]] = Field(
         None,
         description="Departments of the main Roista (lookup from participants)",
-        alias="RoistaDepartment"
+        alias="RoistaDepartment",
     )
     roista_room: Optional[List[Union[int, str]]] = Field(
         None,
         description="Room numbers of the main Roista (lookup from participants)",
-        alias="RoistaRoom"
+        alias="RoistaRoom",
     )
     roista_notes: Optional[List[str]] = Field(
         None,
         description="Notes about the main Roista (lookup from participants)",
-        alias="RoistaNotes"
+        alias="RoistaNotes",
     )
     assistant: List[str] = Field(
         default_factory=list,
-        description="List of participant record IDs for assistant(s)"
+        description="List of participant record IDs for assistant(s)",
     )
     assistant_church: Optional[List[str]] = Field(
         None,
         description="Churches of the assistant Roista (lookup from participants)",
-        alias="AssistantChuch"  # Note: Airtable has a typo in field name
+        alias="AssistantChuch",  # Note: Airtable has a typo in field name
     )
     assistant_department: Optional[List[str]] = Field(
         None,
         description="Departments of the assistant Roista (lookup from participants)",
-        alias="AssistantDepartment"
+        alias="AssistantDepartment",
     )
     assistant_room: Optional[List[Union[int, str]]] = Field(
         None,
         description="Room numbers of the assistant Roista (lookup from participants)",
-        alias="AssistantRoom"
+        alias="AssistantRoom",
     )
 
     @classmethod
@@ -123,5 +125,5 @@ class ROE(BaseModel):
         return {
             "RoeTopic": self.roe_topic,
             "Roista": self.roista,
-            "Assistant": self.assistant
+            "Assistant": self.assistant,
         }

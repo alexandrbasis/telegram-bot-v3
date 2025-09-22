@@ -5,8 +5,9 @@ Tests ensure the abstract base class defines proper contracts
 for data operations following the repository pattern.
 """
 
-import pytest
 from abc import ABC
+
+import pytest
 
 from src.data.repositories.roe_repository import ROERepository
 from src.models.roe import ROE
@@ -33,7 +34,7 @@ class TestROERepositoryInterface:
             "delete",
             "list_all",
             "get_by_roista_id",
-            "get_by_assistant_id"
+            "get_by_assistant_id",
         ]
 
         for method_name in required_methods:
@@ -43,6 +44,7 @@ class TestROERepositoryInterface:
 
     def test_abstract_methods_are_properly_marked(self):
         """Test that abstract methods raise TypeError when not implemented."""
+
         # Create a concrete class that doesn't implement required methods
         class IncompleteRepository(ROERepository):
             pass
