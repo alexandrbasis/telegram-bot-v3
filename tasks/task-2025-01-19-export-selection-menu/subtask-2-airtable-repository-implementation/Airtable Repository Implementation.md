@@ -7,15 +7,15 @@ Implement concrete Airtable repository classes for BibleReaders and ROE tables t
 
 ### Use Cases
 1. **BibleReaders Data Access**: System can retrieve reading assignments, locations, and participant details
-   - **Acceptance Criteria**: Repository correctly accesses BibleReaders table (ID: tblGEnSfpPOuPLXcm) and maps all fields
-2. **ROE Data Access**: System can retrieve ROE topics, presenters, and assistant assignments
-   - **Acceptance Criteria**: Repository correctly accesses ROE table (ID: tbl0j8bcgkV3lVAdc) and handles presenter relationships
+   - **Acceptance Criteria**: Repository correctly accesses BibleReaders table (ID: tblGEnSfpPOuPLXcm) and maps the current fields (Where, Participants, When, Bible)
+2. **ROE Data Access**: System can retrieve ROE topics along with presenters, assistants, prayer partners, and schedule metadata
+   - **Acceptance Criteria**: Repository correctly accesses ROE table (ID: tbl0j8bcgkV3lVAdc) and handles presenter/assistant/prayer relationships plus the new date/time/duration fields
 3. **Multi-Table Client Management**: System efficiently manages connections to multiple Airtable tables
    - **Acceptance Criteria**: Repository implementations use factory-created clients without connection conflicts
 
 ### Success Metrics
 - [ ] BibleReaders repository correctly maps all table fields and relationships
-- [ ] ROE repository handles presenter relationships and lookup fields accurately
+- [ ] ROE repository handles presenter/assistant/prayer relationships and scheduling fields accurately
 - [ ] Repository implementations follow existing Airtable client patterns
 
 ### Constraints
@@ -52,17 +52,17 @@ Implement concrete Airtable repository classes for BibleReaders and ROE tables t
   - [ ] Sub-step 0.1: Define BibleReaders mapping helper
     - **Directory**: `src/config/`
     - **Files to create/modify**: `src/config/field_mappings/bible_readers.py`
-    - **Accept**: Mapping exposes Airtable field IDs, option IDs, and python↔Airtable translations for BibleReaders exports
+    - **Accept**: Mapping exposes Airtable field IDs and python↔Airtable translations for the active BibleReaders fields (Where, Participants, When, Bible)
     - **Tests**: `tests/unit/test_config/test_field_mappings_bible_readers.py`
-    - **Done**: Helper converts to/from Airtable schema without relying on participant mapping
+    - **Done**: Helper converts to/from Airtable schema without relying on participant mapping and enforces localized date formatting (`format = l`)
     - **Changelog**: [Record changes made with file paths and line ranges]
 
   - [ ] Sub-step 0.2: Define ROE mapping helper
     - **Directory**: `src/config/`
     - **Files to create/modify**: `src/config/field_mappings/roe.py`
-    - **Accept**: Mapping exposes Airtable field IDs, option IDs, and python↔Airtable translations for ROE exports
+    - **Accept**: Mapping exposes Airtable field IDs and python↔Airtable translations for ROE exports including schedule fields and prayer links
     - **Tests**: `tests/unit/test_config/test_field_mappings_roe.py`
-    - **Done**: Helper handles presenter/assistant lookups and validations
+    - **Done**: Helper handles presenter/assistant/prayer relationship validation plus date/duration conversions
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 - [ ] Step 1: Implement BibleReaders repository
@@ -71,7 +71,7 @@ Implement concrete Airtable repository classes for BibleReaders and ROE tables t
     - **Files to create/modify**: `src/data/airtable/airtable_bible_readers_repo.py`
     - **Accept**: Repository implements BibleReadersRepository interface using table ID tblGEnSfpPOuPLXcm
     - **Tests**: `tests/unit/test_data/test_airtable/test_airtable_bible_readers_repo.py`
-    - **Done**: Repository correctly maps BibleReaders fields and relationships
+    - **Done**: Repository correctly maps BibleReaders fields and participant relationships
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 - [ ] Step 2: Implement ROE repository
@@ -80,7 +80,7 @@ Implement concrete Airtable repository classes for BibleReaders and ROE tables t
     - **Files to create/modify**: `src/data/airtable/airtable_roe_repo.py`
     - **Accept**: Repository implements ROERepository interface using table ID tbl0j8bcgkV3lVAdc
     - **Tests**: `tests/unit/test_data/test_airtable/test_airtable_roe_repo.py`
-    - **Done**: Repository correctly handles ROE presenter relationships and lookup fields
+    - **Done**: Repository correctly handles ROE presenter, assistant, and prayer relationships plus schedule fields
     - **Changelog**: [Record changes made with file paths and line ranges]
 
 - [ ] Step 3: Integration testing
@@ -100,7 +100,7 @@ Implement concrete Airtable repository classes for BibleReaders and ROE tables t
 ## Success Criteria
 - [ ] Field mapping helpers translate BibleReaders/ROE schemas accurately
 - [ ] BibleReaders repository accesses correct table with proper field mapping
-- [ ] ROE repository handles presenter relationships correctly
+- [ ] ROE repository handles presenter/assistant/prayer relationships and schedule fields correctly
 - [ ] All repository operations follow existing error handling patterns
 - [ ] All tests pass (100% required)
 - [ ] Code review approved
