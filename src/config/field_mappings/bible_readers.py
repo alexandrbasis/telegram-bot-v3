@@ -48,9 +48,7 @@ class BibleReadersFieldMapping:
     }
 
     # Airtable field name -> Python field name mapping (reverse mapping)
-    AIRTABLE_TO_PYTHON: Dict[str, str] = {
-        v: k for k, v in PYTHON_TO_AIRTABLE.items()
-    }
+    AIRTABLE_TO_PYTHON: Dict[str, str] = {v: k for k, v in PYTHON_TO_AIRTABLE.items()}
 
     @classmethod
     def get_airtable_field_id(cls, airtable_field_name: str) -> str:

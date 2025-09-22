@@ -5,12 +5,13 @@ Tests the Airtable-specific ROE repository that handles CRUD operations
 for ROE records with proper field mapping and validation.
 """
 
-import pytest
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock
 
-from src.data.airtable.airtable_roe_repo import AirtableROERepository
+import pytest
+
 from src.data.airtable.airtable_client import AirtableAPIError
+from src.data.airtable.airtable_roe_repo import AirtableROERepository
 from src.data.repositories.participant_repository import (
     NotFoundError,
     RepositoryError,
@@ -65,11 +66,13 @@ class TestAirtableROERepository:
                 "AssistantChuch": ["Assistant Church"],
                 "AssistantDepartment": ["Chapel"],
                 "AssistantRoom": [102],
-            }
+            },
         }
 
     # CREATE TESTS
-    async def test_create_success(self, repository, mock_client, sample_roe, sample_airtable_record):
+    async def test_create_success(
+        self, repository, mock_client, sample_roe, sample_airtable_record
+    ):
         """Test successful ROE creation."""
         mock_client.create_record.return_value = sample_airtable_record
 
@@ -95,11 +98,15 @@ class TestAirtableROERepository:
         assert call_args["RoeTiming"] == "Morning Session"
         assert call_args["RoeDuration"] == 45
 
-    async def test_create_validation_error_existing_record_id(self, repository, sample_roe):
+    async def test_create_validation_error_existing_record_id(
+        self, repository, sample_roe
+    ):
         """Test creation fails when ROE already has record_id."""
         sample_roe.record_id = "existing_id"
 
-        with pytest.raises(ValidationError, match="Cannot create roe with existing record_id"):
+        with pytest.raises(
+            ValidationError, match="Cannot create roe with existing record_id"
+        ):
             await repository.create(sample_roe)
 
     async def test_create_validation_error_no_presenter(self, repository, mock_client):
@@ -110,7 +117,9 @@ class TestAirtableROERepository:
             assistant=[],
         )
 
-        with pytest.raises(ValidationError, match="ROE must have at least one presenter"):
+        with pytest.raises(
+            ValidationError, match="ROE must have at least one presenter"
+        ):
             await repository.create(roe_without_presenter)
 
     async def test_create_airtable_api_error(self, repository, mock_client, sample_roe):
@@ -121,7 +130,9 @@ class TestAirtableROERepository:
             await repository.create(sample_roe)
 
     # GET BY ID TESTS
-    async def test_get_by_id_success(self, repository, mock_client, sample_airtable_record):
+    async def test_get_by_id_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful ROE retrieval by ID."""
         mock_client.get_record.return_value = sample_airtable_record
 
@@ -159,7 +170,9 @@ class TestAirtableROERepository:
             await repository.get_by_id("recTEST123")
 
     # GET BY TOPIC TESTS
-    async def test_get_by_topic_success(self, repository, mock_client, sample_airtable_record):
+    async def test_get_by_topic_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful ROE retrieval by topic."""
         mock_client.list_records.return_value = [sample_airtable_record]
 
@@ -168,8 +181,7 @@ class TestAirtableROERepository:
         assert result is not None
         assert result.roe_topic == "Test ROE Topic"
         mock_client.list_records.assert_called_once_with(
-            formula="{RoeTopic} = 'Test ROE Topic'",
-            max_records=1
+            formula="{RoeTopic} = 'Test ROE Topic'", max_records=1
         )
 
     async def test_get_by_topic_not_found(self, repository, mock_client):
@@ -188,7 +200,9 @@ class TestAirtableROERepository:
             await repository.get_by_topic("Test Topic")
 
     # UPDATE TESTS
-    async def test_update_success(self, repository, mock_client, sample_roe, sample_airtable_record):
+    async def test_update_success(
+        self, repository, mock_client, sample_roe, sample_airtable_record
+    ):
         """Test successful ROE update."""
         sample_roe.record_id = "recTEST123"
         sample_roe.roe_topic = "Updated ROE Topic"
@@ -200,13 +214,17 @@ class TestAirtableROERepository:
 
         assert result.roe_topic == "Updated ROE Topic"
         assert result.record_id == "recTEST123"
-        mock_client.update_record.assert_called_once_with("recTEST123", result.to_airtable_fields())
+        mock_client.update_record.assert_called_once_with(
+            "recTEST123", result.to_airtable_fields()
+        )
 
     async def test_update_validation_error_no_record_id(self, repository, sample_roe):
         """Test update fails when ROE has no record_id."""
         sample_roe.record_id = None
 
-        with pytest.raises(ValidationError, match="Cannot update roe without record_id"):
+        with pytest.raises(
+            ValidationError, match="Cannot update roe without record_id"
+        ):
             await repository.update(sample_roe)
 
     async def test_update_validation_error_no_presenter(self, repository):
@@ -218,7 +236,9 @@ class TestAirtableROERepository:
             assistant=[],
         )
 
-        with pytest.raises(ValidationError, match="ROE must have at least one presenter"):
+        with pytest.raises(
+            ValidationError, match="ROE must have at least one presenter"
+        ):
             await repository.update(roe_without_presenter)
 
     async def test_update_not_found_error(self, repository, mock_client, sample_roe):
@@ -263,7 +283,9 @@ class TestAirtableROERepository:
             await repository.delete("recTEST123")
 
     # LIST TESTS
-    async def test_list_all_success(self, repository, mock_client, sample_airtable_record):
+    async def test_list_all_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful listing of all ROE records."""
         mock_client.list_records.return_value = [sample_airtable_record]
 
@@ -290,7 +312,9 @@ class TestAirtableROERepository:
             await repository.list_all()
 
     # RELATIONSHIP QUERY TESTS
-    async def test_get_by_roista_id_success(self, repository, mock_client, sample_airtable_record):
+    async def test_get_by_roista_id_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful ROE retrieval by roista ID."""
         mock_client.list_records.return_value = [sample_airtable_record]
 
@@ -302,7 +326,9 @@ class TestAirtableROERepository:
             formula="FIND('recROISTAID1', ARRAYJOIN({Roista})) > 0"
         )
 
-    async def test_get_by_assistant_id_success(self, repository, mock_client, sample_airtable_record):
+    async def test_get_by_assistant_id_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful ROE retrieval by assistant ID."""
         mock_client.list_records.return_value = [sample_airtable_record]
 

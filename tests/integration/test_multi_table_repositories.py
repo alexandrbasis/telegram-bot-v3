@@ -47,9 +47,7 @@ class TestMultiTableRepositories:
         bible_readers_repo = AirtableBibleReadersRepository(
             factory.create_client("bible_readers")
         )
-        roe_repo = AirtableROERepository(
-            factory.create_client("roe")
-        )
+        roe_repo = AirtableROERepository(factory.create_client("roe"))
 
         # Verify each repository has its own client
         assert bible_readers_repo.client is bible_readers_client
@@ -72,8 +70,13 @@ class TestMultiTableRepositories:
         assert bible_readers_repo.field_mapping is not roe_repo.field_mapping
 
         # Test key field mappings
-        assert bible_readers_repo.field_mapping.python_to_airtable_field("where") == "Where"
-        assert roe_repo.field_mapping.python_to_airtable_field("roe_topic") == "RoeTopic"
+        assert (
+            bible_readers_repo.field_mapping.python_to_airtable_field("where")
+            == "Where"
+        )
+        assert (
+            roe_repo.field_mapping.python_to_airtable_field("roe_topic") == "RoeTopic"
+        )
 
     async def test_concurrent_repository_operations(self, mock_factory):
         """Test that repositories can operate concurrently without conflicts."""
@@ -89,6 +92,7 @@ class TestMultiTableRepositories:
 
         # Perform concurrent operations
         import asyncio
+
         bible_readers_task = asyncio.create_task(bible_readers_repo.list_all())
         roe_task = asyncio.create_task(roe_repo.list_all())
 

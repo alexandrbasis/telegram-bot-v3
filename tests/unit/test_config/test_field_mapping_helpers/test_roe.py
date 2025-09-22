@@ -133,8 +133,14 @@ class TestROEFieldMapping:
 
         # Ensure read-only fields are excluded
         excluded_fields = {
-            "roista_church", "roista_department", "roista_room", "roista_notes",
-            "assistant_church", "assistant_department", "assistant_room", "record_id"
+            "roista_church",
+            "roista_department",
+            "roista_room",
+            "roista_notes",
+            "assistant_church",
+            "assistant_department",
+            "assistant_room",
+            "record_id",
         }
         for field in excluded_fields:
             assert field not in writable_fields
@@ -253,4 +259,6 @@ class TestROEFieldMapping:
         """Test that Airtable field name typo is preserved for compatibility."""
         # AssistantChuch (not Church) should be preserved
         assert "AssistantChuch" in ROEFieldMapping.AIRTABLE_FIELD_IDS
-        assert ROEFieldMapping.PYTHON_TO_AIRTABLE["assistant_church"] == "AssistantChuch"
+        assert (
+            ROEFieldMapping.PYTHON_TO_AIRTABLE["assistant_church"] == "AssistantChuch"
+        )

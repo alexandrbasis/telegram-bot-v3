@@ -56,10 +56,12 @@ class TestAirtableBibleReadersRepository:
                 "Bible": "John 3:16",
                 "Church": ["Grace Church"],
                 "RoomNumber": [101, 102],
-            }
+            },
         }
 
-    async def test_create_success(self, repository, mock_client, sample_bible_reader, sample_airtable_record):
+    async def test_create_success(
+        self, repository, mock_client, sample_bible_reader, sample_airtable_record
+    ):
         """Test successful BibleReader creation."""
         mock_client.create_record.return_value = sample_airtable_record
 
@@ -81,17 +83,23 @@ class TestAirtableBibleReadersRepository:
         """Test creation fails when BibleReader already has record_id."""
         sample_bible_reader.record_id = "recExisting123"
 
-        with pytest.raises(ValidationError, match="Cannot create bible_reader with existing record_id"):
+        with pytest.raises(
+            ValidationError, match="Cannot create bible_reader with existing record_id"
+        ):
             await repository.create(sample_bible_reader)
 
-    async def test_create_airtable_error(self, repository, mock_client, sample_bible_reader):
+    async def test_create_airtable_error(
+        self, repository, mock_client, sample_bible_reader
+    ):
         """Test creation handles Airtable API errors."""
         mock_client.create_record.side_effect = AirtableAPIError("API Error")
 
         with pytest.raises(RepositoryError, match="Failed to create BibleReader"):
             await repository.create(sample_bible_reader)
 
-    async def test_get_by_id_success(self, repository, mock_client, sample_airtable_record):
+    async def test_get_by_id_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful retrieval by ID."""
         mock_client.get_record.return_value = sample_airtable_record
 
@@ -125,7 +133,9 @@ class TestAirtableBibleReadersRepository:
         with pytest.raises(RepositoryError, match="Failed to get BibleReader"):
             await repository.get_by_id("recBibleReader123")
 
-    async def test_get_by_where_success(self, repository, mock_client, sample_airtable_record):
+    async def test_get_by_where_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful retrieval by where field."""
         mock_client.list_records.return_value = [sample_airtable_record]
 
@@ -134,8 +144,7 @@ class TestAirtableBibleReadersRepository:
         assert result is not None
         assert result.where == "Morning Chapel"
         mock_client.list_records.assert_called_once_with(
-            formula="{Where} = 'Morning Chapel'",
-            max_records=1
+            formula="{Where} = 'Morning Chapel'", max_records=1
         )
 
     async def test_get_by_where_not_found(self, repository, mock_client):
@@ -153,7 +162,9 @@ class TestAirtableBibleReadersRepository:
         with pytest.raises(RepositoryError, match="Failed to search BibleReader"):
             await repository.get_by_where("Morning Chapel")
 
-    async def test_update_success(self, repository, mock_client, sample_airtable_record):
+    async def test_update_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful BibleReader update."""
         bible_reader = BibleReader(
             record_id="recBibleReader123",
@@ -163,11 +174,14 @@ class TestAirtableBibleReadersRepository:
             bible="Psalm 23",
         )
 
-        updated_record = {**sample_airtable_record, "fields": {
-            **sample_airtable_record["fields"],
-            "Where": "Evening Service",
-            "Bible": "Psalm 23"
-        }}
+        updated_record = {
+            **sample_airtable_record,
+            "fields": {
+                **sample_airtable_record["fields"],
+                "Where": "Evening Service",
+                "Bible": "Psalm 23",
+            },
+        }
         mock_client.update_record.return_value = updated_record
 
         result = await repository.update(bible_reader)
@@ -178,20 +192,28 @@ class TestAirtableBibleReadersRepository:
 
     async def test_update_without_id_fails(self, repository, sample_bible_reader):
         """Test update fails when BibleReader has no record_id."""
-        with pytest.raises(ValidationError, match="Cannot update bible_reader without record_id"):
+        with pytest.raises(
+            ValidationError, match="Cannot update bible_reader without record_id"
+        ):
             await repository.update(sample_bible_reader)
 
     async def test_update_not_found_error(self, repository, mock_client):
         """Test update handles NOT_FOUND errors."""
-        bible_reader = BibleReader(record_id="nonexistent", where="Test", participants=[])
+        bible_reader = BibleReader(
+            record_id="nonexistent", where="Test", participants=[]
+        )
         mock_client.update_record.side_effect = AirtableAPIError("NOT_FOUND")
 
-        with pytest.raises(NotFoundError, match="BibleReader with id nonexistent not found"):
+        with pytest.raises(
+            NotFoundError, match="BibleReader with id nonexistent not found"
+        ):
             await repository.update(bible_reader)
 
     async def test_update_other_airtable_error(self, repository, mock_client):
         """Test update handles other Airtable API errors."""
-        bible_reader = BibleReader(record_id="recBibleReader123", where="Test", participants=[])
+        bible_reader = BibleReader(
+            record_id="recBibleReader123", where="Test", participants=[]
+        )
         mock_client.update_record.side_effect = AirtableAPIError("API Error")
 
         with pytest.raises(RepositoryError, match="Failed to update BibleReader"):
@@ -221,7 +243,9 @@ class TestAirtableBibleReadersRepository:
         with pytest.raises(RepositoryError, match="Failed to delete BibleReader"):
             await repository.delete("recBibleReader123")
 
-    async def test_list_all_success(self, repository, mock_client, sample_airtable_record):
+    async def test_list_all_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful listing of all BibleReaders."""
         mock_client.list_records.return_value = [sample_airtable_record]
 
@@ -239,11 +263,16 @@ class TestAirtableBibleReadersRepository:
 
         assert result == []
 
-    async def test_list_all_with_invalid_record(self, repository, mock_client, sample_airtable_record):
+    async def test_list_all_with_invalid_record(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test list_all skips invalid records and logs warning."""
         valid_record = sample_airtable_record
         # Create a record that will cause BibleReader.from_airtable_record to fail
-        invalid_record = {"id": "recInvalid", "fields": {"When": "invalid-date-format"}}  # Invalid date format
+        invalid_record = {
+            "id": "recInvalid",
+            "fields": {"When": "invalid-date-format"},
+        }  # Invalid date format
 
         mock_client.list_records.return_value = [valid_record, invalid_record]
 
@@ -259,7 +288,9 @@ class TestAirtableBibleReadersRepository:
         with pytest.raises(RepositoryError, match="Failed to list BibleReaders"):
             await repository.list_all()
 
-    async def test_get_by_participant_id_success(self, repository, mock_client, sample_airtable_record):
+    async def test_get_by_participant_id_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
         """Test successful retrieval by participant ID."""
         mock_client.list_records.return_value = [sample_airtable_record]
 
@@ -271,7 +302,7 @@ class TestAirtableBibleReadersRepository:
         # Verify formula construction
         mock_client.list_records.assert_called_once()
         call_args = mock_client.list_records.call_args
-        formula = call_args.kwargs['formula']
+        formula = call_args.kwargs["formula"]
         assert "FIND('recParticipant1'" in formula
         assert "Participants" in formula
 
@@ -287,7 +318,9 @@ class TestAirtableBibleReadersRepository:
         """Test get_by_participant_id handles Airtable API errors."""
         mock_client.list_records.side_effect = AirtableAPIError("API Error")
 
-        with pytest.raises(RepositoryError, match="Failed to search BibleReaders by participant"):
+        with pytest.raises(
+            RepositoryError, match="Failed to search BibleReaders by participant"
+        ):
             await repository.get_by_participant_id("recParticipant1")
 
     async def test_repository_uses_correct_field_mapping(self, repository):
@@ -295,4 +328,7 @@ class TestAirtableBibleReadersRepository:
         assert repository.field_mapping is not None
         # Test a few key mappings
         assert repository.field_mapping.python_to_airtable_field("where") == "Where"
-        assert repository.field_mapping.python_to_airtable_field("participants") == "Participants"
+        assert (
+            repository.field_mapping.python_to_airtable_field("participants")
+            == "Participants"
+        )

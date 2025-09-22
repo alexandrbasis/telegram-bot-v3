@@ -131,11 +131,19 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
             return BibleReader.from_airtable_record(records[0])
 
         except AirtableAPIError as e:
-            logger.error(f"Airtable API error searching BibleReader by where '{where}': {e}")
-            raise RepositoryError(f"Failed to search BibleReader by where '{where}': {e}") from e
+            logger.error(
+                f"Airtable API error searching BibleReader by where '{where}': {e}"
+            )
+            raise RepositoryError(
+                f"Failed to search BibleReader by where '{where}': {e}"
+            ) from e
         except Exception as e:
-            logger.error(f"Unexpected error searching BibleReader by where '{where}': {e}")
-            raise RepositoryError(f"Failed to search BibleReader by where '{where}': {e}") from e
+            logger.error(
+                f"Unexpected error searching BibleReader by where '{where}': {e}"
+            )
+            raise RepositoryError(
+                f"Failed to search BibleReader by where '{where}': {e}"
+            ) from e
 
     async def update(self, bible_reader: BibleReader) -> BibleReader:
         """
@@ -160,19 +168,31 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
             airtable_fields = bible_reader.to_airtable_fields()
 
             # Update record via client
-            record = await self.client.update_record(bible_reader.record_id, airtable_fields)
+            record = await self.client.update_record(
+                bible_reader.record_id, airtable_fields
+            )
 
             # Convert back to domain object
             return BibleReader.from_airtable_record(record)
 
         except AirtableAPIError as e:
             if "NOT_FOUND" in str(e):
-                raise NotFoundError(f"BibleReader with id {bible_reader.record_id} not found") from e
-            logger.error(f"Airtable API error updating BibleReader {bible_reader.record_id}: {e}")
-            raise RepositoryError(f"Failed to update BibleReader {bible_reader.record_id}: {e}") from e
+                raise NotFoundError(
+                    f"BibleReader with id {bible_reader.record_id} not found"
+                ) from e
+            logger.error(
+                f"Airtable API error updating BibleReader {bible_reader.record_id}: {e}"
+            )
+            raise RepositoryError(
+                f"Failed to update BibleReader {bible_reader.record_id}: {e}"
+            ) from e
         except Exception as e:
-            logger.error(f"Unexpected error updating BibleReader {bible_reader.record_id}: {e}")
-            raise RepositoryError(f"Failed to update BibleReader {bible_reader.record_id}: {e}") from e
+            logger.error(
+                f"Unexpected error updating BibleReader {bible_reader.record_id}: {e}"
+            )
+            raise RepositoryError(
+                f"Failed to update BibleReader {bible_reader.record_id}: {e}"
+            ) from e
 
     async def delete(self, record_id: str) -> bool:
         """
@@ -195,10 +215,14 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
             if "NOT_FOUND" in str(e):
                 return False
             logger.error(f"Airtable API error deleting BibleReader {record_id}: {e}")
-            raise RepositoryError(f"Failed to delete BibleReader {record_id}: {e}") from e
+            raise RepositoryError(
+                f"Failed to delete BibleReader {record_id}: {e}"
+            ) from e
         except Exception as e:
             logger.error(f"Unexpected error deleting BibleReader {record_id}: {e}")
-            raise RepositoryError(f"Failed to delete BibleReader {record_id}: {e}") from e
+            raise RepositoryError(
+                f"Failed to delete BibleReader {record_id}: {e}"
+            ) from e
 
     async def list_all(self) -> List[BibleReader]:
         """
@@ -219,7 +243,9 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
                     bible_reader = BibleReader.from_airtable_record(record)
                     bible_readers.append(bible_reader)
                 except Exception as e:
-                    logger.warning(f"Skipping invalid BibleReader record {record.get('id', 'unknown')}: {e}")
+                    logger.warning(
+                        f"Skipping invalid BibleReader record {record.get('id', 'unknown')}: {e}"
+                    )
 
             return bible_readers
 
@@ -245,7 +271,9 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
         """
         try:
             # Build Airtable formula to search for participant in Participants field
-            participants_field = self.field_mapping.python_to_airtable_field("participants")
+            participants_field = self.field_mapping.python_to_airtable_field(
+                "participants"
+            )
             # Use FIND function to search within the array field
             escaped_participant_id = escape_formula_value(participant_id)
             formula = f"FIND('{escaped_participant_id}', ARRAYJOIN({{{participants_field}}})) > 0"
@@ -258,13 +286,23 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
                     bible_reader = BibleReader.from_airtable_record(record)
                     bible_readers.append(bible_reader)
                 except Exception as e:
-                    logger.warning(f"Skipping invalid BibleReader record {record.get('id', 'unknown')}: {e}")
+                    logger.warning(
+                        f"Skipping invalid BibleReader record {record.get('id', 'unknown')}: {e}"
+                    )
 
             return bible_readers
 
         except AirtableAPIError as e:
-            logger.error(f"Airtable API error searching BibleReaders by participant {participant_id}: {e}")
-            raise RepositoryError(f"Failed to search BibleReaders by participant {participant_id}: {e}") from e
+            logger.error(
+                f"Airtable API error searching BibleReaders by participant {participant_id}: {e}"
+            )
+            raise RepositoryError(
+                f"Failed to search BibleReaders by participant {participant_id}: {e}"
+            ) from e
         except Exception as e:
-            logger.error(f"Unexpected error searching BibleReaders by participant {participant_id}: {e}")
-            raise RepositoryError(f"Failed to search BibleReaders by participant {participant_id}: {e}") from e
+            logger.error(
+                f"Unexpected error searching BibleReaders by participant {participant_id}: {e}"
+            )
+            raise RepositoryError(
+                f"Failed to search BibleReaders by participant {participant_id}: {e}"
+            ) from e

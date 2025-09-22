@@ -134,12 +134,21 @@ class TestBibleReadersFieldMapping:
         assert "Where" in BibleReadersFieldMapping.AIRTABLE_FIELD_IDS
         assert "where" in BibleReadersFieldMapping.PYTHON_TO_AIRTABLE
         assert BibleReadersFieldMapping.PYTHON_TO_AIRTABLE["where"] == "Where"
-        assert BibleReadersFieldMapping.get_airtable_field_id("Where") == "fldsSNHSXJBhewCxq"
+        assert (
+            BibleReadersFieldMapping.get_airtable_field_id("Where")
+            == "fldsSNHSXJBhewCxq"
+        )
 
     def test_relationship_field_mapping(self):
         """Test that relationship field (Participants) is properly mapped."""
         # Participants field should be in all mappings
         assert "Participants" in BibleReadersFieldMapping.AIRTABLE_FIELD_IDS
         assert "participants" in BibleReadersFieldMapping.PYTHON_TO_AIRTABLE
-        assert BibleReadersFieldMapping.PYTHON_TO_AIRTABLE["participants"] == "Participants"
-        assert BibleReadersFieldMapping.get_airtable_field_id("Participants") == "fldVBlRvv295QhBlX"
+        assert (
+            BibleReadersFieldMapping.PYTHON_TO_AIRTABLE["participants"]
+            == "Participants"
+        )
+        assert (
+            BibleReadersFieldMapping.get_airtable_field_id("Participants")
+            == "fldVBlRvv295QhBlX"
+        )

@@ -33,7 +33,7 @@ class ROEFieldMapping:
         "RoistaDepartment": "fldLookupRDept",  # Departments of main Roista (lookup)
         "RoistaRoom": "fldLookupRRoom",  # Room numbers of main Roista (lookup)
         "RoistaNotes": "fldLookupRNotes",  # Notes about main Roista (lookup)
-        "AssistantChuch": "fldLookupAChuch",  # Churches of assistant (lookup, note typo)
+        "AssistantChuch": "fldLookupAChuch",  # Churches of assistant (lookup, typo)
         "AssistantDepartment": "fldLookupADept",  # Departments of assistant (lookup)
         "AssistantRoom": "fldLookupARoom",  # Room numbers of assistant (lookup)
         # Special record ID pseudo-field mapping
@@ -64,9 +64,7 @@ class ROEFieldMapping:
     }
 
     # Airtable field name -> Python field name mapping (reverse mapping)
-    AIRTABLE_TO_PYTHON: Dict[str, str] = {
-        v: k for k, v in PYTHON_TO_AIRTABLE.items()
-    }
+    AIRTABLE_TO_PYTHON: Dict[str, str] = {v: k for k, v in PYTHON_TO_AIRTABLE.items()}
 
     @classmethod
     def get_airtable_field_id(cls, airtable_field_name: str) -> str:
@@ -126,8 +124,14 @@ class ROEFieldMapping:
         """
         # Exclude lookup fields and record ID which are read-only
         excluded_fields = {
-            "roista_church", "roista_department", "roista_room", "roista_notes",
-            "assistant_church", "assistant_department", "assistant_room", "record_id"
+            "roista_church",
+            "roista_department",
+            "roista_room",
+            "roista_notes",
+            "assistant_church",
+            "assistant_department",
+            "assistant_room",
+            "record_id",
         }
         return {
             python_field: airtable_field
@@ -141,7 +145,7 @@ class ROEFieldMapping:
         Get fields related to presenter and assistant relationships.
 
         Returns:
-            Dictionary of python_field_name -> airtable_field_name for relationship fields
+            Dictionary of python_field_name -> airtable_field_name for relationships
         """
         relationship_fields = {"roista", "assistant", "prayer"}
         return {

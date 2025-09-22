@@ -59,7 +59,9 @@ class AirtableROERepository(ROERepository):
 
         # Validate that ROE has at least one presenter
         if not self.field_mapping.validate_presenter_relationships(roe.model_dump()):
-            raise ValidationError("ROE must have at least one presenter (roista or assistant)")
+            raise ValidationError(
+                "ROE must have at least one presenter (roista or assistant)"
+            )
 
         try:
             # Convert to Airtable fields format
@@ -135,10 +137,14 @@ class AirtableROERepository(ROERepository):
 
         except AirtableAPIError as e:
             logger.error(f"Airtable API error searching ROE by topic '{topic}': {e}")
-            raise RepositoryError(f"Failed to search ROE by topic '{topic}': {e}") from e
+            raise RepositoryError(
+                f"Failed to search ROE by topic '{topic}': {e}"
+            ) from e
         except Exception as e:
             logger.error(f"Unexpected error searching ROE by topic '{topic}': {e}")
-            raise RepositoryError(f"Failed to search ROE by topic '{topic}': {e}") from e
+            raise RepositoryError(
+                f"Failed to search ROE by topic '{topic}': {e}"
+            ) from e
 
     async def update(self, roe: ROE) -> ROE:
         """
@@ -160,7 +166,9 @@ class AirtableROERepository(ROERepository):
 
         # Validate that ROE has at least one presenter
         if not self.field_mapping.validate_presenter_relationships(roe.model_dump()):
-            raise ValidationError("ROE must have at least one presenter (roista or assistant)")
+            raise ValidationError(
+                "ROE must have at least one presenter (roista or assistant)"
+            )
 
         try:
             # Convert to Airtable fields format (only writable fields)
@@ -226,7 +234,9 @@ class AirtableROERepository(ROERepository):
                     roe = ROE.from_airtable_record(record)
                     roes.append(roe)
                 except Exception as e:
-                    logger.warning(f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}")
+                    logger.warning(
+                        f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}"
+                    )
 
             return roes
 
@@ -264,16 +274,24 @@ class AirtableROERepository(ROERepository):
                     roe = ROE.from_airtable_record(record)
                     roes.append(roe)
                 except Exception as e:
-                    logger.warning(f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}")
+                    logger.warning(
+                        f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}"
+                    )
 
             return roes
 
         except AirtableAPIError as e:
-            logger.error(f"Airtable API error searching ROEs by roista {roista_id}: {e}")
-            raise RepositoryError(f"Failed to search ROEs by roista {roista_id}: {e}") from e
+            logger.error(
+                f"Airtable API error searching ROEs by roista {roista_id}: {e}"
+            )
+            raise RepositoryError(
+                f"Failed to search ROEs by roista {roista_id}: {e}"
+            ) from e
         except Exception as e:
             logger.error(f"Unexpected error searching ROEs by roista {roista_id}: {e}")
-            raise RepositoryError(f"Failed to search ROEs by roista {roista_id}: {e}") from e
+            raise RepositoryError(
+                f"Failed to search ROEs by roista {roista_id}: {e}"
+            ) from e
 
     async def get_by_assistant_id(self, assistant_id: str) -> List[ROE]:
         """
@@ -292,7 +310,9 @@ class AirtableROERepository(ROERepository):
             # Build Airtable formula to search for participant in Assistant field
             assistant_field = self.field_mapping.python_to_airtable_field("assistant")
             escaped_assistant_id = escape_formula_value(assistant_id)
-            formula = f"FIND('{escaped_assistant_id}', ARRAYJOIN({{{assistant_field}}})) > 0"
+            formula = (
+                f"FIND('{escaped_assistant_id}', ARRAYJOIN({{{assistant_field}}})) > 0"
+            )
 
             records = await self.client.list_records(formula=formula)
 
@@ -302,13 +322,23 @@ class AirtableROERepository(ROERepository):
                     roe = ROE.from_airtable_record(record)
                     roes.append(roe)
                 except Exception as e:
-                    logger.warning(f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}")
+                    logger.warning(
+                        f"Skipping invalid ROE record {record.get('id', 'unknown')}: {e}"
+                    )
 
             return roes
 
         except AirtableAPIError as e:
-            logger.error(f"Airtable API error searching ROEs by assistant {assistant_id}: {e}")
-            raise RepositoryError(f"Failed to search ROEs by assistant {assistant_id}: {e}") from e
+            logger.error(
+                f"Airtable API error searching ROEs by assistant {assistant_id}: {e}"
+            )
+            raise RepositoryError(
+                f"Failed to search ROEs by assistant {assistant_id}: {e}"
+            ) from e
         except Exception as e:
-            logger.error(f"Unexpected error searching ROEs by assistant {assistant_id}: {e}")
-            raise RepositoryError(f"Failed to search ROEs by assistant {assistant_id}: {e}") from e
+            logger.error(
+                f"Unexpected error searching ROEs by assistant {assistant_id}: {e}"
+            )
+            raise RepositoryError(
+                f"Failed to search ROEs by assistant {assistant_id}: {e}"
+            ) from e

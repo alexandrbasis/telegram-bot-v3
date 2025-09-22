@@ -15,7 +15,9 @@ import httpx
 from pyairtable import Api, Table
 from pyairtable.api.types import RecordDict
 
-from src.config.field_mappings import AirtableFieldMapping  # Original participant mapping
+from src.config.field_mappings import (  # Original participant mapping
+    AirtableFieldMapping,
+)
 from src.data.repositories.participant_repository import RepositoryError
 
 logger = logging.getLogger(__name__)
