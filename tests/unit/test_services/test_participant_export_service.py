@@ -151,7 +151,7 @@ class TestGetAllParticipantsAsCSV:
         assert first_row["PaymentStatus"] == "Paid"
         assert first_row["PaymentAmount"] == "5000"
         assert first_row["PaymentDate"] == "2025-01-15"
-        assert first_row["DateOfBirth"] == "1990-05-20"
+        assert first_row["DateOfBirth"] == "20/05/1990"
         assert first_row["Age"] == "34"
         assert first_row["Floor"] == "2"
         assert first_row["RoomNumber"] == "205"

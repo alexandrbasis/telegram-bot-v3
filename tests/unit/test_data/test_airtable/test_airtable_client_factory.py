@@ -21,7 +21,13 @@ class TestAirtableClientFactory:
         """Test creating client for participants table."""
         with patch.dict(
             "os.environ",
-            {"AIRTABLE_API_KEY": "test_key", "AIRTABLE_BASE_ID": "test_base"},
+            {
+                "AIRTABLE_API_KEY": "test_key",
+                "AIRTABLE_BASE_ID": "test_base",
+                "AIRTABLE_TABLE_ID": "tbl8ivwOdAUvMi3Jy",
+                "AIRTABLE_TABLE_NAME": "Participants",
+            },
+            clear=True,
         ):
             factory = AirtableClientFactory()
             client = factory.create_client("participants")
@@ -34,7 +40,15 @@ class TestAirtableClientFactory:
         """Test creating client for bible_readers table."""
         with patch.dict(
             "os.environ",
-            {"AIRTABLE_API_KEY": "test_key", "AIRTABLE_BASE_ID": "test_base"},
+            {
+                "AIRTABLE_API_KEY": "test_key",
+                "AIRTABLE_BASE_ID": "test_base",
+                "AIRTABLE_TABLE_ID": "tbl8ivwOdAUvMi3Jy",
+                "AIRTABLE_TABLE_NAME": "Participants",
+                "AIRTABLE_BIBLE_READERS_TABLE_ID": "tblGEnSfpPOuPLXcm",
+                "AIRTABLE_BIBLE_READERS_TABLE_NAME": "BibleReaders",
+            },
+            clear=True,
         ):
             factory = AirtableClientFactory()
             client = factory.create_client("bible_readers")
@@ -47,7 +61,15 @@ class TestAirtableClientFactory:
         """Test creating client for roe table."""
         with patch.dict(
             "os.environ",
-            {"AIRTABLE_API_KEY": "test_key", "AIRTABLE_BASE_ID": "test_base"},
+            {
+                "AIRTABLE_API_KEY": "test_key",
+                "AIRTABLE_BASE_ID": "test_base",
+                "AIRTABLE_TABLE_ID": "tbl8ivwOdAUvMi3Jy",
+                "AIRTABLE_TABLE_NAME": "Participants",
+                "AIRTABLE_ROE_TABLE_ID": "tbl0j8bcgkV3lVAdc",
+                "AIRTABLE_ROE_TABLE_NAME": "ROE",
+            },
+            clear=True,
         ):
             factory = AirtableClientFactory()
             client = factory.create_client("roe")
@@ -60,7 +82,17 @@ class TestAirtableClientFactory:
         """Test that invalid table type raises ValueError."""
         with patch.dict(
             "os.environ",
-            {"AIRTABLE_API_KEY": "test_key", "AIRTABLE_BASE_ID": "test_base"},
+            {
+                "AIRTABLE_API_KEY": "test_key",
+                "AIRTABLE_BASE_ID": "test_base",
+                "AIRTABLE_TABLE_ID": "tbl8ivwOdAUvMi3Jy",
+                "AIRTABLE_TABLE_NAME": "Participants",
+                "AIRTABLE_BIBLE_READERS_TABLE_ID": "tblGEnSfpPOuPLXcm",
+                "AIRTABLE_BIBLE_READERS_TABLE_NAME": "BibleReaders",
+                "AIRTABLE_ROE_TABLE_ID": "tbl0j8bcgkV3lVAdc",
+                "AIRTABLE_ROE_TABLE_NAME": "ROE",
+            },
+            clear=True,
         ):
             factory = AirtableClientFactory()
             with pytest.raises(ValueError) as exc_info:
