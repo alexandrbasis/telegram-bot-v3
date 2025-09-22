@@ -6,6 +6,8 @@ import pytest
 
 from src.data.airtable.airtable_client import AirtableConfig
 from src.services import service_factory
+from src.services.bible_readers_export_service import BibleReadersExportService
+from src.services.roe_export_service import ROEExportService
 
 
 @pytest.fixture(autouse=True)
@@ -121,3 +123,159 @@ class TestAirtableClientReuse:
         assert mock_airtable_client.call_count == 2
         assert repo1.client is first_client
         assert repo2.client is second_client
+
+
+class TestTableSpecificClients:
+    """Test table-specific client creation and caching."""
+
+    @patch("src.services.service_factory.AirtableClient")
+    @patch("src.services.service_factory.get_settings")
+    def test_get_airtable_client_for_table_caches_by_type(
+        self, mock_get_settings, mock_airtable_client
+    ):
+        """Test that table-specific clients are cached separately."""
+        # Mock settings for different tables
+        participants_config = AirtableConfig(
+            api_key="key",
+            base_id="base",
+            table_name="Participants",
+            table_id="tbl_participants",
+            rate_limit_per_second=5,
+            timeout_seconds=30,
+            max_retries=3,
+            retry_delay_seconds=1.0,
+        )
+        bible_readers_config = AirtableConfig(
+            api_key="key",
+            base_id="base",
+            table_name="BibleReaders",
+            table_id="tbl_bible_readers",
+            rate_limit_per_second=5,
+            timeout_seconds=30,
+            max_retries=3,
+            retry_delay_seconds=1.0,
+        )
+
+        def get_config_side_effect(table_type=None):
+            if table_type == "bible_readers":
+                return bible_readers_config
+            return participants_config
+
+        mock_settings = Mock()
+        mock_settings.get_airtable_config.side_effect = get_config_side_effect
+        mock_get_settings.return_value = mock_settings
+
+        participants_client = Mock()
+        bible_readers_client = Mock()
+        mock_airtable_client.side_effect = [participants_client, bible_readers_client]
+
+        # Get clients for different tables
+        client1 = service_factory.get_airtable_client_for_table("participants")
+        client2 = service_factory.get_airtable_client_for_table("bible_readers")
+        client3 = service_factory.get_airtable_client_for_table("participants")
+
+        # Should create one client per table type
+        assert mock_airtable_client.call_count == 2
+        assert client1 is participants_client
+        assert client2 is bible_readers_client
+        assert client3 is participants_client  # Cached
+
+
+class TestNewRepositoryFactories:
+    """Test new repository factory methods."""
+
+    @patch("src.services.service_factory.get_airtable_client_for_table")
+    def test_get_bible_readers_repository(self, mock_get_client):
+        """Test BibleReaders repository factory method."""
+        mock_client = Mock()
+        mock_get_client.return_value = mock_client
+
+        repo = service_factory.get_bible_readers_repository()
+
+        mock_get_client.assert_called_once_with("bible_readers")
+        assert repo.client is mock_client
+
+    @patch("src.services.service_factory.get_airtable_client_for_table")
+    def test_get_roe_repository(self, mock_get_client):
+        """Test ROE repository factory method."""
+        mock_client = Mock()
+        mock_get_client.return_value = mock_client
+
+        repo = service_factory.get_roe_repository()
+
+        mock_get_client.assert_called_once_with("roe")
+        assert repo.client is mock_client
+
+
+class TestNewExportServiceFactories:
+    """Test new export service factory methods."""
+
+    @patch("src.services.service_factory.get_bible_readers_repository")
+    @patch("src.services.service_factory.get_participant_repository")
+    def test_get_bible_readers_export_service(
+        self, mock_get_participant_repo, mock_get_bible_readers_repo
+    ):
+        """Test BibleReaders export service factory method."""
+        mock_bible_readers_repo = Mock()
+        mock_participant_repo = Mock()
+        mock_get_bible_readers_repo.return_value = mock_bible_readers_repo
+        mock_get_participant_repo.return_value = mock_participant_repo
+
+        progress_callback = Mock()
+        service = service_factory.get_bible_readers_export_service(progress_callback)
+
+        assert isinstance(service, BibleReadersExportService)
+        assert service.bible_readers_repository is mock_bible_readers_repo
+        assert service.participant_repository is mock_participant_repo
+        assert service.progress_callback is progress_callback
+
+    @patch("src.services.service_factory.get_roe_repository")
+    @patch("src.services.service_factory.get_participant_repository")
+    def test_get_roe_export_service(
+        self, mock_get_participant_repo, mock_get_roe_repo
+    ):
+        """Test ROE export service factory method."""
+        mock_roe_repo = Mock()
+        mock_participant_repo = Mock()
+        mock_get_roe_repo.return_value = mock_roe_repo
+        mock_get_participant_repo.return_value = mock_participant_repo
+
+        progress_callback = Mock()
+        service = service_factory.get_roe_export_service(progress_callback)
+
+        assert isinstance(service, ROEExportService)
+        assert service.roe_repository is mock_roe_repo
+        assert service.participant_repository is mock_participant_repo
+        assert service.progress_callback is progress_callback
+
+    @patch("src.services.service_factory.get_bible_readers_repository")
+    @patch("src.services.service_factory.get_participant_repository")
+    def test_get_bible_readers_export_service_without_callback(
+        self, mock_get_participant_repo, mock_get_bible_readers_repo
+    ):
+        """Test BibleReaders export service factory without progress callback."""
+        mock_bible_readers_repo = Mock()
+        mock_participant_repo = Mock()
+        mock_get_bible_readers_repo.return_value = mock_bible_readers_repo
+        mock_get_participant_repo.return_value = mock_participant_repo
+
+        service = service_factory.get_bible_readers_export_service()
+
+        assert isinstance(service, BibleReadersExportService)
+        assert service.progress_callback is None
+
+    @patch("src.services.service_factory.get_roe_repository")
+    @patch("src.services.service_factory.get_participant_repository")
+    def test_get_roe_export_service_without_callback(
+        self, mock_get_participant_repo, mock_get_roe_repo
+    ):
+        """Test ROE export service factory without progress callback."""
+        mock_roe_repo = Mock()
+        mock_participant_repo = Mock()
+        mock_get_roe_repo.return_value = mock_roe_repo
+        mock_get_participant_repo.return_value = mock_participant_repo
+
+        service = service_factory.get_roe_export_service()
+
+        assert isinstance(service, ROEExportService)
+        assert service.progress_callback is None
