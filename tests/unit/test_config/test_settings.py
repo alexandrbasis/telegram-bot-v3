@@ -509,6 +509,43 @@ class TestSettings:
             assert config.api_key == "test_key"
             assert config.base_id == "test_base"
 
+    def test_get_airtable_config_with_table_type(self):
+        """Test getting table-specific Airtable configuration from settings."""
+        env_vars = {
+            "AIRTABLE_API_KEY": "test_key",
+            "AIRTABLE_BASE_ID": "test_base",
+            "TELEGRAM_BOT_TOKEN": "test_token",
+            "AIRTABLE_BIBLE_READERS_TABLE_ID": "tblBibleReadersTest",
+            "AIRTABLE_BIBLE_READERS_TABLE_NAME": "BibleReaders",
+            "AIRTABLE_ROE_TABLE_ID": "tblROETest",
+            "AIRTABLE_ROE_TABLE_NAME": "ROE",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = Settings()
+
+            # Test participants table (default)
+            config = settings.get_airtable_config("participants")
+            assert isinstance(config, AirtableConfig)
+            assert config.table_id == "tbl8ivwOdAUvMi3Jy"  # default participants table ID
+            assert config.table_name == "Participants"
+
+            # Test bible_readers table
+            config_br = settings.get_airtable_config("bible_readers")
+            assert isinstance(config_br, AirtableConfig)
+            assert config_br.table_id == "tblBibleReadersTest"
+            assert config_br.table_name == "BibleReaders"
+
+            # Test ROE table
+            config_roe = settings.get_airtable_config("roe")
+            assert isinstance(config_roe, AirtableConfig)
+            assert config_roe.table_id == "tblROETest"
+            assert config_roe.table_name == "ROE"
+
+            # All configs should share the same base settings
+            assert config.api_key == config_br.api_key == config_roe.api_key == "test_key"
+            assert config.base_id == config_br.base_id == config_roe.base_id == "test_base"
+
     def test_to_dict(self):
         """Test converting settings to dictionary."""
         env_vars = {

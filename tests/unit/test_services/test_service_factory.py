@@ -1,9 +1,11 @@
 """Tests for service_factory helper functions."""
 
+import os
 from unittest.mock import Mock, patch
 
 import pytest
 
+from src.config.settings import Settings
 from src.data.airtable.airtable_client import AirtableConfig
 from src.services import service_factory
 from src.services.bible_readers_export_service import BibleReadersExportService
@@ -279,3 +281,60 @@ class TestNewExportServiceFactories:
 
         assert isinstance(service, ROEExportService)
         assert service.progress_callback is None
+
+
+class TestSettingsIntegration:
+    """Regression tests for real Settings object integration."""
+
+    def test_get_airtable_client_for_table_with_real_settings(self):
+        """Test that get_airtable_client_for_table works with real Settings object."""
+        env_vars = {
+            "AIRTABLE_API_KEY": "test_key",
+            "AIRTABLE_BASE_ID": "test_base",
+            "TELEGRAM_BOT_TOKEN": "test_token",
+            "AIRTABLE_BIBLE_READERS_TABLE_ID": "tblBibleReadersTest",
+            "AIRTABLE_BIBLE_READERS_TABLE_NAME": "BibleReaders",
+            "AIRTABLE_ROE_TABLE_ID": "tblROETest",
+            "AIRTABLE_ROE_TABLE_NAME": "ROE",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            with patch("src.services.service_factory.get_settings") as mock_get_settings:
+                # Use real Settings object instead of mock
+                real_settings = Settings()
+                mock_get_settings.return_value = real_settings
+
+                # This should not raise TypeError anymore
+                client_bible = service_factory.get_airtable_client_for_table("bible_readers")
+                assert client_bible is not None
+
+                client_roe = service_factory.get_airtable_client_for_table("roe")
+                assert client_roe is not None
+
+                client_participants = service_factory.get_airtable_client_for_table("participants")
+                assert client_participants is not None
+
+    def test_export_service_factories_with_real_settings(self):
+        """Test that export service factories work with real Settings object."""
+        env_vars = {
+            "AIRTABLE_API_KEY": "test_key",
+            "AIRTABLE_BASE_ID": "test_base",
+            "TELEGRAM_BOT_TOKEN": "test_token",
+            "AIRTABLE_BIBLE_READERS_TABLE_ID": "tblBibleReadersTest",
+            "AIRTABLE_BIBLE_READERS_TABLE_NAME": "BibleReaders",
+            "AIRTABLE_ROE_TABLE_ID": "tblROETest",
+            "AIRTABLE_ROE_TABLE_NAME": "ROE",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            with patch("src.services.service_factory.get_settings") as mock_get_settings:
+                # Use real Settings object
+                real_settings = Settings()
+                mock_get_settings.return_value = real_settings
+
+                # These should not raise TypeError anymore
+                bible_service = service_factory.get_bible_readers_export_service()
+                assert isinstance(bible_service, BibleReadersExportService)
+
+                roe_service = service_factory.get_roe_export_service()
+                assert isinstance(roe_service, ROEExportService)

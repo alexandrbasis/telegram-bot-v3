@@ -501,14 +501,18 @@ class Settings:
         """Check if running in production environment."""
         return self.application.environment == "production"
 
-    def get_airtable_config(self) -> AirtableConfig:
+    def get_airtable_config(self, table_type: str = "participants") -> AirtableConfig:
         """
         Get Airtable configuration from database settings.
+
+        Args:
+            table_type: The type of table to get config for (default: 'participants').
+                       Supported values: 'participants', 'bible_readers', 'roe'
 
         Returns:
             AirtableConfig instance ready for use with AirtableClient
         """
-        return self.database.to_airtable_config()
+        return self.database.to_airtable_config(table_type)
 
     def get_file_logging_config(self) -> "FileLoggingConfig":
         """
