@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from telegram import CallbackQuery, Message, Update, User
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, ConversationHandler
 
 from src.bot.handlers.export_conversation_handlers import (
     start_export_selection,
@@ -100,14 +100,14 @@ class TestExportTypeSelection:
         with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
             result = await handle_export_type_selection(update, context)
 
-        # Should transition to PROCESSING_EXPORT state
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should end the conversation
+        assert result == ConversationHandler.END
 
         # Should acknowledge callback
         query.answer.assert_called_once()
 
-        # Should update message text
-        query.edit_message_text.assert_called_once()
+        # Should update message text twice (start + completion)
+        assert query.edit_message_text.call_count == 2
 
     @pytest.mark.asyncio
     async def test_handle_department_selection_flow(self):
@@ -158,8 +158,8 @@ class TestExportTypeSelection:
         with patch('src.services.service_factory.get_bible_readers_export_service', return_value=mock_export_service):
             result = await handle_export_type_selection(update, context)
 
-        # Should transition to PROCESSING_EXPORT state
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should end the conversation
+        assert result == ConversationHandler.END
 
         # Should call Bible Readers export service
         mock_export_service.export_to_csv_async.assert_called_once()
@@ -185,18 +185,18 @@ class TestDepartmentSelection:
 
         # Mock participant export service with department filtering
         mock_export_service = AsyncMock()
-        mock_export_service.export_filtered_to_csv_async = AsyncMock(return_value="kitchen,participants,data")
+        mock_export_service.get_participants_by_department_as_csv = AsyncMock(return_value="kitchen,participants,data")
 
         with patch('src.services.service_factory.get_export_service', return_value=mock_export_service):
             result = await handle_department_selection(update, context)
 
-        # Should transition to PROCESSING_EXPORT state
-        assert result == ExportStates.PROCESSING_EXPORT
+        # Should end the conversation
+        assert result == ConversationHandler.END
 
         # Should call export service with department filter
-        mock_export_service.export_filtered_to_csv_async.assert_called_once()
-        call_args = mock_export_service.export_filtered_to_csv_async.call_args
-        assert call_args[1]['department'] == "Kitchen"
+        mock_export_service.get_participants_by_department_as_csv.assert_called_once()
+        call_args = mock_export_service.get_participants_by_department_as_csv.call_args
+        assert call_args[0][0].value == "Kitchen"
 
     @pytest.mark.asyncio
     async def test_handle_department_back_navigation(self):

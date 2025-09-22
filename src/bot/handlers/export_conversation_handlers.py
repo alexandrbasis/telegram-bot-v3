@@ -25,11 +25,14 @@ from src.bot.keyboards.export_keyboards import (
     get_export_selection_keyboard,
     get_department_selection_keyboard,
 )
+from src.models.participant import Role, Department
 from src.services import service_factory
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
 
 logger = logging.getLogger(__name__)
+
+
 
 
 async def start_export_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -155,7 +158,7 @@ async def handle_export_type_selection(update: Update, context: ContextTypes.DEF
     # Process the export based on type
     await _process_export_by_type(callback_data, query, context, user_id)
 
-    return ExportStates.PROCESSING_EXPORT
+    return ConversationHandler.END
 
 
 async def handle_department_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -219,7 +222,7 @@ async def handle_department_selection(update: Update, context: ContextTypes.DEFA
     # Process department export
     await _process_department_export(department, query, context, user_id)
 
-    return ExportStates.PROCESSING_EXPORT
+    return ConversationHandler.END
 
 
 async def cancel_export(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -301,14 +304,14 @@ async def _process_export_by_type(
             export_service = service_factory.get_export_service(
                 progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
             )
-            csv_data = await export_service.export_filtered_to_csv_async(role="TEAM")
+            csv_data = await export_service.get_participants_by_role_as_csv(Role.TEAM)
             filename_prefix = "participants_team"
 
         elif export_type == ExportCallbackData.EXPORT_CANDIDATES:
             export_service = service_factory.get_export_service(
                 progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
             )
-            csv_data = await export_service.export_filtered_to_csv_async(role="CANDIDATE")
+            csv_data = await export_service.get_participants_by_role_as_csv(Role.CANDIDATE)
             filename_prefix = "participants_candidates"
 
         elif export_type == ExportCallbackData.EXPORT_BIBLE_READERS:
@@ -372,7 +375,7 @@ async def _process_department_export(
         export_service = service_factory.get_export_service(
             progress_callback=lambda c, t: asyncio.create_task(progress_callback(c, t))
         )
-        csv_data = await export_service.export_filtered_to_csv_async(department=department)
+        csv_data = await export_service.get_participants_by_department_as_csv(Department(department))
 
         # Send the file
         filename_prefix = f"participants_{department.lower()}"
@@ -446,8 +449,8 @@ async def _send_export_file(
 
         # Update final message
         await query.edit_message_text(
-            f"✅ Экспорт завершён!\n"
-            f"📁 Файл отправлен выше."
+            "✅ Экспорт завершён!\n"
+            "📁 Файл отправлен выше."
         )
 
         # Log successful export
