@@ -546,7 +546,7 @@ Error handling has been enhanced with centralized message templates located in `
 ## Data Export Commands
 
 ### /export
-Export complete participant database to CSV format for administrative use. Available to authorized administrators only.
+Interactive export conversation flow for administrative data export. Available to authorized administrators only. Converts the direct export command into a conversation with 6 targeted export options.
 
 **Admin-Only Access Control**:
 - Command validates user authorization using `auth_utils.is_admin_user()` function
@@ -554,13 +554,21 @@ Export complete participant database to CSV format for administrative use. Avail
 - Admin user IDs configured via `ADMIN_USER_IDS` environment variable
 - Comprehensive logging for security monitoring and access control
 
-**Export Process**:
+**Interactive Export Conversation Flow**:
 1. User (admin) types: `/export`
-2. Bot validates admin access using auth utilities
-3. **Progress Notifications**: Real-time export progress updates with throttled notifications (minimum 2-second intervals)
-4. **CSV Generation**: Complete participant dataset exported with all fields
-5. **File Delivery**: CSV file sent to user via Telegram file upload
-6. **Progress Tracking**: Updates show export status and completion percentage
+2. Bot validates admin access and displays interactive selection menu
+3. **Export Selection Menu**: 6 export options with Russian localization:
+   - "Экспорт всех данных" (Export All) - Complete participant database
+   - "Экспорт команды" (Export Team) - Team members only
+   - "Экспорт кандидатов" (Export Candidates) - Candidates only
+   - "Экспорт по департаменту" (Export by Department) - Department-specific export
+   - "Экспорт Bible Readers" (Export Bible Readers) - Bible reading assignments
+   - "Экспорт ROE" (Export ROE) - ROE session data
+4. **Department Selection Workflow**: When "Export by Department" is selected, displays submenu with all 13 departments
+5. **Export Processing**: Selected export type processed with progress notifications
+6. **Progress Notifications**: Real-time export progress updates with throttled notifications (minimum 2-second intervals)
+7. **File Delivery**: CSV file sent to user via Telegram file upload
+8. **Navigation**: Cancel option returns to main menu, back navigation between selection screens
 
 **Features**:
 - **Complete Data Export**: All participant fields included with exact Airtable field names
@@ -570,9 +578,26 @@ Export complete participant database to CSV format for administrative use. Avail
 - **Secure Processing**: Temporary file creation with automatic cleanup
 - **Error Handling**: User-friendly error messages for various failure scenarios
 
-**Usage Example with File Delivery**:
+**Interactive Export Selection Example**:
 ```
 Admin: /export
+Bot: Выберите тип экспорта:
+[6 export option buttons displayed]
+
+Admin clicks: "Экспорт по департаменту"
+Bot: Выберите департамент:
+[13 department buttons displayed: ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate]
+
+Admin clicks: "Setup"
+Bot: 🔄 Начинается экспорт данных департамента Setup...
+Bot: 📈 Экспорт: 50% завершено (25/50 участников)
+Bot: ✅ Экспорт завершён! Отправляю файл...
+Bot: 📁 Файл успешно отправлен!
+[CSV file attachment: setup_export_YYYY-MM-DD_HH-MM.csv]
+
+# Alternative workflow - Export All:
+Admin: /export
+Admin clicks: "Экспорт всех данных"
 Bot: 🔄 Начинается экспорт данных участников...
 Bot: 📈 Экспорт: 25% завершено (250/1000 участников)
 Bot: 📈 Экспорт: 50% завершено (500/1000 участников)
@@ -580,18 +605,20 @@ Bot: 📈 Экспорт: 75% завершено (750/1000 участников)
 Bot: ✅ Экспорт завершён! Отправляю файл...
 Bot: 📁 Файл успешно отправлен!
 [CSV file attachment: participants_export_YYYY-MM-DD_HH-MM.csv]
-
-# Error scenario example:
-Bot: ❌ Ошибка при отправке файла. Повторная попытка...
-Bot: 📁 Файл успешно отправлен!
 ```
 
-**File Delivery Integration Features**:
-- **Progress Tracker**: ExportProgressTracker class manages throttled notifications
-- **Service Integration**: Uses ParticipantExportService for CSV generation
-- **Repository Pattern**: Leverages existing data access layer
+**Interactive Conversation Features**:
+- **Conversation Flow**: ConversationHandler-based state management with export selection workflow
+- **Service Factory Integration**: All 6 export types integrated through service factory for unified access
+- **State Management**: Proper conversation states for selection → processing → completion workflow
+- **Export Selection Keyboards**: Mobile-optimized inline keyboards with Russian localization
+- **Department Selection Interface**: Secondary keyboard for department-specific exports with all 13 departments
+- **Progress Tracker**: ExportProgressTracker class manages throttled notifications across all export types
+- **Service Integration**: Uses multiple export services (ParticipantExportService, BibleReadersExportService, ROEExportService)
+- **Repository Pattern**: Leverages existing data access layer with multi-table support
 - **3-Layer Architecture**: Follows established bot → service → data pattern
 - **Telegram File Upload**: Direct CSV delivery via Telegram document upload API
+- **Navigation & Cancellation**: Cancel options at each step, back navigation between selection screens
 - **File Size Validation**: Pre-upload validation against 50MB Telegram limit
 - **Resource Management**: Guaranteed file cleanup with try-finally blocks
 - **Error Recovery**: Comprehensive retry logic for transient failures
