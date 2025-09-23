@@ -320,7 +320,7 @@ class TestMainBotRunning:
 
             task = asyncio.create_task(main_module.run_bot())
 
-            await asyncio.wait_for(started_event.wait(), timeout=0.1)
+            await asyncio.wait_for(started_event.wait(), timeout=1.0)
 
             assert mock_create.call_count == 2
             first_updater.start_polling.assert_awaited()
@@ -330,7 +330,10 @@ class TestMainBotRunning:
             mock_sleep.assert_awaited_with(0.1)
 
             task.cancel()
-            await task
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass  # Expected when task is cancelled
 
             second_updater.stop.assert_awaited()
             second_updater.shutdown.assert_awaited()

@@ -470,6 +470,7 @@ class TestExportErrorHandling:
         return context
 
     @pytest.mark.asyncio
+    @pytest.mark.filterwarnings("ignore::telegram.warnings.PTBDeprecationWarning")
     async def test_export_command_telegram_rate_limit_with_retry(
         self, mock_update_with_file, mock_context_with_settings
     ):

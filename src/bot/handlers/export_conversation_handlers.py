@@ -8,6 +8,7 @@ department filtering, and integration with export services through service facto
 import asyncio
 import logging
 import tempfile
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -500,10 +501,22 @@ def get_export_conversation_handler() -> ConversationHandler:
     Returns:
         ConversationHandler with states, entry points, and fallbacks
     """
-    return ConversationHandler(
-        entry_points=[
-            CommandHandler("export", start_export_selection),
-        ],
+    # Suppress PTBUserWarning during handler construction due to mixed handler types
+    try:
+        from telegram.warnings import PTBUserWarning  # type: ignore
+    except Exception:  # pragma: no cover - fallback for PTB variants
+        try:
+            from telegram._utils.warnings import PTBUserWarning  # type: ignore
+        except Exception:
+            PTBUserWarning = Warning  # type: ignore
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", PTBUserWarning)
+
+        return ConversationHandler(
+            entry_points=[
+                CommandHandler("export", start_export_selection),
+            ],
         states={
             ExportStates.SELECTING_EXPORT_TYPE: [
                 CallbackQueryHandler(
@@ -535,4 +548,6 @@ def get_export_conversation_handler() -> ConversationHandler:
                 cancel_export, pattern=f"^{ExportCallbackData.CANCEL}$"
             ),
         ],
+        # Keep default mixed-handler behavior; warnings suppressed above
+        per_message=False,
     )
