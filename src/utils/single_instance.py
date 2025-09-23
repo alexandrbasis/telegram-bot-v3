@@ -100,7 +100,8 @@ class InstanceLock:
             self._fd = None
         # Best-effort: remove lock file for tidiness
         try:
-            self.path.unlink(missing_ok=True)
+            if self.path.exists():
+                self.path.unlink()
         except Exception:
             pass
 

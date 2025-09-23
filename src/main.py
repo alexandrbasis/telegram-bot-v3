@@ -344,9 +344,10 @@ def main() -> None:
     Sets up and runs the bot with proper error handling and logging.
     This function does not return under normal circumstances.
     """
+    bot_coroutine = run_bot()
     try:
         # Run the bot (async run via asyncio.run to satisfy tests)
-        asyncio.run(run_bot())
+        asyncio.run(bot_coroutine)
 
     except KeyboardInterrupt:
         print("\nBot stopped by user")
@@ -354,6 +355,24 @@ def main() -> None:
         print(f"Fatal error: {e}")
         logger.exception("Fatal error in main")
     finally:
+        # When asyncio.run is mocked in tests the coroutine is never awaited,
+        # so we need to close it manually to avoid runtime warnings.
+        if hasattr(bot_coroutine, "close"):
+            bot_coroutine.close()
+
+        # Some tests patch asyncio.run, which leaves the implicitly created
+        # default event loop open. Closing it here prevents ResourceWarnings
+        # about unclosed sockets and loops while keeping real runtime behavior
+        # (where asyncio.run() manages the loop) unchanged.
+        loop: Optional[asyncio.AbstractEventLoop]
+        try:
+            loop = asyncio.get_event_loop_policy().get_event_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop is not None and not loop.is_closed() and not loop.is_running():
+            loop.close()
+
         print("Application terminated")
 
 
