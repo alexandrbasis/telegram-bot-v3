@@ -359,15 +359,21 @@ class Participant(BaseModel):
 
     @staticmethod
     def _format_date_of_birth(value: date) -> str:
-        """Return DateOfBirth string in Airtable's European format (DD/MM/YYYY)."""
-        return value.strftime("%d/%m/%Y")
+        """Return DateOfBirth string in Airtable's ISO format (YYYY-MM-DD)."""
+        return value.strftime("%Y-%m-%d")
 
     @classmethod
     def _parse_date_of_birth(cls, value: str) -> date:
-        """Parse DateOfBirth strings coming from Airtable (European D/M/YYYY)."""
+        """Parse DateOfBirth strings coming from Airtable (ISO YYYY-MM-DD or legacy European D/M/YYYY)."""
         normalized = value.strip()
 
-        # Accept both European D/M/YYYY and legacy ISO formats for backward compatibility
+        # Try ISO format first (YYYY-MM-DD)
+        try:
+            return date.fromisoformat(normalized)
+        except ValueError:
+            pass
+
+        # Fall back to European D/M/YYYY for backward compatibility
         try:
             day_str, month_str, year_str = normalized.split("/")
             day = int(day_str)
