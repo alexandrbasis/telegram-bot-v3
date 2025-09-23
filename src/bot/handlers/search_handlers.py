@@ -387,9 +387,7 @@ async def process_name_search(
             keyboard = create_participant_selection_keyboard(search_results)
             # Send results with inline selection keyboard
             await await_if_needed(
-                update.message.reply_text(
-                    text=results_message, reply_markup=keyboard
-                )
+                update.message.reply_text(text=results_message, reply_markup=keyboard)
             )
             # Update navigation reply keyboard layout for results view
             await await_if_needed(

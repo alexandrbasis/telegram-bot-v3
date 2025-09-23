@@ -218,7 +218,11 @@ class AirtableClient:
             logger.debug(
                 "Creating record with fields: %s%s",
                 list(payload.keys()),
-                f" on table {table_id or table_name}" if (table_name or table_id) else "",
+                (
+                    f" on table {table_id or table_name}"
+                    if (table_name or table_id)
+                    else ""
+                ),
             )
 
             # Translate field names to Field IDs and option values to Option IDs
@@ -260,7 +264,11 @@ class AirtableClient:
             logger.debug(
                 "Getting record %s%s",
                 record_id,
-                f" from table {table_id or table_name}" if (table_name or table_id) else "",
+                (
+                    f" from table {table_id or table_name}"
+                    if (table_name or table_id)
+                    else ""
+                ),
             )
 
             table = self._get_table(table_name=table_name, table_id=table_id)
@@ -314,16 +322,18 @@ class AirtableClient:
                 "Updating record %s with fields: %s%s",
                 record_id,
                 list(payload.keys()),
-                f" on table {table_id or table_name}" if (table_name or table_id) else "",
+                (
+                    f" on table {table_id or table_name}"
+                    if (table_name or table_id)
+                    else ""
+                ),
             )
 
             # Translate field names to Field IDs and option values to Option IDs
             translated_fields = self._translate_fields_for_api(payload)
 
             table = self._get_table(table_name=table_name, table_id=table_id)
-            record = await asyncio.to_thread(
-                table.update, record_id, translated_fields
-            )
+            record = await asyncio.to_thread(table.update, record_id, translated_fields)
 
             logger.debug(f"Updated record with ID: {record['id']}")
             return record
@@ -358,7 +368,11 @@ class AirtableClient:
             logger.debug(
                 "Deleting record %s%s",
                 record_id,
-                f" from table {table_id or table_name}" if (table_name or table_id) else "",
+                (
+                    f" from table {table_id or table_name}"
+                    if (table_name or table_id)
+                    else ""
+                ),
             )
 
             table = self._get_table(table_name=table_name, table_id=table_id)
@@ -408,7 +422,11 @@ class AirtableClient:
                 "Listing records with formula: %s, max: %s%s",
                 formula,
                 max_records,
-                f", table: {table_id or table_name}" if (table_name or table_id) else "",
+                (
+                    f", table: {table_id or table_name}"
+                    if (table_name or table_id)
+                    else ""
+                ),
             )
 
             # Build parameters for Airtable API

@@ -134,7 +134,8 @@ async def ensure_user_access_on_start(
             if settings.is_production():
                 return False
             logger.warning(
-                "Access check failed for user %s; allowing access in non-production environment",
+                "Access check failed for user %s; allowing access in "
+                "non-production environment",
                 user.id,
             )
             return True
