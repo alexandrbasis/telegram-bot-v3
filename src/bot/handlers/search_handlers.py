@@ -29,6 +29,7 @@ from src.services.search_service import (
 )
 from src.services.service_factory import get_participant_repository
 from src.services.user_interaction_logger import get_user_interaction_logger
+from src.utils.async_utils import await_if_needed
 
 logger = logging.getLogger(__name__)
 
@@ -155,19 +156,30 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # Get unified welcome message
     welcome_message = get_welcome_message()
 
-    message = update.effective_message
+    message = getattr(update, "message", None)
+    if message is None:
+        message = getattr(update, "effective_message", None)
     if message:
-        await message.reply_text(
-            text=welcome_message,
-            reply_markup=get_main_menu_keyboard(),
-        )
-    else:
-        chat = update.effective_chat
-        if chat:
-            await context.bot.send_message(
-                chat_id=chat.id,
+        await await_if_needed(
+            message.reply_text(
                 text=welcome_message,
                 reply_markup=get_main_menu_keyboard(),
+            )
+        )
+    else:
+        chat = getattr(update, "effective_chat", None)
+        if chat is None:
+            base_message = getattr(update, "message", None)
+            if base_message is None:
+                base_message = getattr(update, "effective_message", None)
+            chat = getattr(base_message, "chat", None) if base_message else None
+        if chat:
+            await await_if_needed(
+                context.bot.send_message(
+                    chat_id=chat.id,
+                    text=welcome_message,
+                    reply_markup=get_main_menu_keyboard(),
+                )
             )
 
     return SearchStates.MAIN_MENU
@@ -216,10 +228,12 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         and context.user_data.get("force_direct_name_input")
     ):
         prompt = "Введите имя участника:"  # Russian prompt for name input
-        await query.message.edit_text(text=prompt)
-        await query.message.reply_text(
-            text="Отправьте имя или часть имени для поиска.",
-            reply_markup=get_waiting_for_name_keyboard(),
+        await await_if_needed(query.message.edit_text(text=prompt))
+        await await_if_needed(
+            query.message.reply_text(
+                text="Отправьте имя или часть имени для поиска.",
+                reply_markup=get_waiting_for_name_keyboard(),
+            )
         )
 
         if user_logger:
@@ -233,15 +247,19 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # Default: send search mode selection prompt
     search_prompt = "Выберите тип поиска:"
     if query:
-        await query.message.edit_text(text=search_prompt)
-        await query.message.reply_text(
-            text="Используйте клавиатуру ниже для выбора типа поиска.",
-            reply_markup=get_search_mode_selection_keyboard(),
+        await await_if_needed(query.message.edit_text(text=search_prompt))
+        await await_if_needed(
+            query.message.reply_text(
+                text="Используйте клавиатуру ниже для выбора типа поиска.",
+                reply_markup=get_search_mode_selection_keyboard(),
+            )
         )
     elif message:
-        await message.reply_text(
-            text=search_prompt,
-            reply_markup=get_search_mode_selection_keyboard(),
+        await await_if_needed(
+            message.reply_text(
+                text=search_prompt,
+                reply_markup=get_search_mode_selection_keyboard(),
+            )
         )
 
     if user_logger:
@@ -368,17 +386,25 @@ async def process_name_search(
         if search_results:
             keyboard = create_participant_selection_keyboard(search_results)
             # Send results with inline selection keyboard
-            await update.message.reply_text(text=results_message, reply_markup=keyboard)
+            await await_if_needed(
+                update.message.reply_text(
+                    text=results_message, reply_markup=keyboard
+                )
+            )
             # Update navigation reply keyboard layout for results view
-            await update.message.reply_text(
-                text="Используйте клавиатуру для навигации.",
-                reply_markup=get_results_navigation_keyboard(),
+            await await_if_needed(
+                update.message.reply_text(
+                    text="Используйте клавиатуру для навигации.",
+                    reply_markup=get_results_navigation_keyboard(),
+                )
             )
         else:
             # No results; keep navigation keyboard to allow retry/main menu
-            await update.message.reply_text(
-                text=results_message,
-                reply_markup=get_results_navigation_keyboard(),
+            await await_if_needed(
+                update.message.reply_text(
+                    text=results_message,
+                    reply_markup=get_results_navigation_keyboard(),
+                )
             )
 
     except Exception as e:
@@ -398,9 +424,11 @@ async def process_name_search(
 
         # Send error message
         error_message = "Ошибка. Попробуйте позже."
-        await update.message.reply_text(
-            text=error_message,
-            reply_markup=get_results_navigation_keyboard(),
+        await await_if_needed(
+            update.message.reply_text(
+                text=error_message,
+                reply_markup=get_results_navigation_keyboard(),
+            )
         )
 
     return SearchStates.SHOWING_RESULTS
@@ -467,16 +495,20 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     welcome_message = get_welcome_message()
 
     if query:
-        await query.message.edit_text(text=welcome_message)
+        await await_if_needed(query.message.edit_text(text=welcome_message))
         # Send a new message to apply the reply keyboard
-        await query.message.reply_text(
-            text="Используйте клавиатуру ниже для навигации.",
-            reply_markup=get_main_menu_keyboard(),
+        await await_if_needed(
+            query.message.reply_text(
+                text="Используйте клавиатуру ниже для навигации.",
+                reply_markup=get_main_menu_keyboard(),
+            )
         )
     elif message:
-        await message.reply_text(
-            text=welcome_message,
-            reply_markup=get_main_menu_keyboard(),
+        await await_if_needed(
+            message.reply_text(
+                text=welcome_message,
+                reply_markup=get_main_menu_keyboard(),
+            )
         )
 
     # Log bot response if logging is enabled
@@ -502,9 +534,11 @@ async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # Get unified welcome message
     welcome_message = get_welcome_message()
 
-    await update.message.reply_text(
-        text=welcome_message,
-        reply_markup=get_main_menu_keyboard(),
+    await await_if_needed(
+        update.message.reply_text(
+            text=welcome_message,
+            reply_markup=get_main_menu_keyboard(),
+        )
     )
 
     return SearchStates.MAIN_MENU
@@ -573,8 +607,11 @@ async def handle_participant_selection(
                 error_message=f"Participant not found for ID {participant_id}",
             )
 
-        await query.message.edit_text(
-            text="❌ Участник не найден.", reply_markup=get_main_menu_keyboard()
+        await await_if_needed(
+            query.message.edit_text(
+                text="❌ Участник не найден.",
+                reply_markup=get_main_menu_keyboard(),
+            )
         )
         return SearchStates.SHOWING_RESULTS
 
@@ -626,9 +663,11 @@ async def handle_search_name_mode(
     # Send name search prompt
     search_prompt = "Введите имя участника:"
 
-    await update.message.reply_text(
-        text=search_prompt,
-        reply_markup=get_waiting_for_name_keyboard(),
+    await await_if_needed(
+        update.message.reply_text(
+            text=search_prompt,
+            reply_markup=get_waiting_for_name_keyboard(),
+        )
     )
 
     return SearchStates.WAITING_FOR_NAME
@@ -659,9 +698,11 @@ async def handle_search_room_mode(
     from src.bot.messages import InfoMessages
 
     # Ask for room number and set waiting state
-    await update.message.reply_text(
-        text=InfoMessages.ENTER_ROOM_NUMBER,
-        reply_markup=get_waiting_for_room_keyboard(),
+    await await_if_needed(
+        update.message.reply_text(
+            text=InfoMessages.ENTER_ROOM_NUMBER,
+            reply_markup=get_waiting_for_room_keyboard(),
+        )
     )
 
     return RoomSearchStates.WAITING_FOR_ROOM
@@ -690,9 +731,11 @@ async def handle_search_floor_mode(
     from src.bot.handlers.floor_search_handlers import FloorSearchStates
 
     # Ask for floor number and provide discovery button (consistent with /search_floor)
-    await update.message.reply_text(
-        text=InfoMessages.ENTER_FLOOR_WITH_DISCOVERY,
-        reply_markup=get_floor_discovery_keyboard(),
+    await await_if_needed(
+        update.message.reply_text(
+            text=InfoMessages.ENTER_FLOOR_WITH_DISCOVERY,
+            reply_markup=get_floor_discovery_keyboard(),
+        )
     )
 
     return FloorSearchStates.WAITING_FOR_FLOOR
@@ -719,9 +762,11 @@ async def back_to_search_modes(
     # Send search mode selection prompt
     search_prompt = "Выберите тип поиска:"
 
-    await update.message.reply_text(
-        text=search_prompt,
-        reply_markup=get_search_mode_selection_keyboard(),
+    await await_if_needed(
+        update.message.reply_text(
+            text=search_prompt,
+            reply_markup=get_search_mode_selection_keyboard(),
+        )
     )
 
     return SearchStates.SEARCH_MODE_SELECTION

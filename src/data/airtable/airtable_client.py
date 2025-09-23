@@ -85,6 +85,7 @@ class AirtableClient:
         self.rate_limiter = RateLimiter(config.rate_limit_per_second)
         self._api: Optional[Api] = None
         self._table: Optional[Table] = None
+        self._table_cache: Dict[str, Table] = {}
 
         # Connection validation will be done on first request
         logger.info(
@@ -107,7 +108,32 @@ class AirtableClient:
                 self.config.table_id if self.config.table_id else self.config.table_name
             )
             self._table = self.api.table(self.config.base_id, table_identifier)
+            self._table_cache[table_identifier] = self._table
         return self._table
+
+    def _get_table(
+        self,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+    ) -> Table:
+        """Return the appropriate Airtable table instance, caching by identifier."""
+
+        if not table_name and not table_id:
+            return self.table
+
+        identifier = table_id if table_id else table_name
+        if identifier is None:
+            identifier = (
+                self.config.table_id if self.config.table_id else self.config.table_name
+            )
+
+        cached = self._table_cache.get(identifier)
+        if cached is not None:
+            return cached
+
+        table_instance = self.api.table(self.config.base_id, identifier)
+        self._table_cache[identifier] = table_instance
+        return table_instance
 
     def _translate_fields_for_api(self, fields: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -160,7 +186,14 @@ class AirtableClient:
             logger.error(error_msg)
             raise AirtableAPIError(error_msg, original_error=e)
 
-    async def create_record(self, fields: Dict[str, Any]) -> RecordDict:
+    async def create_record(
+        self,
+        fields: Optional[Dict[str, Any]] = None,
+        *,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+        data: Optional[Dict[str, Any]] = None,
+    ) -> RecordDict:
         """
         Create a single record in Airtable.
 
@@ -173,15 +206,26 @@ class AirtableClient:
         Raises:
             AirtableAPIError: If creation fails
         """
+        payload = data if data is not None else fields
+        if payload is None:
+            raise ValueError(
+                "Either 'fields' positional argument or 'data' keyword argument must be provided"
+            )
+
         await self.rate_limiter.acquire()
 
         try:
-            logger.debug(f"Creating record with fields: {list(fields.keys())}")
+            logger.debug(
+                "Creating record with fields: %s%s",
+                list(payload.keys()),
+                f" on table {table_id or table_name}" if (table_name or table_id) else "",
+            )
 
             # Translate field names to Field IDs and option values to Option IDs
-            translated_fields = self._translate_fields_for_api(fields)
+            translated_fields = self._translate_fields_for_api(payload)
 
-            record = await asyncio.to_thread(self.table.create, translated_fields)
+            table = self._get_table(table_name=table_name, table_id=table_id)
+            record = await asyncio.to_thread(table.create, translated_fields)
 
             logger.debug(f"Created record with ID: {record['id']}")
             return record
@@ -191,7 +235,13 @@ class AirtableClient:
             logger.error(error_msg)
             raise AirtableAPIError(error_msg, original_error=e)
 
-    async def get_record(self, record_id: str) -> Optional[RecordDict]:
+    async def get_record(
+        self,
+        record_id: str,
+        *,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+    ) -> Optional[RecordDict]:
         """
         Get a single record by ID.
 
@@ -207,9 +257,14 @@ class AirtableClient:
         await self.rate_limiter.acquire()
 
         try:
-            logger.debug(f"Getting record with ID: {record_id}")
+            logger.debug(
+                "Getting record %s%s",
+                record_id,
+                f" from table {table_id or table_name}" if (table_name or table_id) else "",
+            )
 
-            record = await asyncio.to_thread(self.table.get, record_id)
+            table = self._get_table(table_name=table_name, table_id=table_id)
+            record = await asyncio.to_thread(table.get, record_id)
 
             return record
 
@@ -224,7 +279,15 @@ class AirtableClient:
             logger.error(error_msg)
             raise AirtableAPIError(error_msg, original_error=e)
 
-    async def update_record(self, record_id: str, fields: Dict[str, Any]) -> RecordDict:
+    async def update_record(
+        self,
+        record_id: str,
+        fields: Optional[Dict[str, Any]] = None,
+        *,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+        data: Optional[Dict[str, Any]] = None,
+    ) -> RecordDict:
         """
         Update a single record.
 
@@ -238,18 +301,28 @@ class AirtableClient:
         Raises:
             AirtableAPIError: If update fails
         """
+        payload = data if data is not None else fields
+        if payload is None:
+            raise ValueError(
+                "Either 'fields' positional argument or 'data' keyword argument must be provided"
+            )
+
         await self.rate_limiter.acquire()
 
         try:
             logger.debug(
-                f"Updating record {record_id} with fields: {list(fields.keys())}"
+                "Updating record %s with fields: %s%s",
+                record_id,
+                list(payload.keys()),
+                f" on table {table_id or table_name}" if (table_name or table_id) else "",
             )
 
             # Translate field names to Field IDs and option values to Option IDs
-            translated_fields = self._translate_fields_for_api(fields)
+            translated_fields = self._translate_fields_for_api(payload)
 
+            table = self._get_table(table_name=table_name, table_id=table_id)
             record = await asyncio.to_thread(
-                self.table.update, record_id, translated_fields
+                table.update, record_id, translated_fields
             )
 
             logger.debug(f"Updated record with ID: {record['id']}")
@@ -260,7 +333,13 @@ class AirtableClient:
             logger.error(error_msg)
             raise AirtableAPIError(error_msg, original_error=e)
 
-    async def delete_record(self, record_id: str) -> bool:
+    async def delete_record(
+        self,
+        record_id: str,
+        *,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+    ) -> bool:
         """
         Delete a single record.
 
@@ -276,9 +355,14 @@ class AirtableClient:
         await self.rate_limiter.acquire()
 
         try:
-            logger.debug(f"Deleting record with ID: {record_id}")
+            logger.debug(
+                "Deleting record %s%s",
+                record_id,
+                f" from table {table_id or table_name}" if (table_name or table_id) else "",
+            )
 
-            await asyncio.to_thread(self.table.delete, record_id)
+            table = self._get_table(table_name=table_name, table_id=table_id)
+            await asyncio.to_thread(table.delete, record_id)
 
             logger.debug(f"Deleted record with ID: {record_id}")
             return True
@@ -295,6 +379,11 @@ class AirtableClient:
         fields: Optional[List[str]] = None,
         max_records: Optional[int] = None,
         view: Optional[str] = None,
+        *,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+        offset: Optional[int] = None,
+        page_size: Optional[int] = None,
     ) -> List[RecordDict]:
         """
         List records with optional filtering and pagination.
@@ -315,7 +404,12 @@ class AirtableClient:
         await self.rate_limiter.acquire()
 
         try:
-            logger.debug(f"Listing records with formula: {formula}, max: {max_records}")
+            logger.debug(
+                "Listing records with formula: %s, max: %s%s",
+                formula,
+                max_records,
+                f", table: {table_id or table_name}" if (table_name or table_id) else "",
+            )
 
             # Build parameters for Airtable API
             params: Dict[str, Any] = {}
@@ -329,8 +423,24 @@ class AirtableClient:
                 params["max_records"] = max_records
             if view:
                 params["view"] = view
+            if page_size:
+                params["page_size"] = page_size
+
+            table = self._get_table(table_name=table_name, table_id=table_id)
+
             # Ensure a list is returned to keep behavior identical
-            records = await asyncio.to_thread(lambda: list(self.table.all(**params)))
+            records = await asyncio.to_thread(lambda: list(table.all(**params)))
+
+            if offset:
+                try:
+                    offset_int = int(offset)
+                    if offset_int > 0:
+                        records = records[offset_int:]
+                except (TypeError, ValueError):
+                    logger.warning(
+                        "Invalid offset '%s' provided to list_records; ignoring.",
+                        offset,
+                    )
 
             logger.debug(f"Retrieved {len(records)} records")
             return records
@@ -340,7 +450,40 @@ class AirtableClient:
             logger.error(error_msg)
             raise AirtableAPIError(error_msg, original_error=e)
 
-    async def bulk_create(self, records: List[Dict[str, Any]]) -> List[RecordDict]:
+    async def get_records(
+        self,
+        *,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+        filter_formula: Optional[str] = None,
+        max_records: Optional[int] = None,
+        sort: Optional[List[str]] = None,
+        fields: Optional[List[str]] = None,
+        view: Optional[str] = None,
+        offset: Optional[int] = None,
+        page_size: Optional[int] = None,
+    ) -> List[RecordDict]:
+        """Alias for list_records with repository-friendly parameter names."""
+
+        return await self.list_records(
+            formula=filter_formula,
+            sort=sort,
+            fields=fields,
+            max_records=max_records,
+            view=view,
+            table_name=table_name,
+            table_id=table_id,
+            offset=offset,
+            page_size=page_size,
+        )
+
+    async def bulk_create(
+        self,
+        records: List[Dict[str, Any]],
+        *,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+    ) -> List[RecordDict]:
         """
         Create multiple records in batch.
 
@@ -371,8 +514,9 @@ class AirtableClient:
                     self._translate_fields_for_api(record) for record in batch
                 ]
 
+                table = self._get_table(table_name=table_name, table_id=table_id)
                 batch_results = await asyncio.to_thread(
-                    self.table.batch_create, translated_batch
+                    table.batch_create, translated_batch
                 )
 
                 results.extend(batch_results)
@@ -385,7 +529,13 @@ class AirtableClient:
 
         return results
 
-    async def bulk_update(self, updates: List[Dict[str, Any]]) -> List[RecordDict]:
+    async def bulk_update(
+        self,
+        updates: List[Dict[str, Any]],
+        *,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+    ) -> List[RecordDict]:
         """
         Update multiple records in batch.
 
@@ -420,8 +570,9 @@ class AirtableClient:
                     for update in batch
                 ]
 
+                table = self._get_table(table_name=table_name, table_id=table_id)
                 batch_results = await asyncio.to_thread(
-                    self.table.batch_update, translated_batch  # type: ignore[arg-type]
+                    table.batch_update, translated_batch  # type: ignore[arg-type]
                 )
 
                 results.extend(batch_results)
