@@ -32,11 +32,24 @@ async def start_command_handler(
     - Creates new request for new users
     - Shows denial message for denied users
     """
+    has_access = await ensure_user_access_on_start(update, context)
+
+    chat = update.effective_chat
+    if has_access and chat:
+        await context.bot.send_message(
+            chat_id=chat.id, text=AccessRequestMessages.ACCESS_GRANTED_RU
+        )
+
+
+async def ensure_user_access_on_start(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> bool:
+    """Ensure the user has access before entering the main conversation."""
     user = update.effective_user
     chat = update.effective_chat
 
     if not user or not chat:
-        return
+        return False
 
     # Initialize service
     repository = get_user_access_repository()
@@ -48,48 +61,50 @@ async def start_command_handler(
 
         if existing_request:
             if existing_request.status == AccessRequestStatus.APPROVED:
-                # User is approved - show welcome message
-                await context.bot.send_message(
-                    chat_id=chat.id, text=AccessRequestMessages.ACCESS_GRANTED_RU
-                )
-            elif existing_request.status == AccessRequestStatus.PENDING:
-                # User has pending request
+                return True
+            if existing_request.status == AccessRequestStatus.PENDING:
                 await context.bot.send_message(
                     chat_id=chat.id, text=AccessRequestMessages.EXISTING_PENDING_RU
                 )
+                logger.info(
+                    "User %s has a pending access request", user.id
+                )
             elif existing_request.status == AccessRequestStatus.DENIED:
-                # User was denied
                 await context.bot.send_message(
                     chat_id=chat.id, text=AccessRequestMessages.DENIED_RU
                 )
-        else:
-            # New user - submit access request
-            new_request = await service.submit_request(
-                telegram_user_id=user.id, telegram_username=user.username
+                logger.info("User %s previously denied access", user.id)
+            return False
+
+        # New user - submit access request
+        new_request = await service.submit_request(
+            telegram_user_id=user.id, telegram_username=user.username
+        )
+
+        await context.bot.send_message(
+            chat_id=chat.id, text=AccessRequestMessages.PENDING_REQUEST_RU
+        )
+
+        # Notify admins about new request
+        try:
+            settings = Settings()
+            notification_service = NotificationService(
+                bot=context.bot, admin_ids=settings.telegram.admin_user_ids
             )
-
-            await context.bot.send_message(
-                chat_id=chat.id, text=AccessRequestMessages.PENDING_REQUEST_RU
-            )
-
-            # Notify admins about new request
-            try:
-                settings = Settings()
-                notification_service = NotificationService(
-                    bot=context.bot, admin_ids=settings.telegram.admin_user_ids
-                )
-                await notification_service.notify_admins_of_new_request(new_request)
-                logger.info(
-                    f"Admins notified about new access request from user {user.id}"
-                )
-            except Exception as e:
-                logger.error(
-                    f"Failed to notify admins about request from user {user.id}: {e}"
-                )
-
+            await notification_service.notify_admins_of_new_request(new_request)
             logger.info(
-                f"New access request submitted by user {user.id} (@{user.username})"
+                f"Admins notified about new access request from user {user.id}"
             )
+        except Exception as e:
+            logger.error(
+                f"Failed to notify admins about request from user {user.id}: {e}"
+            )
+
+        logger.info(
+            f"New access request submitted by user {user.id} (@{user.username})"
+        )
+
+        return False
 
     except Exception as e:
         logger.error(f"Error handling start command for user {user.id}: {e}")
@@ -97,6 +112,9 @@ async def start_command_handler(
             chat_id=chat.id,
             text=AccessRequestMessages.REQUEST_ERROR_RU,
         )
+        return False
+
+    return False
 
 
 async def check_user_access(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:

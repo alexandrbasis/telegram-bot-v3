@@ -22,7 +22,6 @@ from src.bot.handlers.admin_handlers import (
     handle_logging_toggle_command,
     requests_command_handler,
 )
-from src.bot.handlers.auth_handlers import start_command_handler
 from src.bot.handlers.export_conversation_handlers import (
     get_export_conversation_handler,
 )
@@ -149,9 +148,6 @@ def create_application() -> Application:
 
     # Add access control handlers
     logger.info("Adding access control handlers")
-    start_handler = CommandHandler("start", start_command_handler)
-    app.add_handler(start_handler)
-
     requests_handler = CommandHandler("requests", requests_command_handler)
     app.add_handler(requests_handler)
 
