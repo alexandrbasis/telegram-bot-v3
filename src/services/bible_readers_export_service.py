@@ -283,12 +283,10 @@ class BibleReadersExportService:
             else:
                 row[airtable_field] = str(value)
 
-        # Hydrate participant names and populate Participants column with readable values
+        # Hydrate participant names for Participants column
         participant_names = await self._hydrate_participant_names(
             bible_reader.participants
         )
-        row["Participants"] = (
-            "; ".join(participant_names) if participant_names else ""
-        )
+        row["Participants"] = "; ".join(participant_names) if participant_names else ""
 
         return row
