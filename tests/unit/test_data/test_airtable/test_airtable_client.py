@@ -555,10 +555,7 @@ class TestAirtableClientOperations:
             {"id": "rec123", "fields": {"TestField": "Value 1"}},
             {"id": "rec456", "fields": {"TestField": "Value 2"}},
         ]
-        mock_response = {
-            "records": expected_records,
-            "offset": None
-        }
+        mock_response = {"records": expected_records, "offset": None}
 
         # Mock the API request method instead of table.all
         client.api.request.return_value = mock_response
