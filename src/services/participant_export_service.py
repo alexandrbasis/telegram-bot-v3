@@ -43,47 +43,29 @@ class ParticipantExportService:
 
     # Fallback view field ordering to ensure consistent headers even when
     # Airtable returns sparse data (fields with no values are omitted).
-    VIEW_HEADER_HINTS: Dict[str, List[str]] = {
+    VIEW_HEADER_ORDER: Dict[str, List[str]] = {
         TEAM_VIEW_NAME: [
             "FullNameRU",
-            "FullNameEN",
             "Gender",
+            "DateOfBirth",
             "Size",
-            "Church",
-            "Role",
             "Department",
             "CountryAndCity",
-            "PaymentStatus",
-            "Floor",
-            "DateOfBirth",
-            "ChurchLeader",
-            "IsDepartmentChief",
+            "Church",
             "SubmittedBy",
+            "FullNameEN",
             "ContactInformation",
-            "Age",
-            "RoeAssistant",
-            "Notes",
-            "Roe",
-            "BibleReaders",
-            "ROE 2",
         ],
         CANDIDATE_VIEW_NAME: [
             "FullNameRU",
-            "FullNameEN",
             "Gender",
-            "Size",
-            "Church",
-            "Role",
-            "CountryAndCity",
-            "SubmittedBy",
-            "PaymentStatus",
-            "Floor",
-            "RoomNumber",
             "DateOfBirth",
-            "ChurchLeader",
+            "Size",
+            "CountryAndCity",
+            "Church",
+            "SubmittedBy",
+            "FullNameEN",
             "ContactInformation",
-            "Age",
-            "Notes",
         ],
     }
 
@@ -442,6 +424,9 @@ class ParticipantExportService:
         self, view_name: str, records: List[Dict[str, Any]]
     ) -> List[str]:
         """Determine CSV headers matching the Airtable view ordering."""
+        if view_name in self.VIEW_HEADER_ORDER:
+            return list(self.VIEW_HEADER_ORDER[view_name])
+
         headers: List[str] = []
         seen = set()
 
@@ -451,13 +436,7 @@ class ParticipantExportService:
                     headers.append(field_name)
                     seen.add(field_name)
 
-        for hint in self.VIEW_HEADER_HINTS.get(view_name, []):
-            if hint not in seen:
-                headers.append(hint)
-                seen.add(hint)
-
         if not headers:
-            # Fallback to default CSV headers when view data is empty
             headers = self._get_csv_headers()
 
         return headers

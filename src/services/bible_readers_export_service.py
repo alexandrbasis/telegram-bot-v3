@@ -238,19 +238,7 @@ class BibleReadersExportService:
         Returns:
             List of Airtable field names for CSV headers plus hydrated fields
         """
-        # Get core Airtable field names from mapping (excluding 'id')
-        headers = []
-        for (
-            python_field,
-            airtable_field,
-        ) in BibleReadersFieldMapping.PYTHON_TO_AIRTABLE.items():
-            if python_field != "record_id":  # Skip record_id as it's internal
-                headers.append(airtable_field)
-
-        # Add custom hydrated field for participant names
-        headers.append("ParticipantNames")
-
-        return headers
+        return ["Where", "Participants", "When", "Bible"]
 
     async def _bible_reader_to_csv_row(
         self, bible_reader: BibleReader
@@ -295,11 +283,11 @@ class BibleReadersExportService:
             else:
                 row[airtable_field] = str(value)
 
-        # Hydrate participant names
+        # Hydrate participant names and populate Participants column with readable values
         participant_names = await self._hydrate_participant_names(
             bible_reader.participants
         )
-        row["ParticipantNames"] = (
+        row["Participants"] = (
             "; ".join(participant_names) if participant_names else ""
         )
 

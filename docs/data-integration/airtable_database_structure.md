@@ -1,9 +1,9 @@
 # Airtable Database Structure Documentation
 
 ## Last Updated
-- **Date**: September 22, 2025
+- **Date**: September 23, 2025
 - **Version**: 3.1.0
-- **Changes**: Synchronized ROE and BibleReaders schemas with new scheduling fields, refreshed participant view catalog, documented ROE prayer support links
+- **Changes**: Added BotAccessRequests schema details including field IDs, env configuration, and view references
 
 ## Database Information
 - **Base ID**: `appRp7Vby2JMzN0mC`
@@ -29,6 +29,10 @@ AIRTABLE_BIBLE_READERS_TABLE_ID=tblGEnSfpPOuPLXcm
 # ROE table
 AIRTABLE_ROE_TABLE_NAME=ROE
 AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
+
+# Bot Access Requests table
+AIRTABLE_ACCESS_REQUESTS_TABLE_NAME=BotAccessRequests
+AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN
 ```
 
 ## Tables Overview
@@ -45,9 +49,21 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
 **Table ID**: `tblGEnSfpPOuPLXcm`
 **Primary Field**: `Where` (fldsSNHSXJBhewCxq)
 
+### 4. BotAccessRequests Table
+**Table ID**: `tblQWWEcHx9sfhsgN`
+**Primary Field**: `TelegramUserId` (fldeiF3gxg4fZMirc)
+
 ## Field Specifications
 
 ### Text Fields
+
+#### TelegramUsername
+- **Field ID**: `fld1RzNGWTGl8fSE4`
+- **Type**: `singleLineText`
+- **Purpose**: Telegram username captured without @ prefix
+- **Required**: No
+- **Example**: `basisalexandr`
+
 
 #### FullNameRU
 - **Field ID**: `fldOcpA3JW5MRmR6R`
@@ -116,6 +132,27 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
 
 ### Single Select Fields
 
+#### Status (BotAccessRequests)
+- **Field ID**: `fldcuRa8qeUDKY3hN`
+- **Type**: `singleSelect`
+- **Purpose**: Tracks request state
+- **Required**: Yes
+- **Options**:
+  - `Pending` - Color: `yellowLight2` - ID: `sel2z5NxHBR4zPIbY`
+  - `Approved` - Color: `greenLight2` - ID: `selw76sykZ8WNV5nP`
+  - `Denied` - Color: `redLight2` - ID: `selterUXC4cXAuyWI`
+
+#### AccessLevel (BotAccessRequests)
+- **Field ID**: `fldRBCoHwrJ87hdjr`
+- **Type**: `singleSelect`
+- **Purpose**: Defines access tier granted after approval
+- **Required**: Yes
+- **Options**:
+  - `VIEWER` - Color: `tealLight2` - ID: `seldUb45waf3xvSOH`
+  - `COORDINATOR` - Color: `cyanLight2` - ID: `selhBl3PB3h6NQ9TQ`
+  - `ADMIN` - Color: `blueLight2` - ID: `selUPw7UMErtc7O9n`
+
+
 #### Gender
 - **Field ID**: `fldOAGXoU0DqqFRmB`
 - **Type**: `singleSelect`
@@ -178,6 +215,13 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
   - `Unpaid` - Color: `redLight2` - ID: `selFWmvtAQC7EEB72`
 
 ### Number Fields
+
+#### TelegramUserId
+- **Field ID**: `fldeiF3gxg4fZMirc`
+- **Type**: `number` (precision 0)
+- **Purpose**: Stores Telegram user ID for lookup and uniqueness
+- **Required**: Yes (primary field in BotAccessRequests table)
+- **Example**: `5212991086`
 
 #### PaymentAmount
 - **Field ID**: `fldyP24ZbeGD8nnaZ`
@@ -284,14 +328,14 @@ The following views have been precisely documented to support view-driven export
 
 1. **All Data** (`viwxzBkV6XPSOlaY6`) - Grid view showing the full participant roster
 2. **Тимы** (`viwhPNd0BbAxw9lr2`) - Grid view filtered for active team members
-   - **Exact Export Column Order**: `FullNameRU`, `FullNameEN`, `Gender`, `Size`, `Church`, `Role`, `Department`, `CountryAndCity`, `PaymentStatus`, `Floor`, `DateOfBirth`, `ChurchLeader`, `IsDepartmentChief`, `SubmittedBy`, `ContactInformation`, `Age`, `RoeAssistant`, `Notes`, `Roe`, `BibleReaders`, `ROE 2`
-   - **Export Integration**: Used by `ParticipantExportService` for Team role filtering with preserved view structure
-   - **Column Order Preservation**: Export service maintains exact Airtable view ordering including linked fields
+   - **Exact Export Column Order**: `FullNameRU`, `Gender`, `DateOfBirth`, `Size`, `Department`, `CountryAndCity`, `Church`, `SubmittedBy`, `FullNameEN`, `ContactInformation`
+   - **Export Integration**: Used by `ParticipantExportService` for Team role and department-based exports with preserved view structure
+   - **Column Order Preservation**: Export service maintains exact Airtable view ordering for participant essentials
 3. **Тимы по департаментам** (`viwsTX6z1SKc0fc9c`) - Grid view grouping team members by department assignments (shares the same column layout as **Тимы**)
 4. **Кандидаты** (`viwIJSnpWr61efCYB`) - Grid view filtered for candidate applications
-   - **Exact Export Column Order**: `FullNameRU`, `FullNameEN`, `Gender`, `Size`, `Church`, `Role`, `CountryAndCity`, `SubmittedBy`, `PaymentStatus`, `Floor`, `RoomNumber`, `DateOfBirth`, `ChurchLeader`, `ContactInformation`, `Age`, `Notes`
+   - **Exact Export Column Order**: `FullNameRU`, `Gender`, `DateOfBirth`, `Size`, `CountryAndCity`, `Church`, `SubmittedBy`, `FullNameEN`, `ContactInformation`
    - **Export Integration**: Used by `ParticipantExportService` for Candidate role filtering with preserved view structure
-   - **Column Order Preservation**: Export service maintains exact Airtable view ordering optimized for candidate data
+   - **Column Order Preservation**: Export service maintains concise candidate-focused column ordering
 5. **По этажам** (`viwvKvD2hDiAHmEK9`) - Grid view grouped by lodging floor assignments
 6. **По комнатам** (`viwOFJJ8vmhwCsiJZ`) - Grid view grouped by room assignments
 7. **Размеры** (`viwcH4YV8e0bOsXDn`) - Grid view grouping by clothing size selections
@@ -311,6 +355,9 @@ The following views have been precisely documented to support view-driven export
 - **Table ID**: `tbl0j8bcgkV3lVAdc`
 - **Primary Field**: `RoeTopic` (fldSniGvfWpmkpc1r)
 - **Purpose**: Manages ROE (Rollo of Encouragement) sessions and assignments
+
+### Export Column Order
+- `RoeTopic`, `Roista`, `RoeDate`, `RoeTiming`, `RoeDuration`, `Assistant`, `Prayer`
 
 ### ROE Table Fields
 
@@ -370,6 +417,9 @@ The following views have been precisely documented to support view-driven export
 - **Table ID**: `tblGEnSfpPOuPLXcm`
 - **Primary Field**: `Where` (fldsSNHSXJBhewCxq)
 - **Purpose**: Manages Bible reading sessions and reader assignments
+
+### Export Column Order
+- `Where`, `Participants`, `When`, `Bible`
 
 ### BibleReaders Table Fields
 
@@ -528,3 +578,9 @@ The following views have been precisely documented to support view-driven export
     - **Optional Filtering**: Filters applied while preserving complete view column structure for consistency
     - **Linked Field Support**: Relationship fields (Roe, BibleReaders, ROE 2) included in exports with proper formatting
     - **Fall-back Header Support**: VIEW_HEADER_HINTS provide column ordering when view returns sparse data
+
+## Bot Access Requests Table Details
+- **Table ID**: tblQWWEcHx9sfhsgN
+- **Primary View**: `Grid view` (viwVDrguxKWbRS9Xz)
+- **Key Fields**: TelegramUserId (primary), Status, AccessLevel
+- **Usage Notes**: Pending requests filtered in application code; AccessLevel defaults to VIEWER upon creation.

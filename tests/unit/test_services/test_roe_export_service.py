@@ -165,6 +165,15 @@ class TestGetAllROEAsCSV:
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
+        assert reader.fieldnames == [
+            "RoeTopic",
+            "Roista",
+            "RoeDate",
+            "RoeTiming",
+            "RoeDuration",
+            "Assistant",
+            "Prayer",
+        ]
         rows = list(reader)
 
         assert len(rows) == 2
@@ -175,16 +184,16 @@ class TestGetAllROEAsCSV:
         assert first_row["RoeDate"] == "2025-01-25"
         assert first_row["RoeTiming"] == "Morning"
         assert first_row["RoeDuration"] == "15"
-        assert "Иванов Иван Иванович" in first_row["RoistaNames"]
-        assert "Петрова Мария Сергеевна" in first_row["AssistantNames"]
-        assert "Сидоров Петр Александрович" in first_row["PrayerNames"]
+        assert "Иванов Иван Иванович" in first_row["Roista"]
+        assert "Петрова Мария Сергеевна" in first_row["Assistant"]
+        assert "Сидоров Петр Александрович" in first_row["Prayer"]
 
         # Check second row with multiple presenters
         second_row = rows[1]
         assert second_row["RoeTopic"] == "Прощение"
-        assert "Петрова Мария Сергеевна" in second_row["RoistaNames"]
-        assert "Сидоров Петр Александрович" in second_row["RoistaNames"]
-        assert second_row["AssistantNames"] == ""  # No assistant
+        assert "Петрова Мария Сергеевна" in second_row["Roista"]
+        assert "Сидоров Петр Александрович" in second_row["Roista"]
+        assert second_row["Assistant"] == ""  # No assistant
 
     @pytest.mark.asyncio
     async def test_export_roe_empty_relationships(
@@ -214,9 +223,9 @@ class TestGetAllROEAsCSV:
         rows = list(reader)
 
         assert len(rows) == 1
-        assert rows[0]["RoistaNames"] == ""
-        assert rows[0]["AssistantNames"] == ""
-        assert rows[0]["PrayerNames"] == ""
+        assert rows[0]["Roista"] == ""
+        assert rows[0]["Assistant"] == ""
+        assert rows[0]["Prayer"] == ""
 
     @pytest.mark.asyncio
     async def test_export_roe_missing_participants(
@@ -259,9 +268,9 @@ class TestGetAllROEAsCSV:
 
         assert len(rows) == 1
         # Should only include existing participants
-        assert rows[0]["RoistaNames"] == "Существующий участник 1"
-        assert rows[0]["AssistantNames"] == ""  # Missing participant excluded
-        assert rows[0]["PrayerNames"] == "Существующий участник 2"
+        assert rows[0]["Roista"] == "Существующий участник 1"
+        assert rows[0]["Assistant"] == ""  # Missing participant excluded
+        assert rows[0]["Prayer"] == "Существующий участник 2"
 
     @pytest.mark.asyncio
     async def test_csv_headers_match_field_mapping(

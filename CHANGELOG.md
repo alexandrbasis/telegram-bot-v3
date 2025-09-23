@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Airtable View-Based Participant Export Alignment** – Complete alignment of participant exports with Airtable Тимы/Кандидаты views enabling direct comparability between export files and live base structure for improved data consistency and workflow efficiency (PR #57, completed 2025-09-23, merged at SHA 2558744)
+- **Airtable View-Based Participant Export Alignment** – Complete alignment of participant exports with Airtable Тимы/Кандидаты views enabling direct comparability between export files and live base structure for improved data consistency and workflow efficiency (PR #57, completed 2025-09-23, merged at SHA ee3d204, merged on 2025-09-23T06:08:00Z, PR URL https://github.com/alexandrbasis/telegram-bot-v3/pull/57)
   - Enhanced repository interface with view-based record retrieval capability (`src/data/repositories/participant_repository.py:399-408`)
     - Added list_view_records abstract method supporting raw Airtable view data fetching with filter preservation
     - Enables export services to access complete view structure including column ordering and linked field relationships
@@ -69,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Complete BibleReadersExportService with participant name hydration (`src/services/bible_readers_export_service.py`)
     - Dedicated export service for BibleReaders table with CSV generation and participant relationship resolution
     - Participant name hydration from linked participant IDs providing actionable assignment data with complete contact details
-    - Custom ParticipantNames field formatting with proper CSV structure and comprehensive error handling
+    - Participants column populated with hydrated reader names for actionable ministry planning
     - Progress tracking integration and file management following established service patterns
   - Complete ROEExportService with multi-relationship hydration (`src/services/roe_export_service.py`)
     - Dedicated export service for ROE table with complex presenter, assistant, and prayer partner relationship handling

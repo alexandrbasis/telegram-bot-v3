@@ -144,6 +144,7 @@ class TestGetAllBibleReadersAsCSV:
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
+        assert reader.fieldnames == ["Where", "Participants", "When", "Bible"]
         rows = list(reader)
 
         assert len(rows) == 2
@@ -153,8 +154,8 @@ class TestGetAllBibleReadersAsCSV:
         assert first_row["Where"] == "Утренняя служба"
         assert first_row["When"] == "2025-01-25"
         assert first_row["Bible"] == "Псалом 23:1-6"
-        assert "Иванов Иван Иванович" in first_row["ParticipantNames"]
-        assert "Петрова Мария Сергеевна" in first_row["ParticipantNames"]
+        assert "Иванов Иван Иванович" in first_row["Participants"]
+        assert "Петрова Мария Сергеевна" in first_row["Participants"]
 
     @pytest.mark.asyncio
     async def test_export_bible_readers_empty_participants(
@@ -181,7 +182,7 @@ class TestGetAllBibleReadersAsCSV:
         rows = list(reader)
 
         assert len(rows) == 1
-        assert rows[0]["ParticipantNames"] == ""
+        assert rows[0]["Participants"] == ""
 
     @pytest.mark.asyncio
     async def test_export_bible_readers_missing_participants(
@@ -219,7 +220,7 @@ class TestGetAllBibleReadersAsCSV:
 
         assert len(rows) == 1
         # Should only include existing participant
-        assert rows[0]["ParticipantNames"] == "Существующий участник"
+        assert rows[0]["Participants"] == "Существующий участник"
 
     @pytest.mark.asyncio
     async def test_csv_headers_match_field_mapping(

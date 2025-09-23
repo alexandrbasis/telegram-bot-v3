@@ -694,6 +694,18 @@ class TestRoleBasedFiltering:
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
+        expected_headers = [
+            "FullNameRU",
+            "Gender",
+            "DateOfBirth",
+            "Size",
+            "CountryAndCity",
+            "Church",
+            "SubmittedBy",
+            "FullNameEN",
+            "ContactInformation",
+        ]
+        assert reader.fieldnames == expected_headers
         rows = list(reader)
 
         # Should only contain CANDIDATE participants
@@ -781,10 +793,19 @@ class TestRoleBasedFiltering:
         reader = csv.DictReader(io.StringIO(csv_data))
         actual_headers = reader.fieldnames
 
-        assert actual_headers is not None
-        assert "FullNameRU" in actual_headers
-        assert "Role" in actual_headers
-        assert "Department" in actual_headers
+        expected_headers = [
+            "FullNameRU",
+            "Gender",
+            "DateOfBirth",
+            "Size",
+            "Department",
+            "CountryAndCity",
+            "Church",
+            "SubmittedBy",
+            "FullNameEN",
+            "ContactInformation",
+        ]
+        assert actual_headers == expected_headers
 
 
 class TestDepartmentBasedFiltering:
@@ -842,6 +863,19 @@ class TestDepartmentBasedFiltering:
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
+        expected_headers = [
+            "FullNameRU",
+            "Gender",
+            "DateOfBirth",
+            "Size",
+            "Department",
+            "CountryAndCity",
+            "Church",
+            "SubmittedBy",
+            "FullNameEN",
+            "ContactInformation",
+        ]
+        assert reader.fieldnames == expected_headers
         rows = list(reader)
 
         # Should only contain WORSHIP department participants
