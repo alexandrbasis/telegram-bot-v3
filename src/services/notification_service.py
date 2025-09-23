@@ -133,7 +133,7 @@ class NotificationService:
     ) -> str:
         """Format approval message based on language."""
         if language == "en":
-            access_level_str = access_level.value if access_level else 'VIEWER'
+            access_level_str = access_level.value if access_level else "VIEWER"
             message = f"✅ You're all set! Assigned access level: {access_level_str}."
 
             if admin_notes:
@@ -141,7 +141,7 @@ class NotificationService:
 
             message += "\n\nUse /start to begin working with the bot."
         else:  # Default to Russian
-            access_level_str = access_level.value if access_level else 'VIEWER'
+            access_level_str = access_level.value if access_level else "VIEWER"
             message = f"✅ Доступ подтверждён! Ваша роль: {access_level_str}."
 
             if admin_notes:

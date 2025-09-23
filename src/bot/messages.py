@@ -41,21 +41,35 @@ class AccessRequestMessages:
     ADMIN_NOTE_EN = "\n\nAdmin note: {notes}"
 
     # Error messages
-    REQUEST_ERROR_RU = "Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже."
-    REQUEST_ERROR_EN = "An error occurred while processing the request. Please try again later."
+    REQUEST_ERROR_RU = (
+        "Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже."
+    )
+    REQUEST_ERROR_EN = (
+        "An error occurred while processing the request. Please try again later."
+    )
 
-    ACCESS_CHECK_ERROR_RU = "Произошла ошибка при проверке доступа. Пожалуйста, попробуйте позже."
-    ACCESS_CHECK_ERROR_EN = "An error occurred while checking access. Please try again later."
+    ACCESS_CHECK_ERROR_RU = (
+        "Произошла ошибка при проверке доступа. Пожалуйста, попробуйте позже."
+    )
+    ACCESS_CHECK_ERROR_EN = (
+        "An error occurred while checking access. Please try again later."
+    )
 
-    LOAD_REQUESTS_ERROR_RU = "Произошла ошибка при загрузке запросов. Пожалуйста, попробуйте позже."
-    LOAD_REQUESTS_ERROR_EN = "An error occurred while loading requests. Please try again later."
+    LOAD_REQUESTS_ERROR_RU = (
+        "Произошла ошибка при загрузке запросов. Пожалуйста, попробуйте позже."
+    )
+    LOAD_REQUESTS_ERROR_EN = (
+        "An error occurred while loading requests. Please try again later."
+    )
 
     # Access control messages
     ADMIN_ONLY_RU = "Эта команда доступна только администраторам."
     ADMIN_ONLY_EN = "This command is available to administrators only."
 
     NEED_APPROVAL_RU = "Для использования этой функции необходимо одобрение администратора. Используйте /start для запроса доступа."
-    NEED_APPROVAL_EN = "This function requires administrator approval. Use /start to request access."
+    NEED_APPROVAL_EN = (
+        "This function requires administrator approval. Use /start to request access."
+    )
 
     PENDING_PROCESSING_RU = "Ваш запрос на доступ обрабатывается. Пожалуйста, подождите одобрения администратора."
     PENDING_PROCESSING_EN = "Your access request is being processed. Please wait for administrator approval."

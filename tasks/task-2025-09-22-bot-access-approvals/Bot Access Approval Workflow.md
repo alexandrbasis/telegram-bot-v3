@@ -8,8 +8,8 @@
 
 ### PR Details
 - **Branch**: feature/agb-67-bot-access-approval-workflow
-- **PR URL**: [Will be added during implementation]
-- **Status**: Draft
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/59
+- **Status**: ✅ Ready for Merge
 
 ## Business Requirements
 **Status**: ✅ Approved | **Approved by**: Alexandr Basis | **Date**: 2025-09-22
