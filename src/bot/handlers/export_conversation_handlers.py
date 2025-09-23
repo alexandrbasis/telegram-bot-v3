@@ -539,7 +539,8 @@ def get_export_conversation_handler() -> ConversationHandler:
                     ),
                 ],
                 ExportStates.PROCESSING_EXPORT: [
-                    # This state handles the export process, no additional handlers needed
+                    # This state handles the export process
+                    # No additional handlers needed
                     # The export process ends the conversation automatically
                 ],
             },
