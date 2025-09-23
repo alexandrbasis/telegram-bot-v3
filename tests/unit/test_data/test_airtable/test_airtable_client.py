@@ -550,14 +550,30 @@ class TestAirtableClientOperations:
         """Test successful record listing."""
         client, mock_table = client_with_mock_table
 
-        result = await client.list_records()
-
-        expected = [
+        # Mock the API response for the new pagination format
+        expected_records = [
             {"id": "rec123", "fields": {"TestField": "Value 1"}},
             {"id": "rec456", "fields": {"TestField": "Value 2"}},
         ]
-        assert result == expected
-        mock_table.all.assert_called_once_with()
+        mock_response = {
+            "records": expected_records,
+            "offset": None
+        }
+
+        # Mock the API request method instead of table.all
+        client.api.request.return_value = mock_response
+
+        result = await client.list_records()
+
+        # Verify the new pagination format
+        assert isinstance(result, dict)
+        assert "records" in result
+        assert "offset" in result
+        assert result["records"] == expected_records
+        assert result["offset"] is None  # No next page in this test
+
+        # Verify API was called correctly
+        client.api.request.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_list_records_with_parameters(self, client_with_mock_table):
