@@ -6,22 +6,23 @@ for bot features during the approval workflow.
 """
 
 import logging
+
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from src.services.access_request_service import AccessRequestService
-from src.services.notification_service import NotificationService
-from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
-from src.services.service_factory import get_airtable_client
-from src.models.user_access_request import AccessRequestStatus, AccessLevel
 from src.bot.messages import AccessRequestMessages
 from src.config.settings import Settings
-
+from src.models.user_access_request import AccessLevel, AccessRequestStatus
+from src.services.access_request_service import AccessRequestService
+from src.services.notification_service import NotificationService
+from src.services.service_factory import get_user_access_repository
 
 logger = logging.getLogger(__name__)
 
 
-async def start_command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def start_command_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     """
     Handle /start command with access control.
 
@@ -38,8 +39,7 @@ async def start_command_handler(update: Update, context: ContextTypes.DEFAULT_TY
         return
 
     # Initialize service
-    airtable_client = get_airtable_client()
-    repository = AirtableUserAccessRepository(airtable_client)
+    repository = get_user_access_repository()
     service = AccessRequestService(repository)
 
     try:
@@ -50,52 +50,52 @@ async def start_command_handler(update: Update, context: ContextTypes.DEFAULT_TY
             if existing_request.status == AccessRequestStatus.APPROVED:
                 # User is approved - show welcome message
                 await context.bot.send_message(
-                    chat_id=chat.id,
-                    text=AccessRequestMessages.ACCESS_GRANTED_RU
+                    chat_id=chat.id, text=AccessRequestMessages.ACCESS_GRANTED_RU
                 )
             elif existing_request.status == AccessRequestStatus.PENDING:
                 # User has pending request
                 await context.bot.send_message(
-                    chat_id=chat.id,
-                    text=AccessRequestMessages.EXISTING_PENDING_RU
+                    chat_id=chat.id, text=AccessRequestMessages.EXISTING_PENDING_RU
                 )
             elif existing_request.status == AccessRequestStatus.DENIED:
                 # User was denied
                 await context.bot.send_message(
-                    chat_id=chat.id,
-                    text=AccessRequestMessages.DENIED_RU
+                    chat_id=chat.id, text=AccessRequestMessages.DENIED_RU
                 )
         else:
             # New user - submit access request
             new_request = await service.submit_request(
-                telegram_user_id=user.id,
-                telegram_username=user.username
+                telegram_user_id=user.id, telegram_username=user.username
             )
 
             await context.bot.send_message(
-                chat_id=chat.id,
-                text=AccessRequestMessages.PENDING_REQUEST_RU
+                chat_id=chat.id, text=AccessRequestMessages.PENDING_REQUEST_RU
             )
 
             # Notify admins about new request
             try:
                 settings = Settings()
                 notification_service = NotificationService(
-                    bot=context.bot,
-                    admin_ids=settings.telegram.admin_user_ids
+                    bot=context.bot, admin_ids=settings.telegram.admin_user_ids
                 )
                 await notification_service.notify_admins_of_new_request(new_request)
-                logger.info(f"Admins notified about new access request from user {user.id}")
+                logger.info(
+                    f"Admins notified about new access request from user {user.id}"
+                )
             except Exception as e:
-                logger.error(f"Failed to notify admins about request from user {user.id}: {e}")
+                logger.error(
+                    f"Failed to notify admins about request from user {user.id}: {e}"
+                )
 
-            logger.info(f"New access request submitted by user {user.id} (@{user.username})")
+            logger.info(
+                f"New access request submitted by user {user.id} (@{user.username})"
+            )
 
     except Exception as e:
         logger.error(f"Error handling start command for user {user.id}: {e}")
         await context.bot.send_message(
             chat_id=chat.id,
-            text="Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже."
+            text=AccessRequestMessages.REQUEST_ERROR_RU,
         )
 
 
@@ -117,8 +117,7 @@ async def check_user_access(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return False
 
     # Initialize service
-    airtable_client = get_airtable_client()
-    repository = AirtableUserAccessRepository(airtable_client)
+    repository = get_user_access_repository()
     service = AccessRequestService(repository)
 
     try:
@@ -133,21 +132,19 @@ async def check_user_access(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             # No request exists
             await context.bot.send_message(
                 chat_id=chat.id,
-                text="Для использования этой функции необходимо одобрение администратора. "
-                     "Используйте /start для запроса доступа."
+                text=AccessRequestMessages.NEED_APPROVAL_RU,
             )
         elif user_request.status == AccessRequestStatus.PENDING:
             # Request is pending
             await context.bot.send_message(
                 chat_id=chat.id,
-                text="Ваш запрос на доступ обрабатывается. Пожалуйста, подождите одобрения администратора."
+                text=AccessRequestMessages.PENDING_PROCESSING_RU,
             )
         elif user_request.status == AccessRequestStatus.DENIED:
             # Request was denied
             await context.bot.send_message(
                 chat_id=chat.id,
-                text="Доступ к этой функции был отклонен. "
-                     "Обратитесь к администратору для получения дополнительной информации."
+                text=AccessRequestMessages.ACCESS_DENIED_INFO_RU,
             )
 
         return False
@@ -156,12 +153,14 @@ async def check_user_access(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         logger.error(f"Error checking access for user {user.id}: {e}")
         await context.bot.send_message(
             chat_id=chat.id,
-            text="Произошла ошибка при проверке доступа. Пожалуйста, попробуйте позже."
+            text=AccessRequestMessages.ACCESS_CHECK_ERROR_RU,
         )
         return False
 
 
-async def get_user_access_level(update: Update, context: ContextTypes.DEFAULT_TYPE) -> AccessLevel:
+async def get_user_access_level(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> AccessLevel:
     """
     Get user's access level if approved.
 
@@ -178,8 +177,7 @@ async def get_user_access_level(update: Update, context: ContextTypes.DEFAULT_TY
         return AccessLevel.VIEWER
 
     # Initialize service
-    airtable_client = get_airtable_client()
-    repository = AirtableUserAccessRepository(airtable_client)
+    repository = get_user_access_repository()
     service = AccessRequestService(repository)
 
     try:
@@ -203,7 +201,10 @@ def require_access(handler_func):
         async def my_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Handler logic here
     """
-    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+
+    async def wrapper(
+        update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs
+    ):
         has_access = await check_user_access(update, context)
         if has_access:
             return await handler_func(update, context, *args, **kwargs)
@@ -222,7 +223,10 @@ def require_admin_access(handler_func):
         async def admin_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Admin handler logic here
     """
-    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+
+    async def wrapper(
+        update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs
+    ):
         user = update.effective_user
         chat = update.effective_chat
 
@@ -241,8 +245,7 @@ def require_admin_access(handler_func):
 
         # User doesn't have admin access
         await context.bot.send_message(
-            chat_id=chat.id,
-            text="Эта команда доступна только администраторам."
+            chat_id=chat.id, text=AccessRequestMessages.ADMIN_ONLY_RU
         )
         return None
 

@@ -7,12 +7,12 @@ with retry mechanisms for transient failures and proper error handling.
 
 import asyncio
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
+
 from telegram import Bot
-from telegram.error import TelegramError, NetworkError, BadRequest
+from telegram.error import BadRequest, NetworkError, TelegramError
 
-from src.models.user_access_request import UserAccessRequest, AccessLevel
-
+from src.models.user_access_request import AccessLevel, UserAccessRequest
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,9 @@ class NotificationService:
         results = {}
 
         # Format display name
-        display_name = f"@{request.telegram_username}" if request.telegram_username else "User"
+        display_name = (
+            f"@{request.telegram_username}" if request.telegram_username else "User"
+        )
 
         # Create notification message
         message = (
@@ -75,9 +77,13 @@ class NotificationService:
                 results[admin_id] = False
                 logger.error(f"Failed to notify admin {admin_id}: {result}")
             else:
-                results[admin_id] = result
-                if result:
-                    logger.info(f"Successfully notified admin {admin_id} about new request")
+                # result is guaranteed to be bool here
+                success = bool(result)
+                results[admin_id] = success
+                if success:
+                    logger.info(
+                        f"Successfully notified admin {admin_id} about new request"
+                    )
 
         return results
 
@@ -87,7 +93,7 @@ class NotificationService:
         approved: bool,
         access_level: Optional[AccessLevel] = None,
         admin_notes: Optional[str] = None,
-        language: str = "ru"
+        language: str = "ru",
     ) -> bool:
         """
         Notify a user about the decision on their access request.
@@ -111,7 +117,9 @@ class NotificationService:
         # Send notification with retry
         try:
             await self._send_with_retry(user_id, message)
-            logger.info(f"Successfully notified user {user_id} of decision: approved={approved}")
+            logger.info(
+                f"Successfully notified user {user_id} of decision: approved={approved}"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to notify user {user_id} of decision: {e}")
@@ -121,18 +129,20 @@ class NotificationService:
         self,
         access_level: Optional[AccessLevel],
         admin_notes: Optional[str],
-        language: str
+        language: str,
     ) -> str:
         """Format approval message based on language."""
         if language == "en":
-            message = f"✅ You're all set! Assigned access level: {access_level.value if access_level else 'VIEWER'}."
+            access_level_str = access_level.value if access_level else 'VIEWER'
+            message = f"✅ You're all set! Assigned access level: {access_level_str}."
 
             if admin_notes:
                 message += f"\n\nAdmin note: {admin_notes}"
 
             message += "\n\nUse /start to begin working with the bot."
         else:  # Default to Russian
-            message = f"✅ Доступ подтверждён! Ваша роль: {access_level.value if access_level else 'VIEWER'}."
+            access_level_str = access_level.value if access_level else 'VIEWER'
+            message = f"✅ Доступ подтверждён! Ваша роль: {access_level_str}."
 
             if admin_notes:
                 message += f"\n\nКомментарий администратора: {admin_notes}"
@@ -141,19 +151,21 @@ class NotificationService:
 
         return message
 
-    def _format_denial_message(
-        self,
-        admin_notes: Optional[str],
-        language: str
-    ) -> str:
+    def _format_denial_message(self, admin_notes: Optional[str], language: str) -> str:
         """Format denial message based on language."""
         if language == "en":
-            message = "❌ We weren't able to approve your access right now. Contact an admin if you believe this is a mistake."
+            message = (
+                "❌ We weren't able to approve your access right now. "
+                "Contact an admin if you believe this is a mistake."
+            )
 
             if admin_notes:
                 message += f"\n\nAdmin note: {admin_notes}"
         else:  # Default to Russian
-            message = "❌ К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором."
+            message = (
+                "❌ К сожалению, в доступе отказано. Если это ошибка, "
+                "пожалуйста свяжитесь с администратором."
+            )
 
             if admin_notes:
                 message += f"\n\nКомментарий администратора: {admin_notes}"
@@ -188,7 +200,7 @@ class NotificationService:
         Raises:
             TelegramError: If all retry attempts fail
         """
-        last_error = None
+        last_error: Optional[TelegramError] = None
 
         for attempt in range(self.max_retries):
             try:
@@ -209,7 +221,7 @@ class NotificationService:
 
                 if attempt < self.max_retries - 1:
                     # Exponential backoff
-                    await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                    await asyncio.sleep(self.retry_delay * (2**attempt))
 
             except TelegramError as e:
                 last_error = e

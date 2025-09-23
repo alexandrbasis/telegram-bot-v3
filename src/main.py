@@ -14,10 +14,14 @@ from typing import Optional
 
 from telegram import Update
 from telegram.error import Conflict, NetworkError, RetryAfter, TimedOut
-from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
+from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 from telegram.request import HTTPXRequest
 
-from src.bot.handlers.admin_handlers import handle_logging_toggle_command, requests_command_handler, access_callback_handler
+from src.bot.handlers.admin_handlers import (
+    access_callback_handler,
+    handle_logging_toggle_command,
+    requests_command_handler,
+)
 from src.bot.handlers.auth_handlers import start_command_handler
 from src.bot.handlers.export_conversation_handlers import (
     get_export_conversation_handler,
@@ -152,8 +156,7 @@ def create_application() -> Application:
     app.add_handler(requests_handler)
 
     access_callback_handler_instance = CallbackQueryHandler(
-        access_callback_handler,
-        pattern=r"^access:(approve|deny):"
+        access_callback_handler, pattern=r"^access:(approve|deny):"
     )
     app.add_handler(access_callback_handler_instance)
 

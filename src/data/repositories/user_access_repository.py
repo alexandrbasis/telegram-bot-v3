@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from src.models.user_access_request import (
-    UserAccessRequest,
     AccessLevel,
     AccessRequestStatus,
+    UserAccessRequest,
 )
 
 
@@ -40,7 +40,9 @@ class UserAccessRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_request_by_user_id(self, telegram_user_id: int) -> Optional[UserAccessRequest]:
+    async def get_request_by_user_id(
+        self, telegram_user_id: int
+    ) -> Optional[UserAccessRequest]:
         """
         Retrieve access request by Telegram user ID.
 
@@ -60,7 +62,7 @@ class UserAccessRepository(ABC):
         self,
         status: AccessRequestStatus,
         limit: Optional[int] = None,
-        offset: Optional[int] = None
+        offset: Optional[int] = None,
     ) -> List[UserAccessRequest]:
         """
         List access requests filtered by status.
@@ -80,10 +82,7 @@ class UserAccessRepository(ABC):
 
     @abstractmethod
     async def approve_request(
-        self,
-        request: UserAccessRequest,
-        access_level: AccessLevel,
-        reviewed_by: str
+        self, request: UserAccessRequest, access_level: AccessLevel, reviewed_by: str
     ) -> UserAccessRequest:
         """
         Approve an access request with specified access level.
@@ -103,9 +102,7 @@ class UserAccessRepository(ABC):
 
     @abstractmethod
     async def deny_request(
-        self,
-        request: UserAccessRequest,
-        reviewed_by: str
+        self, request: UserAccessRequest, reviewed_by: str
     ) -> UserAccessRequest:
         """
         Deny an access request.

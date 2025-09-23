@@ -9,12 +9,16 @@ This bot serves as a centralized participant management system for Tres Dias spi
 ### Key Capabilities
 - **Multi-language Search**: Advanced fuzzy matching across Russian/English names with transliteration support
 - **Interactive Editing**: In-place participant profile editing with validation and change confirmation workflows
-- **Enhanced Export Services**: Multi-table CSV export with filtering and participant hydration
+- **Bot Access Management**: User onboarding capture with admin review workflow for controlled access
+- **Interactive Export UI**: Conversation-based export with 6-option menu and department filtering
+  - **View-Based Export**: Direct alignment with Airtable views for data consistency
   - **Participant Filtering**: Role-based (TEAM/CANDIDATE) and department-based export filtering
   - **BibleReaders Export**: Bible reading assignments with participant name resolution
   - **ROE Export**: Session data with presenter/assistant/prayer partner details
+- **Department Organization**: Team browsing by department with chief-first sorting and visual indicators
 - **Location-based Search**: Room and floor-based participant discovery with interactive UI
 - **Role-based Access**: Team member and candidate list views with pagination
+- **Notification System**: Admin notifications for user access requests and approvals
 
 ## 🏗️ Technical Architecture
 
@@ -162,11 +166,23 @@ USER app
 
 ### Admin Features
 
-#### CSV Export
-- **Full Data Export**: All participant records with complete field mapping
+#### Interactive CSV Export
+- **Conversation-Based UI**: 6-option selection menu with mobile-optimized layout
+  - Export All Participants
+  - Export Team Members (with department filtering)
+  - Export Candidates
+  - Export by Department (13 departments available)
+  - Export Bible Readers (with participant name hydration)
+  - Export ROE Sessions (with presenter/assistant relationships)
+- **View-Based Alignment**: Exports match Airtable view structure exactly
 - **Progress Tracking**: Real-time updates during long exports
 - **File Delivery**: Direct Telegram document upload with size validation
 - **Error Recovery**: Automatic retry with exponential backoff
+
+#### Bot Access Management
+- **User Onboarding**: Capture new user requests with profile information
+- **Admin Review**: Notification system for access approval workflow
+- **Access Control**: Admin-only approval process with audit logging
 
 #### Authentication
 - **Settings-based**: Admin users defined in environment configuration
@@ -219,11 +235,22 @@ telegram-bot-v3/
 │   │   └── keyboards/       # UI components
 │   ├── services/            # Business logic layer
 │   │   ├── participant_service.py
-│   │   └── participant_export_service.py
+│   │   ├── participant_export_service.py
+│   │   ├── bible_readers_export_service.py
+│   │   ├── roe_export_service.py
+│   │   ├── notification_service.py
+│   │   └── service_factory.py
 │   ├── data/                # Data access layer
-│   │   ├── airtable/        # Airtable implementation
+│   │   ├── airtable/        # Multi-table Airtable implementation
+│   │   │   ├── airtable_participant_repo.py
+│   │   │   ├── airtable_bible_readers_repo.py
+│   │   │   ├── airtable_roe_repo.py
+│   │   │   └── airtable_client_factory.py
 │   │   └── repositories/    # Abstract interfaces
 │   ├── models/              # Pydantic data models
+│   │   ├── participant.py
+│   │   ├── bible_readers.py
+│   │   └── roe.py
 │   ├── config/              # Configuration management
 │   └── utils/               # Shared utilities
 ├── tests/
@@ -291,9 +318,19 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 AIRTABLE_API_KEY=your_api_key
 AIRTABLE_BASE_ID=appRp7Vby2JMzN0mC
 
-# Optional
+# Optional - Participants Table
 AIRTABLE_TABLE_NAME=Participants
 AIRTABLE_TABLE_ID=tbl8ivwOdAUvMi3Jy
+
+# Optional - Multi-Table Support
+AIRTABLE_BIBLE_READERS_TABLE_NAME=BibleReaders
+AIRTABLE_BIBLE_READERS_TABLE_ID=tblXYZ123
+AIRTABLE_ROE_TABLE_NAME=ROE
+AIRTABLE_ROE_TABLE_ID=tblABC456
+AIRTABLE_BASE_ID_BIBLE_READERS=appRp7Vby2JMzN0mC
+AIRTABLE_BASE_ID_ROE=appRp7Vby2JMzN0mC
+
+# Optional - Application Settings
 LOG_LEVEL=INFO
 ENVIRONMENT=development
 ADMIN_USER_IDS=123456789,987654321
@@ -325,11 +362,13 @@ async def test_search_conversation(update, context):
 ## 📈 Scalability & Performance
 
 ### Current Capabilities
-- **Dataset Size**: Tested with 1500+ participant records
-- **Rate Limiting**: 5 requests/second to Airtable API
+- **Dataset Size**: Tested with 1500+ participant records across multiple tables
+- **Multi-Table Support**: BibleReaders and ROE tables with relationship hydration
+- **Rate Limiting**: 5 requests/second to Airtable API with intelligent caching
 - **Message Size**: Dynamic pagination for Telegram's 4096-char limit
-- **File Size**: CSV exports up to 50MB
+- **File Size**: CSV exports up to 50MB with progress tracking
 - **Concurrent Users**: Async architecture supports multiple conversations
+- **Interactive UI**: Conversation-based workflows with state management
 
 ### Future Enhancements
 - **Database Migration**: PostgreSQL/MongoDB for improved performance
@@ -377,4 +416,4 @@ Built for the Tres Dias community to streamline participant management and enhan
 
 ---
 
-**Technical Stack**: Python 3.11, python-telegram-bot, Airtable API, Docker, GitHub Actions, pytest, mypy, black, flake8
+**Technical Stack**: Python 3.11, python-telegram-bot, Airtable API (Multi-table), Pydantic v2, Docker, GitHub Actions, pytest, mypy, black, flake8

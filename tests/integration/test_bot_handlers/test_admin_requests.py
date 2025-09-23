@@ -5,15 +5,24 @@ Tests the admin workflow for reviewing pending access requests,
 including listing, approval, denial, and pagination.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from telegram import Update, User, Chat, Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import (
+    CallbackQuery,
+    Chat,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+    Update,
+    User,
+)
 from telegram.ext import ContextTypes
 
 from src.models.user_access_request import (
-    UserAccessRequest,
     AccessLevel,
     AccessRequestStatus,
+    UserAccessRequest,
 )
 
 
@@ -24,18 +33,11 @@ class TestAdminRequests:
     def mock_admin_update(self):
         """Create mock Telegram update from admin user."""
         admin_user = User(
-            id=999888777,
-            is_bot=False,
-            first_name="Admin",
-            username="admin_test"
+            id=999888777, is_bot=False, first_name="Admin", username="admin_test"
         )
         chat = Chat(id=999888777, type="private")
         message = Message(
-            message_id=1,
-            date=None,
-            chat=chat,
-            from_user=admin_user,
-            text="/requests"
+            message_id=1, date=None, chat=chat, from_user=admin_user, text="/requests"
         )
 
         update = Mock(spec=Update)
@@ -48,10 +50,7 @@ class TestAdminRequests:
     def mock_callback_update(self):
         """Create mock callback query update."""
         admin_user = User(
-            id=999888777,
-            is_bot=False,
-            first_name="Admin",
-            username="admin_test"
+            id=999888777, is_bot=False, first_name="Admin", username="admin_test"
         )
         chat = Chat(id=999888777, type="private")
         message = Message(
@@ -59,7 +58,7 @@ class TestAdminRequests:
             date=None,
             chat=chat,
             from_user=admin_user,
-            text="Request details"
+            text="Request details",
         )
 
         callback_query = Mock(spec=CallbackQuery)
@@ -124,16 +123,23 @@ class TestAdminRequests:
         mock_admin_update,
         mock_context,
         mock_access_service,
-        sample_pending_requests
+        sample_pending_requests,
     ):
         """Test complete admin flow from viewing pending to approving request."""
         # Setup service mocks
-        mock_access_service.get_pending_requests.return_value = sample_pending_requests[:2]  # Show 2 requests
+        mock_access_service.get_pending_requests.return_value = sample_pending_requests[
+            :2
+        ]  # Show 2 requests
 
         # Mock the /requests command handler
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             # Simulate /requests command
-            pending_requests = await mock_access_service.get_pending_requests(limit=5, offset=0)
+            pending_requests = await mock_access_service.get_pending_requests(
+                limit=5, offset=0
+            )
 
             if not pending_requests:
                 message_text = "Нет ожидающих запросов на доступ."
@@ -143,30 +149,36 @@ class TestAdminRequests:
                 buttons = []
 
                 for i, request in enumerate(pending_requests):
-                    display_name = request.telegram_username or f"User {request.telegram_user_id}"
+                    display_name = (
+                        request.telegram_username or f"User {request.telegram_user_id}"
+                    )
                     message_text += f"{i+1}. {display_name} (@{request.telegram_username or 'no_username'} / {request.telegram_user_id})\n"
 
                     # Create inline buttons for approve/deny
                     approve_btn = InlineKeyboardButton(
                         f"✅ Approve {display_name}",
-                        callback_data=f"access:approve:{request.record_id}"
+                        callback_data=f"access:approve:{request.record_id}",
                     )
                     deny_btn = InlineKeyboardButton(
                         f"❌ Deny {display_name}",
-                        callback_data=f"access:deny:{request.record_id}"
+                        callback_data=f"access:deny:{request.record_id}",
                     )
                     buttons.extend([approve_btn, deny_btn])
 
-                keyboard = InlineKeyboardMarkup([buttons[i:i+2] for i in range(0, len(buttons), 2)])
+                keyboard = InlineKeyboardMarkup(
+                    [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
+                )
 
             await mock_context.bot.send_message(
                 chat_id=mock_admin_update.effective_chat.id,
                 text=message_text,
-                reply_markup=keyboard
+                reply_markup=keyboard,
             )
 
         # Verify service call
-        mock_access_service.get_pending_requests.assert_called_once_with(limit=5, offset=0)
+        mock_access_service.get_pending_requests.assert_called_once_with(
+            limit=5, offset=0
+        )
 
         # Verify message sent with keyboard
         mock_context.bot.send_message.assert_called_once()
@@ -182,7 +194,7 @@ class TestAdminRequests:
         mock_callback_update,
         mock_context,
         mock_access_service,
-        sample_pending_requests
+        sample_pending_requests,
     ):
         """Test admin approval callback handling."""
         # Setup mocks
@@ -201,13 +213,18 @@ class TestAdminRequests:
         mock_access_service.approve_request.return_value = approved_request
 
         # Mock callback handler logic
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             callback_data = mock_callback_update.callback_query.data
             action, action_type, record_id = callback_data.split(":")
 
             if action == "access" and action_type == "approve":
                 # Find the request using the admin handler logic (searches pending requests)
-                pending_requests = await mock_access_service.get_pending_requests(limit=100)
+                pending_requests = await mock_access_service.get_pending_requests(
+                    limit=100
+                )
                 target_request = None
 
                 for request in pending_requests:
@@ -218,35 +235,31 @@ class TestAdminRequests:
                 if target_request:
                     # Approve with default VIEWER level
                     approved = await mock_access_service.approve_request(
-                        target_request,
-                        AccessLevel.VIEWER,
-                        "admin_test"
+                        target_request, AccessLevel.VIEWER, "admin_test"
                     )
 
                     # Update the callback message
                     await mock_context.bot.edit_message_text(
                         chat_id=mock_callback_update.effective_chat.id,
                         message_id=mock_callback_update.callback_query.message.message_id,
-                        text=f"✅ Запрос от {target_request.telegram_username} одобрен с уровнем доступа {approved.access_level}."
+                        text=f"✅ Запрос от {target_request.telegram_username} одобрен с уровнем доступа {approved.access_level}.",
                     )
 
                     # Notify the user
                     await mock_context.bot.send_message(
                         chat_id=target_request.telegram_user_id,
-                        text=f"Доступ подтверждён! Ваша роль: {approved.access_level}."
+                        text=f"Доступ подтверждён! Ваша роль: {approved.access_level}.",
                     )
 
             await mock_context.bot.answer_callback_query(
                 callback_query_id=mock_callback_update.callback_query.id,
-                text="Запрос обработан"
+                text="Запрос обработан",
             )
 
         # Verify service calls
         mock_access_service.get_pending_requests.assert_called_once_with(limit=100)
         mock_access_service.approve_request.assert_called_once_with(
-            request_to_approve,
-            AccessLevel.VIEWER,
-            "admin_test"
+            request_to_approve, AccessLevel.VIEWER, "admin_test"
         )
 
         # Verify messages sent
@@ -259,7 +272,7 @@ class TestAdminRequests:
         mock_callback_update,
         mock_context,
         mock_access_service,
-        sample_pending_requests
+        sample_pending_requests,
     ):
         """Test denial flow with audit logging."""
         # Setup mocks
@@ -279,13 +292,18 @@ class TestAdminRequests:
         mock_callback_update.callback_query.data = "access:deny:recPEND002"
 
         # Mock callback handler logic
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             callback_data = mock_callback_update.callback_query.data
             action, action_type, record_id = callback_data.split(":")
 
             if action == "access" and action_type == "deny":
                 # Find the request using the admin handler logic
-                pending_requests = await mock_access_service.get_pending_requests(limit=100)
+                pending_requests = await mock_access_service.get_pending_requests(
+                    limit=100
+                )
                 target_request = None
 
                 for request in pending_requests:
@@ -295,34 +313,35 @@ class TestAdminRequests:
 
                 if target_request:
                     # Deny the request
-                    denied = await mock_access_service.deny_request(target_request, "admin_test")
+                    denied = await mock_access_service.deny_request(
+                        target_request, "admin_test"
+                    )
 
                     # Update the callback message
                     await mock_context.bot.edit_message_text(
                         chat_id=mock_callback_update.effective_chat.id,
                         message_id=mock_callback_update.callback_query.message.message_id,
-                        text=f"❌ Запрос от {target_request.telegram_username} отклонен администратором {denied.reviewed_by}."
+                        text=f"❌ Запрос от {target_request.telegram_username} отклонен администратором {denied.reviewed_by}.",
                     )
 
                     # Notify the user
                     await mock_context.bot.send_message(
                         chat_id=target_request.telegram_user_id,
-                        text="К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором."
+                        text="К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором.",
                     )
 
         # Verify service calls
         mock_access_service.get_pending_requests.assert_called_once_with(limit=100)
-        mock_access_service.deny_request.assert_called_once_with(request_to_deny, "admin_test")
+        mock_access_service.deny_request.assert_called_once_with(
+            request_to_deny, "admin_test"
+        )
 
         # Verify audit information is recorded (reviewed_by field)
         assert denied_request.reviewed_by == "admin_test"
         assert denied_request.status == AccessRequestStatus.DENIED
 
     async def test_reapproval_updates_status(
-        self,
-        mock_callback_update,
-        mock_context,
-        mock_access_service
+        self, mock_callback_update, mock_context, mock_access_service
     ):
         """Test re-approval of previously denied request."""
         # Setup previously denied request
@@ -351,13 +370,18 @@ class TestAdminRequests:
         mock_callback_update.callback_query.data = "access:approve:recDENY123"
 
         # Mock callback handler logic
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             callback_data = mock_callback_update.callback_query.data
             action, action_type, record_id = callback_data.split(":")
 
             if action == "access" and action_type == "approve":
                 # Find the request using the admin handler logic
-                pending_requests = await mock_access_service.get_pending_requests(limit=100)
+                pending_requests = await mock_access_service.get_pending_requests(
+                    limit=100
+                )
                 target_request = None
 
                 for request in pending_requests:
@@ -368,24 +392,20 @@ class TestAdminRequests:
                 if target_request:
                     # Re-approve with COORDINATOR level
                     approved = await mock_access_service.approve_request(
-                        target_request,
-                        AccessLevel.COORDINATOR,
-                        "admin_test"
+                        target_request, AccessLevel.COORDINATOR, "admin_test"
                     )
 
                     # Update the callback message
                     await mock_context.bot.edit_message_text(
                         chat_id=mock_callback_update.effective_chat.id,
                         message_id=mock_callback_update.callback_query.message.message_id,
-                        text=f"✅ Запрос от {target_request.telegram_username} переутвержден с уровнем доступа {approved.access_level}."
+                        text=f"✅ Запрос от {target_request.telegram_username} переутвержден с уровнем доступа {approved.access_level}.",
                     )
 
         # Verify service calls
         mock_access_service.get_pending_requests.assert_called_once_with(limit=100)
         mock_access_service.approve_request.assert_called_once_with(
-            denied_request,
-            AccessLevel.COORDINATOR,
-            "admin_test"
+            denied_request, AccessLevel.COORDINATOR, "admin_test"
         )
 
         # Verify status transition from DENIED to APPROVED
@@ -394,10 +414,7 @@ class TestAdminRequests:
         assert reapproved_request.reviewed_by == "admin_test"
 
     async def test_pagination_and_navigation(
-        self,
-        mock_admin_update,
-        mock_context,
-        mock_access_service
+        self, mock_admin_update, mock_context, mock_access_service
     ):
         """Test pagination for large numbers of pending requests."""
         # Setup large number of requests (simulate page 2)
@@ -413,13 +430,18 @@ class TestAdminRequests:
         mock_access_service.get_pending_requests.return_value = page_2_requests
 
         # Mock paginated /requests command
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             # Simulate page 2 (offset=5, limit=5)
             page = 2
             limit = 5
             offset = (page - 1) * limit
 
-            pending_requests = await mock_access_service.get_pending_requests(limit=limit, offset=offset)
+            pending_requests = await mock_access_service.get_pending_requests(
+                limit=limit, offset=offset
+            )
 
             message_text = f"Ожидающие запросы на доступ (страница {page}):\n\n"
             for i, request in enumerate(pending_requests):
@@ -428,20 +450,30 @@ class TestAdminRequests:
             # Add navigation buttons
             nav_buttons = []
             if offset > 0:  # Previous page exists
-                nav_buttons.append(InlineKeyboardButton("⬅️ Назад", callback_data=f"requests:page:{page-1}"))
+                nav_buttons.append(
+                    InlineKeyboardButton(
+                        "⬅️ Назад", callback_data=f"requests:page:{page-1}"
+                    )
+                )
             if len(pending_requests) == limit:  # More pages might exist
-                nav_buttons.append(InlineKeyboardButton("➡️ Далее", callback_data=f"requests:page:{page+1}"))
+                nav_buttons.append(
+                    InlineKeyboardButton(
+                        "➡️ Далее", callback_data=f"requests:page:{page+1}"
+                    )
+                )
 
             keyboard = InlineKeyboardMarkup([nav_buttons]) if nav_buttons else None
 
             await mock_context.bot.send_message(
                 chat_id=mock_admin_update.effective_chat.id,
                 text=message_text,
-                reply_markup=keyboard
+                reply_markup=keyboard,
             )
 
         # Verify service call with pagination
-        mock_access_service.get_pending_requests.assert_called_once_with(limit=5, offset=5)
+        mock_access_service.get_pending_requests.assert_called_once_with(
+            limit=5, offset=5
+        )
 
         # Verify message contains page information
         call_args = mock_context.bot.send_message.call_args

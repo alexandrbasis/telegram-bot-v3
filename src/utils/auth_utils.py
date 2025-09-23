@@ -5,14 +5,12 @@ Provides functions for user authorization and access control.
 """
 
 import logging
-from typing import Union, Optional
-import asyncio
+from typing import Optional, Union
 
 from src.config.settings import Settings
 from src.models.user_access_request import AccessLevel, AccessRequestStatus
-from src.services.service_factory import get_airtable_client
-from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
 from src.services.access_request_service import AccessRequestService
+from src.services.service_factory import get_user_access_repository
 
 logger = logging.getLogger(__name__)
 
@@ -80,15 +78,16 @@ async def get_user_access_level(user_id: Union[int, str]) -> Optional[AccessLeve
 
     # Initialize service
     try:
-        airtable_client = get_airtable_client()
-        repository = AirtableUserAccessRepository(airtable_client)
+        repository = get_user_access_repository()
         service = AccessRequestService(repository)
 
         # Get user's request from Airtable
         user_request = await service.get_request_by_user_id(user_id)
 
         if user_request and user_request.status == AccessRequestStatus.APPROVED:
-            logger.debug(f"User {user_id} has access level: {user_request.access_level}")
+            logger.debug(
+                f"User {user_id} has access level: {user_request.access_level}"
+            )
             return user_request.access_level
 
     except Exception as e:
@@ -137,7 +136,9 @@ def is_admin_or_coordinator(user_id: Union[int, str], settings: Settings) -> boo
     return is_admin_user(user_id, settings)
 
 
-async def is_admin_or_coordinator_async(user_id: Union[int, str], settings: Settings) -> bool:
+async def is_admin_or_coordinator_async(
+    user_id: Union[int, str], settings: Settings
+) -> bool:
     """
     Async check if user is an admin or coordinator.
 
@@ -154,4 +155,8 @@ async def is_admin_or_coordinator_async(user_id: Union[int, str], settings: Sett
 
     # Check Airtable for coordinator or admin access
     access_level = await get_user_access_level(user_id)
-    return access_level in [AccessLevel.COORDINATOR, AccessLevel.ADMIN] if access_level else False
+    return (
+        access_level in [AccessLevel.COORDINATOR, AccessLevel.ADMIN]
+        if access_level
+        else False
+    )

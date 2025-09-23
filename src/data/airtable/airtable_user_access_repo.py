@@ -8,13 +8,13 @@ field mapping, status filtering, and audit metadata support.
 from datetime import datetime, timezone
 from typing import List, Optional
 
+from src.config.field_mappings import BotAccessRequestsFieldMapping
 from src.data.repositories.user_access_repository import UserAccessRepository
 from src.models.user_access_request import (
-    UserAccessRequest,
     AccessLevel,
     AccessRequestStatus,
+    UserAccessRequest,
 )
-from src.config.field_mappings import BotAccessRequestsFieldMapping
 
 
 class AirtableUserAccessRepository(UserAccessRepository):
@@ -25,16 +25,23 @@ class AirtableUserAccessRepository(UserAccessRepository):
     with proper field mapping and option ID translation.
     """
 
-    def __init__(self, airtable_client):
+    def __init__(
+        self,
+        airtable_client,
+        table_name: Optional[str] = None,
+        table_id: Optional[str] = None,
+    ):
         """
-        Initialize repository with Airtable client.
+        Initialize repository with Airtable client and optional table configuration.
 
         Args:
             airtable_client: Configured Airtable client instance
+            table_name: Name of the access requests table (defaults to field mapping)
+            table_id: ID of the access requests table (defaults to field mapping)
         """
         self.client = airtable_client
-        self.table_name = BotAccessRequestsFieldMapping.TABLE_NAME
-        self.table_id = BotAccessRequestsFieldMapping.TABLE_ID
+        self.table_name = table_name or BotAccessRequestsFieldMapping.TABLE_NAME
+        self.table_id = table_id or BotAccessRequestsFieldMapping.TABLE_ID
 
     async def create_request(self, request: UserAccessRequest) -> UserAccessRequest:
         """Create a new access request in Airtable."""
@@ -42,18 +49,21 @@ class AirtableUserAccessRepository(UserAccessRepository):
         airtable_data = self._model_to_airtable_data(request)
 
         # Translate field names to field IDs for API call
-        field_id_data = BotAccessRequestsFieldMapping.translate_fields_to_ids(airtable_data)
+        field_id_data = BotAccessRequestsFieldMapping.translate_fields_to_ids(
+            airtable_data
+        )
 
         # Create record in Airtable
         response = await self.client.create_record(
-            table_name=self.table_name,
-            data=field_id_data
+            table_name=self.table_name, data=field_id_data
         )
 
         # Convert response back to model
         return self._airtable_record_to_model(response)
 
-    async def get_request_by_user_id(self, telegram_user_id: int) -> Optional[UserAccessRequest]:
+    async def get_request_by_user_id(
+        self, telegram_user_id: int
+    ) -> Optional[UserAccessRequest]:
         """Retrieve access request by Telegram user ID."""
         # Build filter formula for Telegram user ID lookup
         user_id_field_id = BotAccessRequestsFieldMapping.get_field_id("TelegramUserId")
@@ -61,9 +71,7 @@ class AirtableUserAccessRepository(UserAccessRepository):
 
         # Query Airtable
         records = await self.client.get_records(
-            table_name=self.table_name,
-            filter_formula=filter_formula,
-            max_records=1
+            table_name=self.table_name, filter_formula=filter_formula, max_records=1
         )
 
         if not records:
@@ -75,12 +83,14 @@ class AirtableUserAccessRepository(UserAccessRepository):
         self,
         status: AccessRequestStatus,
         limit: Optional[int] = None,
-        offset: Optional[int] = None
+        offset: Optional[int] = None,
     ) -> List[UserAccessRequest]:
         """List access requests filtered by status."""
         # Build filter formula for status
         status_field_id = BotAccessRequestsFieldMapping.get_field_id("Status")
-        status_option_id = BotAccessRequestsFieldMapping.get_option_id("Status", status.value)
+        status_option_id = BotAccessRequestsFieldMapping.get_option_id(
+            "Status", status.value
+        )
         filter_formula = f"{{{status_field_id}}} = '{status_option_id}'"
 
         # Query Airtable with pagination
@@ -101,10 +111,7 @@ class AirtableUserAccessRepository(UserAccessRepository):
         return [self._airtable_record_to_model(record) for record in records]
 
     async def approve_request(
-        self,
-        request: UserAccessRequest,
-        access_level: AccessLevel,
-        reviewed_by: str
+        self, request: UserAccessRequest, access_level: AccessLevel, reviewed_by: str
     ) -> UserAccessRequest:
         """Approve an access request with specified access level."""
         if not request.record_id:
@@ -119,20 +126,19 @@ class AirtableUserAccessRepository(UserAccessRepository):
         }
 
         # Translate to field IDs
-        field_id_data = BotAccessRequestsFieldMapping.translate_fields_to_ids(update_data)
+        field_id_data = BotAccessRequestsFieldMapping.translate_fields_to_ids(
+            update_data
+        )
 
         # Update record in Airtable
         response = await self.client.update_record(
-            record_id=request.record_id,
-            data=field_id_data
+            record_id=request.record_id, data=field_id_data
         )
 
         return self._airtable_record_to_model(response)
 
     async def deny_request(
-        self,
-        request: UserAccessRequest,
-        reviewed_by: str
+        self, request: UserAccessRequest, reviewed_by: str
     ) -> UserAccessRequest:
         """Deny an access request."""
         if not request.record_id:
@@ -146,12 +152,13 @@ class AirtableUserAccessRepository(UserAccessRepository):
         }
 
         # Translate to field IDs
-        field_id_data = BotAccessRequestsFieldMapping.translate_fields_to_ids(update_data)
+        field_id_data = BotAccessRequestsFieldMapping.translate_fields_to_ids(
+            update_data
+        )
 
         # Update record in Airtable
         response = await self.client.update_record(
-            record_id=request.record_id,
-            data=field_id_data
+            record_id=request.record_id, data=field_id_data
         )
 
         return self._airtable_record_to_model(response)
@@ -165,20 +172,19 @@ class AirtableUserAccessRepository(UserAccessRepository):
         airtable_data = self._model_to_airtable_data(request, exclude_record_id=True)
 
         # Translate field names to field IDs
-        field_id_data = BotAccessRequestsFieldMapping.translate_fields_to_ids(airtable_data)
+        field_id_data = BotAccessRequestsFieldMapping.translate_fields_to_ids(
+            airtable_data
+        )
 
         # Update record in Airtable
         response = await self.client.update_record(
-            record_id=request.record_id,
-            data=field_id_data
+            record_id=request.record_id, data=field_id_data
         )
 
         return self._airtable_record_to_model(response)
 
     def _model_to_airtable_data(
-        self,
-        request: UserAccessRequest,
-        exclude_record_id: bool = False
+        self, request: UserAccessRequest, exclude_record_id: bool = False
     ) -> dict:
         """Convert UserAccessRequest model to Airtable field format."""
         data = {}
@@ -206,7 +212,7 @@ class AirtableUserAccessRepository(UserAccessRepository):
                         "DENIED": "Denied",
                     }
                     value = status_mapping.get(value, value)
-                elif hasattr(value, 'value'):
+                elif hasattr(value, "value"):
                     value = value.value
                 # Handle datetime values
                 elif isinstance(value, datetime):
@@ -258,10 +264,14 @@ class AirtableUserAccessRepository(UserAccessRepository):
                         access_level = AccessLevel.VIEWER
                 elif airtable_field == "RequestedAt":
                     if value:
-                        requested_at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                        requested_at = datetime.fromisoformat(
+                            value.replace("Z", "+00:00")
+                        )
                 elif airtable_field == "ReviewedAt":
                     if value:
-                        reviewed_at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                        reviewed_at = datetime.fromisoformat(
+                            value.replace("Z", "+00:00")
+                        )
                 elif airtable_field == "ReviewedBy":
                     reviewed_by = value
 

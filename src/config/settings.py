@@ -81,6 +81,18 @@ class DatabaseSettings:
         default_factory=lambda: os.getenv("AIRTABLE_ROE_TABLE_ID", "tbl0j8bcgkV3lVAdc")
     )
 
+    # Access requests table configuration
+    access_requests_table_name: str = field(
+        default_factory=lambda: os.getenv(
+            "AIRTABLE_ACCESS_REQUESTS_TABLE_NAME", "BotAccessRequests"
+        )
+    )
+    access_requests_table_id: str = field(
+        default_factory=lambda: os.getenv(
+            "AIRTABLE_ACCESS_REQUESTS_TABLE_ID", "tblQWWEcHx9sfhsgN"
+        )
+    )
+
     # Rate limiting and performance
     rate_limit_per_second: int = field(
         default_factory=lambda: int(os.getenv("AIRTABLE_RATE_LIMIT", "5"))
@@ -150,7 +162,8 @@ class DatabaseSettings:
         Get configuration for a specific table type.
 
         Args:
-            table_type: The type of table ('participants', 'bible_readers', 'roe')
+            table_type: The type of table
+                ('participants', 'bible_readers', 'roe', 'access_requests')
 
         Returns:
             Dictionary with table_id and table_name for the specified table
@@ -170,6 +183,10 @@ class DatabaseSettings:
             "roe": {
                 "table_id": self.roe_table_id,
                 "table_name": self.roe_table_name,
+            },
+            "access_requests": {
+                "table_id": self.access_requests_table_id,
+                "table_name": self.access_requests_table_name,
             },
         }
 

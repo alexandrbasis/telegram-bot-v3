@@ -10,7 +10,9 @@ class AccessRequestMessages:
     """Messages for access request workflow."""
 
     # User-facing messages
-    PENDING_REQUEST_RU = "✅ Запрос на доступ принят. Мы уведомим вас, как только админ его обработает."
+    PENDING_REQUEST_RU = (
+        "✅ Запрос на доступ принят. Мы уведомим вас, как только админ его обработает."
+    )
     PENDING_REQUEST_EN = "✅ Your access request has been recorded. We'll notify you as soon as an admin reviews it."
 
     EXISTING_PENDING_RU = "⏳ Ваш запрос на доступ уже находится на рассмотрении. Мы уведомим вас после решения администратора."
@@ -37,6 +39,29 @@ class AccessRequestMessages:
     # Admin notes
     ADMIN_NOTE_RU = "\n\nКомментарий администратора: {notes}"
     ADMIN_NOTE_EN = "\n\nAdmin note: {notes}"
+
+    # Error messages
+    REQUEST_ERROR_RU = "Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже."
+    REQUEST_ERROR_EN = "An error occurred while processing the request. Please try again later."
+
+    ACCESS_CHECK_ERROR_RU = "Произошла ошибка при проверке доступа. Пожалуйста, попробуйте позже."
+    ACCESS_CHECK_ERROR_EN = "An error occurred while checking access. Please try again later."
+
+    LOAD_REQUESTS_ERROR_RU = "Произошла ошибка при загрузке запросов. Пожалуйста, попробуйте позже."
+    LOAD_REQUESTS_ERROR_EN = "An error occurred while loading requests. Please try again later."
+
+    # Access control messages
+    ADMIN_ONLY_RU = "Эта команда доступна только администраторам."
+    ADMIN_ONLY_EN = "This command is available to administrators only."
+
+    NEED_APPROVAL_RU = "Для использования этой функции необходимо одобрение администратора. Используйте /start для запроса доступа."
+    NEED_APPROVAL_EN = "This function requires administrator approval. Use /start to request access."
+
+    PENDING_PROCESSING_RU = "Ваш запрос на доступ обрабатывается. Пожалуйста, подождите одобрения администратора."
+    PENDING_PROCESSING_EN = "Your access request is being processed. Please wait for administrator approval."
+
+    ACCESS_DENIED_INFO_RU = "Доступ к этой функции был отклонен. Обратитесь к администратору для получения дополнительной информации."
+    ACCESS_DENIED_INFO_EN = "Access to this function has been denied. Contact an administrator for more information."
 
     # Button labels
     BTN_APPROVE = "✅ Одобрить"

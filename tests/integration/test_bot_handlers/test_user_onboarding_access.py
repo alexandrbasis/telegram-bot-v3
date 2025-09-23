@@ -5,15 +5,16 @@ Tests the end-to-end flow of users requesting access through the bot,
 from first interaction to approval notification.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from telegram import Update, User, Chat, Message
+from telegram import Chat, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.models.user_access_request import (
-    UserAccessRequest,
     AccessLevel,
     AccessRequestStatus,
+    UserAccessRequest,
 )
 
 
@@ -23,19 +24,10 @@ class TestUserOnboardingAccess:
     @pytest.fixture
     def mock_update(self):
         """Create mock Telegram update."""
-        user = User(
-            id=123456789,
-            is_bot=False,
-            first_name="Test",
-            username="testuser"
-        )
+        user = User(id=123456789, is_bot=False, first_name="Test", username="testuser")
         chat = Chat(id=123456789, type="private")
         message = Message(
-            message_id=1,
-            date=None,
-            chat=chat,
-            from_user=user,
-            text="/start"
+            message_id=1, date=None, chat=chat, from_user=user, text="/start"
         )
 
         update = Mock(spec=Update)
@@ -62,10 +54,7 @@ class TestUserOnboardingAccess:
         return service
 
     async def test_first_time_user_gets_pending_message(
-        self,
-        mock_update,
-        mock_context,
-        mock_access_service
+        self, mock_update, mock_context, mock_access_service
     ):
         """Test that first-time user triggers pending request message."""
         # Setup service mocks
@@ -80,7 +69,10 @@ class TestUserOnboardingAccess:
         mock_access_service.submit_request.return_value = created_request
 
         # Mock the handler function (this would be implemented in actual handler)
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             # Simulate start command handler logic
             user_id = mock_update.effective_user.id
             username = mock_update.effective_user.username
@@ -91,34 +83,29 @@ class TestUserOnboardingAccess:
             if not existing_request:
                 # Submit new request
                 await mock_access_service.submit_request(
-                    telegram_user_id=user_id,
-                    telegram_username=username
+                    telegram_user_id=user_id, telegram_username=username
                 )
 
                 # Send pending message
                 await mock_context.bot.send_message(
                     chat_id=mock_update.effective_chat.id,
-                    text="Запрос на доступ принят. Мы уведомим вас, как только админ его обработает."
+                    text="Запрос на доступ принят. Мы уведомим вас, как только админ его обработает.",
                 )
 
         # Verify service calls
         mock_access_service.get_request_by_user_id.assert_called_once_with(123456789)
         mock_access_service.submit_request.assert_called_once_with(
-            telegram_user_id=123456789,
-            telegram_username="testuser"
+            telegram_user_id=123456789, telegram_username="testuser"
         )
 
         # Verify message sent
         mock_context.bot.send_message.assert_called_once_with(
             chat_id=123456789,
-            text="Запрос на доступ принят. Мы уведомим вас, как только админ его обработает."
+            text="Запрос на доступ принят. Мы уведомим вас, как только админ его обработает.",
         )
 
     async def test_user_with_pending_request_gets_status_message(
-        self,
-        mock_update,
-        mock_context,
-        mock_access_service
+        self, mock_update, mock_context, mock_access_service
     ):
         """Test user with pending request gets status message."""
         # Setup existing pending request
@@ -131,15 +118,21 @@ class TestUserOnboardingAccess:
         mock_access_service.get_request_by_user_id.return_value = existing_request
 
         # Mock handler logic
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             user_id = mock_update.effective_user.id
 
             existing_request = await mock_access_service.get_request_by_user_id(user_id)
 
-            if existing_request and existing_request.status == AccessRequestStatus.PENDING:
+            if (
+                existing_request
+                and existing_request.status == AccessRequestStatus.PENDING
+            ):
                 await mock_context.bot.send_message(
                     chat_id=mock_update.effective_chat.id,
-                    text="Ваш запрос на доступ уже обрабатывается. Пожалуйста, подождите."
+                    text="Ваш запрос на доступ уже обрабатывается. Пожалуйста, подождите.",
                 )
 
         # Verify service call
@@ -149,14 +142,11 @@ class TestUserOnboardingAccess:
         # Verify status message sent
         mock_context.bot.send_message.assert_called_once_with(
             chat_id=123456789,
-            text="Ваш запрос на доступ уже обрабатывается. Пожалуйста, подождите."
+            text="Ваш запрос на доступ уже обрабатывается. Пожалуйста, подождите.",
         )
 
     async def test_approved_user_gets_welcome_message(
-        self,
-        mock_update,
-        mock_context,
-        mock_access_service
+        self, mock_update, mock_context, mock_access_service
     ):
         """Test approved user gets welcome message and access to features."""
         # Setup approved request
@@ -170,15 +160,21 @@ class TestUserOnboardingAccess:
         mock_access_service.get_request_by_user_id.return_value = approved_request
 
         # Mock handler logic
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             user_id = mock_update.effective_user.id
 
             existing_request = await mock_access_service.get_request_by_user_id(user_id)
 
-            if existing_request and existing_request.status == AccessRequestStatus.APPROVED:
+            if (
+                existing_request
+                and existing_request.status == AccessRequestStatus.APPROVED
+            ):
                 await mock_context.bot.send_message(
                     chat_id=mock_update.effective_chat.id,
-                    text=f"Добро пожаловать! Ваша роль: {existing_request.access_level}. Используйте /help для просмотра команд."
+                    text=f"Добро пожаловать! Ваша роль: {existing_request.access_level}. Используйте /help для просмотра команд.",
                 )
 
         # Verify service call
@@ -187,14 +183,11 @@ class TestUserOnboardingAccess:
         # Verify welcome message sent
         mock_context.bot.send_message.assert_called_once_with(
             chat_id=123456789,
-            text="Добро пожаловать! Ваша роль: COORDINATOR. Используйте /help для просмотра команд."
+            text="Добро пожаловать! Ваша роль: COORDINATOR. Используйте /help для просмотра команд.",
         )
 
     async def test_denied_user_receives_guidance(
-        self,
-        mock_update,
-        mock_context,
-        mock_access_service
+        self, mock_update, mock_context, mock_access_service
     ):
         """Test denied user receives guidance message."""
         # Setup denied request
@@ -207,15 +200,21 @@ class TestUserOnboardingAccess:
         mock_access_service.get_request_by_user_id.return_value = denied_request
 
         # Mock handler logic
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             user_id = mock_update.effective_user.id
 
             existing_request = await mock_access_service.get_request_by_user_id(user_id)
 
-            if existing_request and existing_request.status == AccessRequestStatus.DENIED:
+            if (
+                existing_request
+                and existing_request.status == AccessRequestStatus.DENIED
+            ):
                 await mock_context.bot.send_message(
                     chat_id=mock_update.effective_chat.id,
-                    text="К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором."
+                    text="К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором.",
                 )
 
         # Verify service call
@@ -224,14 +223,11 @@ class TestUserOnboardingAccess:
         # Verify denial message sent
         mock_context.bot.send_message.assert_called_once_with(
             chat_id=123456789,
-            text="К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором."
+            text="К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором.",
         )
 
     async def test_user_receives_approval_message(
-        self,
-        mock_update,
-        mock_context,
-        mock_access_service
+        self, mock_update, mock_context, mock_access_service
     ):
         """Test user receives notification when their request is approved."""
         # This tests the notification flow when admin approves a request
@@ -239,45 +235,46 @@ class TestUserOnboardingAccess:
         access_level = AccessLevel.VIEWER
 
         # Mock notification logic (would be called by admin action)
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             # Simulate approval notification
             await mock_context.bot.send_message(
                 chat_id=user_id,
-                text=f"Доступ подтверждён! Ваша роль: {access_level.value}."
+                text=f"Доступ подтверждён! Ваша роль: {access_level.value}.",
             )
 
         # Verify approval notification sent
         mock_context.bot.send_message.assert_called_once_with(
-            chat_id=123456789,
-            text="Доступ подтверждён! Ваша роль: VIEWER."
+            chat_id=123456789, text="Доступ подтверждён! Ваша роль: VIEWER."
         )
 
     async def test_access_control_gates_main_features(
-        self,
-        mock_update,
-        mock_context,
-        mock_access_service
+        self, mock_update, mock_context, mock_access_service
     ):
         """Test that main features are gated until approval."""
         # Setup user with no request
         mock_access_service.get_request_by_user_id.return_value = None
 
         # Mock feature access check (would be used in other handlers)
-        with patch('src.services.access_request_service.AccessRequestService', return_value=mock_access_service):
+        with patch(
+            "src.services.access_request_service.AccessRequestService",
+            return_value=mock_access_service,
+        ):
             user_id = mock_update.effective_user.id
 
             user_request = await mock_access_service.get_request_by_user_id(user_id)
 
             # Check if user has approved access
             has_access = (
-                user_request and
-                user_request.status == AccessRequestStatus.APPROVED
+                user_request and user_request.status == AccessRequestStatus.APPROVED
             )
 
             if not has_access:
                 await mock_context.bot.send_message(
                     chat_id=mock_update.effective_chat.id,
-                    text="Для использования этой функции необходимо одобрение администратора. Используйте /start для запроса доступа."
+                    text="Для использования этой функции необходимо одобрение администратора. Используйте /start для запроса доступа.",
                 )
 
         # Verify access check was performed
@@ -286,5 +283,5 @@ class TestUserOnboardingAccess:
         # Verify access denied message sent
         mock_context.bot.send_message.assert_called_once_with(
             chat_id=123456789,
-            text="Для использования этой функции необходимо одобрение администратора. Используйте /start для запроса доступа."
+            text="Для использования этой функции необходимо одобрение администратора. Используйте /start для запроса доступа.",
         )

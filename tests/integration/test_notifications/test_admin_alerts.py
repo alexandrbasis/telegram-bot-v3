@@ -5,16 +5,21 @@ Tests the complete flow of notifying admins about new access requests
 including error recovery and batch processing.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
+import pytest
 from telegram import Bot
 from telegram.error import NetworkError
 
-from src.services.notification_service import NotificationService
-from src.services.access_request_service import AccessRequestService
-from src.models.user_access_request import UserAccessRequest, AccessLevel, AccessRequestStatus
 from src.data.repositories.user_access_repository import UserAccessRepository
+from src.models.user_access_request import (
+    AccessLevel,
+    AccessRequestStatus,
+    UserAccessRequest,
+)
+from src.services.access_request_service import AccessRequestService
+from src.services.notification_service import NotificationService
 
 
 @pytest.mark.asyncio
@@ -61,17 +66,18 @@ class TestAdminAlerts:
             telegram_username="newuser",
             status=AccessRequestStatus.PENDING,
             access_level=AccessLevel.VIEWER,
-            requested_at=datetime.now(timezone.utc)
+            requested_at=datetime.now(timezone.utc),
         )
 
         # Mock repository responses for submit_request flow
-        mock_repository.get_request_by_user_id.return_value = None  # No existing request
+        mock_repository.get_request_by_user_id.return_value = (
+            None  # No existing request
+        )
         mock_repository.create_request.return_value = new_request
 
         # Act - Submit request and notify admins
         created_request = await access_service.submit_request(
-            telegram_user_id=123456789,
-            telegram_username="newuser"
+            telegram_user_id=123456789, telegram_username="newuser"
         )
 
         notification_results = await notification_service.notify_admins_of_new_request(
@@ -87,8 +93,7 @@ class TestAdminAlerts:
         expected_message = "🔔 Новый запрос на доступ: @newuser (123456789)."
         for admin_id in [100000001, 100000002, 100000003]:
             bot_mock.send_message.assert_any_call(
-                chat_id=admin_id,
-                text=expected_message
+                chat_id=admin_id, text=expected_message
             )
 
     async def test_admin_notification_with_network_recovery(
@@ -101,7 +106,7 @@ class TestAdminAlerts:
             telegram_user_id=987654321,
             telegram_username="networktest",
             status=AccessRequestStatus.PENDING,
-            access_level=AccessLevel.VIEWER
+            access_level=AccessLevel.VIEWER,
         )
 
         # Simulate network issues for first admin, success for others
@@ -132,7 +137,7 @@ class TestAdminAlerts:
             telegram_user_id=555666777,
             telegram_username="partialfail",
             status=AccessRequestStatus.PENDING,
-            access_level=AccessLevel.VIEWER
+            access_level=AccessLevel.VIEWER,
         )
 
         # Admin 2 has permanent failure (e.g., blocked bot)
@@ -162,7 +167,7 @@ class TestAdminAlerts:
                 telegram_user_id=111000 + i,
                 telegram_username=f"bulkuser{i}",
                 status=AccessRequestStatus.PENDING,
-                access_level=AccessLevel.VIEWER
+                access_level=AccessLevel.VIEWER,
             )
             for i in range(5)
         ]
@@ -202,22 +207,19 @@ class TestAdminAlerts:
                 telegram_user_id=999888777,
                 telegram_username=username,
                 status=AccessRequestStatus.PENDING,
-                access_level=AccessLevel.VIEWER
+                access_level=AccessLevel.VIEWER,
             )
 
             # Act
             await notification_service.notify_admins_of_new_request(request)
 
             # Assert
-            expected_text = f"🔔 Новый запрос на доступ: {expected_display} (999888777)."
-            bot_mock.send_message.assert_any_call(
-                chat_id=100000001,
-                text=expected_text
+            expected_text = (
+                f"🔔 Новый запрос на доступ: {expected_display} (999888777)."
             )
+            bot_mock.send_message.assert_any_call(chat_id=100000001, text=expected_text)
 
-    async def test_concurrent_admin_notifications(
-        self, notification_service, bot_mock
-    ):
+    async def test_concurrent_admin_notifications(self, notification_service, bot_mock):
         """Test that notifications to multiple admins are sent concurrently."""
         # Arrange
         import asyncio
@@ -227,7 +229,7 @@ class TestAdminAlerts:
             telegram_user_id=777888999,
             telegram_username="concurrent",
             status=AccessRequestStatus.PENDING,
-            access_level=AccessLevel.VIEWER
+            access_level=AccessLevel.VIEWER,
         )
 
         # Track timing of calls
@@ -257,13 +259,14 @@ class TestAdminAlerts:
     ):
         """Test that errors during admin notification are properly logged."""
         import logging
+
         # Arrange
         request = UserAccessRequest(
             record_id="recLogTest",
             telegram_user_id=333444555,
             telegram_username="logtest",
             status=AccessRequestStatus.PENDING,
-            access_level=AccessLevel.VIEWER
+            access_level=AccessLevel.VIEWER,
         )
 
         bot_mock.send_message.side_effect = NetworkError("Connection refused")

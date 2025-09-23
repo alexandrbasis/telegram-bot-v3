@@ -610,21 +610,22 @@ class BotAccessRequestsFieldMapping:
     Airtable BotAccessRequests table fields.
     """
 
-    # Table configuration
+    # Table configuration - defaults match environment variable defaults
+    # These are only used as fallbacks; actual values come from environment/settings
     TABLE_NAME = "BotAccessRequests"
     TABLE_ID = "tblQWWEcHx9sfhsgN"
     VIEW_ID = "viwVDrguxKWbRS9Xz"  # Grid view for admin queue
 
     # Airtable field name -> Field ID mapping
     AIRTABLE_FIELD_IDS: Dict[str, str] = {
-        "TelegramUserId": "fldeiF3gxg4fZMirc",      # Number (Integer) - Primary key
-        "TelegramUsername": "fld1RzNGWTGl8fSE4",    # Single line text - Optional
-        "Status": "fldcuRa8qeUDKY3hN",              # Single select (Pending, Approved, Denied)
-        "AccessLevel": "fldRBCoHwrJ87hdjr",         # Single select (VIEWER, COORDINATOR, ADMIN)
-        "RequestedAt": "fldRequestedAt123456",      # Date - Auto-set on creation
-        "ReviewedAt": "fldReviewedAt123456",        # Date - Set on approval/denial
-        "ReviewedBy": "fldReviewedBy123456",        # Single line text - Admin ID
-        "id": "fldRECORDID000000",                  # Special record ID field
+        "TelegramUserId": "fldeiF3gxg4fZMirc",  # Number (Integer) - Primary key
+        "TelegramUsername": "fld1RzNGWTGl8fSE4",  # Single line text - Optional
+        "Status": "fldcuRa8qeUDKY3hN",  # Single select (Pending, Approved, Denied)
+        "AccessLevel": "fldRBCoHwrJ87hdjr",  # Single select (VIEWER, COORDINATOR, ADMIN)
+        "RequestedAt": "fldRequestedAt123456",  # Date - Auto-set on creation
+        "ReviewedAt": "fldReviewedAt123456",  # Date - Set on approval/denial
+        "ReviewedBy": "fldReviewedBy123456",  # Single line text - Admin ID
+        "id": "fldRECORDID000000",  # Special record ID field
     }
 
     # Python field name -> Airtable field name mapping

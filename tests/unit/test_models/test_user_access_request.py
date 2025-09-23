@@ -5,14 +5,15 @@ Tests the data model validation, field mapping, and state transitions
 for bot access request functionality.
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 from pydantic import ValidationError
 
 from src.models.user_access_request import (
-    UserAccessRequest,
     AccessLevel,
     AccessRequestStatus,
+    UserAccessRequest,
 )
 
 
@@ -22,8 +23,7 @@ class TestUserAccessRequest:
     def test_create_minimal_request(self):
         """Test creating a request with minimal required fields."""
         request = UserAccessRequest(
-            telegram_user_id=123456789,
-            telegram_username="testuser"
+            telegram_user_id=123456789, telegram_username="testuser"
         )
 
         assert request.telegram_user_id == 123456789
@@ -37,9 +37,7 @@ class TestUserAccessRequest:
 
     def test_create_request_without_username(self):
         """Test creating a request without username (optional field)."""
-        request = UserAccessRequest(
-            telegram_user_id=123456789
-        )
+        request = UserAccessRequest(telegram_user_id=123456789)
 
         assert request.telegram_user_id == 123456789
         assert request.telegram_username is None
@@ -62,35 +60,23 @@ class TestUserAccessRequest:
         """Test AccessLevel enum validation."""
         # Valid access levels
         for level in AccessLevel:
-            request = UserAccessRequest(
-                telegram_user_id=123456789,
-                access_level=level
-            )
+            request = UserAccessRequest(telegram_user_id=123456789, access_level=level)
             assert request.access_level == level
 
         # Invalid access level should raise ValidationError
         with pytest.raises(ValidationError):
-            UserAccessRequest(
-                telegram_user_id=123456789,
-                access_level="INVALID"
-            )
+            UserAccessRequest(telegram_user_id=123456789, access_level="INVALID")
 
     def test_status_enum_validation(self):
         """Test AccessRequestStatus enum validation."""
         # Valid statuses
         for status in AccessRequestStatus:
-            request = UserAccessRequest(
-                telegram_user_id=123456789,
-                status=status
-            )
+            request = UserAccessRequest(telegram_user_id=123456789, status=status)
             assert request.status == status
 
         # Invalid status should raise ValidationError
         with pytest.raises(ValidationError):
-            UserAccessRequest(
-                telegram_user_id=123456789,
-                status="INVALID"
-            )
+            UserAccessRequest(telegram_user_id=123456789, status="INVALID")
 
     def test_requested_at_auto_generation(self):
         """Test that requested_at is automatically set to current timestamp."""
@@ -113,7 +99,7 @@ class TestUserAccessRequest:
             access_level=AccessLevel.COORDINATOR,
             requested_at=requested_at,
             reviewed_at=reviewed_at,
-            reviewed_by="admin_user_123"
+            reviewed_by="admin_user_123",
         )
 
         assert request.record_id == "recABC123456789"
@@ -130,7 +116,7 @@ class TestUserAccessRequest:
         request = UserAccessRequest(
             telegram_user_id=123456789,
             telegram_username="testuser",
-            access_level=AccessLevel.COORDINATOR
+            access_level=AccessLevel.COORDINATOR,
         )
 
         data = request.model_dump()
@@ -152,7 +138,7 @@ class TestUserAccessRequest:
             "access_level": "ADMIN",
             "requested_at": "2025-09-23T10:00:00",
             "reviewed_at": "2025-09-23T11:00:00",
-            "reviewed_by": "admin_123"
+            "reviewed_by": "admin_123",
         }
 
         request = UserAccessRequest.model_validate(data)
@@ -196,9 +182,18 @@ class TestAccessRequestStatus:
         # This tests the business logic that PENDING can transition to APPROVED/DENIED
         # and APPROVED/DENIED can be changed (for re-approval scenarios)
         valid_transitions = {
-            AccessRequestStatus.PENDING: [AccessRequestStatus.APPROVED, AccessRequestStatus.DENIED],
-            AccessRequestStatus.APPROVED: [AccessRequestStatus.DENIED, AccessRequestStatus.PENDING],
-            AccessRequestStatus.DENIED: [AccessRequestStatus.APPROVED, AccessRequestStatus.PENDING],
+            AccessRequestStatus.PENDING: [
+                AccessRequestStatus.APPROVED,
+                AccessRequestStatus.DENIED,
+            ],
+            AccessRequestStatus.APPROVED: [
+                AccessRequestStatus.DENIED,
+                AccessRequestStatus.PENDING,
+            ],
+            AccessRequestStatus.DENIED: [
+                AccessRequestStatus.APPROVED,
+                AccessRequestStatus.PENDING,
+            ],
         }
 
         for from_status, to_statuses in valid_transitions.items():

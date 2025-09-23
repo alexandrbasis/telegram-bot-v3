@@ -3,22 +3,21 @@
 import logging
 from typing import List
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
+from src.bot.handlers.auth_handlers import require_admin_access
+from src.bot.messages import AccessRequestMessages
+from src.config.settings import Settings
+from src.models.user_access_request import AccessLevel
+from src.services.access_request_service import AccessRequestService
+from src.services.notification_service import NotificationService
+from src.services.service_factory import get_user_access_repository
 from src.services.user_interaction_logger import (
     is_user_interaction_logging_enabled,
     set_user_interaction_logging_enabled,
 )
 from src.utils.auth_utils import is_admin_user
-from src.services.access_request_service import AccessRequestService
-from src.services.notification_service import NotificationService
-from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
-from src.services.service_factory import get_airtable_client
-from src.models.user_access_request import UserAccessRequest, AccessRequestStatus, AccessLevel
-from src.bot.handlers.auth_handlers import require_admin_access
-from src.bot.messages import AccessRequestMessages
-from src.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +72,11 @@ async def handle_logging_toggle_command(
 
 # Access Request Management Handlers
 
+
 @require_admin_access
-async def requests_command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def requests_command_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     """
     Handle /requests command to show pending access requests.
 
@@ -86,26 +88,27 @@ async def requests_command_handler(update: Update, context: ContextTypes.DEFAULT
         return
 
     # Initialize service
-    airtable_client = get_airtable_client()
-    repository = AirtableUserAccessRepository(airtable_client)
+    repository = get_user_access_repository()
     service = AccessRequestService(repository)
 
     # Get page from context (default to page 1)
-    page = context.user_data.get('requests_page', 1)
+    page = context.user_data.get("requests_page", 1)
     limit = 5
     offset = (page - 1) * limit
 
     try:
         # Get pending requests
-        pending_requests = await service.get_pending_requests(limit=limit, offset=offset)
+        pending_requests = await service.get_pending_requests(
+            limit=limit, offset=offset
+        )
 
         if not pending_requests:
             if page == 1:
-                message_text = "Нет ожидающих запросов на доступ."
+                message_text = AccessRequestMessages.NO_PENDING_REQUESTS
                 keyboard = None
             else:
                 # No requests on this page, go back to page 1
-                context.user_data['requests_page'] = 1
+                context.user_data["requests_page"] = 1
                 await requests_command_handler(update, context)
                 return
         else:
@@ -117,16 +120,19 @@ async def requests_command_handler(update: Update, context: ContextTypes.DEFAULT
             for i, request in enumerate(pending_requests):
                 display_name = service.format_display_name(request)
                 message_text += f"{offset + i + 1}. {display_name} "
-                message_text += f"(@{request.telegram_username or 'no_username'} / {request.telegram_user_id})\n"
+                message_text += (
+                    f"(@{request.telegram_username or 'no_username'} / "
+                    f"{request.telegram_user_id})\n"
+                )
 
                 # Create approve/deny buttons for each request
                 approve_btn = InlineKeyboardButton(
                     f"✅ Approve {display_name}",
-                    callback_data=f"access:approve:{request.record_id}"
+                    callback_data=f"access:approve:{request.record_id}",
                 )
                 deny_btn = InlineKeyboardButton(
                     f"❌ Deny {display_name}",
-                    callback_data=f"access:deny:{request.record_id}"
+                    callback_data=f"access:deny:{request.record_id}",
                 )
                 keyboard_buttons.extend([approve_btn, deny_btn])
 
@@ -134,11 +140,15 @@ async def requests_command_handler(update: Update, context: ContextTypes.DEFAULT
             nav_buttons = []
             if offset > 0:  # Previous page exists
                 nav_buttons.append(
-                    InlineKeyboardButton("⬅️ Назад", callback_data=f"requests:page:{page-1}")
+                    InlineKeyboardButton(
+                        "⬅️ Назад", callback_data=f"requests:page:{page-1}"
+                    )
                 )
             if len(pending_requests) == limit:  # More pages might exist
                 nav_buttons.append(
-                    InlineKeyboardButton("➡️ Далее", callback_data=f"requests:page:{page+1}")
+                    InlineKeyboardButton(
+                        "➡️ Далее", callback_data=f"requests:page:{page+1}"
+                    )
                 )
 
             # Add refresh button
@@ -146,28 +156,31 @@ async def requests_command_handler(update: Update, context: ContextTypes.DEFAULT
                 InlineKeyboardButton("🔄 Обновить", callback_data="requests:refresh")
             )
 
-            # Organize keyboard layout (2 buttons per row for requests, navigation row at bottom)
-            keyboard_layout = [keyboard_buttons[i:i+2] for i in range(0, len(keyboard_buttons), 2)]
+            # Organize keyboard layout (2 buttons per row for requests,
+            # navigation row at bottom)
+            keyboard_layout = [
+                keyboard_buttons[i : i + 2] for i in range(0, len(keyboard_buttons), 2)
+            ]
             if nav_buttons:
                 keyboard_layout.append(nav_buttons)
 
             keyboard = InlineKeyboardMarkup(keyboard_layout)
 
         await context.bot.send_message(
-            chat_id=chat.id,
-            text=message_text,
-            reply_markup=keyboard
+            chat_id=chat.id, text=message_text, reply_markup=keyboard
         )
 
     except Exception as e:
         logger.error(f"Error handling requests command: {e}")
         await context.bot.send_message(
             chat_id=chat.id,
-            text="Произошла ошибка при загрузке запросов. Пожалуйста, попробуйте позже."
+            text=AccessRequestMessages.LOAD_REQUESTS_ERROR_RU,
         )
 
 
-async def access_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def access_callback_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     """
     Handle callback queries for access request actions.
 
@@ -193,8 +206,7 @@ async def access_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         action_type = callback_parts[1]
 
         # Initialize service
-        airtable_client = get_airtable_client()
-        repository = AirtableUserAccessRepository(airtable_client)
+        repository = get_user_access_repository()
         service = AccessRequestService(repository)
 
         if action == "access":
@@ -204,14 +216,16 @@ async def access_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                 return
 
             record_id = callback_parts[2]
-            await handle_access_action(query, service, action_type, record_id, user.username or str(user.id))
+            await handle_access_action(
+                query, service, action_type, record_id, user.username or str(user.id)
+            )
 
         elif action == "requests":
             # Handle navigation actions
             if action_type == "page":
                 if len(callback_parts) == 3:
                     page = int(callback_parts[2])
-                    context.user_data['requests_page'] = page
+                    context.user_data["requests_page"] = page
                     # Create new update for the requests command
                     await requests_command_handler(update, context)
                     await query.delete_message()
@@ -230,7 +244,7 @@ async def handle_access_action(
     service: AccessRequestService,
     action_type: str,
     record_id: str,
-    admin_username: str
+    admin_username: str,
 ) -> None:
     """
     Handle individual access approve/deny actions.
@@ -245,7 +259,9 @@ async def handle_access_action(
     try:
         # Find the request by scanning all pending requests
         # This is inefficient but works with current repository interface
-        pending_requests = await service.get_pending_requests(limit=100)  # Reasonable limit
+        pending_requests = await service.get_pending_requests(
+            limit=100
+        )  # Reasonable limit
         target_request = None
 
         for request in pending_requests:
@@ -260,9 +276,7 @@ async def handle_access_action(
         if action_type == "approve":
             # Approve with default VIEWER level
             approved_request = await service.approve_request(
-                target_request,
-                AccessLevel.VIEWER,
-                admin_username
+                target_request, AccessLevel.VIEWER, admin_username
             )
 
             await query.edit_message_text(
@@ -274,17 +288,19 @@ async def handle_access_action(
             try:
                 settings = Settings()
                 notification_service = NotificationService(
-                    bot=query.bot,
-                    admin_ids=settings.telegram.admin_user_ids
+                    bot=query.bot, admin_ids=settings.telegram.admin_user_ids
                 )
                 success = await notification_service.notify_user_decision(
                     user_id=target_request.telegram_user_id,
                     approved=True,
                     access_level=approved_request.access_level,
-                    language="ru"
+                    language="ru",
                 )
                 if not success:
-                    logger.warning(f"Failed to notify user {target_request.telegram_user_id} about approval")
+                    logger.warning(
+                        f"Failed to notify user {target_request.telegram_user_id} "
+                        f"about approval"
+                    )
             except Exception as e:
                 logger.error(f"Error notifying user about approval: {e}")
 
@@ -303,16 +319,18 @@ async def handle_access_action(
             try:
                 settings = Settings()
                 notification_service = NotificationService(
-                    bot=query.bot,
-                    admin_ids=settings.telegram.admin_user_ids
+                    bot=query.bot, admin_ids=settings.telegram.admin_user_ids
                 )
                 success = await notification_service.notify_user_decision(
                     user_id=target_request.telegram_user_id,
                     approved=False,
-                    language="ru"
+                    language="ru",
                 )
                 if not success:
-                    logger.warning(f"Failed to notify user {target_request.telegram_user_id} about denial")
+                    logger.warning(
+                        f"Failed to notify user {target_request.telegram_user_id} "
+                        f"about denial"
+                    )
             except Exception as e:
                 logger.error(f"Error notifying user about denial: {e}")
 
@@ -327,7 +345,9 @@ async def handle_access_action(
 
 
 @require_admin_access
-async def list_approved_users_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def list_approved_users_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     """
     Handle command to list approved users.
 
@@ -339,8 +359,7 @@ async def list_approved_users_handler(update: Update, context: ContextTypes.DEFA
         return
 
     # Initialize service
-    airtable_client = get_airtable_client()
-    repository = AirtableUserAccessRepository(airtable_client)
+    repository = get_user_access_repository()
     service = AccessRequestService(repository)
 
     try:
@@ -358,14 +377,10 @@ async def list_approved_users_handler(update: Update, context: ContextTypes.DEFA
                 message_text += f"(@{request.telegram_username or 'no_username'}) - "
                 message_text += f"{request.access_level.value}\n"
 
-        await context.bot.send_message(
-            chat_id=chat.id,
-            text=message_text
-        )
+        await context.bot.send_message(chat_id=chat.id, text=message_text)
 
     except Exception as e:
         logger.error(f"Error listing approved users: {e}")
         await context.bot.send_message(
-            chat_id=chat.id,
-            text="Произошла ошибка при загрузке списка пользователей."
+            chat_id=chat.id, text="Произошла ошибка при загрузке списка пользователей."
         )

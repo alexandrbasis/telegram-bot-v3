@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AccessLevel(str, Enum):
@@ -38,21 +38,25 @@ class UserAccessRequest(BaseModel):
 
     record_id: Optional[str] = Field(None, description="Airtable record ID")
     telegram_user_id: int = Field(..., description="Telegram user ID (primary key)")
-    telegram_username: Optional[str] = Field(None, description="Telegram username without @ prefix")
+    telegram_username: Optional[str] = Field(
+        None, description="Telegram username without @ prefix"
+    )
     status: AccessRequestStatus = Field(
-        default=AccessRequestStatus.PENDING,
-        description="Current request status"
+        default=AccessRequestStatus.PENDING, description="Current request status"
     )
     access_level: AccessLevel = Field(
-        default=AccessLevel.VIEWER,
-        description="Effective permissions after approval"
+        default=AccessLevel.VIEWER, description="Effective permissions after approval"
     )
     requested_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        description="Timestamp when request was submitted"
+        description="Timestamp when request was submitted",
     )
-    reviewed_at: Optional[datetime] = Field(None, description="Timestamp when request was reviewed")
-    reviewed_by: Optional[str] = Field(None, description="Admin user who reviewed the request")
+    reviewed_at: Optional[datetime] = Field(
+        None, description="Timestamp when request was reviewed"
+    )
+    reviewed_by: Optional[str] = Field(
+        None, description="Admin user who reviewed the request"
+    )
 
     model_config = ConfigDict(
         use_enum_values=True,

@@ -5,14 +5,15 @@ Tests the business logic service for handling user access requests,
 including submission, approval/denial, and admin notifications.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from src.models.user_access_request import (
-    UserAccessRequest,
     AccessLevel,
     AccessRequestStatus,
+    UserAccessRequest,
 )
 from src.services.access_request_service import AccessRequestService
 
@@ -37,7 +38,9 @@ class TestAccessRequestService:
         """Create service instance with mocked repository."""
         return AccessRequestService(mock_repository)
 
-    async def test_submit_request_creates_pending_record(self, service, mock_repository):
+    async def test_submit_request_creates_pending_record(
+        self, service, mock_repository
+    ):
         """Test submitting a new access request creates a pending record."""
         # Setup mocks - no existing request found
         mock_repository.get_request_by_user_id.return_value = None
@@ -53,8 +56,7 @@ class TestAccessRequestService:
 
         # Test submission
         result = await service.submit_request(
-            telegram_user_id=123456789,
-            telegram_username="testuser"
+            telegram_user_id=123456789, telegram_username="testuser"
         )
 
         # Verify repository was called correctly
@@ -135,16 +137,12 @@ class TestAccessRequestService:
 
         # Test approval
         result = await service.approve_request(
-            pending_request,
-            AccessLevel.COORDINATOR,
-            "admin_123"
+            pending_request, AccessLevel.COORDINATOR, "admin_123"
         )
 
         # Verify repository call
         mock_repository.approve_request.assert_called_once_with(
-            pending_request,
-            AccessLevel.COORDINATOR,
-            "admin_123"
+            pending_request, AccessLevel.COORDINATOR, "admin_123"
         )
 
         # Verify result
@@ -177,8 +175,7 @@ class TestAccessRequestService:
 
         # Verify repository call
         mock_repository.deny_request.assert_called_once_with(
-            pending_request,
-            "admin_456"
+            pending_request, "admin_456"
         )
 
         # Verify result
@@ -205,9 +202,7 @@ class TestAccessRequestService:
 
         # Verify repository call
         mock_repository.list_requests_by_status.assert_called_once_with(
-            AccessRequestStatus.PENDING,
-            limit=5,
-            offset=0
+            AccessRequestStatus.PENDING, limit=5, offset=0
         )
 
         # Verify result
@@ -240,7 +235,9 @@ class TestAccessRequestService:
         mock_repository.get_request_by_user_id.assert_called_once_with(999999999)
         assert result is None
 
-    async def test_submit_request_handles_repository_failure(self, service, mock_repository):
+    async def test_submit_request_handles_repository_failure(
+        self, service, mock_repository
+    ):
         """Test service handles repository failures gracefully."""
         # Setup repository to raise exception
         mock_repository.get_request_by_user_id.return_value = None
@@ -279,7 +276,10 @@ class TestAccessRequestService:
         )
 
         # This would be the actual service method
-        display_name = request_with_username.telegram_username or f"User {request_with_username.telegram_user_id}"
+        display_name = (
+            request_with_username.telegram_username
+            or f"User {request_with_username.telegram_user_id}"
+        )
         assert display_name == "testuser"
 
         # Test without username
@@ -288,5 +288,8 @@ class TestAccessRequestService:
             telegram_username=None,
         )
 
-        display_name = request_without_username.telegram_username or f"User {request_without_username.telegram_user_id}"
+        display_name = (
+            request_without_username.telegram_username
+            or f"User {request_without_username.telegram_user_id}"
+        )
         assert display_name == "User 987654321"

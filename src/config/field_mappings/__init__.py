@@ -32,7 +32,9 @@ if field_mappings_file.exists():
         AirtableFieldMapping = field_mappings_module.AirtableFieldMapping
         FieldType = field_mappings_module.FieldType
         SearchFieldMapping = field_mappings_module.SearchFieldMapping
-        BotAccessRequestsFieldMapping = field_mappings_module.BotAccessRequestsFieldMapping
+        BotAccessRequestsFieldMapping = (
+            field_mappings_module.BotAccessRequestsFieldMapping
+        )
         field_mapping = field_mappings_module.field_mapping
         search_mapping = field_mappings_module.search_mapping
         bot_access_mapping = field_mappings_module.bot_access_mapping

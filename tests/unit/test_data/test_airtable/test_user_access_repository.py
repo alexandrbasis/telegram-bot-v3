@@ -5,17 +5,18 @@ Tests the repository pattern for user access requests with Airtable integration,
 including CRUD operations, status filtering, and error handling.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
+
+from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
+from src.data.repositories.user_access_repository import UserAccessRepository
 from src.models.user_access_request import (
-    UserAccessRequest,
     AccessLevel,
     AccessRequestStatus,
+    UserAccessRequest,
 )
-from src.data.repositories.user_access_repository import UserAccessRepository
-from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
 
 
 class TestUserAccessRepository:
@@ -68,11 +69,13 @@ class TestAirtableUserAccessRepository:
                 "fldeiF3gxg4fZMirc": 123456789,  # TelegramUserId
                 "fld1RzNGWTGl8fSE4": "testuser",  # TelegramUsername
                 "fldcuRa8qeUDKY3hN": "Pending",  # Status
-                "fldRBCoHwrJ87hdjr": "VIEWER",   # AccessLevel
-            }
+                "fldRBCoHwrJ87hdjr": "VIEWER",  # AccessLevel
+            },
         }
 
-    async def test_create_request(self, repository, mock_airtable_client, sample_request_data):
+    async def test_create_request(
+        self, repository, mock_airtable_client, sample_request_data
+    ):
         """Test creating a new access request."""
         # Setup mock response
         mock_airtable_client.create_record.return_value = {
@@ -82,7 +85,7 @@ class TestAirtableUserAccessRepository:
                 "fld1RzNGWTGl8fSE4": "testuser",
                 "fldcuRa8qeUDKY3hN": "Pending",
                 "fldRBCoHwrJ87hdjr": "VIEWER",
-            }
+            },
         }
 
         request = UserAccessRequest(**sample_request_data)
@@ -101,7 +104,9 @@ class TestAirtableUserAccessRepository:
         assert result.record_id == "recABC123456789"
         assert result.telegram_user_id == 123456789
 
-    async def test_get_request_by_user_id(self, repository, mock_airtable_client, sample_airtable_record):
+    async def test_get_request_by_user_id(
+        self, repository, mock_airtable_client, sample_airtable_record
+    ):
         """Test retrieving a request by Telegram user ID."""
         # Setup mock response
         mock_airtable_client.get_records.return_value = [sample_airtable_record]
@@ -120,7 +125,9 @@ class TestAirtableUserAccessRepository:
         assert result.telegram_username == "testuser"
         assert result.status == AccessRequestStatus.PENDING
 
-    async def test_get_request_by_user_id_not_found(self, repository, mock_airtable_client):
+    async def test_get_request_by_user_id_not_found(
+        self, repository, mock_airtable_client
+    ):
         """Test retrieving a non-existent request returns None."""
         mock_airtable_client.get_records.return_value = []
 
@@ -128,7 +135,9 @@ class TestAirtableUserAccessRepository:
 
         assert result is None
 
-    async def test_list_requests_by_status(self, repository, mock_airtable_client, sample_airtable_record):
+    async def test_list_requests_by_status(
+        self, repository, mock_airtable_client, sample_airtable_record
+    ):
         """Test listing requests filtered by status."""
         # Setup mock response with multiple records
         mock_airtable_client.get_records.return_value = [
@@ -140,8 +149,8 @@ class TestAirtableUserAccessRepository:
                     "fld1RzNGWTGl8fSE4": "anotheruser",
                     "fldcuRa8qeUDKY3hN": "Pending",
                     "fldRBCoHwrJ87hdjr": "COORDINATOR",
-                }
-            }
+                },
+            },
         ]
 
         results = await repository.list_requests_by_status(AccessRequestStatus.PENDING)
@@ -158,7 +167,9 @@ class TestAirtableUserAccessRepository:
         assert results[0].telegram_user_id == 123456789
         assert results[1].telegram_user_id == 987654321
 
-    async def test_approve_request(self, repository, mock_airtable_client, sample_request_data):
+    async def test_approve_request(
+        self, repository, mock_airtable_client, sample_request_data
+    ):
         """Test approving a request with status transition."""
         # Setup initial request
         request = UserAccessRequest(**sample_request_data)
@@ -172,13 +183,11 @@ class TestAirtableUserAccessRepository:
                 "fld1RzNGWTGl8fSE4": "testuser",
                 "fldcuRa8qeUDKY3hN": "Approved",
                 "fldRBCoHwrJ87hdjr": "COORDINATOR",
-            }
+            },
         }
 
         result = await repository.approve_request(
-            request,
-            AccessLevel.COORDINATOR,
-            "admin_123"
+            request, AccessLevel.COORDINATOR, "admin_123"
         )
 
         # Verify update call
@@ -199,7 +208,9 @@ class TestAirtableUserAccessRepository:
         assert result.status == AccessRequestStatus.APPROVED
         assert result.access_level == AccessLevel.COORDINATOR
 
-    async def test_deny_request(self, repository, mock_airtable_client, sample_request_data):
+    async def test_deny_request(
+        self, repository, mock_airtable_client, sample_request_data
+    ):
         """Test denying a request with audit metadata."""
         # Setup initial request
         request = UserAccessRequest(**sample_request_data)
@@ -213,7 +224,7 @@ class TestAirtableUserAccessRepository:
                 "fld1RzNGWTGl8fSE4": "testuser",
                 "fldcuRa8qeUDKY3hN": "Denied",
                 "fldRBCoHwrJ87hdjr": "VIEWER",
-            }
+            },
         }
 
         result = await repository.deny_request(request, "admin_456")
@@ -246,7 +257,9 @@ class TestAirtableUserAccessRepository:
 
     async def test_field_mapping_integration(self, repository):
         """Test that repository correctly uses field mappings."""
-        with patch('src.data.airtable.airtable_user_access_repo.BotAccessRequestsFieldMapping') as mock_mapping:
+        with patch(
+            "src.data.airtable.airtable_user_access_repo.BotAccessRequestsFieldMapping"
+        ) as mock_mapping:
             # Setup mock field mapping
             mock_mapping.get_field_id.side_effect = lambda field: {
                 "TelegramUserId": "fldeiF3gxg4fZMirc",
