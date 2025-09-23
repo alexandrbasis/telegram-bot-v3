@@ -9,25 +9,25 @@ import asyncio
 import csv
 import json
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
-from datetime import datetime
 
 import pytest
 
-from src.services.israel_missions_import_service import (
-    IsraelMissionsImportService,
-    ImportMode,
-    ImportResult,
-    ImportRecordResult,
-    ImportSummary,
-)
 from src.data.repositories.participant_repository import (
     DuplicateError,
     RepositoryError,
     ValidationError,
 )
 from src.models.participant import Participant
+from src.services.israel_missions_import_service import (
+    ImportMode,
+    ImportRecordResult,
+    ImportResult,
+    ImportSummary,
+    IsraelMissionsImportService,
+)
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def import_service(mock_repository):
     """Create import service with mock repository."""
     return IsraelMissionsImportService(
         participant_repository=mock_repository,
-        rate_limit_delay=0.01  # Fast for testing
+        rate_limit_delay=0.01,  # Fast for testing
     )
 
 
@@ -57,7 +57,7 @@ def sample_csv_data():
             "Size": "L",
             "ContactInformation": "+7-495-123-4567",
             "CountryAndCity": "Москва, Россия",
-            "Role": "TEAM"
+            "Role": "TEAM",
         },
         {
             "FullNameRU": "Мария Иванова",
@@ -66,15 +66,17 @@ def sample_csv_data():
             "Size": "M",
             "ContactInformation": "maria@example.com",
             "CountryAndCity": "Санкт-Петербург, Россия",
-            "Role": "CANDIDATE"
-        }
+            "Role": "CANDIDATE",
+        },
     ]
 
 
 @pytest.fixture
 def csv_file(sample_csv_data):
     """Create a temporary CSV file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".csv", delete=False, encoding="utf-8"
+    ) as f:
         if sample_csv_data:
             writer = csv.DictWriter(f, fieldnames=sample_csv_data[0].keys())
             writer.writeheader()
@@ -109,9 +111,7 @@ class TestImportSummary:
         """Test adding successful results."""
         summary = ImportSummary()
         result = ImportRecordResult(
-            row_number=1,
-            result=ImportResult.SUCCESS,
-            message="Created successfully"
+            row_number=1, result=ImportResult.SUCCESS, message="Created successfully"
         )
 
         summary.add_result(result)
@@ -126,10 +126,16 @@ class TestImportSummary:
 
         # Add one of each type
         summary.add_result(ImportRecordResult(1, ImportResult.SUCCESS, "OK"))
-        summary.add_result(ImportRecordResult(2, ImportResult.DUPLICATE_SKIP, "Duplicate"))
-        summary.add_result(ImportRecordResult(3, ImportResult.VALIDATION_ERROR, "Invalid"))
+        summary.add_result(
+            ImportRecordResult(2, ImportResult.DUPLICATE_SKIP, "Duplicate")
+        )
+        summary.add_result(
+            ImportRecordResult(3, ImportResult.VALIDATION_ERROR, "Invalid")
+        )
         summary.add_result(ImportRecordResult(4, ImportResult.API_ERROR, "API fail"))
-        summary.add_result(ImportRecordResult(5, ImportResult.TRANSFORMATION_ERROR, "Transform fail"))
+        summary.add_result(
+            ImportRecordResult(5, ImportResult.TRANSFORMATION_ERROR, "Transform fail")
+        )
 
         assert summary.total_rows == 5
         assert summary.successful == 1
@@ -146,7 +152,9 @@ class TestImportSummary:
         summary.add_result(ImportRecordResult(1, ImportResult.SUCCESS, "OK"))
         summary.add_result(ImportRecordResult(2, ImportResult.SUCCESS, "OK"))
         summary.add_result(ImportRecordResult(3, ImportResult.SUCCESS, "OK"))
-        summary.add_result(ImportRecordResult(4, ImportResult.VALIDATION_ERROR, "Error"))
+        summary.add_result(
+            ImportRecordResult(4, ImportResult.VALIDATION_ERROR, "Error")
+        )
         summary.add_result(ImportRecordResult(5, ImportResult.API_ERROR, "Error"))
 
         assert summary.get_success_rate() == 60.0
@@ -160,7 +168,9 @@ class TestImportSummary:
         """Test is_successful returns False when errors exist."""
         summary = ImportSummary()
         summary.add_result(ImportRecordResult(1, ImportResult.SUCCESS, "OK"))
-        summary.add_result(ImportRecordResult(2, ImportResult.VALIDATION_ERROR, "Error"))
+        summary.add_result(
+            ImportRecordResult(2, ImportResult.VALIDATION_ERROR, "Error")
+        )
 
         assert summary.is_successful() is False
 
@@ -168,7 +178,9 @@ class TestImportSummary:
         """Test is_successful returns True when only duplicates (no errors)."""
         summary = ImportSummary()
         summary.add_result(ImportRecordResult(1, ImportResult.SUCCESS, "OK"))
-        summary.add_result(ImportRecordResult(2, ImportResult.DUPLICATE_SKIP, "Duplicate"))
+        summary.add_result(
+            ImportRecordResult(2, ImportResult.DUPLICATE_SKIP, "Duplicate")
+        )
 
         assert summary.is_successful() is True
 
@@ -179,8 +191,7 @@ class TestImportService:
     def test_service_initialization(self, mock_repository):
         """Test service initializes correctly."""
         service = IsraelMissionsImportService(
-            participant_repository=mock_repository,
-            rate_limit_delay=0.5
+            participant_repository=mock_repository, rate_limit_delay=0.5
         )
 
         assert service.repository == mock_repository
@@ -191,8 +202,7 @@ class TestImportService:
     async def test_dry_run_import_successful(self, import_service, csv_file):
         """Test dry-run import with successful validation."""
         summary = await import_service.import_from_csv(
-            csv_file,
-            mode=ImportMode.DRY_RUN
+            csv_file, mode=ImportMode.DRY_RUN
         )
 
         assert summary.total_rows == 2
@@ -213,12 +223,15 @@ class TestImportService:
         import_service.repository.create.return_value = mock_participant
 
         # Mock Participant.from_airtable_fields to avoid actual instantiation
-        with patch('src.services.israel_missions_import_service.Participant') as mock_participant_class:
-            mock_participant_class.from_airtable_fields.return_value = Mock(spec=Participant)
+        with patch(
+            "src.services.israel_missions_import_service.Participant"
+        ) as mock_participant_class:
+            mock_participant_class.from_airtable_fields.return_value = Mock(
+                spec=Participant
+            )
 
             summary = await import_service.import_from_csv(
-                csv_file,
-                mode=ImportMode.LIVE
+                csv_file, mode=ImportMode.LIVE
             )
 
         assert summary.total_rows == 2
@@ -232,16 +245,22 @@ class TestImportService:
     async def test_import_with_validation_errors(self, import_service):
         """Test import handles validation errors correctly."""
         # Create CSV with missing required fields
-        invalid_data = [{"FullNameRU": "", "ContactInformation": ""}]  # Empty required fields
+        invalid_data = [
+            {"FullNameRU": "", "ContactInformation": ""}
+        ]  # Empty required fields
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".csv", delete=False, encoding="utf-8"
+        ) as f:
             writer = csv.DictWriter(f, fieldnames=["FullNameRU", "ContactInformation"])
             writer.writeheader()
             writer.writerows(invalid_data)
             csv_path = Path(f.name)
 
         try:
-            summary = await import_service.import_from_csv(csv_path, mode=ImportMode.DRY_RUN)
+            summary = await import_service.import_from_csv(
+                csv_path, mode=ImportMode.DRY_RUN
+            )
 
             assert summary.total_rows == 1
             assert summary.successful == 0
@@ -264,15 +283,18 @@ class TestImportService:
 
         import_service.repository.create.side_effect = [
             mock_participant,  # First record succeeds
-            DuplicateError("Duplicate participant")  # Second record fails
+            DuplicateError("Duplicate participant"),  # Second record fails
         ]
 
-        with patch('src.services.israel_missions_import_service.Participant') as mock_participant_class:
-            mock_participant_class.from_airtable_fields.return_value = Mock(spec=Participant)
+        with patch(
+            "src.services.israel_missions_import_service.Participant"
+        ) as mock_participant_class:
+            mock_participant_class.from_airtable_fields.return_value = Mock(
+                spec=Participant
+            )
 
             summary = await import_service.import_from_csv(
-                csv_file,
-                mode=ImportMode.LIVE
+                csv_file, mode=ImportMode.LIVE
             )
 
         assert summary.total_rows == 2
@@ -283,14 +305,19 @@ class TestImportService:
     @pytest.mark.asyncio
     async def test_import_with_api_errors(self, import_service, csv_file):
         """Test handling of API errors during live import."""
-        import_service.repository.create.side_effect = RepositoryError("API connection failed")
+        import_service.repository.create.side_effect = RepositoryError(
+            "API connection failed"
+        )
 
-        with patch('src.services.israel_missions_import_service.Participant') as mock_participant_class:
-            mock_participant_class.from_airtable_fields.return_value = Mock(spec=Participant)
+        with patch(
+            "src.services.israel_missions_import_service.Participant"
+        ) as mock_participant_class:
+            mock_participant_class.from_airtable_fields.return_value = Mock(
+                spec=Participant
+            )
 
             summary = await import_service.import_from_csv(
-                csv_file,
-                mode=ImportMode.LIVE
+                csv_file, mode=ImportMode.LIVE
             )
 
         assert summary.total_rows == 2
@@ -308,12 +335,12 @@ class TestImportService:
     async def test_import_with_max_records_limit(self, import_service, csv_file):
         """Test import respects max_records parameter."""
         summary = await import_service.import_from_csv(
-            csv_file,
-            mode=ImportMode.DRY_RUN,
-            max_records=1
+            csv_file, mode=ImportMode.DRY_RUN, max_records=1
         )
 
-        assert summary.total_rows == 1  # Should only process 1 record despite CSV having 2
+        assert (
+            summary.total_rows == 1
+        )  # Should only process 1 record despite CSV having 2
 
     @pytest.mark.asyncio
     async def test_rate_limiting_in_live_mode(self, import_service, csv_file):
@@ -322,10 +349,14 @@ class TestImportService:
         mock_participant.record_id = "recABC123"
         import_service.repository.create.return_value = mock_participant
 
-        with patch('src.services.israel_missions_import_service.Participant') as mock_participant_class:
-            mock_participant_class.from_airtable_fields.return_value = Mock(spec=Participant)
+        with patch(
+            "src.services.israel_missions_import_service.Participant"
+        ) as mock_participant_class:
+            mock_participant_class.from_airtable_fields.return_value = Mock(
+                spec=Participant
+            )
 
-            with patch('asyncio.sleep') as mock_sleep:
+            with patch("asyncio.sleep") as mock_sleep:
                 await import_service.import_from_csv(csv_file, mode=ImportMode.LIVE)
 
                 # Should have called sleep for rate limiting (2 records = 2 sleep calls)
@@ -350,7 +381,9 @@ class TestImportService:
         assert "name+DOB key 'john|1990' (cached)" in duplicate_info
 
         # Test no duplicate found
-        duplicate_info = await import_service._check_for_duplicates("999999999", "jane|1985")
+        duplicate_info = await import_service._check_for_duplicates(
+            "999999999", "jane|1985"
+        )
         assert duplicate_info is None
 
 
@@ -375,8 +408,12 @@ class TestReportGeneration:
         """Test formatting of summary with errors."""
         summary = ImportSummary()
         summary.add_result(ImportRecordResult(1, ImportResult.SUCCESS, "Created"))
-        summary.add_result(ImportRecordResult(2, ImportResult.VALIDATION_ERROR, "Missing field"))
-        summary.add_result(ImportRecordResult(3, ImportResult.DUPLICATE_SKIP, "Duplicate found"))
+        summary.add_result(
+            ImportRecordResult(2, ImportResult.VALIDATION_ERROR, "Missing field")
+        )
+        summary.add_result(
+            ImportRecordResult(3, ImportResult.DUPLICATE_SKIP, "Duplicate found")
+        )
         summary.finalize()
 
         report = import_service.format_summary_report(summary)
@@ -396,17 +433,20 @@ class TestReportGeneration:
 
         # Add successful results with payloads
         payload1 = {"FullNameRU": "Test User", "ContactInformation": "+7123456789"}
-        payload2 = {"FullNameRU": "Another User", "ContactInformation": "test@example.com"}
+        payload2 = {
+            "FullNameRU": "Another User",
+            "ContactInformation": "test@example.com",
+        }
 
-        summary.add_result(ImportRecordResult(
-            1, ImportResult.SUCCESS, "OK", payload=payload1
-        ))
-        summary.add_result(ImportRecordResult(
-            2, ImportResult.SUCCESS, "OK", payload=payload2
-        ))
-        summary.add_result(ImportRecordResult(
-            3, ImportResult.VALIDATION_ERROR, "Error"  # No payload
-        ))
+        summary.add_result(
+            ImportRecordResult(1, ImportResult.SUCCESS, "OK", payload=payload1)
+        )
+        summary.add_result(
+            ImportRecordResult(2, ImportResult.SUCCESS, "OK", payload=payload2)
+        )
+        summary.add_result(
+            ImportRecordResult(3, ImportResult.VALIDATION_ERROR, "Error")  # No payload
+        )
 
         preview = import_service.get_dry_run_preview(summary, max_samples=2)
 
@@ -415,14 +455,16 @@ class TestReportGeneration:
         assert "Sample 2 (Row 2):" in preview
         assert "Test User" in preview
         # Should show redacted contact info
-        assert "+7*****89" in preview or "+7*******89" in preview  # Depending on redaction logic
+        assert (
+            "+7*****89" in preview or "+7*******89" in preview
+        )  # Depending on redaction logic
 
     def test_format_payload_preview_redacts_contact(self, import_service):
         """Test payload preview redacts sensitive information."""
         payload = {
             "FullNameRU": "Test User",
             "ContactInformation": "+7-495-123-4567",
-            "Other": "Normal field"
+            "Other": "Normal field",
         }
 
         formatted = import_service._format_payload_preview(payload)
@@ -448,7 +490,7 @@ class TestIntegrationScenarios:
                 "Size": "L",
                 "ContactInformation": "+7-495-123-4567",
                 "CountryAndCity": "Moscow",
-                "Role": "TEAM"
+                "Role": "TEAM",
             },
             {
                 "FullNameRU": "",  # Invalid - empty required field
@@ -457,11 +499,13 @@ class TestIntegrationScenarios:
                 "Size": "XXXL",  # Invalid size
                 "ContactInformation": "test@example.com",
                 "CountryAndCity": "",
-                "Role": "INVALID"
-            }
+                "Role": "INVALID",
+            },
         ]
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".csv", delete=False, encoding="utf-8"
+        ) as f:
             writer = csv.DictWriter(f, fieldnames=csv_data[0].keys())
             writer.writeheader()
             writer.writerows(csv_data)
@@ -494,7 +538,7 @@ class TestIntegrationScenarios:
         # Setup mock repository responses
         mock_participants = [
             Mock(spec=Participant, record_id="rec1"),
-            Mock(spec=Participant, record_id="rec2")
+            Mock(spec=Participant, record_id="rec2"),
         ]
         import_service.repository.create.side_effect = mock_participants
 
@@ -507,7 +551,7 @@ class TestIntegrationScenarios:
                 "Gender": "Male",
                 "Size": "M",
                 "CountryAndCity": "Moscow",
-                "Role": "TEAM"
+                "Role": "TEAM",
             },
             {
                 "FullNameRU": "User Two",
@@ -516,22 +560,30 @@ class TestIntegrationScenarios:
                 "Gender": "Female",
                 "Size": "S",
                 "CountryAndCity": "SPB",
-                "Role": "CANDIDATE"
-            }
+                "Role": "CANDIDATE",
+            },
         ]
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".csv", delete=False, encoding="utf-8"
+        ) as f:
             writer = csv.DictWriter(f, fieldnames=csv_data[0].keys())
             writer.writeheader()
             writer.writerows(csv_data)
             csv_path = Path(f.name)
 
         try:
-            with patch('src.services.israel_missions_import_service.Participant') as mock_participant_class:
-                mock_participant_class.from_airtable_fields.return_value = Mock(spec=Participant)
+            with patch(
+                "src.services.israel_missions_import_service.Participant"
+            ) as mock_participant_class:
+                mock_participant_class.from_airtable_fields.return_value = Mock(
+                    spec=Participant
+                )
 
                 # Run live import
-                summary = await import_service.import_from_csv(csv_path, ImportMode.LIVE)
+                summary = await import_service.import_from_csv(
+                    csv_path, ImportMode.LIVE
+                )
 
                 # Verify results
                 assert summary.total_rows == 2

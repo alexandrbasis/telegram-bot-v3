@@ -4,7 +4,8 @@ Israel Missions 2025 CSV → Airtable mapping constants and normalization helper
 This module provides typed mapping dictionaries and validation helpers for
 safely importing participant data from Google Form responses to Airtable.
 
-Based on the mapping specification: docs/data-integration/israel-missions-2025-mapping.md
+Based on the mapping specification:
+docs/data-integration/israel-missions-2025-mapping.md
 """
 
 import re
@@ -189,7 +190,9 @@ class IsraelMissionsMapping:
 
         # For phone numbers, show pattern like +7********01
         if contact_info.startswith("+") and len(contact_info) > 6:
-            return f"{contact_info[:2]}{'*' * (len(contact_info) - 4)}{contact_info[-2:]}"
+            return (
+                f"{contact_info[:2]}{'*' * (len(contact_info) - 4)}{contact_info[-2:]}"
+            )
 
         # For other formats, mask middle
         return f"{contact_info[:2]}{'*' * (len(contact_info) - 4)}{contact_info[-2:]}"
@@ -217,7 +220,8 @@ class IsraelMissionsMapping:
         for csv_column, airtable_field in cls.CSV_TO_AIRTABLE.items():
             raw_value = csv_row.get(csv_column)
 
-            if raw_value is None:
+            # Role field should always be processed (even if None) to get default value
+            if raw_value is None and airtable_field != "Role":
                 continue
 
             # Apply field-specific transformations
@@ -239,7 +243,9 @@ class IsraelMissionsMapping:
                 transformed_value = raw_value.strip() if raw_value else None
             else:
                 # Default: strip whitespace for text fields
-                transformed_value = raw_value.strip() if isinstance(raw_value, str) else raw_value
+                transformed_value = (
+                    raw_value.strip() if isinstance(raw_value, str) else raw_value
+                )
 
             # Only add non-None values to payload
             if transformed_value is not None:

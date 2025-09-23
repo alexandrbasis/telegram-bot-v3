@@ -43,7 +43,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from src.config.settings import get_settings
-from src.data.airtable.airtable_client import AirtableClient
+from src.data.airtable.airtable_client import AirtableClient, AirtableConfig
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.services.israel_missions_import_service import (
     IsraelMissionsImportService,
@@ -164,8 +164,8 @@ def validate_environment() -> bool:
         # Check required settings
         required_checks = [
             (settings.telegram.bot_token, "TELEGRAM_BOT_TOKEN"),
-            (settings.database.api_key, "AIRTABLE_API_KEY"),
-            (settings.database.base_id, "AIRTABLE_BASE_ID"),
+            (settings.database.airtable_api_key, "AIRTABLE_API_KEY"),
+            (settings.database.airtable_base_id, "AIRTABLE_BASE_ID"),
         ]
 
         missing = []
@@ -180,8 +180,8 @@ def validate_environment() -> bool:
             return False
 
         logger.info(f"Environment validation passed:")
-        logger.info(f"  - Airtable Base: {settings.database.base_id}")
-        logger.info(f"  - Airtable Table: {settings.database.table_name}")
+        logger.info(f"  - Airtable Base: {settings.database.airtable_base_id}")
+        logger.info(f"  - Airtable Table: {settings.database.airtable_table_name}")
         logger.info(f"  - Environment: {settings.application.environment}")
 
         return True
@@ -328,12 +328,14 @@ async def main():
         # Initialize services
         settings = get_settings()
 
-        client = AirtableClient(
-            api_key=settings.database.api_key,
-            base_id=settings.database.base_id,
-            table_name=settings.database.table_name,
-            table_id=settings.database.table_id
+        config = AirtableConfig(
+            api_key=settings.database.airtable_api_key,
+            base_id=settings.database.airtable_base_id,
+            table_name=settings.database.airtable_table_name,
+            table_id=settings.database.airtable_table_id
         )
+
+        client = AirtableClient(config)
 
         repository = AirtableParticipantRepository(client)
 

@@ -606,7 +606,7 @@ class TestAirtableClientOperations:
     async def test_list_records_failure(self, client_with_mock_table):
         """Test record listing failure."""
         client, mock_table = client_with_mock_table
-        mock_table.all.side_effect = Exception("Listing failed")
+        client.api.request.side_effect = Exception("Listing failed")
 
         with pytest.raises(AirtableAPIError) as exc_info:
             await client.list_records()
@@ -782,22 +782,38 @@ class TestAirtableClientSearchOperations:
         """Test search by field with numeric value."""
         client, mock_table = client_with_mock_table
 
+        # Mock the API response
+        mock_response = {"records": [], "offset": None}
+        client.api.request.return_value = mock_response
+
         await client.search_by_field("NumberField", 42)
 
         # Numeric values should not be quoted
         expected_formula = "{NumberField} = 42"
-        mock_table.all.assert_called_once_with(formula=expected_formula)
+        client.api.request.assert_called_once_with(
+            "GET",
+            f"/v0/{client.config.base_id}/{client.config.table_name}",
+            params={"filterByFormula": expected_formula},
+        )
 
     @pytest.mark.asyncio
     async def test_search_by_field_string_with_quotes(self, client_with_mock_table):
         """Test search by field with string value containing single quotes."""
         client, mock_table = client_with_mock_table
 
+        # Mock the API response
+        mock_response = {"records": [], "offset": None}
+        client.api.request.return_value = mock_response
+
         await client.search_by_field("NameField", "O'Connor")
 
         # Single quotes should be escaped by doubling them
         expected_formula = "{NameField} = 'O''Connor'"
-        mock_table.all.assert_called_once_with(formula=expected_formula)
+        client.api.request.assert_called_once_with(
+            "GET",
+            f"/v0/{client.config.base_id}/{client.config.table_name}",
+            params={"filterByFormula": expected_formula},
+        )
 
     @pytest.mark.asyncio
     async def test_search_by_field_string_with_multiple_quotes(
@@ -806,11 +822,19 @@ class TestAirtableClientSearchOperations:
         """Test search by field with string value containing multiple single quotes."""
         client, mock_table = client_with_mock_table
 
+        # Mock the API response
+        mock_response = {"records": [], "offset": None}
+        client.api.request.return_value = mock_response
+
         await client.search_by_field("CommentField", "Can't find John's file")
 
         # All single quotes should be escaped by doubling them
         expected_formula = "{CommentField} = 'Can''t find John''s file'"
-        mock_table.all.assert_called_once_with(formula=expected_formula)
+        client.api.request.assert_called_once_with(
+            "GET",
+            f"/v0/{client.config.base_id}/{client.config.table_name}",
+            params={"filterByFormula": expected_formula},
+        )
 
     @pytest.mark.asyncio
     async def test_search_by_formula(self, client_with_mock_table):
@@ -818,9 +842,17 @@ class TestAirtableClientSearchOperations:
         client, mock_table = client_with_mock_table
         custom_formula = "AND({Field1} = 'Value', {Field2} > 10)"
 
+        # Mock the API response
+        mock_response = {"records": [], "offset": None}
+        client.api.request.return_value = mock_response
+
         await client.search_by_formula(custom_formula)
 
-        mock_table.all.assert_called_once_with(formula=custom_formula)
+        client.api.request.assert_called_once_with(
+            "GET",
+            f"/v0/{client.config.base_id}/{client.config.table_name}",
+            params={"filterByFormula": custom_formula},
+        )
 
     @pytest.mark.asyncio
     async def test_get_schema_success(self, client_with_mock_table):

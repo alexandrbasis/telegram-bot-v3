@@ -85,16 +85,19 @@ def mock_airtable_client():
     client.delete_record = AsyncMock(return_value=True)
 
     client.list_records = AsyncMock(
-        return_value=[
-            {
-                "id": "rec123456789012345",
-                "fields": {"FullNameRU": "Иван Иванов", "Role": "CANDIDATE"},
-            },
-            {
-                "id": "rec234567890123456",
-                "fields": {"FullNameRU": "Петр Петров", "Role": "TEAM"},
-            },
-        ]
+        return_value={
+            "records": [
+                {
+                    "id": "rec123456789012345",
+                    "fields": {"FullNameRU": "Иван Иванов", "Role": "CANDIDATE"},
+                },
+                {
+                    "id": "rec234567890123456",
+                    "fields": {"FullNameRU": "Петр Петров", "Role": "TEAM"},
+                },
+            ],
+            "offset": None,
+        }
     )
 
     client.search_by_field = AsyncMock(
@@ -561,7 +564,10 @@ class TestAirtableParticipantRepositorySearch:
                 },
             },
         ]
-        mock_airtable_client.list_records.return_value = mock_records
+        mock_airtable_client.list_records.return_value = {
+            "records": mock_records,
+            "offset": None,
+        }
 
         result = await repository.get_team_members_by_department()
 
@@ -595,7 +601,10 @@ class TestAirtableParticipantRepositorySearch:
                 },
             }
         ]
-        mock_airtable_client.list_records.return_value = mock_records
+        mock_airtable_client.list_records.return_value = {
+            "records": mock_records,
+            "offset": None,
+        }
 
         result = await repository.get_team_members_by_department("ROE")
 
@@ -626,7 +635,10 @@ class TestAirtableParticipantRepositorySearch:
                 },
             }
         ]
-        mock_airtable_client.list_records.return_value = mock_records
+        mock_airtable_client.list_records.return_value = {
+            "records": mock_records,
+            "offset": None,
+        }
 
         result = await repository.get_team_members_by_department("unassigned")
 
@@ -1173,7 +1185,10 @@ class TestRoomFloorSearchMethods:
             {"id": "rec5", "fields": {"Floor": 1}},  # Duplicate
         ]
 
-        mock_airtable_client.list_records.return_value = mock_records
+        mock_airtable_client.list_records.return_value = {
+            "records": mock_records,
+            "offset": None,
+        }
 
         # This test should FAIL - method doesn't exist yet
         result = await repository.get_available_floors()
@@ -1204,7 +1219,10 @@ class TestRoomFloorSearchMethods:
             },  # Empty string - should be filtered out
         ]
 
-        mock_airtable_client.list_records.return_value = mock_records
+        mock_airtable_client.list_records.return_value = {
+            "records": mock_records,
+            "offset": None,
+        }
 
         result = await repository.get_available_floors()
 
@@ -1260,7 +1278,10 @@ class TestRoomFloorSearchMethods:
             {"id": "rec1", "fields": {"Floor": 2}},
             {"id": "rec2", "fields": {"Floor": 1}},
         ]
-        mock_airtable_client.list_records.return_value = mock_records
+        mock_airtable_client.list_records.return_value = {
+            "records": mock_records,
+            "offset": None,
+        }
 
         # First call should hit API
         result1 = await repository.get_available_floors()
@@ -1283,8 +1304,8 @@ class TestRoomFloorSearchMethods:
         mock_records_second = [{"id": "rec2", "fields": {"Floor": 2}}]
 
         mock_airtable_client.list_records.side_effect = [
-            mock_records_first,
-            mock_records_second,
+            {"records": mock_records_first, "offset": None},
+            {"records": mock_records_second, "offset": None},
         ]
 
         # Mock time to control cache expiry
