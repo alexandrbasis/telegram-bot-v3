@@ -278,15 +278,30 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
 ## Views Available
 
 ### Participants Table Views
+
+#### Export-Aligned Views (Updated 2025-09-23)
+The following views have been precisely documented to support view-driven export functionality that maintains Airtable column ordering:
+
 1. **All Data** (`viwxzBkV6XPSOlaY6`) - Grid view showing the full participant roster
 2. **Тимы** (`viwhPNd0BbAxw9lr2`) - Grid view filtered for active team members
-   - **Visible fields (export order)**: `FullNameRU`, `FullNameEN`, `Gender`, `Size`, `Church`, `Role`, `Department`, `CountryAndCity`, `PaymentStatus`, `Floor`, `DateOfBirth`, `ChurchLeader`, `IsDepartmentChief`, `SubmittedBy`, `ContactInformation`, `Age`, `RoeAssistant`, `Notes`, `Roe`, `BibleReaders`, `ROE 2`
+   - **Exact Export Column Order**: `FullNameRU`, `FullNameEN`, `Gender`, `Size`, `Church`, `Role`, `Department`, `CountryAndCity`, `PaymentStatus`, `Floor`, `DateOfBirth`, `ChurchLeader`, `IsDepartmentChief`, `SubmittedBy`, `ContactInformation`, `Age`, `RoeAssistant`, `Notes`, `Roe`, `BibleReaders`, `ROE 2`
+   - **Export Integration**: Used by `ParticipantExportService` for Team role filtering with preserved view structure
+   - **Column Order Preservation**: Export service maintains exact Airtable view ordering including linked fields
 3. **Тимы по департаментам** (`viwsTX6z1SKc0fc9c`) - Grid view grouping team members by department assignments (shares the same column layout as **Тимы**)
 4. **Кандидаты** (`viwIJSnpWr61efCYB`) - Grid view filtered for candidate applications
-   - **Visible fields (export order)**: `FullNameRU`, `FullNameEN`, `Gender`, `Size`, `Church`, `Role`, `CountryAndCity`, `SubmittedBy`, `PaymentStatus`, `Floor`, `RoomNumber`, `DateOfBirth`, `ChurchLeader`, `ContactInformation`, `Age`, `Notes`
+   - **Exact Export Column Order**: `FullNameRU`, `FullNameEN`, `Gender`, `Size`, `Church`, `Role`, `CountryAndCity`, `SubmittedBy`, `PaymentStatus`, `Floor`, `RoomNumber`, `DateOfBirth`, `ChurchLeader`, `ContactInformation`, `Age`, `Notes`
+   - **Export Integration**: Used by `ParticipantExportService` for Candidate role filtering with preserved view structure
+   - **Column Order Preservation**: Export service maintains exact Airtable view ordering optimized for candidate data
 5. **По этажам** (`viwvKvD2hDiAHmEK9`) - Grid view grouped by lodging floor assignments
 6. **По комнатам** (`viwOFJJ8vmhwCsiJZ`) - Grid view grouped by room assignments
 7. **Размеры** (`viwcH4YV8e0bOsXDn`) - Grid view grouping by clothing size selections
+
+#### View-Based Export Implementation (2025-09-23)
+- **Repository Support**: Added `list_view_records(view: str)` method to retrieve raw Airtable view data
+- **Column Order Preservation**: Export services maintain exact view column ordering including linked relationship fields
+- **Header Reconstruction**: Enhanced header detection includes linked fields and preserves complete view structure
+- **Filter Application**: Optional filters applied while maintaining complete view column layout
+- **Export Alignment**: Ensures export output matches live Airtable base structure for direct comparability
 
 ---
 
@@ -506,3 +521,10 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
     - Tables now expose relationship IDs only; downstream services should hydrate names, churches, and rooms as needed
     - Maintain caching to avoid redundant participant lookups when resolving linked records
     - Continue to respect Airtable rate limits when expanding linked record details
+16. **View-Based Export Integration** (2025-09-23): Export services now align with Airtable view structure
+    - **list_view_records() Method**: New repository interface method fetches raw view records preserving column order
+    - **Header Reconstruction**: Export services reconstruct headers from actual view data including linked fields
+    - **View-Driven Column Order**: Exports maintain exact Airtable view ordering for direct comparison with live base
+    - **Optional Filtering**: Filters applied while preserving complete view column structure for consistency
+    - **Linked Field Support**: Relationship fields (Roe, BibleReaders, ROE 2) included in exports with proper formatting
+    - **Fall-back Header Support**: VIEW_HEADER_HINTS provide column ordering when view returns sparse data

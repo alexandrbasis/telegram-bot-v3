@@ -578,11 +578,27 @@ Interactive export conversation flow for administrative data export. Available t
 - **Secure Processing**: Temporary file creation with automatic cleanup
 - **Error Handling**: User-friendly error messages for various failure scenarios
 
-**Interactive Export Selection Example**:
+**Interactive Export Selection Example with View Alignment (2025-09-23)**:
 ```
 Admin: /export
 Bot: Выберите тип экспорта:
 [6 export option buttons displayed]
+
+Admin clicks: "Экспорт команды"
+Bot: 🔄 Начинается экспорт данных команды...
+📊 Используется представление Airtable: "Тимы"
+Bot: 📈 Экспорт: 50% завершено (25/50 участников)
+Bot: ✅ Экспорт завершён! Отправляю файл...
+Bot: 📁 Файл успешно отправлен!
+[CSV file attachment: team_export_YYYY-MM-DD_HH-MM.csv with Тимы view column ordering]
+
+Admin clicks: "Экспорт кандидатов"
+Bot: 🔄 Начинается экспорт данных кандидатов...
+📊 Используется представление Airtable: "Кандидаты"
+Bot: 📈 Экспорт: 75% завершено (38/50 участников)
+Bot: ✅ Экспорт завершён! Отправляю файл...
+Bot: 📁 Файл успешно отправлен!
+[CSV file attachment: candidates_export_YYYY-MM-DD_HH-MM.csv with Кандидаты view column ordering]
 
 Admin clicks: "Экспорт по департаменту"
 Bot: Выберите департамент:
@@ -590,10 +606,11 @@ Bot: Выберите департамент:
 
 Admin clicks: "Setup"
 Bot: 🔄 Начинается экспорт данных департамента Setup...
+📊 Используется представление Airtable: "Тимы" с фильтром по департаменту
 Bot: 📈 Экспорт: 50% завершено (25/50 участников)
 Bot: ✅ Экспорт завершён! Отправляю файл...
 Bot: 📁 Файл успешно отправлен!
-[CSV file attachment: setup_export_YYYY-MM-DD_HH-MM.csv]
+[CSV file attachment: setup_export_YYYY-MM-DD_HH-MM.csv with Тимы view column ordering]
 
 # Alternative workflow - Export All:
 Admin: /export
@@ -607,15 +624,19 @@ Bot: 📁 Файл успешно отправлен!
 [CSV file attachment: participants_export_YYYY-MM-DD_HH-MM.csv]
 ```
 
-**Interactive Conversation Features**:
+**Interactive Conversation Features with View Alignment (2025-09-23)**:
 - **Conversation Flow**: ConversationHandler-based state management with export selection workflow
 - **Service Factory Integration**: All 6 export types integrated through service factory for unified access
+- **View-Driven Exports**: Team and Candidate exports align with Airtable "Тимы" and "Кандидаты" views
+- **Column Order Preservation**: Exports maintain exact Airtable view ordering for direct comparison
+- **Header Reconstruction**: Headers built from actual view data including linked relationship fields
+- **Linked Field Support**: Relationship fields (Roe, BibleReaders, ROE 2) included with proper formatting
 - **State Management**: Proper conversation states for selection → processing → completion workflow
 - **Export Selection Keyboards**: Mobile-optimized inline keyboards with Russian localization
 - **Department Selection Interface**: Secondary keyboard for department-specific exports with all 13 departments
 - **Progress Tracker**: ExportProgressTracker class manages throttled notifications across all export types
 - **Service Integration**: Uses multiple export services (ParticipantExportService, BibleReadersExportService, ROEExportService)
-- **Repository Pattern**: Leverages existing data access layer with multi-table support
+- **Repository Pattern**: Leverages existing data access layer with multi-table support and new `list_view_records()` method
 - **3-Layer Architecture**: Follows established bot → service → data pattern
 - **Telegram File Upload**: Direct CSV delivery via Telegram document upload API
 - **Navigation & Cancellation**: Cancel options at each step, back navigation between selection screens
