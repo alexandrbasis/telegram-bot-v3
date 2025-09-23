@@ -452,12 +452,14 @@ class AirtableClient:
             table_identifier = table_id if table_id else table_name
             if not table_identifier:
                 table_identifier = (
-                    self.config.table_id if self.config.table_id else self.config.table_name
+                    self.config.table_id
+                    if self.config.table_id
+                    else self.config.table_name
                 )
 
             # Make direct API call to get paginated response with offset token
             url = f"/v0/{self.config.base_id}/{table_identifier}"
-            
+
             response = await asyncio.to_thread(
                 self.api.request, "GET", url, params=params
             )
@@ -466,12 +468,11 @@ class AirtableClient:
             records = response.get("records", [])
             next_offset = response.get("offset")
 
-            result = {
-                "records": records,
-                "offset": next_offset
-            }
+            result = {"records": records, "offset": next_offset}
 
-            logger.debug(f"Retrieved {len(records)} records, next_offset: {bool(next_offset)}")
+            logger.debug(
+                f"Retrieved {len(records)} records, next_offset: {bool(next_offset)}"
+            )
             return result
 
         except Exception as e:

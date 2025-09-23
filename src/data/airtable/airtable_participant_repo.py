@@ -398,7 +398,8 @@ class AirtableParticipantRepository(ParticipantRepository):
                 )
 
             # Get records from Airtable
-            records = await self.client.list_records(max_records=limit)
+            response = await self.client.list_records(max_records=limit)
+            records = response.get("records", [])
 
             # Convert to Participant objects
             participants = []
@@ -424,9 +425,10 @@ class AirtableParticipantRepository(ParticipantRepository):
         """Retrieve raw Airtable records for a given view."""
         try:
             logger.debug(f"Listing participants using view '{view}'")
-            records = await self.client.list_records(view=view)
+            response = await self.client.list_records(view=view)
+            records = response.get("records", [])
             logger.debug("Retrieved %s records from view '%s'", len(records), view)
-            return records  # type: ignore
+            return records
         except AirtableAPIError as e:
             raise RepositoryError(
                 f"Failed to list participants for view '{view}': {e}", e.original_error
@@ -1010,7 +1012,8 @@ class AirtableParticipantRepository(ParticipantRepository):
 
             # Get all records and count them
             # Note: For very large datasets, this could be optimized with a dedicated count API
-            records = await self.client.list_records()
+            response = await self.client.list_records()
+            records = response.get("records", [])
             count = len(records)
 
             logger.debug(f"Total participant count: {count}")
@@ -1321,9 +1324,10 @@ class AirtableParticipantRepository(ParticipantRepository):
 
             try:
                 # Use timeout to enforce 10-second discovery limit
-                records = await asyncio.wait_for(
+                response = await asyncio.wait_for(
                     self.client.list_records(fields=[floor_field_name]), timeout=10
                 )
+                records = response.get("records", [])
             except asyncio.TimeoutError:
                 logger.warning(
                     "Floor discovery timed out after 10 seconds, returning empty list"
@@ -1426,7 +1430,8 @@ class AirtableParticipantRepository(ParticipantRepository):
             sort_params = ["-IsDepartmentChief", "Church"]
 
             # Execute query with sorting using list_records (supports sorting)
-            records = await self.client.list_records(formula=formula, sort=sort_params)
+            response = await self.client.list_records(formula=formula, sort=sort_params)
+            records = response.get("records", [])
 
             # Convert to Participant objects
             participants = []

@@ -113,7 +113,7 @@ class AirtableUserAccessRepository(UserAccessRepository):
 
         return (
             [self._airtable_record_to_model(record) for record in records],
-            next_offset
+            next_offset,
         )
 
     async def approve_request(

@@ -123,7 +123,8 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
             escaped_where = escape_formula_value(where)
             formula = f"{{{where_field}}} = '{escaped_where}'"
 
-            records = await self.client.list_records(formula=formula, max_records=1)
+            response = await self.client.list_records(formula=formula, max_records=1)
+            records = response.get("records", [])
 
             if not records:
                 return None
@@ -235,7 +236,8 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
             RepositoryError: If retrieval fails
         """
         try:
-            records = await self.client.list_records()
+            response = await self.client.list_records()
+            records = response.get("records", [])
 
             bible_readers = []
             for record in records:
@@ -282,7 +284,8 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
                 f"ARRAYJOIN({{{participants_field}}})) > 0"
             )
 
-            records = await self.client.list_records(formula=formula)
+            response = await self.client.list_records(formula=formula)
+            records = response.get("records", [])
 
             bible_readers = []
             for record in records:

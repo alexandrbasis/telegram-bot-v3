@@ -153,10 +153,12 @@ class TestAirtableUserAccessRepository:
                     },
                 },
             ],
-            "offset": "recNextPageToken123"
+            "offset": "recNextPageToken123",
         }
 
-        results, next_offset = await repository.list_requests_by_status(AccessRequestStatus.PENDING)
+        results, next_offset = await repository.list_requests_by_status(
+            AccessRequestStatus.PENDING
+        )
 
         # Verify filter formula was used
         mock_airtable_client.get_records.assert_called_once()

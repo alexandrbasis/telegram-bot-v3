@@ -94,11 +94,11 @@ async def requests_command_handler(
     # Get pagination info from context
     page = context.user_data.get("requests_page", 1)
     limit = 5
-    
+
     # Initialize page offset mapping if not exists
     if "page_offsets" not in context.user_data:
         context.user_data["page_offsets"] = {1: None}
-    
+
     page_offsets = context.user_data["page_offsets"]
     offset_token = page_offsets.get(page)
 
@@ -134,9 +134,12 @@ async def requests_command_handler(
             # Create request list with buttons
             keyboard_buttons = []
 
+            # Calculate display offset for numbering (1-based)
+            display_offset = (page - 1) * limit
+
             for i, request in enumerate(pending_requests):
                 display_name = service.format_display_name(request)
-                message_text += f"{offset + i + 1}. {display_name} "
+                message_text += f"{display_offset + i + 1}. {display_name} "
                 message_text += (
                     f"(@{request.telegram_username or 'no_username'} / "
                     f"{request.telegram_user_id})\n"

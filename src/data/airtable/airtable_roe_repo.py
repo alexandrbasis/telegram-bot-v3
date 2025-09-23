@@ -128,7 +128,8 @@ class AirtableROERepository(ROERepository):
             escaped_topic = escape_formula_value(topic)
             formula = f"{{{topic_field}}} = '{escaped_topic}'"
 
-            records = await self.client.list_records(formula=formula, max_records=1)
+            response = await self.client.list_records(formula=formula, max_records=1)
+            records = response.get("records", [])
 
             if not records:
                 return None
@@ -226,7 +227,8 @@ class AirtableROERepository(ROERepository):
             RepositoryError: If retrieval fails
         """
         try:
-            records = await self.client.list_records()
+            response = await self.client.list_records()
+            records = response.get("records", [])
 
             roes = []
             for record in records:
@@ -267,7 +269,8 @@ class AirtableROERepository(ROERepository):
             escaped_roista_id = escape_formula_value(roista_id)
             formula = f"FIND('{escaped_roista_id}', ARRAYJOIN({{{roista_field}}})) > 0"
 
-            records = await self.client.list_records(formula=formula)
+            response = await self.client.list_records(formula=formula)
+            records = response.get("records", [])
 
             roes = []
             for record in records:
@@ -316,7 +319,8 @@ class AirtableROERepository(ROERepository):
                 f"FIND('{escaped_assistant_id}', ARRAYJOIN({{{assistant_field}}})) > 0"
             )
 
-            records = await self.client.list_records(formula=formula)
+            response = await self.client.list_records(formula=formula)
+            records = response.get("records", [])
 
             roes = []
             for record in records:

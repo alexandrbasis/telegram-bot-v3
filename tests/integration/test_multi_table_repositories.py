@@ -83,8 +83,8 @@ class TestMultiTableRepositories:
         factory, bible_readers_client, roe_client = mock_factory
 
         # Setup mock responses
-        bible_readers_client.list_records.return_value = []
-        roe_client.list_records.return_value = []
+        bible_readers_client.list_records.return_value = {"records": [], "offset": None}
+        roe_client.list_records.return_value = {"records": [], "offset": None}
 
         # Create repositories
         bible_readers_repo = AirtableBibleReadersRepository(bible_readers_client)

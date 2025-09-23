@@ -99,8 +99,8 @@ class TestPaginationIntegration:
         mock_api.request.side_effect = mock_request
 
         # Test Page 1 (no offset)
-        requests_page1, offset_token = await service.get_pending_requests_with_pagination(
-            limit=2, offset=None
+        requests_page1, offset_token = (
+            await service.get_pending_requests_with_pagination(limit=2, offset=None)
         )
 
         assert len(requests_page1) == 2
@@ -109,8 +109,10 @@ class TestPaginationIntegration:
         assert offset_token == "page2_token"
 
         # Test Page 2 (with offset token)
-        requests_page2, next_offset = await service.get_pending_requests_with_pagination(
-            limit=2, offset=offset_token
+        requests_page2, next_offset = (
+            await service.get_pending_requests_with_pagination(
+                limit=2, offset=offset_token
+            )
         )
 
         assert len(requests_page2) == 1
@@ -118,8 +120,8 @@ class TestPaginationIntegration:
         assert next_offset is None  # No more pages
 
         # Test backward navigation - should get page 1 again
-        requests_back_page1, back_offset = await service.get_pending_requests_with_pagination(
-            limit=2, offset=None
+        requests_back_page1, back_offset = (
+            await service.get_pending_requests_with_pagination(limit=2, offset=None)
         )
 
         assert len(requests_back_page1) == 2
@@ -129,7 +131,7 @@ class TestPaginationIntegration:
 
         # Verify API calls were made with correct parameters
         assert mock_api.request.call_count == 3
-        
+
         # Verify first call (page 1)
         first_call = mock_api.request.call_args_list[0]
         assert first_call[0] == ("GET", "/v0/test_base/AccessRequests")
