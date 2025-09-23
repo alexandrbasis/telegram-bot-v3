@@ -11,7 +11,7 @@ import logging
 import tempfile
 from datetime import date, datetime
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.config.field_mappings import AirtableFieldMapping
 from src.data.repositories.participant_repository import ParticipantRepository
@@ -37,6 +37,55 @@ class ParticipantExportService:
 
     # Average bytes per participant record (estimated)
     BYTES_PER_RECORD_ESTIMATE = 500  # Conservative estimate
+
+    TEAM_VIEW_NAME = "Тимы"
+    CANDIDATE_VIEW_NAME = "Кандидаты"
+
+    # Fallback view field ordering to ensure consistent headers even when
+    # Airtable returns sparse data (fields with no values are omitted).
+    VIEW_HEADER_HINTS: Dict[str, List[str]] = {
+        TEAM_VIEW_NAME: [
+            "FullNameRU",
+            "FullNameEN",
+            "Gender",
+            "Size",
+            "Church",
+            "Role",
+            "Department",
+            "CountryAndCity",
+            "PaymentStatus",
+            "Floor",
+            "DateOfBirth",
+            "ChurchLeader",
+            "IsDepartmentChief",
+            "SubmittedBy",
+            "ContactInformation",
+            "Age",
+            "RoeAssistant",
+            "Notes",
+            "Roe",
+            "BibleReaders",
+            "ROE 2",
+        ],
+        CANDIDATE_VIEW_NAME: [
+            "FullNameRU",
+            "FullNameEN",
+            "Gender",
+            "Size",
+            "Church",
+            "Role",
+            "CountryAndCity",
+            "SubmittedBy",
+            "PaymentStatus",
+            "Floor",
+            "RoomNumber",
+            "DateOfBirth",
+            "ChurchLeader",
+            "ContactInformation",
+            "Age",
+            "Notes",
+        ],
+    }
 
     def __init__(
         self,
@@ -254,10 +303,30 @@ class ParticipantExportService:
         """
         logger.info(f"Starting participant CSV export filtered by role: {role.value}")
 
-        # Retrieve all participants
-        all_participants = await self.repository.list_all()
+        if role == Role.TEAM:
+            csv_string = await self._export_view_to_csv(
+                self.TEAM_VIEW_NAME,
+                filter_func=lambda record, participant: participant.role == Role.TEAM,
+            )
+            logger.info(
+                "Team export completed using Airtable view '%s'", self.TEAM_VIEW_NAME
+            )
+            return csv_string
 
-        # Filter by role (exclude participants with None role)
+        if role == Role.CANDIDATE:
+            csv_string = await self._export_view_to_csv(
+                self.CANDIDATE_VIEW_NAME,
+                filter_func=lambda record, participant: participant.role
+                == Role.CANDIDATE,
+            )
+            logger.info(
+                "Candidate export completed using Airtable view '%s'",
+                self.CANDIDATE_VIEW_NAME,
+            )
+            return csv_string
+
+        # Fallback to legacy filtering for any other roles
+        all_participants = await self.repository.list_all()
         filtered_participants = [
             p for p in all_participants if p.role is not None and p.role == role
         ]
@@ -265,34 +334,22 @@ class ParticipantExportService:
         total_count = len(filtered_participants)
         logger.info(f"Filtered {total_count} participants with role {role.value}")
 
-        # Report initial progress
         if self.progress_callback:
             self.progress_callback(0, total_count)
 
-        # Create CSV in memory
         output = io.StringIO()
-
-        # Define CSV headers using Airtable field names
         headers = self._get_csv_headers()
-
-        # Create CSV writer
         writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
-
-        # Write headers
         writer.writeheader()
 
-        # Process filtered participants
         for index, participant in enumerate(filtered_participants):
-            # Convert participant to CSV row
             row = self._participant_to_csv_row(participant)
             writer.writerow(row)
 
-            # Report progress at intervals (every 10 records or at end)
             if self.progress_callback:
                 if (index + 1) % 10 == 0 or (index + 1) == total_count:
                     self.progress_callback(index + 1, total_count)
 
-        # Get CSV string
         csv_string = output.getvalue()
         output.close()
 
@@ -318,60 +375,144 @@ class ParticipantExportService:
             Exception: If repository access fails
         """
         logger.info(
-            f"Starting participant CSV export filtered by department: "
-            f"{department.value}"
+            "Starting participant CSV export filtered by department: %s",
+            department.value,
         )
 
-        # Retrieve all participants
-        all_participants = await self.repository.list_all()
+        def department_filter(record: Dict[str, Any], participant: Participant) -> bool:
+            return (
+                participant.department is not None
+                and participant.department == department
+            )
 
-        # Filter by department (exclude participants with None department)
-        filtered_participants = [
-            p
-            for p in all_participants
-            if p.department is not None and p.department == department
-        ]
-
-        total_count = len(filtered_participants)
-        logger.info(
-            f"Filtered {total_count} participants with department {department.value}"
+        csv_string = await self._export_view_to_csv(
+            self.TEAM_VIEW_NAME, filter_func=department_filter
         )
 
-        # Report initial progress
-        if self.progress_callback:
-            self.progress_callback(0, total_count)
-
-        # Create CSV in memory
-        output = io.StringIO()
-
-        # Define CSV headers using Airtable field names
-        headers = self._get_csv_headers()
-
-        # Create CSV writer
-        writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
-
-        # Write headers
-        writer.writeheader()
-
-        # Process filtered participants
-        for index, participant in enumerate(filtered_participants):
-            # Convert participant to CSV row
-            row = self._participant_to_csv_row(participant)
-            writer.writerow(row)
-
-            # Report progress at intervals (every 10 records or at end)
-            if self.progress_callback:
-                if (index + 1) % 10 == 0 or (index + 1) == total_count:
-                    self.progress_callback(index + 1, total_count)
-
-        # Get CSV string
-        csv_string = output.getvalue()
-        output.close()
-
         logger.info(
-            f"Department-filtered CSV export completed with {total_count} records"
+            "Department-filtered CSV export completed for %s using view '%s'",
+            department.value,
+            self.TEAM_VIEW_NAME,
         )
         return csv_string
+
+    async def _export_view_to_csv(
+        self,
+        view_name: str,
+        filter_func: Optional[Callable[[Dict[str, Any], Participant], bool]] = None,
+    ) -> str:
+        """Export Airtable view records to CSV, optionally filtering results."""
+        raw_records = await self.repository.list_view_records(view_name)
+        logger.info(
+            "Retrieved %s records from Airtable view '%s'",
+            len(raw_records),
+            view_name,
+        )
+
+        headers = self._determine_view_headers(view_name, raw_records)
+
+        rows: List[Tuple[Dict[str, Any], Participant]] = []
+        for record in raw_records:
+            try:
+                participant = Participant.from_airtable_record(record)
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.warning(
+                    "Skipping invalid participant record %s from view '%s': %s",
+                    record.get("id", "unknown"),
+                    view_name,
+                    exc,
+                )
+                continue
+
+            if filter_func and not filter_func(record, participant):
+                continue
+
+            rows.append((record, participant))
+
+        if filter_func:
+            logger.info(
+                "Filtered view '%s' records down to %s rows for export",
+                view_name,
+                len(rows),
+            )
+
+        return self._records_to_csv(rows, headers)
+
+    def _determine_view_headers(
+        self, view_name: str, records: List[Dict[str, Any]]
+    ) -> List[str]:
+        """Determine CSV headers matching the Airtable view ordering."""
+        headers: List[str] = []
+        seen = set()
+
+        for record in records:
+            for field_name in record.get("fields", {}).keys():
+                if field_name not in seen:
+                    headers.append(field_name)
+                    seen.add(field_name)
+
+        for hint in self.VIEW_HEADER_HINTS.get(view_name, []):
+            if hint not in seen:
+                headers.append(hint)
+                seen.add(hint)
+
+        if not headers:
+            # Fallback to default CSV headers when view data is empty
+            headers = self._get_csv_headers()
+
+        return headers
+
+    def _records_to_csv(
+        self,
+        rows: List[Tuple[Dict[str, Any], Participant]],
+        headers: List[str],
+    ) -> str:
+        """Convert prepared participant rows to CSV string using ordered headers."""
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
+        writer.writeheader()
+
+        total_count = len(rows)
+        if self.progress_callback and total_count >= 0:
+            # Notify initial progress; guard division in callback implementation
+            self.progress_callback(0, total_count)
+
+        for index, (record, participant) in enumerate(rows):
+            row_data = self._participant_to_csv_row(participant)
+            airtable_fields = record.get("fields", {})
+
+            formatted_row: Dict[str, Any] = {}
+            for header in headers:
+                value = row_data.get(header)
+                if value is None:
+                    value = self._format_raw_value(airtable_fields.get(header))
+                formatted_row[header] = value
+
+            writer.writerow(formatted_row)
+
+            if (
+                self.progress_callback
+                and total_count > 0
+                and ((index + 1) % 10 == 0 or (index + 1) == total_count)
+            ):
+                self.progress_callback(index + 1, total_count)
+
+        csv_string = output.getvalue()
+        output.close()
+        return csv_string
+
+    @staticmethod
+    def _format_raw_value(value: Any) -> str:
+        """Format raw Airtable values for CSV output when mapping is unavailable."""
+        if value is None:
+            return ""
+        if isinstance(value, (date, datetime)):
+            return value.isoformat()[:10]
+        if isinstance(value, list):
+            return ", ".join(str(item) for item in value)
+        if isinstance(value, bool):
+            return "TRUE" if value else "FALSE"
+        return str(value)
 
     def _get_csv_headers(self) -> List[str]:
         """

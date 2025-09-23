@@ -1248,11 +1248,13 @@ Interactive export conversation flow that converts the existing `/export` comman
 
 ### Core Features
 
-#### 1. Participant Export Service Filtering
-- **Role-Based Filtering**: Export only TEAM members or CANDIDATES with proper null value exclusion
-- **Department-Based Filtering**: Export participants from specific departments (13 departments supported)
+#### 1. Participant Export Service with View Alignment (2025-09-23)
+- **Role-Based Filtering with View Alignment**: Export TEAM members using "Тимы" view structure, CANDIDATES using "Кандидаты" view structure
+- **Department-Based Filtering**: Export participants from specific departments using "Тимы" view column ordering
 - **Complete Export**: Full participant database export (existing functionality maintained)
-- **Consistent Format**: All filtering methods maintain existing CSV format and progress tracking
+- **View-Driven Column Order**: Exports maintain exact Airtable view column ordering for direct comparison with live base
+- **Header Reconstruction**: Column headers built from actual view data including linked relationship fields
+- **Linked Field Support**: Relationship fields (Roe, BibleReaders, ROE 2) included in exports with proper formatting
 
 #### 2. BibleReaders Export Service
 - **Dedicated Export Service**: Complete export service for Bible reading assignments
@@ -1275,13 +1277,17 @@ Interactive export conversation flow that converts the existing `/export` comman
 
 ### Technical Implementation
 
-#### Export Service Architecture
+#### Export Service Architecture with View Alignment (2025-09-23)
 - **Files**:
-  - `src/services/participant_export_service.py` (Extended with filtering methods)
+  - `src/services/participant_export_service.py` (Extended with view-driven export methods)
   - `src/services/bible_readers_export_service.py` (New dedicated service)
   - `src/services/roe_export_service.py` (New dedicated service)
   - `src/services/service_factory.py` (Extended with export service factories)
-- **Design Patterns**: Repository pattern, dependency injection, factory pattern
+- **Repository Extensions**:
+  - `src/data/repositories/participant_repository.py` (Added `list_view_records()` method)
+  - `src/data/airtable/airtable_participant_repo.py` (Implemented view-based record retrieval)
+- **Design Patterns**: Repository pattern, dependency injection, factory pattern, view-driven data access
+- **View Integration**: Core export methods use Airtable views ("Тимы", "Кандидаты") for column ordering
 - **Error Handling**: Comprehensive exception handling with resource cleanup
 
 #### Quality Assurance
@@ -1290,15 +1296,21 @@ Interactive export conversation flow that converts the existing `/export` comman
 - **Performance**: Tested with large datasets, memory-efficient implementation
 - **Security**: Admin-only access, secure file management, resource cleanup
 
-### Acceptance Criteria
+### Acceptance Criteria (Updated 2025-09-23)
 
-- [x] ✅ ParticipantExportService supports role-based filtering (TEAM/CANDIDATE)
-- [x] ✅ ParticipantExportService supports department-based filtering (13 departments)
+- [x] ✅ ParticipantExportService supports role-based filtering with view alignment (TEAM/CANDIDATE)
+- [x] ✅ Team exports use "Тимы" view column ordering for consistency with Airtable
+- [x] ✅ Candidate exports use "Кандидаты" view column ordering for consistency with Airtable
+- [x] ✅ ParticipantExportService supports department-based filtering (13 departments) with view structure preservation
+- [x] ✅ Repository interface extended with `list_view_records()` method for raw view data access
+- [x] ✅ Header reconstruction includes linked relationship fields from view data
 - [x] ✅ BibleReaders export service produces CSV with participant hydration
 - [x] ✅ ROE export service handles multi-relationship data and scheduling metadata
 - [x] ✅ All export services integrate with service factory pattern
 - [x] ✅ Consistent CSV formatting and error handling across services
 - [x] ✅ Progress tracking and telemetry integration maintained
+- [x] ✅ View-driven exports maintain exact Airtable view ordering for direct comparison
+- [x] ✅ Optional filtering applied while preserving complete view column structure
 - [x] ✅ Comprehensive test coverage (35+ new tests, 87-91% coverage)
 - [x] ✅ No breaking changes to existing export functionality
 - [x] ✅ Proper participant hydration for actionable CSV output

@@ -358,21 +358,28 @@ Display: Fixed participant reconstruction to include age field in all contexts
 }
 ```
 
-**Enhanced CSV Export Service API**:
+**Enhanced CSV Export Service API with View Alignment (2025-09-23)**:
 - **Participant Service Methods**:
   - `get_all_participants_as_csv(progress_callback)` - Complete database export
-  - `get_participants_by_role_as_csv(role: Role, progress_callback)` - Role-filtered export (TEAM/CANDIDATE)
-  - `get_participants_by_department_as_csv(department: Department, progress_callback)` - Department-filtered export
+  - `get_participants_by_role_as_csv(role: Role, progress_callback)` - View-aligned export for TEAM/CANDIDATE roles
+  - `get_participants_by_department_as_csv(department: Department, progress_callback)` - Department-filtered export using view structure
+- **View-Based Export Architecture**:
+  - `_export_view_to_csv(view_name, filter_func)` - Core view-driven export method
+  - `_determine_view_headers(view_name, records)` - Header reconstruction from view data
+  - `_records_to_csv(rows, headers)` - Convert records maintaining view column order
 - **BibleReaders Service Methods**:
   - `get_bible_readers_as_csv(progress_callback)` - Bible reading assignments with participant names
 - **ROE Service Methods**:
   - `get_roe_sessions_as_csv(progress_callback)` - ROE sessions with presenter/assistant/prayer partner details
+- **Repository Interface Extensions**:
+  - `list_view_records(view: str) -> List[Dict[str, Any]]` - Fetch raw Airtable view records preserving structure
 - **Service Factory Integration**: All export services available through ServiceFactory pattern
 - **Progress Callbacks**: Optional callback for UI updates (every 10 records)
-- **Field Mapping**: Uses AirtableFieldMapping for accurate column headers
+- **View-Aligned Headers**: Headers reconstructed from actual view data including linked fields
 - **UTF-8 Encoding**: Proper Russian text support
 - **File Management**: Secure temporary file creation with automatic cleanup
 - **Participant Hydration**: Linked participant data resolved to names for actionable CSV output
+- **Column Order Preservation**: Exports maintain exact Airtable view ordering for direct comparison
 
 **File Delivery API with Comprehensive Error Handling**:
 - **Format**: CSV with exact Airtable field names as headers
@@ -598,6 +605,33 @@ async def get_available_floors(self) -> List[int]:
 - Cache key: `f"{base_id}:{table_identifier}"` for multi-base support
 
 ## Data Model API
+
+### Repository Interface Extensions (2025-09-23)
+
+#### View-Based Data Access
+```python
+# New repository method for view-driven exports
+async def list_view_records(self, view: str) -> List[Dict[str, Any]]:
+    """
+    Retrieve raw Airtable records for a specific view.
+
+    Args:
+        view: Airtable view name to pull records from
+
+    Returns:
+        List of Airtable record dictionaries with preserved field order
+
+    Raises:
+        RepositoryError: If retrieval fails
+    """
+```
+
+**Implementation Details**:
+- **Purpose**: Enables view-driven exports that maintain Airtable column ordering
+- **Raw Data Access**: Returns unprocessed Airtable record dictionaries
+- **Field Order Preservation**: Maintains exact view column structure for export alignment
+- **View Support**: Works with any Airtable view (Тимы, Кандидаты, etc.)
+- **Error Handling**: Follows established repository error patterns
 
 ### Participant Model (Internal)
 ```python

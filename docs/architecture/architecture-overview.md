@@ -113,6 +113,10 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Service factory pattern** for centralized dependency injection (2025-09-04)
 - **Multi-Table Configuration**: Extended DatabaseSettings with BibleReaders and ROE table support
 - **Airtable Client Factory**: Table-specific client creation with dependency injection support
+- **View-Based Data Access** (2025-09-23):
+  - `list_view_records(view: str)` - Raw Airtable view record retrieval preserving field order
+  - View-driven export architecture maintaining exact Airtable column ordering
+  - Header reconstruction from actual view data including linked relationship fields
 
 ### Service Layer Architecture
 
@@ -122,11 +126,14 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
 
-**Enhanced Export Services** (2025-09-22):
-- **Participant Export Service**: Extended with role and department filtering capabilities
-  - Role-based filtering: Export TEAM members or CANDIDATES specifically
-  - Department-based filtering: Export participants from specific departments
-  - Complete export: Full participant database export (existing functionality)
+**Enhanced Export Services with View Alignment** (Updated 2025-09-23):
+- **Participant Export Service**: Extended with view-driven architecture for Airtable alignment
+  - **View-Aligned Role Filtering**: TEAM exports use "Тимы" view, CANDIDATES use "Кандидаты" view
+  - **Column Order Preservation**: Exports maintain exact Airtable view ordering for direct comparison
+  - **Department-based filtering**: Export participants from specific departments using "Тимы" view structure
+  - **Header Reconstruction**: Headers built from actual view data including linked relationship fields
+  - **View-Driven Methods**: `_export_view_to_csv()`, `_determine_view_headers()`, `_records_to_csv()`
+  - Complete export: Full participant database export (existing functionality maintained)
 - **BibleReaders Export Service**: Dedicated export service for Bible reading assignments
   - Participant name hydration from linked participant IDs
   - CSV generation with custom ParticipantNames field
@@ -135,11 +142,15 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
   - Multi-relationship hydration (presenters, assistants, prayer partners)
   - Scheduling metadata inclusion (date/time/duration)
   - Complex presenter information handling
+- **Repository Interface Extensions**:
+  - `list_view_records(view: str)` method for raw Airtable view data access
+  - View-based record retrieval preserving field order and structure
 - **Service Factory Integration**: All export services accessible through centralized factory pattern
+- **Linked Field Support**: Relationship fields (Roe, BibleReaders, ROE 2) included with proper formatting
 - UTF-8 encoding support for Russian text content
 - Telegram file size limit validation (50MB)
 - Secure temporary file management with automatic cleanup
-- AirtableFieldMapping integration for accurate column headers
+- View-aligned headers for consistency with live Airtable base structure
 - Consistent CSV formatting across all export services
 
 **Search Service Extensions** (Enhanced 2025-01-21):

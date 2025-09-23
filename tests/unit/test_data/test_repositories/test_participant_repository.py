@@ -40,6 +40,7 @@ class TestParticipantRepositoryInterface:
             "update",
             "delete",
             "list_all",
+            "list_view_records",
             "search_by_criteria",
             "get_by_role",
             "get_by_department",
@@ -248,6 +249,9 @@ class TestConcreteImplementationRequirements:
             async def list_all(self, limit=None, offset=None):
                 pass
 
+            async def list_view_records(self, view):
+                pass
+
             async def search_by_criteria(self, criteria):
                 pass
 
@@ -296,6 +300,7 @@ class TestRepositoryMethodDocstrings:
             "update",
             "delete",
             "list_all",
+            "list_view_records",
             "search_by_criteria",
             "get_by_role",
             "get_by_department",
