@@ -4,7 +4,7 @@
     "name": "telegram-bot-v3",
     "description": "A Telegram bot for managing event participants with enterprise-grade architecture, comprehensive testing, and seamless Airtable integration.",
     "main_language": "python",
-    "last_updated": "2025-09-23T16:23:45.780982"
+    "last_updated": "2025-09-23T16:43:46.483373"
   },
   "project_structure": {
     "tree": "telegram-bot-v3/\n├── .claude/\n    ├── agents/\n    ├── commands/\n    ├── hooks/\n    └── mcp/\n├── docs/\n    ├── architecture/\n    ├── business/\n    ├── data-integration/\n    ├── development/\n    └── technical/\n├── src/\n    ├── bot/\n    ├── config/\n    ├── data/\n    ├── models/\n    ├── services/\n    ├── utils/\n    └── main.py (application entry point)\n├── tests/\n    ├── fixtures/\n    ├── integration/\n    ├── unit/\n    ├── conftest.py (pytest configuration)\n    └── test_project_structure.py\n├── CLAUDE.md (Claude Code project guidance)\n├── README.md (project overview)\n├── project_index.json\n├── pyproject.toml\n└── start_bot.sh (bot startup script)",

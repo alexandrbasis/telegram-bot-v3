@@ -5,13 +5,14 @@ Tests the complete pagination flow from client through repository to service lay
 ensuring offset tokens are properly handled and backward navigation works.
 """
 
-import pytest
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from src.data.airtable.airtable_client import AirtableClient, AirtableConfig
 from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
-from src.services.access_request_service import AccessRequestService
 from src.models.user_access_request import AccessRequestStatus, UserAccessRequest
+from src.services.access_request_service import AccessRequestService
 
 
 class TestPaginationIntegration:
