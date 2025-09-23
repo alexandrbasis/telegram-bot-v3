@@ -157,7 +157,10 @@ class TestSearchConversationFlow:
         from src.bot.handlers.search_handlers import search_button, start_command
 
         # Mock access control to return True (approved user)
-        with patch('src.bot.handlers.search_handlers.ensure_user_access_on_start', return_value=True):
+        with patch(
+            "src.bot.handlers.search_handlers.ensure_user_access_on_start",
+            return_value=True,
+        ):
             # Step 1: /start command
             result = await start_command(mock_update_message, mock_context)
             assert result == SearchStates.MAIN_MENU

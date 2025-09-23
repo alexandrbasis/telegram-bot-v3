@@ -94,7 +94,10 @@ class TestStartCommandHandler:
     ):
         """Test /start command sends Russian greeting with search button."""
         # Mock access control to return True (approved user)
-        with patch('src.bot.handlers.search_handlers.ensure_user_access_on_start', return_value=True):
+        with patch(
+            "src.bot.handlers.search_handlers.ensure_user_access_on_start",
+            return_value=True,
+        ):
             result = await start_command(mock_update_message, mock_context)
 
         # Should send Russian welcome message
@@ -121,7 +124,10 @@ class TestStartCommandHandler:
     ):
         """Test that /start command initializes user data."""
         # Mock access control to return True (approved user)
-        with patch('src.bot.handlers.search_handlers.ensure_user_access_on_start', return_value=True):
+        with patch(
+            "src.bot.handlers.search_handlers.ensure_user_access_on_start",
+            return_value=True,
+        ):
             await start_command(mock_update_message, mock_context)
 
         # Should initialize user_data
