@@ -154,8 +154,8 @@ class TestMainBotApplication:
 
             app = create_application()
 
-            # Should add all expected handlers including new access control handlers
-            assert mock_app.add_handler.call_count == 7
+            # Should add all expected handlers (after P0 security fix removed duplicate /start handler)
+            assert mock_app.add_handler.call_count == 6
 
             # First call should be the search conversation handler
             mock_app.add_handler.assert_any_call(mock_conversation_handler)
@@ -178,10 +178,10 @@ class TestMainBotApplication:
             )  # We know export conversation handler provides "export" command
 
             # Should have export (from conversation), export_direct (legacy), logging, and access control commands
+            # Note: /start is now only available through conversation handler entry points (P0 security fix)
             assert "export" in command_commands
             assert "export_direct" in command_commands
             assert "logging" in command_commands
-            assert "start" in command_commands
             assert "requests" in command_commands
 
     @pytest.mark.asyncio
