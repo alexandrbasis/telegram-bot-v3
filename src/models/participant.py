@@ -5,6 +5,8 @@ This model defines the structure for participant data as stored in Airtable,
 including all field types: text, single select, number, and date fields.
 """
 
+from __future__ import annotations
+
 from datetime import date
 from enum import Enum
 from typing import Any, Mapping, Optional, Union
