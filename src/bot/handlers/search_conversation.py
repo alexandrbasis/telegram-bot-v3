@@ -109,211 +109,213 @@ def get_search_conversation_handler() -> ConversationHandler:
 
         conversation_handler = ConversationHandler(
             entry_points=[
-            CommandHandler("start", start_command),
-            CommandHandler("search_room", handle_room_search_command),
-            CommandHandler("search_floor", handle_floor_search_command),
-            # Entry points for text buttons to allow re-entry after timeout
-            MessageHandler(filters.Regex("^🔍 Поиск участников$"), search_button),
-            MessageHandler(
-                filters.Regex("^📋 Получить список$"), handle_get_list_request
-            ),
-            MessageHandler(
-                filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
-            ),
-            # Keep inline button support for stale buttons
-            CallbackQueryHandler(search_button, pattern="^search$"),
-            # Inline restart button entry point after timeout
-            CallbackQueryHandler(main_menu_button, pattern="^restart_bot$"),
-        ],
-        states={
-            # === SEARCH STATES ===
-            SearchStates.MAIN_MENU: [
-                # Text-based navigation from reply keyboard
-                MessageHandler(filters.Regex(r"^🔍 Поиск участников$"), search_button),
+                CommandHandler("start", start_command),
+                CommandHandler("search_room", handle_room_search_command),
+                CommandHandler("search_floor", handle_floor_search_command),
+                # Entry points for text buttons to allow re-entry after timeout
+                MessageHandler(filters.Regex("^🔍 Поиск участников$"), search_button),
                 MessageHandler(
-                    filters.Regex(r"^📋 Получить список$"), handle_get_list_request
+                    filters.Regex("^📋 Получить список$"), handle_get_list_request
                 ),
-                # Backward compat (if any inline button remains)
+                MessageHandler(
+                    filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                ),
+                # Keep inline button support for stale buttons
                 CallbackQueryHandler(search_button, pattern="^search$"),
-                # List callback handlers for role selection, department filtering, and navigation
-                CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
-                CallbackQueryHandler(
-                    handle_department_filter_selection, pattern="^list:filter:"
-                ),
-                CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
+                # Inline restart button entry point after timeout
+                CallbackQueryHandler(main_menu_button, pattern="^restart_bot$"),
             ],
-            SearchStates.SEARCH_MODE_SELECTION: [
-                # Search mode selection handlers
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_SEARCH_NAME)}$"),
-                    handle_search_name_mode,
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_SEARCH_ROOM)}$"),
-                    handle_search_room_mode,
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_SEARCH_FLOOR)}$"),
-                    handle_search_floor_mode,
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
-                ),
-                # List handlers for role selection, department filtering, and navigation
-                CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
-                CallbackQueryHandler(
-                    handle_department_filter_selection, pattern="^list:filter:"
-                ),
-                CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
-            ],
-            SearchStates.WAITING_FOR_NAME: [
-                # Name input
-                MessageHandler(
-                    filters.TEXT
-                    & ~filters.COMMAND
-                    & ~filters.Regex(
-                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_NAME)}$"
+            states={
+                # === SEARCH STATES ===
+                SearchStates.MAIN_MENU: [
+                    # Text-based navigation from reply keyboard
+                    MessageHandler(
+                        filters.Regex(r"^🔍 Поиск участников$"), search_button
                     ),
-                    process_name_search,
-                ),
-                # Navigation via reply keyboard
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
-                    back_to_search_modes,
-                ),
-            ],
-            SearchStates.SHOWING_RESULTS: [
-                # Navigation via reply keyboard
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
-                    back_to_search_modes,
-                ),
-                # Participant selection via inline buttons remains
-                CallbackQueryHandler(
-                    handle_participant_selection, pattern="^select_participant:"
-                ),
-                # Backward compat for inline main menu button if present
-                CallbackQueryHandler(main_menu_button, pattern="^main_menu$"),
-            ],
-            # === ROOM SEARCH STATES ===
-            RoomSearchStates.WAITING_FOR_ROOM: [
-                # Room number input
-                MessageHandler(
-                    filters.TEXT
-                    & ~filters.COMMAND
-                    & ~filters.Regex(
-                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_ROOM)}$"
+                    MessageHandler(
+                        filters.Regex(r"^📋 Получить список$"), handle_get_list_request
                     ),
-                    process_room_search,
-                ),
-                # Navigation via reply keyboard
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
-                    back_to_search_modes,
-                ),
-            ],
-            RoomSearchStates.SHOWING_ROOM_RESULTS: [
-                # Navigation via reply keyboard
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
-                    back_to_search_modes,
-                ),
-            ],
-            # === FLOOR SEARCH STATES ===
-            FloorSearchStates.WAITING_FOR_FLOOR: [
-                # Floor discovery and selection callbacks
-                CallbackQueryHandler(
-                    handle_floor_discovery_callback, pattern="^floor_discovery$"
-                ),
-                CallbackQueryHandler(
-                    handle_floor_selection_callback, pattern=r"^floor_select_(\d+)$"
-                ),
-                # Floor number input
-                MessageHandler(
-                    filters.TEXT
-                    & ~filters.COMMAND
-                    & ~filters.Regex(
-                        rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_FLOOR)}$"
+                    # Backward compat (if any inline button remains)
+                    CallbackQueryHandler(search_button, pattern="^search$"),
+                    # List callback handlers for role selection, department filtering, and navigation
+                    CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
+                    CallbackQueryHandler(
+                        handle_department_filter_selection, pattern="^list:filter:"
                     ),
-                    process_floor_search,
-                ),
-                # Navigation via reply keyboard
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
-                    back_to_search_modes,
-                ),
+                    CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
+                ],
+                SearchStates.SEARCH_MODE_SELECTION: [
+                    # Search mode selection handlers
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_SEARCH_NAME)}$"),
+                        handle_search_name_mode,
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_SEARCH_ROOM)}$"),
+                        handle_search_room_mode,
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_SEARCH_FLOOR)}$"),
+                        handle_search_floor_mode,
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                    ),
+                    # List handlers for role selection, department filtering, and navigation
+                    CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
+                    CallbackQueryHandler(
+                        handle_department_filter_selection, pattern="^list:filter:"
+                    ),
+                    CallbackQueryHandler(handle_list_navigation, pattern="^list_nav:"),
+                ],
+                SearchStates.WAITING_FOR_NAME: [
+                    # Name input
+                    MessageHandler(
+                        filters.TEXT
+                        & ~filters.COMMAND
+                        & ~filters.Regex(
+                            rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_NAME)}$"
+                        ),
+                        process_name_search,
+                    ),
+                    # Navigation via reply keyboard
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
+                        back_to_search_modes,
+                    ),
+                ],
+                SearchStates.SHOWING_RESULTS: [
+                    # Navigation via reply keyboard
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
+                        back_to_search_modes,
+                    ),
+                    # Participant selection via inline buttons remains
+                    CallbackQueryHandler(
+                        handle_participant_selection, pattern="^select_participant:"
+                    ),
+                    # Backward compat for inline main menu button if present
+                    CallbackQueryHandler(main_menu_button, pattern="^main_menu$"),
+                ],
+                # === ROOM SEARCH STATES ===
+                RoomSearchStates.WAITING_FOR_ROOM: [
+                    # Room number input
+                    MessageHandler(
+                        filters.TEXT
+                        & ~filters.COMMAND
+                        & ~filters.Regex(
+                            rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_ROOM)}$"
+                        ),
+                        process_room_search,
+                    ),
+                    # Navigation via reply keyboard
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
+                        back_to_search_modes,
+                    ),
+                ],
+                RoomSearchStates.SHOWING_ROOM_RESULTS: [
+                    # Navigation via reply keyboard
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
+                        back_to_search_modes,
+                    ),
+                ],
+                # === FLOOR SEARCH STATES ===
+                FloorSearchStates.WAITING_FOR_FLOOR: [
+                    # Floor discovery and selection callbacks
+                    CallbackQueryHandler(
+                        handle_floor_discovery_callback, pattern="^floor_discovery$"
+                    ),
+                    CallbackQueryHandler(
+                        handle_floor_selection_callback, pattern=r"^floor_select_(\d+)$"
+                    ),
+                    # Floor number input
+                    MessageHandler(
+                        filters.TEXT
+                        & ~filters.COMMAND
+                        & ~filters.Regex(
+                            rf"^{re.escape(NAV_MAIN_MENU)}$|^{re.escape(NAV_CANCEL)}$|^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$|^{re.escape(NAV_SEARCH_FLOOR)}$"
+                        ),
+                        process_floor_search,
+                    ),
+                    # Navigation via reply keyboard
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
+                        back_to_search_modes,
+                    ),
+                ],
+                FloorSearchStates.SHOWING_FLOOR_RESULTS: [
+                    # Navigation via reply keyboard
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                    ),
+                    MessageHandler(
+                        filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
+                        back_to_search_modes,
+                    ),
+                ],
+                # === EDITING STATES ===
+                # Note: These states handle participant editing after selection from search results
+                # This integration maintains seamless UX and proper state/data management
+                EditStates.FIELD_SELECTION: [
+                    CallbackQueryHandler(
+                        handle_field_edit_selection, pattern="^edit_field:"
+                    ),
+                    CallbackQueryHandler(save_changes, pattern="^save_changes$"),
+                    CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
+                    CallbackQueryHandler(main_menu_button, pattern="^main_menu$"),
+                ],
+                EditStates.TEXT_INPUT: [
+                    MessageHandler(
+                        filters.TEXT & ~filters.COMMAND, handle_text_field_input
+                    ),
+                    CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
+                ],
+                EditStates.BUTTON_SELECTION: [
+                    CallbackQueryHandler(
+                        handle_button_field_selection, pattern="^select_value:"
+                    ),
+                    CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
+                ],
+                EditStates.CONFIRMATION: [
+                    CallbackQueryHandler(save_changes, pattern="^save_changes$"),
+                    CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
+                ],
+                # === TIMEOUT STATE ===
+                ConversationHandler.TIMEOUT: [
+                    # Handle both messages and callback queries after timeout
+                    *get_timeout_recovery_handlers(),
+                ],
+            },
+            fallbacks=[
+                CommandHandler("start", start_command),
+                CommandHandler("logging", handle_logging_toggle_command),
             ],
-            FloorSearchStates.SHOWING_FLOOR_RESULTS: [
-                # Navigation via reply keyboard
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
-                ),
-                MessageHandler(
-                    filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
-                    back_to_search_modes,
-                ),
-            ],
-            # === EDITING STATES ===
-            # Note: These states handle participant editing after selection from search results
-            # This integration maintains seamless UX and proper state/data management
-            EditStates.FIELD_SELECTION: [
-                CallbackQueryHandler(
-                    handle_field_edit_selection, pattern="^edit_field:"
-                ),
-                CallbackQueryHandler(save_changes, pattern="^save_changes$"),
-                CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
-                CallbackQueryHandler(main_menu_button, pattern="^main_menu$"),
-            ],
-            EditStates.TEXT_INPUT: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, handle_text_field_input
-                ),
-                CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
-            ],
-            EditStates.BUTTON_SELECTION: [
-                CallbackQueryHandler(
-                    handle_button_field_selection, pattern="^select_value:"
-                ),
-                CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
-            ],
-            EditStates.CONFIRMATION: [
-                CallbackQueryHandler(save_changes, pattern="^save_changes$"),
-                CallbackQueryHandler(cancel_editing, pattern="^cancel_edit$"),
-            ],
-            # === TIMEOUT STATE ===
-            ConversationHandler.TIMEOUT: [
-                # Handle both messages and callback queries after timeout
-                *get_timeout_recovery_handlers(),
-            ],
-        },
-        fallbacks=[
-            CommandHandler("start", start_command),
-            CommandHandler("logging", handle_logging_toggle_command),
-        ],
             # Timeout configuration: Convert minutes to seconds
             conversation_timeout=get_telegram_settings().conversation_timeout_minutes * 60,
             # Disable allow_reentry to avoid duplicate handler execution when
