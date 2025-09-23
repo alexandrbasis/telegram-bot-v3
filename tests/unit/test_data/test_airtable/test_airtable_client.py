@@ -764,11 +764,18 @@ class TestAirtableClientSearchOperations:
         """Test search by field with string value."""
         client, mock_table = client_with_mock_table
 
+        # Mock the API response
+        mock_response = {"records": [], "offset": None}
+        client.api.request.return_value = mock_response
+
         await client.search_by_field("TestField", "Test Value")
 
-        # String values should be quoted in formula
-        expected_formula = "{TestField} = 'Test Value'"
-        mock_table.all.assert_called_once_with(formula=expected_formula)
+        # Verify API was called with correct formula
+        client.api.request.assert_called_once_with(
+            "GET",
+            f"/v0/{client.config.base_id}/{client.config.table_name}",
+            params={"filterByFormula": "{TestField} = 'Test Value'"},
+        )
 
     @pytest.mark.asyncio
     async def test_search_by_field_number(self, client_with_mock_table):
