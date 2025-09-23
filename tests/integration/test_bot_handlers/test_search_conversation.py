@@ -101,9 +101,11 @@ class TestSearchConversationFlow:
         update = Mock()
         message = Mock()
         user = Mock()
+        chat = Mock()
 
         user.id = 123456
         user.first_name = "Test"
+        chat.id = 123456
 
         message.from_user = user
         message.reply_text = AsyncMock()
@@ -111,6 +113,8 @@ class TestSearchConversationFlow:
         update.message = message
         update.callback_query = None
         update.effective_user = user
+        update.effective_message = message
+        update.effective_chat = chat
 
         return update
 
@@ -152,10 +156,12 @@ class TestSearchConversationFlow:
         """Test complete flow from /start to search button to name input."""
         from src.bot.handlers.search_handlers import search_button, start_command
 
-        # Step 1: /start command
-        result = await start_command(mock_update_message, mock_context)
-        assert result == SearchStates.MAIN_MENU
-        assert "search_results" in mock_context.user_data
+        # Mock access control to return True (approved user)
+        with patch('src.bot.handlers.search_handlers.ensure_user_access_on_start', return_value=True):
+            # Step 1: /start command
+            result = await start_command(mock_update_message, mock_context)
+            assert result == SearchStates.MAIN_MENU
+            assert "search_results" in mock_context.user_data
 
         # Step 2: Search button click
         mock_update_callback.callback_query.data = "search"

@@ -75,6 +75,9 @@ class TestStartCommandHandler:
 
         update.message = message
         update.callback_query = None
+        update.effective_user = user
+        update.effective_message = message
+        update.effective_chat = chat
 
         return update
 
@@ -90,7 +93,9 @@ class TestStartCommandHandler:
         self, mock_update_message, mock_context
     ):
         """Test /start command sends Russian greeting with search button."""
-        result = await start_command(mock_update_message, mock_context)
+        # Mock access control to return True (approved user)
+        with patch('src.bot.handlers.search_handlers.ensure_user_access_on_start', return_value=True):
+            result = await start_command(mock_update_message, mock_context)
 
         # Should send Russian welcome message
         mock_update_message.message.reply_text.assert_called_once()
@@ -115,7 +120,9 @@ class TestStartCommandHandler:
         self, mock_update_message, mock_context
     ):
         """Test that /start command initializes user data."""
-        await start_command(mock_update_message, mock_context)
+        # Mock access control to return True (approved user)
+        with patch('src.bot.handlers.search_handlers.ensure_user_access_on_start', return_value=True):
+            await start_command(mock_update_message, mock_context)
 
         # Should initialize user_data
         assert "search_results" in mock_context.user_data
