@@ -9,6 +9,8 @@ on:
       - 'CHANGELOG.md'
   push:
     branches: [ "main" ]
+    tags:
+      - '*'
     paths-ignore:
       - 'docs/**'
       - '*.md'
@@ -112,12 +114,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements/dev.txt -r requirements/test.txt
       - name: Run pytest (unit + integration + coverage)
-        run: pytest -v
+        run: pytest -v --cov-fail-under=80
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-report-${{ matrix.python-version }}
           path: |
             coverage.xml
             .coverage
