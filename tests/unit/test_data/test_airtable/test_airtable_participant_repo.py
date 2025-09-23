@@ -888,7 +888,7 @@ class TestAirtableParticipantRepositoryErrorHandling:
                     "fields": {"FullNameRU": "Another Valid", "Role": "TEAM"},
                 },
             ],
-            "offset": None
+            "offset": None,
         }
 
         with patch("src.data.airtable.airtable_participant_repo.logger") as mock_logger:

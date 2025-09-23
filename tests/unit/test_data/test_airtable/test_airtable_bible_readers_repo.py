@@ -137,7 +137,10 @@ class TestAirtableBibleReadersRepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful retrieval by where field."""
-        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
+        mock_client.list_records.return_value = {
+            "records": [sample_airtable_record],
+            "offset": None,
+        }
 
         result = await repository.get_by_where("Morning Chapel")
 
@@ -247,7 +250,10 @@ class TestAirtableBibleReadersRepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful listing of all BibleReaders."""
-        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
+        mock_client.list_records.return_value = {
+            "records": [sample_airtable_record],
+            "offset": None,
+        }
 
         result = await repository.list_all()
 
@@ -274,7 +280,10 @@ class TestAirtableBibleReadersRepository:
             "fields": {"When": "invalid-date-format"},
         }  # Invalid date format
 
-        mock_client.list_records.return_value = {"records": [valid_record, invalid_record], "offset": None}
+        mock_client.list_records.return_value = {
+            "records": [valid_record, invalid_record],
+            "offset": None,
+        }
 
         result = await repository.list_all()
 
@@ -292,7 +301,10 @@ class TestAirtableBibleReadersRepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful retrieval by participant ID."""
-        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
+        mock_client.list_records.return_value = {
+            "records": [sample_airtable_record],
+            "offset": None,
+        }
 
         result = await repository.get_by_participant_id("recParticipant1")
 

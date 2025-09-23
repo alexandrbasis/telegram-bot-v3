@@ -174,7 +174,10 @@ class TestAirtableROERepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful ROE retrieval by topic."""
-        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
+        mock_client.list_records.return_value = {
+            "records": [sample_airtable_record],
+            "offset": None,
+        }
 
         result = await repository.get_by_topic("Test ROE Topic")
 
@@ -287,7 +290,10 @@ class TestAirtableROERepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful listing of all ROE records."""
-        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
+        mock_client.list_records.return_value = {
+            "records": [sample_airtable_record],
+            "offset": None,
+        }
 
         result = await repository.list_all()
 
@@ -316,7 +322,10 @@ class TestAirtableROERepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful ROE retrieval by roista ID."""
-        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
+        mock_client.list_records.return_value = {
+            "records": [sample_airtable_record],
+            "offset": None,
+        }
 
         result = await repository.get_by_roista_id("recROISTAID1")
 
@@ -330,7 +339,10 @@ class TestAirtableROERepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful ROE retrieval by assistant ID."""
-        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
+        mock_client.list_records.return_value = {
+            "records": [sample_airtable_record],
+            "offset": None,
+        }
 
         result = await repository.get_by_assistant_id("recASSISTANT1")
 
