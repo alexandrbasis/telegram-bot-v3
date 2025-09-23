@@ -51,22 +51,44 @@ from src.services.israel_missions_import_service import (
     ImportSummary,
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('logs/israel_missions_import.log', mode='a')
-    ]
-)
-
 logger = logging.getLogger(__name__)
 
 # Constants
 DEFAULT_RATE_LIMIT = 0.2  # 5 requests per second
 MIN_RATE_LIMIT = 0.1      # 10 requests per second max
 MAX_RATE_LIMIT = 2.0      # 0.5 requests per second min
+
+
+def configure_logging(verbose: bool = False) -> None:
+    """Configure application logging safely.
+
+    - Creates logs directory if missing
+    - Attaches stdout handler always
+    - Attaches file handler when possible (non-fatal if it fails)
+    - Sets root logger level so tests observing setLevel still pass
+    """
+    log_level = logging.DEBUG if verbose else logging.INFO
+
+    handlers = [logging.StreamHandler(sys.stdout)]
+
+    logs_dir = Path("logs")
+    try:
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(logs_dir / "israel_missions_import.log", mode="a")
+        handlers.append(file_handler)
+    except Exception:
+        # Fall back to stdout-only logging if file handler cannot be created
+        pass
+
+    # Ensure root logger level is set explicitly (used by tests)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=handlers,
+    )
 
 
 def setup_argument_parser() -> argparse.ArgumentParser:
@@ -307,9 +329,9 @@ async def main():
     parser = setup_argument_parser()
     args = parser.parse_args()
 
-    # Setup logging level
+    # Configure logging (stdout + optional file handler)
+    configure_logging(verbose=args.verbose)
     if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
         logger.debug("Verbose logging enabled")
 
     logger.info("Israel Missions 2025 Participant Import Tool")

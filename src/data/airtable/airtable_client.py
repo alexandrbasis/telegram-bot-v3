@@ -458,10 +458,11 @@ class AirtableClient:
                 )
 
             # Make direct API call to get paginated response with offset token
-            url = self.api.build_url(self.config.base_id, table_identifier)
+            # Build path explicitly to avoid relying on Api.build_url in tests
+            path = f"/v0/{self.config.base_id}/{table_identifier}"
 
             response = await asyncio.to_thread(
-                self.api.request, "GET", str(url), params=params
+                self.api.request, "GET", path, params=params
             )
 
             # Extract records and offset from response

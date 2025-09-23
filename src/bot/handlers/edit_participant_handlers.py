@@ -40,6 +40,14 @@ from src.services.user_interaction_logger import (
 logger = logging.getLogger(__name__)
 
 
+def _format_date_for_display_ru(value) -> str:
+    """Format a date for UI display in Russian locale style (DD/MM/YYYY)."""
+    try:
+        return value.strftime("%d/%m/%Y")
+    except Exception:
+        return str(value)
+
+
 def _log_missing(
     user_logger: Optional[UserInteractionLogger],
     user_id: int,
@@ -306,7 +314,7 @@ async def show_participant_edit_menu(
 
     # Date of birth and age fields
     date_of_birth_display = (
-        Participant._format_date_of_birth(participant.date_of_birth)
+        _format_date_for_display_ru(participant.date_of_birth)
         if participant.date_of_birth
         else "Не указано"
     )
@@ -1271,7 +1279,7 @@ async def show_save_confirmation(
 
         # Format current value for display
         if field == "date_of_birth" and hasattr(current_value, "isoformat"):
-            current_display = Participant._format_date_of_birth(current_value)
+            current_display = _format_date_for_display_ru(current_value)
         elif hasattr(current_value, "value"):
             current_display = current_value.value
         else:
@@ -1283,7 +1291,7 @@ async def show_save_confirmation(
         elif hasattr(new_value, "value"):  # Enum values
             display_value = new_value.value
         elif field == "date_of_birth" and hasattr(new_value, "isoformat"):
-            display_value = Participant._format_date_of_birth(new_value)
+            display_value = _format_date_for_display_ru(new_value)
         else:
             display_value = str(new_value)
 

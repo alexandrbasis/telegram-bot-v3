@@ -124,13 +124,13 @@ class IsraelMissionsMapping:
     @classmethod
     def parse_date_of_birth(cls, dob_value: Optional[str]) -> Optional[str]:
         """
-        Parse date of birth from US format (M/D/Y) to ISO format (YYYY-MM-DD).
+        Parse date of birth from US format (M/D/Y) to European format (DD/MM/YYYY).
 
         Args:
             dob_value: Raw date string from CSV (e.g., "7/2/1992")
 
         Returns:
-            ISO formatted date string (e.g., "1992-07-02") or None if invalid
+            European formatted date string (e.g., "02/07/1992") or None if invalid
         """
         if not dob_value or not isinstance(dob_value, str):
             return None
@@ -142,13 +142,13 @@ class IsraelMissionsMapping:
         try:
             # Parse US format: M/D/Y or M/D/YYYY
             parsed_date = datetime.strptime(dob_value, "%m/%d/%Y")
-            # Return ISO format: YYYY-MM-DD
-            return parsed_date.strftime("%Y-%m-%d")
+            # Return European format: DD/MM/YYYY
+            return parsed_date.strftime("%d/%m/%Y")
         except ValueError:
             try:
                 # Try alternative format just in case
                 parsed_date = datetime.strptime(dob_value, "%m/%d/%y")
-                return parsed_date.strftime("%Y-%m-%d")
+                return parsed_date.strftime("%d/%m/%Y")
             except ValueError:
                 return None
 
