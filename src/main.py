@@ -14,10 +14,11 @@ from typing import Optional
 
 from telegram import Update
 from telegram.error import Conflict, NetworkError, RetryAfter, TimedOut
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
 from telegram.request import HTTPXRequest
 
-from src.bot.handlers.admin_handlers import handle_logging_toggle_command
+from src.bot.handlers.admin_handlers import handle_logging_toggle_command, requests_command_handler, access_callback_handler
+from src.bot.handlers.auth_handlers import start_command_handler
 from src.bot.handlers.export_conversation_handlers import (
     get_export_conversation_handler,
 )
@@ -141,6 +142,20 @@ def create_application() -> Application:
     logger.info("Adding logging toggle command handler")
     logging_handler = CommandHandler("logging", handle_logging_toggle_command)
     app.add_handler(logging_handler)
+
+    # Add access control handlers
+    logger.info("Adding access control handlers")
+    start_handler = CommandHandler("start", start_command_handler)
+    app.add_handler(start_handler)
+
+    requests_handler = CommandHandler("requests", requests_command_handler)
+    app.add_handler(requests_handler)
+
+    access_callback_handler_instance = CallbackQueryHandler(
+        access_callback_handler,
+        pattern=r"^access:(approve|deny):"
+    )
+    app.add_handler(access_callback_handler_instance)
 
     # Store settings in bot_data for handlers to access
     app.bot_data["settings"] = settings

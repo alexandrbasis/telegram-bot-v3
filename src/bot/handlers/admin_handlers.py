@@ -12,10 +12,13 @@ from src.services.user_interaction_logger import (
 )
 from src.utils.auth_utils import is_admin_user
 from src.services.access_request_service import AccessRequestService
+from src.services.notification_service import NotificationService
 from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
-from src.data.airtable.airtable_client_factory import get_airtable_client
+from src.services.service_factory import get_airtable_client
 from src.models.user_access_request import UserAccessRequest, AccessRequestStatus, AccessLevel
 from src.bot.handlers.auth_handlers import require_admin_access
+from src.bot.messages import AccessRequestMessages
+from src.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -268,10 +271,22 @@ async def handle_access_action(
             )
 
             # Notify the user
-            await query.bot.send_message(
-                chat_id=target_request.telegram_user_id,
-                text=f"Доступ подтверждён! Ваша роль: {approved_request.access_level.value}."
-            )
+            try:
+                settings = Settings()
+                notification_service = NotificationService(
+                    bot=query.bot,
+                    admin_ids=settings.telegram.admin_user_ids
+                )
+                success = await notification_service.notify_user_decision(
+                    user_id=target_request.telegram_user_id,
+                    approved=True,
+                    access_level=approved_request.access_level,
+                    language="ru"
+                )
+                if not success:
+                    logger.warning(f"Failed to notify user {target_request.telegram_user_id} about approval")
+            except Exception as e:
+                logger.error(f"Error notifying user about approval: {e}")
 
             logger.info(f"Request {record_id} approved by {admin_username}")
 
@@ -285,11 +300,21 @@ async def handle_access_action(
             )
 
             # Notify the user
-            await query.bot.send_message(
-                chat_id=target_request.telegram_user_id,
-                text="К сожалению, в доступе отказано. "
-                     "Если это ошибка, пожалуйста свяжитесь с администратором."
-            )
+            try:
+                settings = Settings()
+                notification_service = NotificationService(
+                    bot=query.bot,
+                    admin_ids=settings.telegram.admin_user_ids
+                )
+                success = await notification_service.notify_user_decision(
+                    user_id=target_request.telegram_user_id,
+                    approved=False,
+                    language="ru"
+                )
+                if not success:
+                    logger.warning(f"Failed to notify user {target_request.telegram_user_id} about denial")
+            except Exception as e:
+                logger.error(f"Error notifying user about denial: {e}")
 
             logger.info(f"Request {record_id} denied by {admin_username}")
 

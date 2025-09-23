@@ -10,9 +10,12 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from src.services.access_request_service import AccessRequestService
+from src.services.notification_service import NotificationService
 from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
-from src.data.airtable.airtable_client_factory import get_airtable_client
+from src.services.service_factory import get_airtable_client
 from src.models.user_access_request import AccessRequestStatus, AccessLevel
+from src.bot.messages import AccessRequestMessages
+from src.config.settings import Settings
 
 
 logger = logging.getLogger(__name__)
@@ -48,35 +51,44 @@ async def start_command_handler(update: Update, context: ContextTypes.DEFAULT_TY
                 # User is approved - show welcome message
                 await context.bot.send_message(
                     chat_id=chat.id,
-                    text=f"Добро пожаловать! Ваша роль: {existing_request.access_level.value}. "
-                         f"Используйте /help для просмотра команд."
+                    text=AccessRequestMessages.ACCESS_GRANTED_RU
                 )
             elif existing_request.status == AccessRequestStatus.PENDING:
                 # User has pending request
                 await context.bot.send_message(
                     chat_id=chat.id,
-                    text="Ваш запрос на доступ уже обрабатывается. Пожалуйста, подождите."
+                    text=AccessRequestMessages.EXISTING_PENDING_RU
                 )
             elif existing_request.status == AccessRequestStatus.DENIED:
                 # User was denied
                 await context.bot.send_message(
                     chat_id=chat.id,
-                    text="К сожалению, в доступе отказано. "
-                         "Если это ошибка, пожалуйста свяжитесь с администратором."
+                    text=AccessRequestMessages.DENIED_RU
                 )
         else:
             # New user - submit access request
-            await service.submit_request(
+            new_request = await service.submit_request(
                 telegram_user_id=user.id,
                 telegram_username=user.username
             )
 
             await context.bot.send_message(
                 chat_id=chat.id,
-                text="Запрос на доступ принят. Мы уведомим вас, как только админ его обработает."
+                text=AccessRequestMessages.PENDING_REQUEST_RU
             )
 
-            # TODO: In Step 3, this will trigger admin notification
+            # Notify admins about new request
+            try:
+                settings = Settings()
+                notification_service = NotificationService(
+                    bot=context.bot,
+                    admin_ids=settings.telegram.admin_user_ids
+                )
+                await notification_service.notify_admins_of_new_request(new_request)
+                logger.info(f"Admins notified about new access request from user {user.id}")
+            except Exception as e:
+                logger.error(f"Failed to notify admins about request from user {user.id}: {e}")
+
             logger.info(f"New access request submitted by user {user.id} (@{user.username})")
 
     except Exception as e:
