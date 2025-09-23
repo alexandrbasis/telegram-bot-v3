@@ -517,37 +517,37 @@ def get_export_conversation_handler() -> ConversationHandler:
             entry_points=[
                 CommandHandler("export", start_export_selection),
             ],
-        states={
-            ExportStates.SELECTING_EXPORT_TYPE: [
-                CallbackQueryHandler(
-                    handle_export_type_selection,
-                    pattern=f"^({ExportCallbackData.EXPORT_ALL}|"
-                    f"{ExportCallbackData.EXPORT_TEAM}|"
-                    f"{ExportCallbackData.EXPORT_CANDIDATES}|"
-                    f"{ExportCallbackData.EXPORT_BY_DEPARTMENT}|"
-                    f"{ExportCallbackData.EXPORT_BIBLE_READERS}|"
-                    f"{ExportCallbackData.EXPORT_ROE})$",
-                ),
-            ],
-            ExportStates.SELECTING_DEPARTMENT: [
-                CallbackQueryHandler(
-                    handle_department_selection,
-                    pattern=(
-                        f"^(export:department:.+|"
-                        f"{ExportCallbackData.BACK_TO_EXPORT_SELECTION})$"
+            states={
+                ExportStates.SELECTING_EXPORT_TYPE: [
+                    CallbackQueryHandler(
+                        handle_export_type_selection,
+                        pattern=f"^({ExportCallbackData.EXPORT_ALL}|"
+                        f"{ExportCallbackData.EXPORT_TEAM}|"
+                        f"{ExportCallbackData.EXPORT_CANDIDATES}|"
+                        f"{ExportCallbackData.EXPORT_BY_DEPARTMENT}|"
+                        f"{ExportCallbackData.EXPORT_BIBLE_READERS}|"
+                        f"{ExportCallbackData.EXPORT_ROE})$",
                     ),
+                ],
+                ExportStates.SELECTING_DEPARTMENT: [
+                    CallbackQueryHandler(
+                        handle_department_selection,
+                        pattern=(
+                            f"^(export:department:.+|"
+                            f"{ExportCallbackData.BACK_TO_EXPORT_SELECTION})$"
+                        ),
+                    ),
+                ],
+                ExportStates.PROCESSING_EXPORT: [
+                    # This state handles the export process, no additional handlers needed
+                    # The export process ends the conversation automatically
+                ],
+            },
+            fallbacks=[
+                CallbackQueryHandler(
+                    cancel_export, pattern=f"^{ExportCallbackData.CANCEL}$"
                 ),
             ],
-            ExportStates.PROCESSING_EXPORT: [
-                # This state handles the export process, no additional handlers needed
-                # The export process ends the conversation automatically
-            ],
-        },
-        fallbacks=[
-            CallbackQueryHandler(
-                cancel_export, pattern=f"^{ExportCallbackData.CANCEL}$"
-            ),
-        ],
-        # Keep default mixed-handler behavior; warnings suppressed above
-        per_message=False,
-    )
+            # Keep default mixed-handler behavior; warnings suppressed above
+            per_message=False,
+        )
