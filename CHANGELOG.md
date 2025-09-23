@@ -8,6 +8,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Bot Access Approval Workflow with Admin Review and Real-Time Notifications** – Complete end-to-end access request management system enabling users to request bot access via `/start` command and admins to review via `/requests` interface with Airtable integration, real-time notifications, and dual-language localization (AGB-67, completed 2025-09-23, PR #59, branch `feature/agb-67-bot-access-approval-workflow`)
+  - User access request data layer with comprehensive Airtable integration (`src/models/user_access_request.py:1-59`, `src/data/repositories/user_access_repository.py:1-139`, `src/data/airtable/airtable_user_access_repo.py:1-270`)
+    - UserAccessRequest model with AccessLevel and AccessRequestStatus enums supporting VIEWER/COORDINATOR/ADMIN roles and Pending/Approved/Denied states
+    - Abstract repository interface with async CRUD operations, status filtering, and approve/deny workflows with audit metadata
+    - Complete Airtable implementation with field mapping integration via BotAccessRequestsFieldMapping configuration
+    - New Airtable table BotAccessRequests (ID: tblQWWEcHx9sfhsgN) with TelegramUserId, TelegramUsername, Status, and AccessLevel fields
+  - Business logic service with comprehensive request management (`src/services/access_request_service.py:1-260`)
+    - Complete access request lifecycle management from submission through approval/denial
+    - Admin validation and authorization workflows with proper access level assignment
+    - Audit trail maintenance with timestamp tracking and administrative metadata
+    - Error handling and validation for all CRUD operations with comprehensive logging
+  - User onboarding and access control system (`src/bot/handlers/auth_handlers.py:1-237`)
+    - Enhanced `/start` command handler supporting all user states: new users, pending requests, approved users, and denied users
+    - Access control decorators (`@require_access`, `@require_admin_access`) with dual-source authorization (config admins + database users)
+    - User access validation against Airtable with fallback to environment configuration for seamless authorization
+    - Real-time admin notifications for new access requests with localized messaging
+  - Admin review interface with paginated request management (`src/bot/handlers/admin_handlers.py:71-346`)
+    - `/requests` command with paginated display (5 requests per page) showing user details and request status
+    - Interactive inline keyboard with approve/deny actions using callback format `access:{action}:{record_id}`
+    - Navigation buttons with state management stored in `context.user_data['requests_page']`
+    - Complete approval/denial workflow with user notifications and status updates
+  - Real-time notification system with retry mechanisms (`src/services/notification_service.py:1-219`)
+    - Concurrent admin notifications for new access requests with exponential backoff retry logic
+    - User decision notifications for approval/denial outcomes with proper error handling
+    - Localized messaging support for Russian/English with template-based formatting
+    - Integration with existing bot notification patterns and service factory architecture
+  - Dual-language localization with comprehensive message templates (`src/bot/messages.py:9-47`)
+    - AccessRequestMessages class with Russian/English support for all user interactions
+    - Pending request confirmations, approval/denial notifications, and admin alerts
+    - Template-based formatting with dynamic content insertion (username, user ID, access level)
+    - Consistent localization patterns following existing bot messaging architecture
+  - Enhanced authentication utilities with Airtable integration (`src/utils/auth_utils.py:63-157`)
+    - Dual-source authorization combining environment-configured admins with database-approved users
+    - Async Airtable integration for real-time access validation with proper error handling
+    - Backward compatibility with existing username-based admin authentication
+    - Service factory integration maintaining dependency injection patterns
+  - Configuration management with new field mappings (`src/config/field_mappings.py:605-733`, `src/config/field_mappings/__init__.py:35,44,53,64,67`)
+    - BotAccessRequestsFieldMapping class with complete Airtable field ID mappings
+    - Table and view configuration matching task specifications (table ID: tblQWWEcHx9sfhsgN, view ID: viwVDrguxKWbRS9Xz)
+    - Export integration for new mapping class with proper module initialization
+    - Environment variable support for table/view configuration with backward compatibility
+  - Complete handler registration and bot integration (`src/main.py:17,20,143-159`)
+    - Registered access control handlers: start command, requests command, and callback query handlers
+    - Proper handler ordering and filter configuration for access control workflows
+    - Service factory integration maintaining dependency injection architecture
+    - Environment-driven configuration support for deployment flexibility
+  - Comprehensive test suite with 90%+ coverage across all components (62 new tests)
+    - Model validation tests covering enum handling, Pydantic validation, and timezone-aware datetime processing (`tests/unit/test_models/test_user_access_request.py`)
+    - Repository tests validating CRUD operations, error handling, and Airtable field mapping integration (`tests/unit/test_data/test_airtable/test_user_access_repository.py`)
+    - Service layer tests covering business logic, approval workflows, and admin validation (`tests/unit/test_services/test_access_request_service.py`)
+    - Integration tests for user onboarding flows, admin review workflows, and callback handling (`tests/integration/test_bot_handlers/test_user_onboarding_access.py`, `tests/integration/test_bot_handlers/test_admin_requests.py`)
+    - Notification service tests with retry mechanisms and localization validation (`tests/unit/test_services/test_notification_service.py`, `tests/integration/test_notifications/test_admin_alerts.py`)
+    - End-to-end integration tests covering complete access request lifecycle with proper error handling and state management
 - **Airtable View-Based Participant Export Alignment** – Complete alignment of participant exports with Airtable Тимы/Кандидаты views enabling direct comparability between export files and live base structure for improved data consistency and workflow efficiency (PR #57, completed 2025-09-23, merged at SHA ee3d204, merged on 2025-09-23T06:08:00Z, PR URL https://github.com/alexandrbasis/telegram-bot-v3/pull/57)
   - Enhanced repository interface with view-based record retrieval capability (`src/data/repositories/participant_repository.py:399-408`)
     - Added list_view_records abstract method supporting raw Airtable view data fetching with filter preservation
