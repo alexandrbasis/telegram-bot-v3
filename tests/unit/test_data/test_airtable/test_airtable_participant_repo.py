@@ -873,20 +873,23 @@ class TestAirtableParticipantRepositoryErrorHandling:
     ):
         """Test that invalid records are skipped and logged during list operations."""
         # Mock list_records to return some valid and some invalid records
-        mock_airtable_client.list_records.return_value = [
-            {
-                "id": "rec123456789012345",
-                "fields": {"FullNameRU": "Valid Participant", "Role": "CANDIDATE"},
-            },
-            {
-                "id": "rec234567890123456",
-                "fields": {"Invalid": "Record"},  # Missing required fields
-            },
-            {
-                "id": "rec345678901234567",
-                "fields": {"FullNameRU": "Another Valid", "Role": "TEAM"},
-            },
-        ]
+        mock_airtable_client.list_records.return_value = {
+            "records": [
+                {
+                    "id": "rec123456789012345",
+                    "fields": {"FullNameRU": "Valid Participant", "Role": "CANDIDATE"},
+                },
+                {
+                    "id": "rec234567890123456",
+                    "fields": {"Invalid": "Record"},  # Missing required fields
+                },
+                {
+                    "id": "rec345678901234567",
+                    "fields": {"FullNameRU": "Another Valid", "Role": "TEAM"},
+                },
+            ],
+            "offset": None
+        }
 
         with patch("src.data.airtable.airtable_participant_repo.logger") as mock_logger:
             result = await repository.list_all()
@@ -1213,7 +1216,7 @@ class TestRoomFloorSearchMethods:
         self, repository, mock_airtable_client, clear_floor_cache
     ):
         """Test floor discovery with no participants returns empty list."""
-        mock_airtable_client.list_records.return_value = []
+        mock_airtable_client.list_records.return_value = {"records": [], "offset": None}
 
         result = await repository.get_available_floors()
 

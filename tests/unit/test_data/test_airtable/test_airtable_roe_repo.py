@@ -174,7 +174,7 @@ class TestAirtableROERepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful ROE retrieval by topic."""
-        mock_client.list_records.return_value = [sample_airtable_record]
+        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
 
         result = await repository.get_by_topic("Test ROE Topic")
 
@@ -186,7 +186,7 @@ class TestAirtableROERepository:
 
     async def test_get_by_topic_not_found(self, repository, mock_client):
         """Test ROE retrieval by topic when no matches found."""
-        mock_client.list_records.return_value = []
+        mock_client.list_records.return_value = {"records": [], "offset": None}
 
         result = await repository.get_by_topic("Nonexistent Topic")
 
@@ -287,7 +287,7 @@ class TestAirtableROERepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful listing of all ROE records."""
-        mock_client.list_records.return_value = [sample_airtable_record]
+        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
 
         result = await repository.list_all()
 
@@ -298,7 +298,7 @@ class TestAirtableROERepository:
 
     async def test_list_all_empty(self, repository, mock_client):
         """Test listing when no ROE records exist."""
-        mock_client.list_records.return_value = []
+        mock_client.list_records.return_value = {"records": [], "offset": None}
 
         result = await repository.list_all()
 
@@ -316,7 +316,7 @@ class TestAirtableROERepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful ROE retrieval by roista ID."""
-        mock_client.list_records.return_value = [sample_airtable_record]
+        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
 
         result = await repository.get_by_roista_id("recROISTAID1")
 
@@ -330,7 +330,7 @@ class TestAirtableROERepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful ROE retrieval by assistant ID."""
-        mock_client.list_records.return_value = [sample_airtable_record]
+        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
 
         result = await repository.get_by_assistant_id("recASSISTANT1")
 

@@ -137,7 +137,7 @@ class TestAirtableBibleReadersRepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful retrieval by where field."""
-        mock_client.list_records.return_value = [sample_airtable_record]
+        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
 
         result = await repository.get_by_where("Morning Chapel")
 
@@ -149,7 +149,7 @@ class TestAirtableBibleReadersRepository:
 
     async def test_get_by_where_not_found(self, repository, mock_client):
         """Test get_by_where returns None when not found."""
-        mock_client.list_records.return_value = []
+        mock_client.list_records.return_value = {"records": [], "offset": None}
 
         result = await repository.get_by_where("Nonexistent Location")
 
@@ -247,7 +247,7 @@ class TestAirtableBibleReadersRepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful listing of all BibleReaders."""
-        mock_client.list_records.return_value = [sample_airtable_record]
+        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
 
         result = await repository.list_all()
 
@@ -257,7 +257,7 @@ class TestAirtableBibleReadersRepository:
 
     async def test_list_all_empty(self, repository, mock_client):
         """Test list_all returns empty list when no records."""
-        mock_client.list_records.return_value = []
+        mock_client.list_records.return_value = {"records": [], "offset": None}
 
         result = await repository.list_all()
 
@@ -274,7 +274,7 @@ class TestAirtableBibleReadersRepository:
             "fields": {"When": "invalid-date-format"},
         }  # Invalid date format
 
-        mock_client.list_records.return_value = [valid_record, invalid_record]
+        mock_client.list_records.return_value = {"records": [valid_record, invalid_record], "offset": None}
 
         result = await repository.list_all()
 
@@ -292,7 +292,7 @@ class TestAirtableBibleReadersRepository:
         self, repository, mock_client, sample_airtable_record
     ):
         """Test successful retrieval by participant ID."""
-        mock_client.list_records.return_value = [sample_airtable_record]
+        mock_client.list_records.return_value = {"records": [sample_airtable_record], "offset": None}
 
         result = await repository.get_by_participant_id("recParticipant1")
 
@@ -308,7 +308,7 @@ class TestAirtableBibleReadersRepository:
 
     async def test_get_by_participant_id_not_found(self, repository, mock_client):
         """Test get_by_participant_id returns empty list when not found."""
-        mock_client.list_records.return_value = []
+        mock_client.list_records.return_value = {"records": [], "offset": None}
 
         result = await repository.get_by_participant_id("nonexistent")
 
