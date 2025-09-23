@@ -123,6 +123,22 @@ class ParticipantRepository(ABC):
         pass
 
     @abstractmethod
+    async def list_view_records(self, view: str) -> List[Dict[str, Any]]:
+        """
+        Retrieve raw Airtable records for a specific view.
+
+        Args:
+            view: Airtable view name to pull records from
+
+        Returns:
+            List of Airtable record dictionaries returned by the view
+
+        Raises:
+            RepositoryError: If retrieval fails
+        """
+        pass
+
+    @abstractmethod
     async def search_by_criteria(self, criteria: Dict[str, Any]) -> List[Participant]:
         """
         Search participants by multiple criteria.

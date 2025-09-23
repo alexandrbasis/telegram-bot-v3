@@ -14,7 +14,7 @@ import io
 import tempfile
 from datetime import date, datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
@@ -92,6 +92,11 @@ def sample_participants():
             room_number="101",
         ),
     ]
+
+
+def make_view_record(record_id: str, **fields: Any) -> Dict[str, Any]:
+    """Utility to build Airtable-style record dictionaries for view responses."""
+    return {"id": record_id, "fields": fields}
 
 
 @pytest.fixture
@@ -572,48 +577,94 @@ class TestRoleBasedFiltering:
     """Test role-based filtering functionality."""
 
     @pytest.fixture
-    def mixed_role_participants(self):
-        """Create participants with different roles for filtering tests."""
+    def team_view_records(self) -> List[Dict[str, Any]]:
+        """Simulate Airtable view records for team members."""
         return [
-            Participant(
-                record_id="rec001",
-                full_name_ru="TEAM Участник 1",
-                role=Role.TEAM,
-                department=Department.WORSHIP,
+            make_view_record(
+                "rec_team_1",
+                FullNameRU="TEAM Участник 1",
+                FullNameEN="Team Member 1",
+                Gender="M",
+                Size="L",
+                Church="Церковь 1",
+                Role="TEAM",
+                Department="Worship",
+                CountryAndCity="Россия, Москва",
+                PaymentStatus="Paid",
+                Floor=2,
+                DateOfBirth="20/05/1990",
+                ChurchLeader="Пастор 1",
+                IsDepartmentChief=True,
             ),
-            Participant(
-                record_id="rec002",
-                full_name_ru="CANDIDATE Участник 1",
-                role=Role.CANDIDATE,
-                department=Department.KITCHEN,
+            make_view_record(
+                "rec_team_2",
+                FullNameRU="TEAM Участник 2",
+                FullNameEN="Team Member 2",
+                Gender="F",
+                Size="M",
+                Church="Церковь 2",
+                Role="TEAM",
+                Department="Kitchen",
+                CountryAndCity="Россия, Санкт-Петербург",
+                PaymentStatus="Unpaid",
+                Floor=1,
+                DateOfBirth="15/08/1992",
+                ChurchLeader="Пастор 2",
+                IsDepartmentChief=False,
             ),
-            Participant(
-                record_id="rec003",
-                full_name_ru="TEAM Участник 2",
-                role=Role.TEAM,
-                department=Department.MEDIA,
+            make_view_record(
+                "rec_team_null_role",
+                FullNameRU="Участник без роли",
+                Church="Церковь 3",
+                Role=None,
+                Department="Media",
             ),
-            Participant(
-                record_id="rec004",
-                full_name_ru="CANDIDATE Участник 2",
-                role=Role.CANDIDATE,
-                department=Department.SETUP,
+        ]
+
+    @pytest.fixture
+    def candidate_view_records(self) -> List[Dict[str, Any]]:
+        """Simulate Airtable view records for candidates."""
+        return [
+            make_view_record(
+                "rec_candidate_1",
+                FullNameRU="CANDIDATE Участник 1",
+                FullNameEN="Candidate One",
+                Gender="F",
+                Size="S",
+                Church="Церковь 4",
+                Role="CANDIDATE",
+                CountryAndCity="Россия, Казань",
+                SubmittedBy="Координатор",
+                PaymentStatus="Partial",
+                Floor=3,
+                RoomNumber="301",
+                DateOfBirth="05/03/1995",
+                ChurchLeader="Пастор 4",
             ),
-            Participant(
-                record_id="rec005",
-                full_name_ru="Участник без роли",
-                role=None,
-                department=Department.ADMINISTRATION,
+            make_view_record(
+                "rec_candidate_2",
+                FullNameRU="CANDIDATE Участник 2",
+                Role="CANDIDATE",
+                CountryAndCity="Россия, Омск",
+                PaymentStatus="Unpaid",
+                Floor=4,
+                RoomNumber="402",
+            ),
+            make_view_record(
+                "rec_candidate_null_role",
+                FullNameRU="Кандидат без роли",
+                Role=None,
+                CountryAndCity="Россия, Тверь",
             ),
         ]
 
     @pytest.mark.asyncio
     async def test_get_participants_by_role_team_only(
-        self, mock_repository, mixed_role_participants
+        self, mock_repository, team_view_records
     ):
         """Test filtering participants by TEAM role only."""
         # Arrange
-        mock_repository.list_all.return_value = mixed_role_participants
+        mock_repository.list_view_records.return_value = team_view_records
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
@@ -627,14 +678,15 @@ class TestRoleBasedFiltering:
         assert len(rows) == 2
         team_names = {row["FullNameRU"] for row in rows}
         assert team_names == {"TEAM Участник 1", "TEAM Участник 2"}
+        mock_repository.list_view_records.assert_awaited_once_with("Тимы")
 
     @pytest.mark.asyncio
     async def test_get_participants_by_role_candidate_only(
-        self, mock_repository, mixed_role_participants
+        self, mock_repository, candidate_view_records
     ):
         """Test filtering participants by CANDIDATE role only."""
         # Arrange
-        mock_repository.list_all.return_value = mixed_role_participants
+        mock_repository.list_view_records.return_value = candidate_view_records
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
@@ -648,43 +700,58 @@ class TestRoleBasedFiltering:
         assert len(rows) == 2
         candidate_names = {row["FullNameRU"] for row in rows}
         assert candidate_names == {"CANDIDATE Участник 1", "CANDIDATE Участник 2"}
+        mock_repository.list_view_records.assert_awaited_once_with("Кандидаты")
+
+    @pytest.mark.asyncio
+    async def test_get_participants_by_role_calls_correct_views(
+        self, mock_repository, team_view_records, candidate_view_records
+    ):
+        """Ensure different role exports query the expected Airtable view."""
+        async def side_effect(view_name: str):
+            if view_name == "Тимы":
+                return team_view_records
+            if view_name == "Кандидаты":
+                return candidate_view_records
+            return []
+
+        mock_repository.list_view_records.side_effect = side_effect
+        service = ParticipantExportService(repository=mock_repository)
+
+        team_csv = await service.get_participants_by_role_as_csv(Role.TEAM)
+        candidate_csv = await service.get_participants_by_role_as_csv(Role.CANDIDATE)
+
+        team_rows = list(csv.DictReader(io.StringIO(team_csv)))
+        candidate_rows = list(csv.DictReader(io.StringIO(candidate_csv)))
+
+        assert len(team_rows) == 2
+        assert len(candidate_rows) == 2
+        awaited_calls = [call.args[0] for call in mock_repository.list_view_records.await_args_list]
+        assert awaited_calls == ["Тимы", "Кандидаты"]
 
     @pytest.mark.asyncio
     async def test_get_participants_by_role_excludes_null_roles(
-        self, mock_repository, mixed_role_participants
+        self, mock_repository, team_view_records
     ):
         """Test that role filtering excludes participants with null roles."""
         # Arrange
-        mock_repository.list_all.return_value = mixed_role_participants
+        mock_repository.list_view_records.return_value = team_view_records
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
         team_csv = await service.get_participants_by_role_as_csv(Role.TEAM)
-        candidate_csv = await service.get_participants_by_role_as_csv(Role.CANDIDATE)
 
         # Assert
         team_reader = csv.DictReader(io.StringIO(team_csv))
-        candidate_reader = csv.DictReader(io.StringIO(candidate_csv))
-
         team_names = {row["FullNameRU"] for row in team_reader}
-        candidate_names = {row["FullNameRU"] for row in candidate_reader}
 
         # Participant with null role should not appear in either export
         assert "Участник без роли" not in team_names
-        assert "Участник без роли" not in candidate_names
 
     @pytest.mark.asyncio
     async def test_get_participants_by_role_empty_result(self, mock_repository):
         """Test role filtering with no matching participants."""
         # Arrange - only participants without the target role
-        participants = [
-            Participant(
-                record_id="rec001",
-                full_name_ru="Только CANDIDATE",
-                role=Role.CANDIDATE,
-            )
-        ]
-        mock_repository.list_all.return_value = participants
+        mock_repository.list_view_records.return_value = []
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
@@ -697,11 +764,11 @@ class TestRoleBasedFiltering:
 
     @pytest.mark.asyncio
     async def test_role_filtering_maintains_csv_format(
-        self, mock_repository, mixed_role_participants
+        self, mock_repository, team_view_records
     ):
         """Test that role filtering maintains proper CSV headers and format."""
         # Arrange
-        mock_repository.list_all.return_value = mixed_role_participants
+        mock_repository.list_view_records.return_value = team_view_records
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
@@ -711,57 +778,58 @@ class TestRoleBasedFiltering:
         reader = csv.DictReader(io.StringIO(csv_data))
         actual_headers = reader.fieldnames
 
-        # Should have same headers as regular export
-        expected_headers = service._get_csv_headers()
-        assert actual_headers == expected_headers
+        assert actual_headers is not None
+        assert "FullNameRU" in actual_headers
+        assert "Role" in actual_headers
+        assert "Department" in actual_headers
 
 
 class TestDepartmentBasedFiltering:
     """Test department-based filtering functionality."""
 
     @pytest.fixture
-    def mixed_department_participants(self):
-        """Create participants with different departments for filtering tests."""
+    def department_view_records(self) -> List[Dict[str, Any]]:
+        """Simulate Airtable team view records spanning multiple departments."""
         return [
-            Participant(
-                record_id="rec001",
-                full_name_ru="Worship Участник 1",
-                role=Role.TEAM,
-                department=Department.WORSHIP,
+            make_view_record(
+                "rec_dep_1",
+                FullNameRU="Worship Участник 1",
+                Role="TEAM",
+                Department="Worship",
             ),
-            Participant(
-                record_id="rec002",
-                full_name_ru="Kitchen Участник 1",
-                role=Role.CANDIDATE,
-                department=Department.KITCHEN,
+            make_view_record(
+                "rec_dep_2",
+                FullNameRU="Kitchen Участник 1",
+                Role="TEAM",
+                Department="Kitchen",
             ),
-            Participant(
-                record_id="rec003",
-                full_name_ru="Worship Участник 2",
-                role=Role.TEAM,
-                department=Department.WORSHIP,
+            make_view_record(
+                "rec_dep_3",
+                FullNameRU="Worship Участник 2",
+                Role="TEAM",
+                Department="Worship",
             ),
-            Participant(
-                record_id="rec004",
-                full_name_ru="Media Участник 1",
-                role=Role.CANDIDATE,
-                department=Department.MEDIA,
+            make_view_record(
+                "rec_dep_candidate",
+                FullNameRU="Media Участник 1",
+                Role="CANDIDATE",
+                Department="Media",
             ),
-            Participant(
-                record_id="rec005",
-                full_name_ru="Участник без департамента",
-                role=Role.TEAM,
-                department=None,
+            make_view_record(
+                "rec_dep_none",
+                FullNameRU="Участник без департамента",
+                Role="TEAM",
+                Department=None,
             ),
         ]
 
     @pytest.mark.asyncio
     async def test_get_participants_by_department(
-        self, mock_repository, mixed_department_participants
+        self, mock_repository, department_view_records
     ):
         """Test filtering participants by specific department."""
         # Arrange
-        mock_repository.list_all.return_value = mixed_department_participants
+        mock_repository.list_view_records.return_value = department_view_records
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
@@ -777,23 +845,27 @@ class TestDepartmentBasedFiltering:
         assert len(rows) == 2
         worship_names = {row["FullNameRU"] for row in rows}
         assert worship_names == {"Worship Участник 1", "Worship Участник 2"}
+        mock_repository.list_view_records.assert_awaited_once_with("Тимы")
 
     @pytest.mark.asyncio
     async def test_department_filtering_all_departments(self, mock_repository):
         """Test that all 13 departments can be filtered correctly."""
         # Arrange - create one participant for each department
         all_departments = list(Department)
-        participants = [
-            Participant(
-                record_id=f"rec{i:03d}",
-                full_name_ru=f"{dept.value} Участник",
-                role=Role.TEAM,
-                department=dept,
+        view_records = [
+            make_view_record(
+                f"rec_{dept.value}",
+                FullNameRU=f"{dept.value} Участник",
+                Role="TEAM",
+                Department=dept.value,
             )
-            for i, dept in enumerate(all_departments, 1)
+            for dept in all_departments
         ]
 
-        mock_repository.list_all.return_value = participants
+        async def side_effect(view_name: str):
+            return view_records
+
+        mock_repository.list_view_records.side_effect = side_effect
         service = ParticipantExportService(repository=mock_repository)
 
         # Act & Assert - test each department
@@ -807,11 +879,11 @@ class TestDepartmentBasedFiltering:
 
     @pytest.mark.asyncio
     async def test_department_filtering_excludes_null_departments(
-        self, mock_repository, mixed_department_participants
+        self, mock_repository, department_view_records
     ):
         """Test that department filtering excludes participants with null departments."""
         # Arrange
-        mock_repository.list_all.return_value = mixed_department_participants
+        mock_repository.list_view_records.return_value = department_view_records
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
@@ -830,15 +902,14 @@ class TestDepartmentBasedFiltering:
     async def test_department_filtering_empty_result(self, mock_repository):
         """Test department filtering with no matching participants."""
         # Arrange - no participants in target department
-        participants = [
-            Participant(
-                record_id="rec001",
-                full_name_ru="Kitchen Участник",
-                role=Role.TEAM,
-                department=Department.KITCHEN,
+        mock_repository.list_view_records.return_value = [
+            make_view_record(
+                "rec001",
+                FullNameRU="Kitchen Участник",
+                Role="TEAM",
+                Department="Kitchen",
             )
         ]
-        mock_repository.list_all.return_value = participants
         service = ParticipantExportService(repository=mock_repository)
 
         # Act

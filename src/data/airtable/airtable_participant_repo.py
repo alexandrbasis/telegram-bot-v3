@@ -420,6 +420,24 @@ class AirtableParticipantRepository(ParticipantRepository):
         except Exception as e:
             raise RepositoryError(f"Unexpected error listing participants: {e}", e)
 
+    async def list_view_records(self, view: str) -> List[Dict[str, Any]]:
+        """Retrieve raw Airtable records for a given view."""
+        try:
+            logger.debug(f"Listing participants using view '{view}'")
+            records = await self.client.list_records(view=view)
+            logger.debug(
+                "Retrieved %s records from view '%s'", len(records), view
+            )
+            return records
+        except AirtableAPIError as e:
+            raise RepositoryError(
+                f"Failed to list participants for view '{view}': {e}", e.original_error
+            )
+        except Exception as e:
+            raise RepositoryError(
+                f"Unexpected error listing participants for view '{view}': {e}", e
+            )
+
     async def search_by_criteria(self, criteria: Dict[str, Any]) -> List[Participant]:
         """
         Search participants by multiple criteria.

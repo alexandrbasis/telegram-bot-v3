@@ -280,8 +280,10 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
 ### Participants Table Views
 1. **All Data** (`viwxzBkV6XPSOlaY6`) - Grid view showing the full participant roster
 2. **Тимы** (`viwhPNd0BbAxw9lr2`) - Grid view filtered for active team members
-3. **Тимы по департаментам** (`viwsTX6z1SKc0fc9c`) - Grid view grouping team members by department assignments
+   - **Visible fields (export order)**: `FullNameRU`, `FullNameEN`, `Gender`, `Size`, `Church`, `Role`, `Department`, `CountryAndCity`, `PaymentStatus`, `Floor`, `DateOfBirth`, `ChurchLeader`, `IsDepartmentChief`, `SubmittedBy`, `ContactInformation`, `Age`, `RoeAssistant`, `Notes`, `Roe`, `BibleReaders`, `ROE 2`
+3. **Тимы по департаментам** (`viwsTX6z1SKc0fc9c`) - Grid view grouping team members by department assignments (shares the same column layout as **Тимы**)
 4. **Кандидаты** (`viwIJSnpWr61efCYB`) - Grid view filtered for candidate applications
+   - **Visible fields (export order)**: `FullNameRU`, `FullNameEN`, `Gender`, `Size`, `Church`, `Role`, `CountryAndCity`, `SubmittedBy`, `PaymentStatus`, `Floor`, `RoomNumber`, `DateOfBirth`, `ChurchLeader`, `ContactInformation`, `Age`, `Notes`
 5. **По этажам** (`viwvKvD2hDiAHmEK9`) - Grid view grouped by lodging floor assignments
 6. **По комнатам** (`viwOFJJ8vmhwCsiJZ`) - Grid view grouped by room assignments
 7. **Размеры** (`viwcH4YV8e0bOsXDn`) - Grid view grouping by clothing size selections
