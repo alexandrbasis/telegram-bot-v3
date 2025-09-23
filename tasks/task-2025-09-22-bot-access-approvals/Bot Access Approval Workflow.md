@@ -33,9 +33,26 @@ Deliver an in-bot approval workflow that captures, tracks, and resolves user acc
 - [ ] Median approval turnaround time < 1 hour after notification (tracked via request timestamps) within two weeks of launch.
 
 ### Constraints
-- Airtable must expose a new `BotAccessRequests` table (schema to be confirmed) reachable with existing API credentials.
+- Airtable must expose a new `BotAccessRequests` table reachable with existing API credentials and matching the schema defined below.
 - Approval and denial messaging must support both Russian and English phrasing consistent with current bot localization.
 - Deployment must avoid downtime; migrations of credentials or environment variables should be backward compatible until rollout completes.
+
+### Airtable Table Schema
+| Field Name | Field ID | Type | Description |
+|------------|----------|------|-------------|
+| TelegramUserId | fldeiF3gxg4fZMirc | Number (Integer) | Primary key storing the Telegram user ID for lookup and uniqueness enforcement. |
+| TelegramUsername | fld1RzNGWTGl8fSE4 | Single line text | Telegram username captured without the `@` prefix; optional if the user has none. |
+| Status | fldcuRa8qeUDKY3hN | Single select (Pending, Approved, Denied) | Tracks the current request state; defaults to `Pending` on creation. |
+| AccessLevel | fldRBCoHwrJ87hdjr | Single select (VIEWER, COORDINATOR, ADMIN) | Effective permissions granted after approval; defaults to `VIEWER`. |
+
+**Views & Indexing**
+- Default view filtered to `Status = Pending` sorted by `TelegramUserId` ascending for admin queue.
+- Secondary view filtered to `Status = Approved` for quick roster of active users.
+
+**Configuration Notes**
+- Primary Airtable view: `Grid view` (viwVDrguxKWbRS9Xz) used for admin queue.
+- Register the field IDs above in `src/config/field_mappings.py` under a new `BotAccessRequests` mapping section (table ID `tblQWWEcHx9sfhsgN`).
+- Add `AIRTABLE_ACCESS_REQUESTS_TABLE_NAME=BotAccessRequests` and `AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN` to environment/config so the repository can resolve IDs.
 
 ## Test Plan
 **Status**: ✅ Approved | **Approved by**: Alexandr Basis | **Date**: 2025-09-22
@@ -86,7 +103,7 @@ Target: 90%+ coverage across all implementation areas
   - [ ] Sub-step 1.1: Introduce models and repositories for Airtable access requests
     - **Directory**: `src/data/`
     - **Files to create/modify**: `src/models/user_access_request.py`, `src/data/repositories/user_access_repository.py`, `src/data/airtable/airtable_user_access_repo.py`, `src/services/__init__.py`
-    - **Accept**: Repository supports create, list-by-status, approve/deny transitions with audit metadata persisted in Airtable.
+    - **Accept**: Repository supports create, list-by-status, approve/deny transitions with approval metadata persisted in Airtable, exposes a `UserAccessRepository` abstract interface mirroring `ParticipantRepository`, and wires field IDs through `src/config/field_mappings.py`.
     - **Tests**: `tests/unit/test_models/test_user_access_request.py`, `tests/unit/test_data/test_airtable/test_user_access_repository.py`
     - **Done**: `pytest tests/unit/test_models/test_user_access_request.py tests/unit/test_data/test_airtable/test_user_access_repository.py`
     - **Changelog**: Populate with file path and line references after implementation.
@@ -94,7 +111,7 @@ Target: 90%+ coverage across all implementation areas
   - [ ] Sub-step 2.1: Update handlers and services to capture requests and expose `/requests`
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/auth_handlers.py`, `src/bot/handlers/admin_handlers.py`, `src/bot/keyboards/admin_keyboards.py`, `src/services/access_request_service.py`
-    - **Accept**: First-time user triggers pending request message; `/requests` shows paginated pending list with approve/deny callbacks.
+    - **Accept**: First-time user triggers pending request message; `/requests` shows paginated (5 records per page) pending list with inline callbacks using format `access:{action}:{record_id}` where `{action}` ∈ {`approve`,`deny`,`setlevel`}; navigation buttons (`Prev`, `Next`, `Refresh`) reuse the same pattern and maintain cursor state in `context.user_data`.
     - **Tests**: `tests/integration/test_bot_handlers/test_user_onboarding_access.py`, `tests/integration/test_bot_handlers/test_admin_requests.py`
     - **Done**: `pytest tests/integration/test_bot_handlers/test_user_onboarding_access.py tests/integration/test_bot_handlers/test_admin_requests.py`
     - **Changelog**: Populate with file path and line references after implementation.
@@ -102,10 +119,22 @@ Target: 90%+ coverage across all implementation areas
   - [ ] Sub-step 3.1: Wire notification service and localization strings
     - **Directory**: `src/services/`
     - **Files to create/modify**: `src/services/notification_service.py`, `src/locale/messages.py`, `src/utils/auth_utils.py`, `src/main.py`
-    - **Accept**: Admins receive immediate notification on new request; requesters receive localized approval/denial updates with logging entries.
+    - **Accept**: Admins receive immediate notification on new request; requesters receive localized pending/approval/denial updates using templates defined below; extend existing `src/utils/auth_utils.py` to combine env-configured viewers/coordinators/admins with approved Airtable records for authorization and AccessLevel enforcement; all notifications log success/failures and retry transient errors.
     - **Tests**: `tests/unit/test_services/test_notification_service.py`, `tests/integration/test_notifications/test_admin_alerts.py`
     - **Done**: `pytest tests/unit/test_services/test_notification_service.py tests/integration/test_notifications/test_admin_alerts.py`
     - **Changelog**: Populate with file path and line references after implementation.
+
+### Localization Templates
+- Pending (RU): "Запрос на доступ принят. Мы уведомим вас, как только админ его обработает."
+- Pending (EN): "Your access request has been recorded. We'll notify you as soon as an admin reviews it."
+- Approved (RU): "Доступ подтверждён! Ваша роль: {access_level}."
+- Approved (EN): "You're all set! Assigned access level: {access_level}."
+- Denied (RU): "К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором."
+- Denied (EN): "We weren't able to approve your access right now. Contact an admin if you believe this is a mistake."
+- Admin alert (RU): "Новый запрос на доступ: {display_name} (@{username} / {user_id})."
+- Admin alert (EN): "New access request from {display_name} (@{username} / {user_id})."
+- Decision footer (RU): append `Комментарий администратора: {notes}` when notes supplied.
+- Decision footer (EN): append `Admin note: {notes}` when notes supplied.
 
 ### Task Splitting Evaluation
 **Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-09-22
@@ -113,9 +142,9 @@ Target: 90%+ coverage across all implementation areas
 **Reasoning**: Scope remains cohesive around a single approval workflow; dependencies between data layer, handlers, and notifications are tightly coupled and manageable within one implementation effort.
 
 ## Knowledge Gaps
-- Confirm Airtable table name, schema, and required field IDs for storing access requests and audit metadata.
-- Determine finalized Russian/English copy for approval, denial, and pending messages to maintain established tone.
-- Validate whether external notification channels (e.g., email, Slack) are needed beyond in-app alerts.
+- Confirm Airtable base permissions allow maintaining the `BotAccessRequests` table (ID `tblQWWEcHx9sfhsgN`) and that AccessLevel choices remain aligned with env-configured viewer/coordinator/admin roles (VIEWER/COORDINATOR/ADMIN).
+- Decide whether admin notifications should also be mirrored to Slack/email in addition to Telegram alerts.
+- Validate operational process for cleaning up stale denied requests older than 90 days (manual vs automated).
 
 ## Notes for Other Devs (Optional)
 - Coordinate rollout so existing admin list remains authoritative until new workflow is live; consider feature flagging `/requests` command during beta.
