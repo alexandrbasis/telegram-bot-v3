@@ -577,6 +577,10 @@ class TestAirtableClientOperations:
         """Test record listing with various parameters."""
         client, mock_table = client_with_mock_table
 
+        # Mock the API response
+        mock_response = {"records": [], "offset": None}
+        client.api.request.return_value = mock_response
+
         await client.list_records(
             formula="TestField = 'Value'",
             sort=["-CreatedAt"],
@@ -585,12 +589,17 @@ class TestAirtableClientOperations:
             view="MyView",
         )
 
-        mock_table.all.assert_called_once_with(
-            formula="TestField = 'Value'",
-            sort=["-CreatedAt"],
-            fields=["TestField"],
-            max_records=10,
-            view="MyView",
+        # Verify API was called with correct parameters
+        client.api.request.assert_called_once_with(
+            "GET",
+            f"/v0/{client.config.base_id}/{client.config.table_name}",
+            params={
+                "filterByFormula": "TestField = 'Value'",
+                "sort": ["-CreatedAt"],
+                "fields": ["TestField"],
+                "maxRecords": 10,
+                "view": "MyView",
+            },
         )
 
     @pytest.mark.asyncio
