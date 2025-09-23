@@ -136,7 +136,7 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
   - Complete export: Full participant database export (existing functionality maintained)
 - **BibleReaders Export Service**: Dedicated export service for Bible reading assignments
   - Participant name hydration from linked participant IDs
-  - CSV generation with custom ParticipantNames field
+  - CSV generation with view-aligned column order and participant names embedded in the `Participants` column
   - Progress tracking and file management integration
 - **ROE Export Service**: Dedicated export service for ROE session data
   - Multi-relationship hydration (presenters, assistants, prayer partners)

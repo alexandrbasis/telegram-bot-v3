@@ -1254,12 +1254,12 @@ Interactive export conversation flow that converts the existing `/export` comman
 - **Complete Export**: Full participant database export (existing functionality maintained)
 - **View-Driven Column Order**: Exports maintain exact Airtable view column ordering for direct comparison with live base
 - **Header Reconstruction**: Column headers built from actual view data including linked relationship fields
-- **Linked Field Support**: Relationship fields (Roe, BibleReaders, ROE 2) included in exports with proper formatting
+- **Streamlined Column Set**: Exports surface the participant essentials required by the "Тимы"/"Кандидаты" views (name, gender, birth date, department, location, church, submitter, English name, contact)
 
 #### 2. BibleReaders Export Service
 - **Dedicated Export Service**: Complete export service for Bible reading assignments
 - **Participant Hydration**: Resolves participant IDs to names using repository lookups
-- **CSV Generation**: Proper CSV formatting with custom ParticipantNames field
+- **CSV Generation**: Proper CSV formatting with participant names rendered directly in the `Participants` column
 - **Progress Integration**: Uses ExportProgressTracker and UserInteractionLogger for telemetry
 - **File Management**: Secure temporary file creation with automatic cleanup
 

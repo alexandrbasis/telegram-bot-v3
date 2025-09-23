@@ -238,19 +238,15 @@ class ROEExportService:
         Returns:
             List of Airtable field names for CSV headers plus hydrated fields
         """
-        # Get core Airtable field names from mapping (excluding 'id')
-        headers = []
-        for (
-            python_field,
-            airtable_field,
-        ) in ROEFieldMapping.PYTHON_TO_AIRTABLE.items():
-            if python_field != "record_id":  # Skip record_id as it's internal
-                headers.append(airtable_field)
-
-        # Add custom hydrated fields for participant names
-        headers.extend(["RoistaNames", "AssistantNames", "PrayerNames"])
-
-        return headers
+        return [
+            "RoeTopic",
+            "Roista",
+            "RoeDate",
+            "RoeTiming",
+            "RoeDuration",
+            "Assistant",
+            "Prayer",
+        ]
 
     async def _roe_to_csv_row(self, roe: ROE) -> Dict[str, str]:
         """
@@ -293,13 +289,13 @@ class ROEExportService:
             else:
                 row[airtable_field] = str(value)
 
-        # Hydrate participant names for all relationship fields
+        # Hydrate participant names for all relationship fields and set them directly
         roista_names = await self._hydrate_participant_names(roe.roista)
         assistant_names = await self._hydrate_participant_names(roe.assistant)
         prayer_names = await self._hydrate_participant_names(roe.prayer)
 
-        row["RoistaNames"] = "; ".join(roista_names) if roista_names else ""
-        row["AssistantNames"] = "; ".join(assistant_names) if assistant_names else ""
-        row["PrayerNames"] = "; ".join(prayer_names) if prayer_names else ""
+        row["Roista"] = "; ".join(roista_names) if roista_names else ""
+        row["Assistant"] = "; ".join(assistant_names) if assistant_names else ""
+        row["Prayer"] = "; ".join(prayer_names) if prayer_names else ""
 
         return row

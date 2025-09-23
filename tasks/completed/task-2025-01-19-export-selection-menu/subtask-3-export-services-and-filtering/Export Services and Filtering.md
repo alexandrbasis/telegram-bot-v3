@@ -66,7 +66,7 @@ Create export services for BibleReaders and ROE tables while extending the exist
 ### Step 2: BibleReadersExportService Implementation — 2025-09-22
 - **Files**: `src/services/bible_readers_export_service.py` - Complete export service with participant hydration
 - **Files**: `tests/unit/test_services/test_bible_readers_export_service.py` - Comprehensive test suite with 12 test cases
-- **Summary**: Created dedicated export service for BibleReaders table with participant name hydration from linked participant IDs. Includes proper CSV formatting with custom ParticipantNames field, progress tracking, and file management.
+- **Summary**: Created dedicated export service for BibleReaders table with participant name hydration from linked participant IDs. Includes proper CSV formatting that writes hydrated names into the `Participants` column, progress tracking, and file management.
 - **Impact**: Enables actionable Bible reading assignment exports with participant details for ministry coordinators
 - **Tests**: Full test coverage including hydration testing, edge cases, and file operations (87% service coverage)
 - **Verification**: All tests pass with proper participant hydration and CSV generation
