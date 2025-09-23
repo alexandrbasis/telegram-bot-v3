@@ -159,7 +159,8 @@ def get_search_conversation_handler() -> ConversationHandler:
                         handle_search_floor_mode,
                     ),
                     MessageHandler(
-                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"),
+                        main_menu_button,
                     ),
                     # List handlers for role selection, department filtering, and navigation
                     CallbackQueryHandler(handle_role_selection, pattern="^list_role:"),
@@ -180,7 +181,8 @@ def get_search_conversation_handler() -> ConversationHandler:
                     ),
                     # Navigation via reply keyboard
                     MessageHandler(
-                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"),
+                        main_menu_button,
                     ),
                     MessageHandler(
                         filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
@@ -193,7 +195,8 @@ def get_search_conversation_handler() -> ConversationHandler:
                 SearchStates.SHOWING_RESULTS: [
                     # Navigation via reply keyboard
                     MessageHandler(
-                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"),
+                        main_menu_button,
                     ),
                     MessageHandler(
                         filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
@@ -219,7 +222,8 @@ def get_search_conversation_handler() -> ConversationHandler:
                     ),
                     # Navigation via reply keyboard
                     MessageHandler(
-                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"),
+                        main_menu_button,
                     ),
                     MessageHandler(
                         filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
@@ -232,7 +236,8 @@ def get_search_conversation_handler() -> ConversationHandler:
                 RoomSearchStates.SHOWING_ROOM_RESULTS: [
                     # Navigation via reply keyboard
                     MessageHandler(
-                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"),
+                        main_menu_button,
                     ),
                     MessageHandler(
                         filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
@@ -259,7 +264,8 @@ def get_search_conversation_handler() -> ConversationHandler:
                     ),
                     # Navigation via reply keyboard
                     MessageHandler(
-                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"),
+                        main_menu_button,
                     ),
                     MessageHandler(
                         filters.Regex(rf"^{re.escape(NAV_CANCEL)}$"), cancel_search
@@ -272,7 +278,8 @@ def get_search_conversation_handler() -> ConversationHandler:
                 FloorSearchStates.SHOWING_FLOOR_RESULTS: [
                     # Navigation via reply keyboard
                     MessageHandler(
-                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"), main_menu_button
+                        filters.Regex(rf"^{re.escape(NAV_MAIN_MENU)}$"),
+                        main_menu_button,
                     ),
                     MessageHandler(
                         filters.Regex(rf"^{re.escape(NAV_BACK_TO_SEARCH_MODES)}$"),
@@ -317,7 +324,8 @@ def get_search_conversation_handler() -> ConversationHandler:
                 CommandHandler("logging", handle_logging_toggle_command),
             ],
             # Timeout configuration: Convert minutes to seconds
-            conversation_timeout=get_telegram_settings().conversation_timeout_minutes * 60,
+            conversation_timeout=get_telegram_settings().conversation_timeout_minutes
+            * 60,
             # Disable allow_reentry to avoid duplicate handler execution when
             # entry points overlap with state handlers (e.g., /start or menu buttons).
             allow_reentry=False,
