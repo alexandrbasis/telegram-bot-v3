@@ -6,6 +6,7 @@ for the Russian name search feature.
 """
 
 import logging
+import warnings
 import re
 
 from telegram.ext import (
@@ -94,8 +95,20 @@ def get_search_conversation_handler() -> ConversationHandler:
     """
     logger.info("Setting up search conversation handler")
 
-    conversation_handler = ConversationHandler(
-        entry_points=[
+    # Suppress PTBUserWarning during handler construction due to mixed handler types
+    try:
+        from telegram.warnings import PTBUserWarning  # type: ignore
+    except Exception:  # pragma: no cover - fallback for PTB variants
+        try:
+            from telegram._utils.warnings import PTBUserWarning  # type: ignore
+        except Exception:
+            PTBUserWarning = Warning  # type: ignore
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", PTBUserWarning)
+
+        conversation_handler = ConversationHandler(
+            entry_points=[
             CommandHandler("start", start_command),
             CommandHandler("search_room", handle_room_search_command),
             CommandHandler("search_floor", handle_floor_search_command),
@@ -301,15 +314,14 @@ def get_search_conversation_handler() -> ConversationHandler:
             CommandHandler("start", start_command),
             CommandHandler("logging", handle_logging_toggle_command),
         ],
-        # Timeout configuration: Convert minutes to seconds
-        conversation_timeout=get_telegram_settings().conversation_timeout_minutes * 60,
-        # Disable allow_reentry to avoid duplicate handler execution when
-        # entry points overlap with state handlers (e.g., /start or menu buttons).
-        allow_reentry=False,
-        per_message=False,  # Required for mixed handler types (CommandHandler + MessageHandler + CallbackQueryHandler)
-        # Note: PTB may emit a warning about CallbackQueryHandler tracking, but this is expected
-        # for mixed conversations and functionality works correctly as verified by tests
-    )
+            # Timeout configuration: Convert minutes to seconds
+            conversation_timeout=get_telegram_settings().conversation_timeout_minutes * 60,
+            # Disable allow_reentry to avoid duplicate handler execution when
+            # entry points overlap with state handlers (e.g., /start or menu buttons).
+            allow_reentry=False,
+            # Keep default mixed-handler behavior; warnings suppressed above
+            per_message=False,
+        )
 
     logger.info("Search conversation handler configured successfully")
     return conversation_handler
