@@ -3,11 +3,11 @@
 
 ## Tracking & Progress
 ### Linear Issue
-- **ID**: AGB-66
-- **URL**: https://linear.app/alexandrbasis/issue/AGB-66/bot-access-approval-workflow  
+- **ID**: AGB-67
+- **URL**: https://linear.app/alexandrbasis/issue/AGB-67/bot-access-approval-workflow
 
 ### PR Details
-- **Branch**: basisalexandr/agb-66-bot-access-approval-workflow
+- **Branch**: basisalexandr/agb-67-bot-access-approval-workflow
 - **PR URL**: [Will be added during implementation]
 - **Status**: Draft
 

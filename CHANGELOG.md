@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Airtable View-Based Participant Export Alignment** – Complete alignment of participant exports with Airtable Тимы/Кандидаты views enabling direct comparability between export files and live base structure for improved data consistency and workflow efficiency (PR #57, completed 2025-09-23, merged at SHA 2558744)
+  - Enhanced repository interface with view-based record retrieval capability (`src/data/repositories/participant_repository.py:399-408`)
+    - Added list_view_records abstract method supporting raw Airtable view data fetching with filter preservation
+    - Enables export services to access complete view structure including column ordering and linked field relationships
+    - Maintains repository abstraction while exposing view-specific functionality for export use cases
+  - Airtable repository implementation with view-based data access (`src/data/airtable/airtable_participant_repo.py:1442-1465`)
+    - Complete list_view_records implementation fetching raw records from specified Airtable views
+    - Preserves view column ordering and linked field relationships for accurate export reconstruction
+    - Integrates with existing rate limiting and error handling patterns maintaining performance standards
+  - Export service enhancement with view-driven column structure (`src/services/participant_export_service.py:366-420`)
+    - Added get_view_headers_with_order helper method reconstructing exact view column structure including linked fields
+    - Enhanced _get_csv_headers to use view-based ordering when view parameter specified preserving Airtable structure
+    - Maintains backward compatibility with existing export workflows while enabling view-aligned exports
+    - Applies optional filters (role/department) while preserving complete view column structure for targeted exports
+  - Comprehensive test coverage with 8 new test cases validating view-based export functionality
+    - Repository interface compliance tests ensuring list_view_records method implementation (`tests/unit/test_data/test_repositories/test_participant_repository.py:534-548`)
+    - Export service view header reconstruction tests covering column ordering and linked field handling (`tests/unit/test_services/test_participant_export_service.py:665-720`)
+    - Integration validation with existing filtering capabilities ensuring no regression in role/department-based exports
+  - Enhanced documentation with comprehensive view-based export implementation details
+    - Updated data integration documentation with view-based export functionality and list_view_records method specification (`docs/data-integration/airtable_database_structure.md`)
+    - Extended API design documentation with repository interface and view-driven export architecture (`docs/architecture/api-design.md`)
+    - Enhanced bot commands documentation with view alignment examples and export workflow details (`docs/technical/bot-commands.md`)
+    - Updated feature specifications with view alignment acceptance criteria and technical implementation (`docs/business/feature-specifications.md`)
+    - Expanded architecture overview with view-based data access patterns and export service enhancements (`docs/architecture/architecture-overview.md`)
 - **Interactive Export Conversation UI with 6-Option Selection Menu** – Complete conversion of `/export` command from direct file generation to interactive conversation flow with department filtering, Russian localization, and mobile optimization enabling targeted admin workflows (TDB-69, completed 2025-09-22, PR #56 merged at SHA 67fb1ac, branch `feature/TDB-69-conversation-ui-integration`)
   - Complete conversation handler with admin validation and state management (`src/bot/handlers/export_conversation_handlers.py:523`)
     - 6 export options: Export All, Export Team, Export Candidates, Export by Department, Export Bible Readers, Export ROE
