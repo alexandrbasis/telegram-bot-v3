@@ -6,6 +6,85 @@ ensuring consistent messaging across different handlers and features.
 """
 
 
+class AccessRequestMessages:
+    """Messages for access request workflow."""
+
+    # User-facing messages
+    PENDING_REQUEST_RU = (
+        "✅ Запрос на доступ принят. Мы уведомим вас, как только админ его обработает."
+    )
+    PENDING_REQUEST_EN = "✅ Your access request has been recorded. We'll notify you as soon as an admin reviews it."
+
+    EXISTING_PENDING_RU = "⏳ Ваш запрос на доступ уже находится на рассмотрении. Мы уведомим вас после решения администратора."
+    EXISTING_PENDING_EN = "⏳ Your access request is already pending review. We'll notify you once an admin makes a decision."
+
+    APPROVED_RU = "✅ Доступ подтверждён! Ваша роль: {access_level}.\n\nИспользуйте /start для начала работы с ботом."
+    APPROVED_EN = "✅ You're all set! Assigned access level: {access_level}.\n\nUse /start to begin working with the bot."
+
+    DENIED_RU = "❌ К сожалению, в доступе отказано. Если это ошибка, пожалуйста свяжитесь с администратором."
+    DENIED_EN = "❌ We weren't able to approve your access right now. Contact an admin if you believe this is a mistake."
+
+    ACCESS_GRANTED_RU = "👋 Добро пожаловать! У вас есть доступ к боту.\n\nДоступные команды:\n/search - Поиск участников\n/export - Экспорт данных\n/help - Помощь"
+    ACCESS_GRANTED_EN = "👋 Welcome! You have access to the bot.\n\nAvailable commands:\n/search - Search participants\n/export - Export data\n/help - Help"
+
+    # Admin notifications
+    NEW_REQUEST_RU = "🔔 Новый запрос на доступ: {display_name} ({user_id})."
+    NEW_REQUEST_EN = "🔔 New access request from {display_name} ({user_id})."
+
+    # Admin interface messages
+    NO_PENDING_REQUESTS = "✅ Нет ожидающих запросов на доступ."
+    REQUESTS_LIST_HEADER = "📋 *Запросы на доступ (страница {page}/{total_pages}):*\n"
+    REQUEST_ITEM = "• @{username} (ID: {user_id})\n  Дата: {date}\n"
+
+    # Admin notes
+    ADMIN_NOTE_RU = "\n\nКомментарий администратора: {notes}"
+    ADMIN_NOTE_EN = "\n\nAdmin note: {notes}"
+
+    # Error messages
+    REQUEST_ERROR_RU = (
+        "Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже."
+    )
+    REQUEST_ERROR_EN = (
+        "An error occurred while processing the request. Please try again later."
+    )
+
+    ACCESS_CHECK_ERROR_RU = (
+        "Произошла ошибка при проверке доступа. Пожалуйста, попробуйте позже."
+    )
+    ACCESS_CHECK_ERROR_EN = (
+        "An error occurred while checking access. Please try again later."
+    )
+
+    LOAD_REQUESTS_ERROR_RU = (
+        "Произошла ошибка при загрузке запросов. Пожалуйста, попробуйте позже."
+    )
+    LOAD_REQUESTS_ERROR_EN = (
+        "An error occurred while loading requests. Please try again later."
+    )
+
+    # Access control messages
+    ADMIN_ONLY_RU = "Эта команда доступна только администраторам."
+    ADMIN_ONLY_EN = "This command is available to administrators only."
+
+    NEED_APPROVAL_RU = "Для использования этой функции необходимо одобрение администратора. Используйте /start для запроса доступа."
+    NEED_APPROVAL_EN = (
+        "This function requires administrator approval. Use /start to request access."
+    )
+
+    PENDING_PROCESSING_RU = "Ваш запрос на доступ обрабатывается. Пожалуйста, подождите одобрения администратора."
+    PENDING_PROCESSING_EN = "Your access request is being processed. Please wait for administrator approval."
+
+    ACCESS_DENIED_INFO_RU = "Доступ к этой функции был отклонен. Обратитесь к администратору для получения дополнительной информации."
+    ACCESS_DENIED_INFO_EN = "Access to this function has been denied. Contact an administrator for more information."
+
+    # Button labels
+    BTN_APPROVE = "✅ Одобрить"
+    BTN_DENY = "❌ Отклонить"
+    BTN_PREV_PAGE = "⬅️ Назад"
+    BTN_NEXT_PAGE = "➡️ Вперед"
+    BTN_CLOSE = "❌ Закрыть"
+
+
 class ErrorMessages:
     """Standardized error messages for user-facing errors."""
 

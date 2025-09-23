@@ -1,1 +1,1 @@
-"""Data models for participants, payments, and business entities."""
+"""Data models for participants, payments, access requests, and business entities."""

@@ -250,6 +250,82 @@ The department field is now prominently displayed in team list results, providin
 #### Usage in Room Search Results
 These translations are also used by the `format_room_results_russian()` function to display all participant information in Russian, providing a consistent and user-friendly experience.
 
+### Bot Access Requests Field Mappings (Added 2025-09-23)
+
+#### BotAccessRequests Table Field Mappings
+The BotAccessRequests table uses the following field mappings for user access control workflow:
+
+```python
+# BotAccessRequests table field mappings (src/config/field_mappings.py)
+BOT_ACCESS_REQUESTS_FIELD_MAPPINGS = {
+    "telegram_user_id": "fldeiF3gxg4fZMirc",    # TelegramUserId (Number - Integer)
+    "telegram_username": "fld1RzNGWTGl8fSE4",   # TelegramUsername (Single line text)
+    "status": "fldcuRa8qeUDKY3hN",              # Status (Single select)
+    "access_level": "fldRBCoHwrJ87hdjr",        # AccessLevel (Single select)
+
+    # Airtable field names for API calls
+    "telegram_user_id_airtable": "TelegramUserId",
+    "telegram_username_airtable": "TelegramUsername",
+    "status_airtable": "Status",
+    "access_level_airtable": "AccessLevel",
+}
+```
+
+**Field Usage Guidelines**:
+- **TelegramUserId**: Required primary key field for user identification and uniqueness enforcement
+- **TelegramUsername**: Optional username field captured without @ prefix for admin reference
+- **Status**: Required single select field with values: Pending (default), Approved, Denied
+- **AccessLevel**: Required single select field with values: VIEWER (default), COORDINATOR, ADMIN
+- **Enum Conversion**: Uses display values in Airtable ("Pending", "Approved") mapped to internal enums
+
+**Repository Implementation** (Added 2025-09-23):
+- **File**: `src/data/airtable/airtable_user_access_repo.py` (270 lines)
+- **Methods**: Complete CRUD operations (create, get_by_id, get_by_telegram_user_id, get_by_status, approve, deny, update, delete)
+- **Features**: Status filtering, approve/deny workflows with audit metadata, enum-to-display-value conversion
+- **Test Coverage**: 9 comprehensive unit tests with full workflow coverage
+- **Field Mapping Helper**: Integrated BotAccessRequestsFieldMapping class with comprehensive field ID mappings
+
+**Model Integration**:
+```python
+# UserAccessRequest model (src/models/user_access_request.py)
+class UserAccessRequest(BaseModel):
+    id: Optional[str] = None
+    telegram_user_id: int
+    telegram_username: Optional[str] = None
+    status: AccessRequestStatus = AccessRequestStatus.PENDING
+    access_level: AccessLevel = AccessLevel.VIEWER
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    # Enum definitions
+    class AccessRequestStatus(str, Enum):
+        PENDING = "Pending"
+        APPROVED = "Approved"
+        DENIED = "Denied"
+
+    class AccessLevel(str, Enum):
+        VIEWER = "VIEWER"
+        COORDINATOR = "COORDINATOR"
+        ADMIN = "ADMIN"
+```
+
+**Configuration Integration**:
+```python
+# Environment variable configuration
+AIRTABLE_ACCESS_REQUESTS_TABLE_NAME=BotAccessRequests
+AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN
+
+# Service layer usage
+from src.services.access_request_service import AccessRequestService
+access_service = AccessRequestService(user_access_repo)
+
+# Create new access request
+request = await access_service.submit_request(user_id=123456789, username="user123")
+
+# Admin approval workflow
+await access_service.approve_request(request_id="recABC123", admin_user_id=987654321)
+```
+
 ### Multi-Table Field Mappings (Added 2025-01-21)
 
 #### BibleReaders Table Field Mappings

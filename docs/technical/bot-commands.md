@@ -1,5 +1,69 @@
 # Bot Commands Reference
 
+## Access Control Commands
+
+### /start
+Initiates bot interaction with automatic access control flow. Behavior depends on user's current access status:
+
+**New Users (First Time)**:
+- Creates pending access request in Airtable BotAccessRequests table
+- Displays "Запрос на доступ принят. Мы уведомим вас, как только админ его обработает." (RU)
+- Notifies all administrators about new access request
+- Captures Telegram username and user ID for admin review
+
+**Pending Users**:
+- Shows current pending status with instructions to wait for admin approval
+- Provides contact information for follow-up if needed
+
+**Approved Users**:
+- Displays main menu with full bot functionality access
+- Provides access to search, export, and other authorized features
+
+**Denied Users**:
+- Shows denial message with administrator contact information
+- Explains next steps for reapplication or clarification
+
+**Features**:
+- Automatic user status detection via Airtable integration
+- Dual-source authorization (environment admins + database approved users)
+- Russian/English localization support
+- Real-time admin notifications via Telegram
+- Audit trail with request timestamps and status changes
+
+### /requests (Admin Only)
+Administrative interface for reviewing and managing user access requests. Restricted to users listed in `ADMIN_USER_IDS` environment variable.
+
+**Access Control**:
+- Validates admin status using `auth_utils.is_admin_user()` function
+- Unauthorized users receive "Доступ запрещён. Эта команда доступна только администраторам."
+- Comprehensive logging for security monitoring
+
+**Request Management Interface**:
+- Paginated list of pending access requests (5 per page)
+- Shows user display name, username, and Telegram user ID
+- Interactive approve/deny buttons for each request
+- Navigation controls for browsing multiple pages of requests
+
+**Approval Workflow**:
+- Click "✅ Одобрить" to approve user access
+- Updates user status to "Approved" with VIEWER access level
+- Sends approval notification to user in Russian/English
+- Records admin user ID and timestamp in audit trail
+
+**Denial Workflow**:
+- Click "❌ Отклонить" to deny user access
+- Updates user status to "Denied" with reason tracking
+- Sends denial notification with administrator contact information
+- Maintains audit trail for compliance and review
+
+**Pagination and Navigation**:
+- "◀️ Назад" and "▶️ Далее" buttons for page navigation
+- Shows current page position and total request count
+- "🏠 Главное меню" option to return to main menu
+- Maintains admin session state during navigation
+
+**Callback Format**: `access:{action}:{record_id}` where action ∈ {approve, deny}
+
 ## Search Commands
 
 ### /search [query] and Search Button
@@ -547,6 +611,12 @@ Error handling has been enhanced with centralized message templates located in `
 
 ### /export
 Interactive export conversation flow for administrative data export. Available to authorized administrators only. Converts the direct export command into a conversation with 6 targeted export options.
+
+**Access Control Integration**:
+- Admin validation uses same `auth_utils.is_admin_user()` function as `/requests` command
+- Leverages `ADMIN_USER_IDS` environment configuration
+- Consistent admin authentication across all administrative features
+- Audit logging tracks export access attempts and completions
 
 **Admin-Only Access Control**:
 - Command validates user authorization using `auth_utils.is_admin_user()` function

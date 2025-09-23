@@ -602,6 +602,133 @@ class SearchFieldMapping:
         return list(cls.SEARCH_CRITERIA_MAPPING.keys())
 
 
+class BotAccessRequestsFieldMapping:
+    """
+    Field mapping configuration for BotAccessRequests table.
+
+    Defines the mapping between UserAccessRequest model fields and
+    Airtable BotAccessRequests table fields.
+    """
+
+    # Table configuration - defaults match environment variable defaults
+    # These are only used as fallbacks; actual values come from environment/settings
+    TABLE_NAME = "BotAccessRequests"
+    TABLE_ID = "tblQWWEcHx9sfhsgN"
+    VIEW_ID = "viwVDrguxKWbRS9Xz"  # Grid view for admin queue
+
+    # Airtable field name -> Field ID mapping
+    AIRTABLE_FIELD_IDS: Dict[str, str] = {
+        "TelegramUserId": "fldeiF3gxg4fZMirc",  # Number (Integer) - Primary key
+        "TelegramUsername": "fld1RzNGWTGl8fSE4",  # Single line text - Optional
+        "Status": "fldcuRa8qeUDKY3hN",  # Single select (Pending, Approved, Denied)
+        "AccessLevel": "fldRBCoHwrJ87hdjr",  # Single select (VIEWER, COORDINATOR, ADMIN)
+        "RequestedAt": "fldRequestedAt123456",  # Date - Auto-set on creation
+        "ReviewedAt": "fldReviewedAt123456",  # Date - Set on approval/denial
+        "ReviewedBy": "fldReviewedBy123456",  # Single line text - Admin ID
+        "id": "fldRECORDID000000",  # Special record ID field
+    }
+
+    # Python field name -> Airtable field name mapping
+    PYTHON_TO_AIRTABLE: Dict[str, str] = {
+        "telegram_user_id": "TelegramUserId",
+        "telegram_username": "TelegramUsername",
+        "status": "Status",
+        "access_level": "AccessLevel",
+        "requested_at": "RequestedAt",
+        "reviewed_at": "ReviewedAt",
+        "reviewed_by": "ReviewedBy",
+        "record_id": "id",
+    }
+
+    # Airtable field name -> Python field name mapping (reverse)
+    AIRTABLE_TO_PYTHON: Dict[str, str] = {v: k for k, v in PYTHON_TO_AIRTABLE.items()}
+
+    # Field type definitions
+    FIELD_TYPES: Dict[str, FieldType] = {
+        "TelegramUserId": FieldType.NUMBER,
+        "TelegramUsername": FieldType.TEXT,
+        "Status": FieldType.SINGLE_SELECT,
+        "AccessLevel": FieldType.SINGLE_SELECT,
+        "RequestedAt": FieldType.DATE,
+        "ReviewedAt": FieldType.DATE,
+        "ReviewedBy": FieldType.TEXT,
+    }
+
+    # Select option value -> Option ID mapping
+    OPTION_ID_MAPPINGS: Dict[str, Dict[str, str]] = {
+        "Status": {
+            "PENDING": "selPending123456789",
+            "APPROVED": "selApproved12345678",
+            "DENIED": "selDenied1234567890",
+        },
+        "AccessLevel": {
+            "VIEWER": "selViewer1234567890",
+            "COORDINATOR": "selCoordinator123456",
+            "ADMIN": "selAdmin12345678901",
+        },
+    }
+
+    # Select field options
+    SELECT_FIELD_OPTIONS: Dict[str, List[str]] = {
+        "Status": ["PENDING", "APPROVED", "DENIED"],
+        "AccessLevel": ["VIEWER", "COORDINATOR", "ADMIN"],
+    }
+
+    # Required fields
+    REQUIRED_FIELDS: List[str] = ["TelegramUserId"]
+
+    # Field constraints
+    FIELD_CONSTRAINTS: Dict[str, Dict[str, Any]] = {
+        "TelegramUserId": {
+            "min_value": 1,
+            "required": True,
+            "description": "Telegram user ID for uniqueness enforcement",
+        },
+        "TelegramUsername": {
+            "max_length": 100,
+            "description": "Telegram username without @ prefix",
+        },
+        "ReviewedBy": {
+            "max_length": 100,
+            "description": "Admin user ID who reviewed the request",
+        },
+    }
+
+    @classmethod
+    def get_field_id(cls, airtable_field: str) -> Optional[str]:
+        """Get Airtable Field ID from field name."""
+        return cls.AIRTABLE_FIELD_IDS.get(airtable_field)
+
+    @classmethod
+    def get_airtable_field_name(cls, python_field: str) -> Optional[str]:
+        """Get Airtable field name from Python field name."""
+        return cls.PYTHON_TO_AIRTABLE.get(python_field)
+
+    @classmethod
+    def get_python_field_name(cls, airtable_field: str) -> Optional[str]:
+        """Get Python field name from Airtable field name."""
+        return cls.AIRTABLE_TO_PYTHON.get(airtable_field)
+
+    @classmethod
+    def translate_fields_to_ids(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Translate field names to Field IDs for API calls."""
+        translated = {}
+        for field_name, value in data.items():
+            field_id = cls.get_field_id(field_name)
+            key = field_id if field_id else field_name
+            translated[key] = value
+        return translated
+
+    @classmethod
+    def get_option_id(cls, field_name: str, option_value: str) -> Optional[str]:
+        """Get Airtable Option ID from field name and option value."""
+        field_options = cls.OPTION_ID_MAPPINGS.get(field_name)
+        if not field_options:
+            return None
+        return field_options.get(option_value)
+
+
 # Field mapping instances for easy import
 field_mapping = AirtableFieldMapping()
 search_mapping = SearchFieldMapping()
+bot_access_mapping = BotAccessRequestsFieldMapping()

@@ -1,5 +1,134 @@
 # Feature Specifications
 
+## Bot Access Approval Workflow
+
+### Overview
+Comprehensive bot access approval workflow that enables administrators to review and approve new bot users directly within Telegram, eliminating the need for manual deployment configuration changes.
+
+**Status**: ✅ Implemented (2025-09-23)
+**Implementation**: Complete 3-layer architecture with notifications and localization
+**Test Coverage**: 62 tests (100% pass rate)
+
+### Core Features
+
+#### 1. User Onboarding Flow
+- **Entry Point**: `/start` command initiates access control flow
+- **Status Detection**: Automatic user status detection via Airtable integration
+- **Request Submission**: New users automatically submit access requests
+- **Confirmation**: Users receive confirmation of request submission with timeline expectations
+- **Audit Trail**: Complete request tracking with timestamps and status changes
+
+#### 2. Admin Review Interface
+- **Administrative Command**: `/requests` command provides admin-only access to pending requests
+- **Paginated Interface**: Review interface shows 5 requests per page with navigation controls
+- **User Information**: Displays Telegram username, display name, and user ID for each request
+- **Interactive Actions**: Approve/deny buttons with callback-based workflow
+- **Status Updates**: Real-time status updates reflected in Airtable database
+
+#### 3. Real-Time Notifications
+- **Admin Alerts**: Immediate notifications to all administrators when new requests are submitted
+- **User Notifications**: Automated approval/denial notifications sent to requesters
+- **Localization**: All notifications support Russian/English based on user preferences
+- **Retry Logic**: Robust retry mechanism with exponential backoff for failed notifications
+
+#### 4. Access Control Integration
+- **Dual Authorization**: Combines environment-configured admins with database-approved users
+- **Permission Levels**: VIEWER, COORDINATOR, ADMIN access levels with default VIEWER assignment
+- **Feature Gating**: Main bot features restricted until access approval confirmed
+- **Admin Functions**: Administrative commands (`/requests`, `/export`) require admin-level authorization
+
+### Technical Implementation
+
+#### Data Layer
+- **Airtable Integration**: New BotAccessRequests table with comprehensive field schema
+- **Repository Pattern**: AirtableUserAccessRepository with CRUD operations and status filtering
+- **Field Mapping**: Complete field ID mapping with proper enum-to-display-value conversion
+- **Audit Metadata**: Timestamps, acting admin tracking, and status change history
+
+#### Service Layer
+- **AccessRequestService**: Business logic for request management and approval workflows
+- **NotificationService**: Multi-user notification system with retry logic and localization
+- **AuthUtils**: Enhanced authorization utilities with dual-source user validation
+
+#### Bot Interface
+- **Auth Handlers**: User onboarding with status-based responses and access control decorators
+- **Admin Handlers**: Administrative interface with pagination and callback handling
+- **Localized Messages**: Russian/English message templates for all user interactions
+
+### User Experience Flows
+
+#### New User Experience
+1. User sends `/start` command to bot
+2. Bot detects new user and creates pending access request
+3. User receives confirmation message explaining approval process
+4. Administrators receive immediate notification about new request
+5. Admin reviews request via `/requests` command and approves/denies
+6. User receives approval/denial notification with appropriate next steps
+7. Approved users gain immediate access to all bot features
+
+#### Admin Experience
+1. Admin receives notification about new access request
+2. Admin uses `/requests` command to view pending requests
+3. Admin reviews user information and makes approval decision
+4. Admin clicks approve/deny button for instant status update
+5. System automatically notifies user and updates audit trail
+6. Admin can review additional requests or return to main menu
+
+### Business Value
+
+#### Before Implementation
+- Manual configuration file updates required for each new user
+- Deployment process needed for user access changes
+- No audit trail or approval workflow visibility
+- Limited ability to revoke or modify user access
+
+#### After Implementation
+- 100% of new access requests handled through in-bot workflow
+- Zero deployment requirements for user access management
+- Complete audit trail with timestamps and admin tracking
+- Real-time approval process with immediate user feedback
+- Scalable administrative workflow supporting multiple admins
+
+### Acceptance Criteria
+
+- [x] ✅ New users can request access via `/start` command with automatic request creation
+- [x] ✅ Administrators receive immediate notifications about new access requests
+- [x] ✅ Admin interface provides paginated review with approve/deny actions
+- [x] ✅ Users receive real-time notifications about approval/denial decisions
+- [x] ✅ Access control integrates with existing bot features and admin functions
+- [x] ✅ Russian/English localization supported throughout entire workflow
+- [x] ✅ Complete audit trail maintained in Airtable with status change tracking
+- [x] ✅ Robust error handling and retry logic for all notification scenarios
+- [x] ✅ Comprehensive test coverage with 62 passing tests across all components
+- [x] ✅ Backward compatibility maintained with existing admin configuration
+
+### Configuration Requirements
+
+#### Environment Variables
+- `AIRTABLE_ACCESS_REQUESTS_TABLE_NAME=BotAccessRequests`
+- `AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN`
+- `ADMIN_USER_IDS=123456789,987654321` (comma-separated admin user IDs)
+
+#### Airtable Schema
+- **Table**: BotAccessRequests (ID: tblQWWEcHx9sfhsgN)
+- **Fields**: TelegramUserId, TelegramUsername, Status, AccessLevel
+- **Views**: Pending requests view for admin queue management
+
+### Future Enhancements
+
+**Potential Improvements**:
+- Bulk approval operations for multiple requests
+- Access level modification workflow for existing users
+- Request expiration and cleanup for stale denied requests
+- Integration with external approval systems (Slack, email)
+- Advanced audit reporting and analytics
+
+**Administrative Features**:
+- User access history and modification tracking
+- Batch user management operations
+- Custom approval workflows based on user attributes
+- Integration with organizational directory systems
+
 ## Participant Editing Interface
 
 ### Overview

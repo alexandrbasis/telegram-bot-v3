@@ -8,6 +8,8 @@ from src.data.airtable.airtable_bible_readers_repo import AirtableBibleReadersRe
 from src.data.airtable.airtable_client import AirtableClient
 from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.data.airtable.airtable_roe_repo import AirtableROERepository
+from src.data.airtable.airtable_user_access_repo import AirtableUserAccessRepository
+from src.data.repositories.user_access_repository import UserAccessRepository
 from src.services.bible_readers_export_service import BibleReadersExportService
 from src.services.participant_export_service import ParticipantExportService
 from src.services.participant_list_service import ParticipantListService
@@ -205,4 +207,24 @@ def get_roe_export_service(
         roe_repository=roe_repository,
         participant_repository=participant_repository,
         progress_callback=progress_callback,
+    )
+
+
+def get_user_access_repository() -> UserAccessRepository:
+    """
+    Get user access repository instance with environment-driven configuration.
+
+    Returns:
+        UserAccessRepository: Configured repository instance with proper table settings
+    """
+    settings = get_settings()
+    airtable_client = get_airtable_client_for_table("access_requests")
+
+    # Get table configuration from settings
+    table_config = settings.database.get_table_config("access_requests")
+
+    return AirtableUserAccessRepository(
+        airtable_client=airtable_client,
+        table_name=table_config["table_name"],
+        table_id=table_config["table_id"],
     )
