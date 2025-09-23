@@ -91,24 +91,41 @@ async def requests_command_handler(
     repository = get_user_access_repository()
     service = AccessRequestService(repository)
 
-    # Get page from context (default to page 1)
+    # Get pagination info from context
     page = context.user_data.get("requests_page", 1)
     limit = 5
-    offset = (page - 1) * limit
+    
+    # Initialize page offset mapping if not exists
+    if "page_offsets" not in context.user_data:
+        context.user_data["page_offsets"] = {1: None}
+    
+    page_offsets = context.user_data["page_offsets"]
+    offset_token = page_offsets.get(page)
 
     try:
-        # Get pending requests
-        pending_requests = await service.get_pending_requests(
-            limit=limit, offset=offset
+        # Get pending requests with pagination info
+        pending_requests, next_offset_token = (
+            await service.get_pending_requests_with_pagination(
+                limit=limit, offset=offset_token
+            )
         )
 
+        # Store the next offset token for the next page
+        if next_offset_token:
+            page_offsets[page + 1] = next_offset_token
+        # If we're on page 1 and no offset token, clear any stored offsets beyond page 1
+        elif page == 1 and not offset_token:
+            # Clear all page offsets beyond page 1 (fresh start)
+            context.user_data["page_offsets"] = {1: None}
+
         if not pending_requests:
-            if page == 1:
+            if page == 1 and not offset_token:
                 message_text = AccessRequestMessages.NO_PENDING_REQUESTS
                 keyboard = None
             else:
                 # No requests on this page, go back to page 1
                 context.user_data["requests_page"] = 1
+                context.user_data["page_offsets"] = {1: None}
                 await requests_command_handler(update, context)
                 return
         else:
@@ -138,13 +155,13 @@ async def requests_command_handler(
 
             # Add navigation buttons
             nav_buttons = []
-            if offset > 0:  # Previous page exists
+            if page > 1:  # Previous page exists
                 nav_buttons.append(
                     InlineKeyboardButton(
                         "⬅️ Назад", callback_data=f"requests:page:{page-1}"
                     )
                 )
-            if len(pending_requests) == limit:  # More pages might exist
+            if next_offset_token:  # More records available
                 nav_buttons.append(
                     InlineKeyboardButton(
                         "➡️ Далее", callback_data=f"requests:page:{page+1}"
@@ -226,6 +243,7 @@ async def access_callback_handler(
                 if len(callback_parts) == 3:
                     page = int(callback_parts[2])
                     context.user_data["requests_page"] = page
+                    # Backward navigation now works with page-to-offset mapping
                     # Create new update for the requests command
                     await requests_command_handler(update, context)
                     await query.delete_message()

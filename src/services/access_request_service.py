@@ -6,7 +6,7 @@ approval, denial, and admin management operations.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from src.data.repositories.user_access_repository import UserAccessRepository
 from src.models.user_access_request import (
@@ -85,17 +85,38 @@ class AccessRequestService:
         return await self.repository.get_request_by_user_id(telegram_user_id)
 
     async def get_pending_requests(
-        self, limit: Optional[int] = None, offset: Optional[int] = None
+        self, limit: Optional[int] = None, offset: Optional[str] = None
     ) -> List[UserAccessRequest]:
         """
         Retrieve pending access requests with pagination.
 
         Args:
             limit: Maximum number of results to return
-            offset: Number of results to skip
+            offset: Offset token for pagination
 
         Returns:
             List of pending UserAccessRequest objects
+
+        Raises:
+            Exception: If repository operation fails
+        """
+        requests, _ = await self.repository.list_requests_by_status(
+            AccessRequestStatus.PENDING, limit=limit, offset=offset
+        )
+        return requests
+
+    async def get_pending_requests_with_pagination(
+        self, limit: Optional[int] = None, offset: Optional[str] = None
+    ) -> Tuple[List[UserAccessRequest], Optional[str]]:
+        """
+        Retrieve pending access requests with pagination info.
+
+        Args:
+            limit: Maximum number of results to return
+            offset: Offset token for pagination
+
+        Returns:
+            Tuple of (requests list, next_offset_token)
 
         Raises:
             Exception: If repository operation fails
@@ -172,14 +193,14 @@ class AccessRequestService:
         return user_id.startswith(("admin_", "coordinator_"))
 
     async def get_approved_requests(
-        self, limit: Optional[int] = None, offset: Optional[int] = None
+        self, limit: Optional[int] = None, offset: Optional[str] = None
     ) -> List[UserAccessRequest]:
         """
         Retrieve approved access requests.
 
         Args:
             limit: Maximum number of results to return
-            offset: Number of results to skip
+            offset: Offset token for pagination
 
         Returns:
             List of approved UserAccessRequest objects
@@ -187,19 +208,20 @@ class AccessRequestService:
         Raises:
             Exception: If repository operation fails
         """
-        return await self.repository.list_requests_by_status(
+        requests, _ = await self.repository.list_requests_by_status(
             AccessRequestStatus.APPROVED, limit=limit, offset=offset
         )
+        return requests
 
     async def get_denied_requests(
-        self, limit: Optional[int] = None, offset: Optional[int] = None
+        self, limit: Optional[int] = None, offset: Optional[str] = None
     ) -> List[UserAccessRequest]:
         """
         Retrieve denied access requests.
 
         Args:
             limit: Maximum number of results to return
-            offset: Number of results to skip
+            offset: Offset token for pagination
 
         Returns:
             List of denied UserAccessRequest objects
@@ -207,9 +229,10 @@ class AccessRequestService:
         Raises:
             Exception: If repository operation fails
         """
-        return await self.repository.list_requests_by_status(
+        requests, _ = await self.repository.list_requests_by_status(
             AccessRequestStatus.DENIED, limit=limit, offset=offset
         )
+        return requests
 
     def check_user_access(self, request: Optional[UserAccessRequest]) -> bool:
         """

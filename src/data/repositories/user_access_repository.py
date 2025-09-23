@@ -6,7 +6,7 @@ in the bot approval workflow system.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from src.models.user_access_request import (
     AccessLevel,
@@ -62,18 +62,19 @@ class UserAccessRepository(ABC):
         self,
         status: AccessRequestStatus,
         limit: Optional[int] = None,
-        offset: Optional[int] = None,
-    ) -> List[UserAccessRequest]:
+        offset: Optional[str] = None,
+    ) -> Tuple[List[UserAccessRequest], Optional[str]]:
         """
         List access requests filtered by status.
 
         Args:
             status: Status to filter by
             limit: Maximum number of results to return
-            offset: Number of results to skip
+            offset: Offset token for pagination (string)
 
         Returns:
-            List of matching UserAccessRequest objects
+            Tuple of (requests list, next_offset_token) where next_offset_token
+            is None if no more records are available
 
         Raises:
             Exception: If query fails

@@ -195,7 +195,7 @@ class TestAccessRequestService:
             )
             for i in range(3)
         ]
-        mock_repository.list_requests_by_status.return_value = pending_requests
+        mock_repository.list_requests_by_status.return_value = (pending_requests, None)
 
         # Test retrieval
         result = await service.get_pending_requests(limit=5, offset=0)

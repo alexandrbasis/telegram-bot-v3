@@ -140,20 +140,23 @@ class TestAirtableUserAccessRepository:
     ):
         """Test listing requests filtered by status."""
         # Setup mock response with multiple records
-        mock_airtable_client.get_records.return_value = [
-            sample_airtable_record,
-            {
-                "id": "recDEF456789123",
-                "fields": {
-                    "fldeiF3gxg4fZMirc": 987654321,
-                    "fld1RzNGWTGl8fSE4": "anotheruser",
-                    "fldcuRa8qeUDKY3hN": "Pending",
-                    "fldRBCoHwrJ87hdjr": "COORDINATOR",
+        mock_airtable_client.get_records.return_value = {
+            "records": [
+                sample_airtable_record,
+                {
+                    "id": "recDEF456789123",
+                    "fields": {
+                        "fldeiF3gxg4fZMirc": 987654321,
+                        "fld1RzNGWTGl8fSE4": "anotheruser",
+                        "fldcuRa8qeUDKY3hN": "Pending",
+                        "fldRBCoHwrJ87hdjr": "COORDINATOR",
+                    },
                 },
-            },
-        ]
+            ],
+            "offset": "recNextPageToken123"
+        }
 
-        results = await repository.list_requests_by_status(AccessRequestStatus.PENDING)
+        results, next_offset = await repository.list_requests_by_status(AccessRequestStatus.PENDING)
 
         # Verify filter formula was used
         mock_airtable_client.get_records.assert_called_once()
@@ -165,6 +168,7 @@ class TestAirtableUserAccessRepository:
         assert len(results) == 2
         assert all(req.status == AccessRequestStatus.PENDING for req in results)
         assert results[0].telegram_user_id == 123456789
+        assert next_offset == "recNextPageToken123"
         assert results[1].telegram_user_id == 987654321
 
     async def test_approve_request(

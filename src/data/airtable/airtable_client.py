@@ -396,9 +396,9 @@ class AirtableClient:
         *,
         table_name: Optional[str] = None,
         table_id: Optional[str] = None,
-        offset: Optional[int] = None,
+        offset: Optional[str] = None,
         page_size: Optional[int] = None,
-    ) -> List[RecordDict]:
+    ) -> Dict[str, Any]:
         """
         List records with optional filtering and pagination.
 
@@ -408,9 +408,10 @@ class AirtableClient:
             fields: List of field names to include in response
             max_records: Maximum number of records to return
             view: Name of view to use
+            offset: Airtable offset token for pagination (string)
 
         Returns:
-            List of records matching criteria
+            Dict containing 'records' list and 'offset' token if more records available
 
         Raises:
             AirtableAPIError: If listing fails
@@ -419,9 +420,10 @@ class AirtableClient:
 
         try:
             logger.debug(
-                "Listing records with formula: %s, max: %s%s",
+                "Listing records with formula: %s, max: %s, offset: %s%s",
                 formula,
                 max_records,
+                offset,
                 (
                     f", table: {table_id or table_name}"
                     if (table_name or table_id)
@@ -429,39 +431,48 @@ class AirtableClient:
                 ),
             )
 
-            # Build parameters for Airtable API
+            # Build parameters for direct Airtable API call
             params: Dict[str, Any] = {}
             if formula:
-                params["formula"] = formula
+                params["filterByFormula"] = formula
             if sort:
                 params["sort"] = sort
             if fields:
                 params["fields"] = fields
             if max_records:
-                params["max_records"] = max_records
+                params["maxRecords"] = max_records
             if view:
                 params["view"] = view
             if page_size:
-                params["page_size"] = page_size
-
-            table = self._get_table(table_name=table_name, table_id=table_id)
-
-            # Ensure a list is returned to keep behavior identical
-            records = await asyncio.to_thread(lambda: list(table.all(**params)))
-
+                params["pageSize"] = page_size
             if offset:
-                try:
-                    offset_int = int(offset)
-                    if offset_int > 0:
-                        records = records[offset_int:]
-                except (TypeError, ValueError):
-                    logger.warning(
-                        "Invalid offset '%s' provided to list_records; ignoring.",
-                        offset,
-                    )
+                params["offset"] = offset
 
-            logger.debug(f"Retrieved {len(records)} records")
-            return records
+            # Get table identifier for URL construction
+            table_identifier = table_id if table_id else table_name
+            if not table_identifier:
+                table_identifier = (
+                    self.config.table_id if self.config.table_id else self.config.table_name
+                )
+
+            # Make direct API call to get paginated response with offset token
+            url = f"/v0/{self.config.base_id}/{table_identifier}"
+            
+            response = await asyncio.to_thread(
+                self.api.request, "GET", url, params=params
+            )
+
+            # Extract records and offset from response
+            records = response.get("records", [])
+            next_offset = response.get("offset")
+
+            result = {
+                "records": records,
+                "offset": next_offset
+            }
+
+            logger.debug(f"Retrieved {len(records)} records, next_offset: {bool(next_offset)}")
+            return result
 
         except Exception as e:
             error_msg = f"Failed to list records: {str(e)}"
@@ -478,9 +489,9 @@ class AirtableClient:
         sort: Optional[List[str]] = None,
         fields: Optional[List[str]] = None,
         view: Optional[str] = None,
-        offset: Optional[int] = None,
+        offset: Optional[str] = None,
         page_size: Optional[int] = None,
-    ) -> List[RecordDict]:
+    ) -> Dict[str, Any]:
         """Alias for list_records with repository-friendly parameter names."""
 
         return await self.list_records(
@@ -626,7 +637,8 @@ class AirtableClient:
             # Numbers and other values don't need quotes
             formula = f"{{{field_name}}} = {value}"
 
-        return await self.list_records(formula=formula)
+        response = await self.list_records(formula=formula)
+        return response["records"]
 
     async def search_by_formula(self, formula: str) -> List[RecordDict]:
         """
@@ -641,7 +653,8 @@ class AirtableClient:
         Raises:
             AirtableAPIError: If search fails
         """
-        return await self.list_records(formula=formula)
+        response = await self.list_records(formula=formula)
+        return response["records"]
 
     async def get_schema(self) -> Any:
         """

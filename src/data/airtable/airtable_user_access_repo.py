@@ -6,7 +6,7 @@ field mapping, status filtering, and audit metadata support.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from src.config.field_mappings import BotAccessRequestsFieldMapping
 from src.data.repositories.user_access_repository import UserAccessRepository
@@ -83,8 +83,8 @@ class AirtableUserAccessRepository(UserAccessRepository):
         self,
         status: AccessRequestStatus,
         limit: Optional[int] = None,
-        offset: Optional[int] = None,
-    ) -> List[UserAccessRequest]:
+        offset: Optional[str] = None,
+    ) -> Tuple[List[UserAccessRequest], Optional[str]]:
         """List access requests filtered by status."""
         # Build filter formula for status
         status_field_id = BotAccessRequestsFieldMapping.get_field_id("Status")
@@ -105,10 +105,16 @@ class AirtableUserAccessRepository(UserAccessRepository):
         if offset is not None:
             kwargs["offset"] = offset
 
-        records = await self.client.get_records(**kwargs)
+        response = await self.client.get_records(**kwargs)
 
-        # Convert all records to models
-        return [self._airtable_record_to_model(record) for record in records]
+        # Extract records from response and convert to models
+        records = response.get("records", [])
+        next_offset = response.get("offset")
+
+        return (
+            [self._airtable_record_to_model(record) for record in records],
+            next_offset
+        )
 
     async def approve_request(
         self, request: UserAccessRequest, access_level: AccessLevel, reviewed_by: str
