@@ -10,7 +10,7 @@ from enum import IntEnum
 from typing import List
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, ConversationHandler
 
 from src.bot.keyboards.search_keyboards import (
     NAV_MAIN_MENU,
@@ -21,6 +21,7 @@ from src.bot.keyboards.search_keyboards import (
     get_waiting_for_name_keyboard,
 )
 from src.bot.messages import InfoMessages
+from src.bot.handlers.auth_handlers import ensure_user_access_on_start
 from src.services.search_service import (
     SearchResult,
     SearchService,
@@ -140,8 +141,13 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     Returns:
         Next conversation state (MAIN_MENU)
     """
+    has_access = await ensure_user_access_on_start(update, context)
+    if not has_access:
+        return ConversationHandler.END
+
     user = update.effective_user
-    logger.info(f"User {user.id} ({user.first_name}) started the bot")
+    if user:
+        logger.info(f"User {user.id} ({user.first_name}) started the bot")
 
     # Initialize user data using shared helper
     initialize_main_menu_session(context)
@@ -149,10 +155,20 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # Get unified welcome message
     welcome_message = get_welcome_message()
 
-    await update.message.reply_text(
-        text=welcome_message,
-        reply_markup=get_main_menu_keyboard(),
-    )
+    message = update.effective_message
+    if message:
+        await message.reply_text(
+            text=welcome_message,
+            reply_markup=get_main_menu_keyboard(),
+        )
+    else:
+        chat = update.effective_chat
+        if chat:
+            await context.bot.send_message(
+                chat_id=chat.id,
+                text=welcome_message,
+                reply_markup=get_main_menu_keyboard(),
+            )
 
     return SearchStates.MAIN_MENU
 

@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Comprehensive Bot Access Approval Workflow with Admin Review and Real-Time Notifications** – Complete end-to-end access request management system enabling users to request bot access via `/start` command and admins to review via `/requests` interface with Airtable integration, real-time notifications, and dual-language localization (AGB-67, completed 2025-09-23, PR #59, branch `feature/agb-67-bot-access-approval-workflow`)
+- **Comprehensive Bot Access Approval Workflow with Admin Review and Real-Time Notifications** – Complete end-to-end access request management system enabling users to request bot access via `/start` command and admins to review via `/requests` interface with Airtable integration, real-time notifications, and dual-language localization (AGB-67, completed 2025-09-23, **✅ MERGED**: PR #59, SHA 3bb7df9, branch `feature/agb-67-bot-access-approval-workflow`)
   - User access request data layer with comprehensive Airtable integration (`src/models/user_access_request.py:1-59`, `src/data/repositories/user_access_repository.py:1-139`, `src/data/airtable/airtable_user_access_repo.py:1-270`)
     - UserAccessRequest model with AccessLevel and AccessRequestStatus enums supporting VIEWER/COORDINATOR/ADMIN roles and Pending/Approved/Denied states
     - Abstract repository interface with async CRUD operations, status filtering, and approve/deny workflows with audit metadata
