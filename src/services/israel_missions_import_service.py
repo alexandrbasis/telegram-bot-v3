@@ -14,16 +14,16 @@ import csv
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
+from src.data.airtable.airtable_client import AirtableAPIError
+from src.data.importers.israel_missions_mapping import IsraelMissionsMapping
 from src.data.repositories.participant_repository import (
     DuplicateError,
     ParticipantRepository,
     RepositoryError,
 )
-from src.data.importers.israel_missions_mapping import IsraelMissionsMapping
 from src.models.participant import Participant
 
 logger = logging.getLogger(__name__)
@@ -31,12 +31,14 @@ logger = logging.getLogger(__name__)
 
 class ImportMode(str, Enum):
     """Import operation modes."""
+
     DRY_RUN = "dry_run"
     LIVE = "live"
 
 
 class ImportResult(str, Enum):
     """Import result types for individual records."""
+
     SUCCESS = "success"
     DUPLICATE_SKIP = "duplicate_skip"
     VALIDATION_ERROR = "validation_error"
@@ -54,7 +56,7 @@ class ImportRecordResult:
         message: str,
         payload: Optional[Dict[str, Any]] = None,
         error: Optional[Exception] = None,
-        duplicate_keys: Optional[Tuple[str, str]] = None
+        duplicate_keys: Optional[Tuple[str, str]] = None,
     ):
         self.row_number = row_number
         self.result = result
@@ -106,7 +108,9 @@ class ImportSummary:
 
     def is_successful(self) -> bool:
         """Check if import was entirely successful."""
-        return (self.validation_errors + self.api_errors + self.transformation_errors) == 0
+        return (
+            self.validation_errors + self.api_errors + self.transformation_errors
+        ) == 0
 
     def get_success_rate(self) -> float:
         """Get success rate as percentage."""
@@ -126,7 +130,7 @@ class IsraelMissionsImportService:
     def __init__(
         self,
         participant_repository: ParticipantRepository,
-        rate_limit_delay: float = 0.2  # 5 requests/second default
+        rate_limit_delay: float = 0.2,  # 5 requests/second default
     ):
         """
         Initialize import service.
@@ -145,7 +149,7 @@ class IsraelMissionsImportService:
         self,
         csv_file_path: Union[str, Path],
         mode: ImportMode = ImportMode.DRY_RUN,
-        max_records: Optional[int] = None
+        max_records: Optional[int] = None,
     ) -> ImportSummary:
         """
         Import participants from CSV file.
@@ -176,7 +180,7 @@ class IsraelMissionsImportService:
             self._duplicate_cache.clear()
 
             # Read and process CSV
-            with open(csv_path, 'r', encoding='utf-8') as csvfile:
+            with open(csv_path, "r", encoding="utf-8") as csvfile:
                 # Detect CSV format
                 sample = csvfile.read(2048)
                 csvfile.seek(0)
@@ -186,7 +190,9 @@ class IsraelMissionsImportService:
                 reader = csv.DictReader(csvfile, delimiter=delimiter)
 
                 # Process each row
-                for row_num, csv_row in enumerate(reader, start=2):  # Start at 2 (header is row 1)
+                for row_num, csv_row in enumerate(
+                    reader, start=2
+                ):  # Start at 2 (header is row 1)
                     if max_records and (row_num - 1) > max_records:
                         break
 
@@ -204,14 +210,13 @@ class IsraelMissionsImportService:
         finally:
             summary.finalize()
 
-        logger.info(f"Import completed: {summary.successful}/{summary.total_rows} successful")
+        logger.info(
+            f"Import completed: {summary.successful}/{summary.total_rows} successful"
+        )
         return summary
 
     async def _process_csv_row(
-        self,
-        csv_row: Dict[str, Any],
-        row_number: int,
-        mode: ImportMode
+        self, csv_row: Dict[str, Any], row_number: int, mode: ImportMode
     ) -> ImportRecordResult:
         """Process a single CSV row."""
         try:
@@ -225,11 +230,13 @@ class IsraelMissionsImportService:
                     row_number=row_number,
                     result=ImportResult.VALIDATION_ERROR,
                     message=f"Missing required fields: {missing_fields}",
-                    payload=payload
+                    payload=payload,
                 )
 
             # Step 3: Check for duplicates
-            contact_key, name_dob_key = self.mapping.get_duplicate_detection_keys(payload)
+            contact_key, name_dob_key = self.mapping.get_duplicate_detection_keys(
+                payload
+            )
             duplicate_info = await self._check_for_duplicates(contact_key, name_dob_key)
 
             if duplicate_info:
@@ -239,9 +246,12 @@ class IsraelMissionsImportService:
                 return ImportRecordResult(
                     row_number=row_number,
                     result=ImportResult.DUPLICATE_SKIP,
-                    message=f"Duplicate detected: {duplicate_info} (contact: {redacted_contact})",
+                    message=(
+                        f"Duplicate detected: {duplicate_info} "
+                        f"(contact: {redacted_contact})"
+                    ),
                     payload=payload,
-                    duplicate_keys=(contact_key, name_dob_key)
+                    duplicate_keys=(contact_key, name_dob_key),
                 )
 
             # Step 4: For dry-run, just validate and return success
@@ -250,7 +260,7 @@ class IsraelMissionsImportService:
                     row_number=row_number,
                     result=ImportResult.SUCCESS,
                     message="Validation passed - ready for import",
-                    payload=payload
+                    payload=payload,
                 )
 
             # Step 5: Live mode - create participant
@@ -260,13 +270,16 @@ class IsraelMissionsImportService:
                 created_participant = await self.repository.create(participant)
 
                 # Cache for duplicate detection
-                self._cache_duplicate_keys(contact_key, name_dob_key, created_participant.record_id)
+                if created_participant.record_id:
+                    self._cache_duplicate_keys(
+                        contact_key, name_dob_key, created_participant.record_id
+                    )
 
                 return ImportRecordResult(
                     row_number=row_number,
                     result=ImportResult.SUCCESS,
                     message=f"Created participant: {created_participant.record_id}",
-                    payload=payload
+                    payload=payload,
                 )
 
             except DuplicateError as e:
@@ -275,7 +288,7 @@ class IsraelMissionsImportService:
                     result=ImportResult.DUPLICATE_SKIP,
                     message=f"Duplicate detected during creation: {e}",
                     payload=payload,
-                    error=e
+                    error=e,
                 )
             except (RepositoryError, AirtableAPIError) as e:
                 return ImportRecordResult(
@@ -283,7 +296,7 @@ class IsraelMissionsImportService:
                     result=ImportResult.API_ERROR,
                     message=f"API error: {e}",
                     payload=payload,
-                    error=e
+                    error=e,
                 )
 
         except Exception as e:
@@ -292,13 +305,11 @@ class IsraelMissionsImportService:
                 row_number=row_number,
                 result=ImportResult.TRANSFORMATION_ERROR,
                 message=f"Failed to transform CSV row: {e}",
-                error=e
+                error=e,
             )
 
     async def _check_for_duplicates(
-        self,
-        contact_key: str,
-        name_dob_key: str
+        self, contact_key: str, name_dob_key: str
     ) -> Optional[str]:
         """
         Check for duplicate participants using normalized keys.
@@ -324,10 +335,7 @@ class IsraelMissionsImportService:
         return None
 
     def _cache_duplicate_keys(
-        self,
-        contact_key: str,
-        name_dob_key: str,
-        record_id: str
+        self, contact_key: str, name_dob_key: str, record_id: str
     ):
         """Cache duplicate detection keys for the session."""
         if contact_key:
@@ -347,7 +355,7 @@ class IsraelMissionsImportService:
         """
         report_lines = [
             "=" * 60,
-            f"ISRAEL MISSIONS 2025 IMPORT SUMMARY",
+            "ISRAEL MISSIONS 2025 IMPORT SUMMARY",
             "=" * 60,
             f"Duration: {summary.get_duration_seconds():.1f} seconds",
             f"Total rows processed: {summary.total_rows}",
@@ -357,48 +365,45 @@ class IsraelMissionsImportService:
             f"  🔄 Duplicates skipped: {summary.duplicates_skipped}",
             f"  ❌ Validation errors: {summary.validation_errors}",
             f"  🚫 API errors: {summary.api_errors}",
-            f"  ⚠️  Transformation errors: {summary.transformation_errors}",
+            f"  ⚠️ Transformation errors: {summary.transformation_errors}",
             "",
             f"Success rate: {summary.get_success_rate():.1f}%",
-            f"Overall status: {'✅ SUCCESS' if summary.is_successful() else '⚠️ PARTIAL/FAILED'}",
+            (
+                f"Overall status: "
+                f"{'✅ SUCCESS' if summary.is_successful() else '⚠️ PARTIAL/FAILED'}"
+            ),
         ]
 
         # Add error details if any
-        if summary.validation_errors + summary.api_errors + summary.transformation_errors > 0:
-            report_lines.extend([
-                "",
-                "ERROR DETAILS:",
-                "-" * 40
-            ])
+        if (
+            summary.validation_errors
+            + summary.api_errors
+            + summary.transformation_errors
+            > 0
+        ):
+            report_lines.extend(["", "ERROR DETAILS:", "-" * 40])
 
             for record in summary.records:
-                if record.result in [ImportResult.VALIDATION_ERROR, ImportResult.API_ERROR, ImportResult.TRANSFORMATION_ERROR]:
+                if record.result in [
+                    ImportResult.VALIDATION_ERROR,
+                    ImportResult.API_ERROR,
+                    ImportResult.TRANSFORMATION_ERROR,
+                ]:
                     report_lines.append(f"Row {record.row_number}: {record.message}")
 
         # Add duplicate details if any
         if summary.duplicates_skipped > 0:
-            report_lines.extend([
-                "",
-                "DUPLICATE DETAILS:",
-                "-" * 40
-            ])
+            report_lines.extend(["", "DUPLICATE DETAILS:", "-" * 40])
 
             for record in summary.records:
                 if record.result == ImportResult.DUPLICATE_SKIP:
                     report_lines.append(f"Row {record.row_number}: {record.message}")
 
-        report_lines.extend([
-            "",
-            "=" * 60
-        ])
+        report_lines.extend(["", "=" * 60])
 
         return "\n".join(report_lines)
 
-    def get_dry_run_preview(
-        self,
-        summary: ImportSummary,
-        max_samples: int = 5
-    ) -> str:
+    def get_dry_run_preview(self, summary: ImportSummary, max_samples: int = 5) -> str:
         """
         Get a preview of dry-run payloads for stakeholder review.
 
@@ -413,19 +418,21 @@ class IsraelMissionsImportService:
             "DRY-RUN PAYLOAD PREVIEW",
             "=" * 40,
             f"Showing first {max_samples} successful transformation samples:",
-            ""
+            "",
         ]
 
         sample_count = 0
         for record in summary.records:
             if record.result == ImportResult.SUCCESS and record.payload:
                 sample_count += 1
-                preview_lines.extend([
-                    f"Sample {sample_count} (Row {record.row_number}):",
-                    "-" * 20,
-                    self._format_payload_preview(record.payload),
-                    ""
-                ])
+                preview_lines.extend(
+                    [
+                        f"Sample {sample_count} (Row {record.row_number}):",
+                        "-" * 20,
+                        self._format_payload_preview(record.payload),
+                        "",
+                    ]
+                )
 
                 if sample_count >= max_samples:
                     break
@@ -435,13 +442,16 @@ class IsraelMissionsImportService:
     def _format_payload_preview(self, payload: Dict[str, Any]) -> str:
         """Format payload for preview display."""
         import json
+
         # Remove sensitive data from preview
         safe_payload = payload.copy()
 
         # Redact contact information
         if "ContactInformation" in safe_payload:
-            safe_payload["ContactInformation"] = self.mapping.redact_contact_for_logging(
-                safe_payload["ContactInformation"]
+            safe_payload["ContactInformation"] = (
+                self.mapping.redact_contact_for_logging(
+                    safe_payload["ContactInformation"]
+                )
             )
 
         return json.dumps(safe_payload, indent=2, ensure_ascii=False)

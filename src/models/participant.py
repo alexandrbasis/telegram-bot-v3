@@ -239,6 +239,62 @@ class Participant(BaseModel):
         return fields
 
     @classmethod
+    def from_airtable_fields(cls, fields: Mapping[str, Any]) -> "Participant":
+        """
+        Create Participant instance from Airtable fields dictionary.
+
+        Args:
+            fields: Airtable fields dictionary (without record wrapper)
+
+        Returns:
+            Participant instance
+        """
+        # Convert date strings to date objects if present
+        payment_date = None
+        if fields.get("PaymentDate"):
+            payment_date = date.fromisoformat(fields["PaymentDate"])
+
+        date_of_birth = None
+        if fields.get("DateOfBirth"):
+            raw_date = fields["DateOfBirth"]
+            date_of_birth = cls._parse_date_of_birth(raw_date)
+
+        # Ensure we have the required field
+        full_name_ru = fields.get("FullNameRU", "")
+        if not full_name_ru:
+            raise ValueError("FullNameRU is required but missing from Airtable fields")
+
+        return cls(
+            full_name_ru=full_name_ru,
+            full_name_en=fields.get("FullNameEN"),
+            church=fields.get("Church"),
+            country_and_city=fields.get("CountryAndCity"),
+            submitted_by=fields.get("SubmittedBy"),
+            contact_information=fields.get("ContactInformation"),
+            church_leader=fields.get("ChurchLeader"),
+            table_name=fields.get("TableName"),
+            notes=fields.get("Notes"),
+            gender=Gender(fields["Gender"]) if fields.get("Gender") else None,
+            size=Size(fields["Size"]) if fields.get("Size") else None,
+            role=Role(fields["Role"]) if fields.get("Role") else None,
+            department=(
+                Department(fields["Department"]) if fields.get("Department") else None
+            ),
+            payment_status=(
+                PaymentStatus(fields["PaymentStatus"])
+                if fields.get("PaymentStatus")
+                else None
+            ),
+            payment_amount=fields.get("PaymentAmount"),
+            payment_date=payment_date,
+            date_of_birth=date_of_birth,
+            age=fields.get("Age"),
+            floor=fields.get("Floor"),
+            room_number=fields.get("RoomNumber"),
+            is_department_chief=fields.get("IsDepartmentChief"),
+        )
+
+    @classmethod
     def from_airtable_record(cls, record: Mapping[str, Any]) -> "Participant":
         """
         Create Participant instance from Airtable record.

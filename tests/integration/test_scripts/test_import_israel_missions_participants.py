@@ -6,28 +6,28 @@ and end-to-end import scenarios using mocked components.
 """
 
 import argparse
-import tempfile
 import csv
-from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-import sys
 import os
+import sys
+import tempfile
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
 # Add scripts to path for import
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
 
-from import_israel_missions_participants import (
+from import_israel_missions_participants import (  # noqa: E402
+    DEFAULT_RATE_LIMIT,
+    MAX_RATE_LIMIT,
+    MIN_RATE_LIMIT,
+    main,
+    run_dry_run,
+    run_live_import,
     setup_argument_parser,
     validate_arguments,
     validate_environment,
-    run_dry_run,
-    run_live_import,
-    main,
-    DEFAULT_RATE_LIMIT,
-    MIN_RATE_LIMIT,
-    MAX_RATE_LIMIT,
 )
 
 
@@ -42,11 +42,13 @@ def sample_csv_file():
             "Size": "M",
             "ContactInformation": "+7-495-123-4567",
             "CountryAndCity": "Москва",
-            "Role": "TEAM"
+            "Role": "TEAM",
         }
     ]
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".csv", delete=False, encoding="utf-8"
+    ) as f:
         writer = csv.DictWriter(f, fieldnames=data[0].keys())
         writer.writeheader()
         writer.writerows(data)
@@ -83,14 +85,19 @@ class TestArgumentParsing:
     def test_all_optional_arguments(self, sample_csv_file):
         """Test all optional arguments."""
         parser = setup_argument_parser()
-        args = parser.parse_args([
-            str(sample_csv_file),
-            '--confirm-live',
-            '--rate-limit', '0.5',
-            '--max-records', '100',
-            '--verbose',
-            '--preview-samples', '5'
-        ])
+        args = parser.parse_args(
+            [
+                str(sample_csv_file),
+                "--confirm-live",
+                "--rate-limit",
+                "0.5",
+                "--max-records",
+                "100",
+                "--verbose",
+                "--preview-samples",
+                "5",
+            ]
+        )
 
         assert args.csv_file == sample_csv_file
         assert args.confirm_live is True
@@ -194,7 +201,7 @@ class TestArgumentValidation:
 class TestEnvironmentValidation:
     """Test environment validation functionality."""
 
-    @patch('import_israel_missions_participants.get_settings')
+    @patch("import_israel_missions_participants.get_settings")
     def test_validate_environment_success(self, mock_get_settings):
         """Test successful environment validation."""
         mock_settings = Mock()
@@ -208,7 +215,7 @@ class TestEnvironmentValidation:
         result = validate_environment()
         assert result is True
 
-    @patch('import_israel_missions_participants.get_settings')
+    @patch("import_israel_missions_participants.get_settings")
     def test_validate_environment_missing_bot_token(self, mock_get_settings):
         """Test environment validation fails with missing bot token."""
         mock_settings = Mock()
@@ -220,19 +227,19 @@ class TestEnvironmentValidation:
         result = validate_environment()
         assert result is False
 
-    @patch('import_israel_missions_participants.get_settings')
+    @patch("import_israel_missions_participants.get_settings")
     def test_validate_environment_missing_api_key(self, mock_get_settings):
         """Test environment validation fails with missing API key."""
         mock_settings = Mock()
         mock_settings.telegram.bot_token = "test_token"
-        mock_settings.database.api_key = None  # Missing
-        mock_settings.database.base_id = "test_base"
+        mock_settings.database.airtable_api_key = None  # Missing
+        mock_settings.database.airtable_base_id = "test_base"
         mock_get_settings.return_value = mock_settings
 
         result = validate_environment()
         assert result is False
 
-    @patch('import_israel_missions_participants.get_settings')
+    @patch("import_israel_missions_participants.get_settings")
     def test_validate_environment_exception_handling(self, mock_get_settings):
         """Test environment validation handles exceptions."""
         mock_get_settings.side_effect = Exception("Configuration error")
@@ -260,14 +267,16 @@ class TestWorkflowFunctions:
         assert result == mock_summary
         mock_service.import_from_csv.assert_called_once()
         mock_service.format_summary_report.assert_called_once_with(mock_summary)
-        mock_service.get_dry_run_preview.assert_called_once_with(mock_summary, max_samples=3)
+        mock_service.get_dry_run_preview.assert_called_once_with(
+            mock_summary, max_samples=3
+        )
 
     @pytest.mark.asyncio
     async def test_run_live_import_cancelled(self, sample_csv_file):
         """Test live import cancelled by user."""
         mock_service = AsyncMock()
 
-        with patch('builtins.input', return_value='CANCEL'):  # User cancels
+        with patch("builtins.input", return_value="CANCEL"):  # User cancels
             result = await run_live_import(mock_service, sample_csv_file, None)
 
         # Should return empty summary without calling service
@@ -282,7 +291,7 @@ class TestWorkflowFunctions:
         mock_service.import_from_csv.return_value = mock_summary
         mock_service.format_summary_report.return_value = "Test report"
 
-        with patch('builtins.input', return_value='CONFIRM'):  # User confirms
+        with patch("builtins.input", return_value="CONFIRM"):  # User confirms
             result = await run_live_import(mock_service, sample_csv_file, 10)
 
         assert result == mock_summary
@@ -295,16 +304,31 @@ class TestMainWorkflow:
     @pytest.mark.asyncio
     async def test_main_dry_run_only(self, sample_csv_file):
         """Test main workflow with dry-run only."""
-        test_args = ['script_name', str(sample_csv_file)]
+        test_args = ["script_name", str(sample_csv_file)]
 
-        with patch('sys.argv', test_args), \
-             patch('import_israel_missions_participants.validate_environment', return_value=True), \
-             patch('import_israel_missions_participants.get_settings') as mock_get_settings, \
-             patch('import_israel_missions_participants.AirtableClient') as mock_client_class, \
-             patch('import_israel_missions_participants.AirtableParticipantRepository') as mock_repo_class, \
-             patch('import_israel_missions_participants.IsraelMissionsImportService') as mock_service_class, \
-             patch('import_israel_missions_participants.run_dry_run') as mock_run_dry_run, \
-             patch('import_israel_missions_participants.print_next_steps'):
+        with (
+            patch("sys.argv", test_args),
+            patch(
+                "import_israel_missions_participants.validate_environment",
+                return_value=True,
+            ),
+            patch(
+                "import_israel_missions_participants.get_settings"
+            ) as mock_get_settings,
+            patch(
+                "import_israel_missions_participants.AirtableClient"
+            ) as mock_client_class,
+            patch(
+                "import_israel_missions_participants.AirtableParticipantRepository"
+            ) as mock_repo_class,
+            patch(
+                "import_israel_missions_participants.IsraelMissionsImportService"
+            ) as mock_service_class,
+            patch(
+                "import_israel_missions_participants.run_dry_run"
+            ) as mock_run_dry_run,
+            patch("import_israel_missions_participants.print_next_steps"),
+        ):
 
             # Mock settings
             mock_settings = Mock()
@@ -328,17 +352,28 @@ class TestMainWorkflow:
     @pytest.mark.asyncio
     async def test_main_live_import_workflow(self, sample_csv_file):
         """Test main workflow with live import."""
-        test_args = ['script_name', str(sample_csv_file), '--confirm-live']
+        test_args = ["script_name", str(sample_csv_file), "--confirm-live"]
 
-        with patch('sys.argv', test_args), \
-             patch('import_israel_missions_participants.validate_environment', return_value=True), \
-             patch('import_israel_missions_participants.get_settings') as mock_get_settings, \
-             patch('import_israel_missions_participants.AirtableClient'), \
-             patch('import_israel_missions_participants.AirtableParticipantRepository'), \
-             patch('import_israel_missions_participants.IsraelMissionsImportService'), \
-             patch('import_israel_missions_participants.run_dry_run') as mock_run_dry_run, \
-             patch('import_israel_missions_participants.run_live_import') as mock_run_live_import, \
-             patch('import_israel_missions_participants.print_next_steps'):
+        with (
+            patch("sys.argv", test_args),
+            patch(
+                "import_israel_missions_participants.validate_environment",
+                return_value=True,
+            ),
+            patch(
+                "import_israel_missions_participants.get_settings"
+            ) as mock_get_settings,
+            patch("import_israel_missions_participants.AirtableClient"),
+            patch("import_israel_missions_participants.AirtableParticipantRepository"),
+            patch("import_israel_missions_participants.IsraelMissionsImportService"),
+            patch(
+                "import_israel_missions_participants.run_dry_run"
+            ) as mock_run_dry_run,
+            patch(
+                "import_israel_missions_participants.run_live_import"
+            ) as mock_run_live_import,
+            patch("import_israel_missions_participants.print_next_steps"),
+        ):
 
             # Mock settings
             mock_settings = Mock()
@@ -367,10 +402,15 @@ class TestMainWorkflow:
     @pytest.mark.asyncio
     async def test_main_environment_validation_failure(self, sample_csv_file):
         """Test main workflow fails with environment validation error."""
-        test_args = ['script_name', str(sample_csv_file)]
+        test_args = ["script_name", str(sample_csv_file)]
 
-        with patch('sys.argv', test_args), \
-             patch('import_israel_missions_participants.validate_environment', return_value=False):
+        with (
+            patch("sys.argv", test_args),
+            patch(
+                "import_israel_missions_participants.validate_environment",
+                return_value=False,
+            ),
+        ):
 
             with pytest.raises(SystemExit) as exc_info:
                 await main()
@@ -380,11 +420,19 @@ class TestMainWorkflow:
     @pytest.mark.asyncio
     async def test_main_keyboard_interrupt(self, sample_csv_file):
         """Test main workflow handles keyboard interrupt."""
-        test_args = ['script_name', str(sample_csv_file)]
+        test_args = ["script_name", str(sample_csv_file)]
 
-        with patch('sys.argv', test_args), \
-             patch('import_israel_missions_participants.validate_environment', return_value=True), \
-             patch('import_israel_missions_participants.get_settings', side_effect=KeyboardInterrupt()):
+        with (
+            patch("sys.argv", test_args),
+            patch(
+                "import_israel_missions_participants.validate_environment",
+                return_value=True,
+            ),
+            patch(
+                "import_israel_missions_participants.get_settings",
+                side_effect=KeyboardInterrupt(),
+            ),
+        ):
 
             with pytest.raises(SystemExit) as exc_info:
                 await main()
@@ -394,11 +442,19 @@ class TestMainWorkflow:
     @pytest.mark.asyncio
     async def test_main_unexpected_exception(self, sample_csv_file):
         """Test main workflow handles unexpected exceptions."""
-        test_args = ['script_name', str(sample_csv_file)]
+        test_args = ["script_name", str(sample_csv_file)]
 
-        with patch('sys.argv', test_args), \
-             patch('import_israel_missions_participants.validate_environment', return_value=True), \
-             patch('import_israel_missions_participants.get_settings', side_effect=Exception("Unexpected error")):
+        with (
+            patch("sys.argv", test_args),
+            patch(
+                "import_israel_missions_participants.validate_environment",
+                return_value=True,
+            ),
+            patch(
+                "import_israel_missions_participants.get_settings",
+                side_effect=Exception("Unexpected error"),
+            ),
+        ):
 
             with pytest.raises(SystemExit) as exc_info:
                 await main()
@@ -465,11 +521,16 @@ class TestCLIIntegration:
     @pytest.mark.asyncio
     async def test_verbose_logging_enabled(self, sample_csv_file):
         """Test that verbose flag enables debug logging."""
-        test_args = ['script_name', str(sample_csv_file), '--verbose']
+        test_args = ["script_name", str(sample_csv_file), "--verbose"]
 
-        with patch('sys.argv', test_args), \
-             patch('logging.getLogger') as mock_get_logger, \
-             patch('import_israel_missions_participants.validate_environment', return_value=False):
+        with (
+            patch("sys.argv", test_args),
+            patch("logging.getLogger") as mock_get_logger,
+            patch(
+                "import_israel_missions_participants.validate_environment",
+                return_value=False,
+            ),
+        ):
 
             mock_logger = Mock()
             mock_get_logger.return_value = mock_logger
