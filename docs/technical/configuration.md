@@ -24,6 +24,8 @@
 | `ENVIRONMENT` | Runtime environment | `development`, `production` | `development` |
 | `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` | Conversation timeout in minutes | `30`, `60` | `30` |
 | `ADMIN_USER_IDS` | Comma-separated admin user IDs | `123456789,987654321` | None |
+| `AIRTABLE_ACCESS_REQUESTS_TABLE_NAME` | BotAccessRequests table name | `BotAccessRequests` | `BotAccessRequests` |
+| `AIRTABLE_ACCESS_REQUESTS_TABLE_ID` | BotAccessRequests table identifier | `tblQWWEcHx9sfhsgN` | `tblQWWEcHx9sfhsgN` |
 
 ### Optional Variables
 
@@ -53,12 +55,16 @@ TELEGRAM_CONVERSATION_TIMEOUT_MINUTES=60
 
 ### Admin Authentication
 
-The bot includes admin-only features that require proper user authorization. Admin access is controlled through environment configuration.
+The bot includes admin-only features that require proper user authorization. Admin access is controlled through environment configuration and supports both administrative commands and user access approval workflows.
 
 - **Environment Variable**: `ADMIN_USER_IDS`
 - **Format**: Comma-separated list of Telegram user IDs
 - **Example**: `123456789,987654321`
-- **Usage**: Controls access to admin features like CSV export functionality
+- **Usage**: Controls access to admin features including:
+  - CSV export functionality (`/export` command)
+  - User access request management (`/requests` command)
+  - Bot access approval workflow administration
+  - Administrative notifications and audit access
 
 **Configuration Examples:**
 ```bash
@@ -74,6 +80,47 @@ ADMIN_USER_IDS=123456789,987654321,555666777
 - **Type Safety**: Handles Union[int, str, None] user ID types with robust validation
 - **Logging**: Comprehensive logging for authentication attempts and failures
 - **Integration**: Uses existing settings configuration for admin user list
+
+### Bot Access Requests Configuration
+
+The bot includes a comprehensive access approval workflow that requires dedicated Airtable table configuration for managing user access requests.
+
+**Required Environment Variables:**
+```bash
+# BotAccessRequests table configuration
+AIRTABLE_ACCESS_REQUESTS_TABLE_NAME=BotAccessRequests
+AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN
+
+# Admin user configuration (required for approval workflow)
+ADMIN_USER_IDS=123456789,987654321
+```
+
+**Airtable Schema Requirements:**
+- **Table Name**: BotAccessRequests
+- **Table ID**: `tblQWWEcHx9sfhsgN`
+- **Primary View**: Grid view (`viwVDrguxKWbRS9Xz`) filtered by Status = Pending
+- **Fields**:
+  - TelegramUserId (`fldeiF3gxg4fZMirc`) - Number (Integer)
+  - TelegramUsername (`fld1RzNGWTGl8fSE4`) - Single line text
+  - Status (`fldcuRa8qeUDKY3hN`) - Single select (Pending, Approved, Denied)
+  - AccessLevel (`fldRBCoHwrJ87hdjr`) - Single select (VIEWER, COORDINATOR, ADMIN)
+
+**Usage Integration:**
+```python
+# Access request workflow
+from src.services.access_request_service import AccessRequestService
+from src.utils.auth_utils import is_admin_user
+
+# Create access request for new user
+access_service = AccessRequestService(user_access_repo)
+request = await access_service.submit_request(user_id, username)
+
+# Admin validation
+is_admin = is_admin_user(user_id, settings)
+if is_admin:
+    # Access to /requests command and approval workflow
+    pending_requests = await access_service.get_pending_requests()
+```
 
 ### Multi-Table Configuration
 
@@ -96,6 +143,10 @@ AIRTABLE_BIBLE_READERS_TABLE_ID=tblGEnSfpPOuPLXcm
 # ROE table
 AIRTABLE_ROE_TABLE_NAME=ROE
 AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
+
+# BotAccessRequests table (access approval workflow)
+AIRTABLE_ACCESS_REQUESTS_TABLE_NAME=BotAccessRequests
+AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN
 ```
 
 **Factory Pattern Usage:**
@@ -142,11 +193,13 @@ roe_sessions = await roe_repo.get_by_roista_id("rec456...")
 - **Bot Token**: Must be provided for bot functionality
 - **Airtable API Key**: Required for data persistence
 - **Environment**: Validates against known environments
-- **Admin User IDs**: Must be valid integer user IDs if provided
+- **Admin User IDs**: Must be valid integer user IDs if provided (required for access approval workflow)
 - **Multi-Table Configuration**: All table configurations validated with defaults and error cases
-- **Table Type Validation**: Factory validates supported table types (participants, bible_readers, roe)
+- **Table Type Validation**: Factory validates supported table types (participants, bible_readers, roe, access_requests)
 - **Field Mapping Validation**: Each table has dedicated field mapping helpers with comprehensive field ID validation
 - **Repository Pattern**: All repositories follow consistent interface patterns with async operations and proper error handling
+- **Access Request Configuration**: BotAccessRequests table configuration validated for proper access approval workflow
+- **Admin Authentication**: Admin user ID format validation and admin access verification
 
 ## Configuration Loading
 
