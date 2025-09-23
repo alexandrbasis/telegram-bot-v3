@@ -12,6 +12,7 @@ from typing import List
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
+from src.bot.handlers.auth_handlers import ensure_user_access_on_start
 from src.bot.keyboards.search_keyboards import (
     NAV_MAIN_MENU,
     get_floor_discovery_keyboard,
@@ -21,7 +22,6 @@ from src.bot.keyboards.search_keyboards import (
     get_waiting_for_name_keyboard,
 )
 from src.bot.messages import InfoMessages
-from src.bot.handlers.auth_handlers import ensure_user_access_on_start
 from src.services.search_service import (
     SearchResult,
     SearchService,

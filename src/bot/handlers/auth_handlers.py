@@ -66,9 +66,7 @@ async def ensure_user_access_on_start(
                 await context.bot.send_message(
                     chat_id=chat.id, text=AccessRequestMessages.EXISTING_PENDING_RU
                 )
-                logger.info(
-                    "User %s has a pending access request", user.id
-                )
+                logger.info("User %s has a pending access request", user.id)
             elif existing_request.status == AccessRequestStatus.DENIED:
                 await context.bot.send_message(
                     chat_id=chat.id, text=AccessRequestMessages.DENIED_RU
@@ -92,9 +90,7 @@ async def ensure_user_access_on_start(
                 bot=context.bot, admin_ids=settings.telegram.admin_user_ids
             )
             await notification_service.notify_admins_of_new_request(new_request)
-            logger.info(
-                f"Admins notified about new access request from user {user.id}"
-            )
+            logger.info(f"Admins notified about new access request from user {user.id}")
         except Exception as e:
             logger.error(
                 f"Failed to notify admins about request from user {user.id}: {e}"
