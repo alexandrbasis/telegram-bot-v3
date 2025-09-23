@@ -308,13 +308,16 @@ class ParticipantExportService:
                 self.TEAM_VIEW_NAME,
                 filter_func=lambda record, participant: participant.role == Role.TEAM,
             )
-            logger.info("Team export completed using Airtable view '%s'", self.TEAM_VIEW_NAME)
+            logger.info(
+                "Team export completed using Airtable view '%s'", self.TEAM_VIEW_NAME
+            )
             return csv_string
 
         if role == Role.CANDIDATE:
             csv_string = await self._export_view_to_csv(
                 self.CANDIDATE_VIEW_NAME,
-                filter_func=lambda record, participant: participant.role == Role.CANDIDATE,
+                filter_func=lambda record, participant: participant.role
+                == Role.CANDIDATE,
             )
             logger.info(
                 "Candidate export completed using Airtable view '%s'",
@@ -377,7 +380,10 @@ class ParticipantExportService:
         )
 
         def department_filter(record: Dict[str, Any], participant: Participant) -> bool:
-            return participant.department is not None and participant.department == department
+            return (
+                participant.department is not None
+                and participant.department == department
+            )
 
         csv_string = await self._export_view_to_csv(
             self.TEAM_VIEW_NAME, filter_func=department_filter

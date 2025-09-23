@@ -425,10 +425,8 @@ class AirtableParticipantRepository(ParticipantRepository):
         try:
             logger.debug(f"Listing participants using view '{view}'")
             records = await self.client.list_records(view=view)
-            logger.debug(
-                "Retrieved %s records from view '%s'", len(records), view
-            )
-            return records
+            logger.debug("Retrieved %s records from view '%s'", len(records), view)
+            return records  # type: ignore
         except AirtableAPIError as e:
             raise RepositoryError(
                 f"Failed to list participants for view '{view}': {e}", e.original_error

@@ -707,6 +707,7 @@ class TestRoleBasedFiltering:
         self, mock_repository, team_view_records, candidate_view_records
     ):
         """Ensure different role exports query the expected Airtable view."""
+
         async def side_effect(view_name: str):
             if view_name == "Тимы":
                 return team_view_records
@@ -725,7 +726,9 @@ class TestRoleBasedFiltering:
 
         assert len(team_rows) == 2
         assert len(candidate_rows) == 2
-        awaited_calls = [call.args[0] for call in mock_repository.list_view_records.await_args_list]
+        awaited_calls = [
+            call.args[0] for call in mock_repository.list_view_records.await_args_list
+        ]
         assert awaited_calls == ["Тимы", "Кандидаты"]
 
     @pytest.mark.asyncio
