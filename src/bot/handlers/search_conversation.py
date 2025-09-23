@@ -6,8 +6,8 @@ for the Russian name search feature.
 """
 
 import logging
-import warnings
 import re
+import warnings
 
 from telegram.ext import (
     CallbackQueryHandler,
