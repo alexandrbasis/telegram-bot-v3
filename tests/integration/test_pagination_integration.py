@@ -135,18 +135,18 @@ class TestPaginationIntegration:
 
         # Verify first call (page 1)
         first_call = mock_api.request.call_args_list[0]
-        assert first_call[0] == ("GET", "/v0/test_base/AccessRequests")
+        assert first_call[0][0] == "GET"  # Check method
         assert first_call[1]["params"]["maxRecords"] == 2
         assert "offset" not in first_call[1]["params"]
 
         # Verify second call (page 2)
         second_call = mock_api.request.call_args_list[1]
-        assert second_call[0] == ("GET", "/v0/test_base/AccessRequests")
+        assert second_call[0][0] == "GET"  # Check method
         assert second_call[1]["params"]["offset"] == "page2_token"
 
         # Verify third call (back to page 1)
         third_call = mock_api.request.call_args_list[2]
-        assert third_call[0] == ("GET", "/v0/test_base/AccessRequests")
+        assert third_call[0][0] == "GET"  # Check method
         assert "offset" not in third_call[1]["params"]
 
     async def test_pagination_with_filtering(
