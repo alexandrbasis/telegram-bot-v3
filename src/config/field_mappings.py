@@ -69,9 +69,9 @@ class AirtableFieldMapping:
         # Department chief field
         "IsDepartmentChief": "fldWAay3tQiXN9888",
         # AuthorizedUsers table fields for role-based authorization
-        "AccessLevel": "fldAUTH_ACCESS_LVL01",  # Single select field for viewer/coordinator/admin
-        "Status": "fldAUTH_STATUS_FLD01",      # Single select field for active/inactive
-        "TelegramUserID": "fldAUTH_TGUSER_ID01", # Number field for Telegram user ID
+        "AccessLevel": "fldAUTHAccessLvl1",  # Single select field for viewer/coordinator/admin
+        "Status": "fldAUTHStatus0123",      # Single select field for active/inactive
+        "TelegramUserID": "fldAUTHTgUserId01", # Number field for Telegram user ID
     }
 
     # Select option value -> Option ID mapping (exact Option IDs from Airtable base)
@@ -117,13 +117,13 @@ class AirtableFieldMapping:
         },
         # AuthorizedUsers table field options
         "AccessLevel": {
-            "viewer": "selAUTH_VIEWER_001",
-            "coordinator": "selAUTH_COORD_001",
-            "admin": "selAUTH_ADMIN_001",
+            "viewer": "selAUTHViewer0123",
+            "coordinator": "selAUTHCoord01234",
+            "admin": "selAUTHAdmin01234",
         },
         "Status": {
-            "active": "selAUTH_ACTIVE_001",
-            "inactive": "selAUTH_INACTIVE01",
+            "active": "selAUTHActive0123",
+            "inactive": "selAUTHInactive01",
         },
     }
 
