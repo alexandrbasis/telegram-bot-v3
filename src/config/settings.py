@@ -18,27 +18,57 @@ if TYPE_CHECKING:  # For type hints without import-time dependency
     from src.services.file_logging_service import FileLoggingConfig
 
 
-def _parse_admin_ids() -> list[int]:
+def _parse_user_ids(env_var_name: str) -> list[int]:
     """
-    Parse TELEGRAM_ADMIN_IDS from environment variable.
+    Parse user IDs from environment variable.
     Supports both comma-separated values and JSON array format.
+
+    Args:
+        env_var_name: Name of the environment variable to parse
+
+    Returns:
+        List of user IDs as integers
     """
-    admin_ids_env = os.getenv("TELEGRAM_ADMIN_IDS", "").strip()
-    if not admin_ids_env:
+    ids_env = os.getenv(env_var_name, "").strip()
+    if not ids_env:
         return []
 
     # Try parsing as JSON array first (e.g., "[123, 456, 789]")
-    if admin_ids_env.startswith("[") and admin_ids_env.endswith("]"):
+    if ids_env.startswith("[") and ids_env.endswith("]"):
         try:
-            ids = json.loads(admin_ids_env)
+            ids = json.loads(ids_env)
             return [int(id) for id in ids if str(id).strip()]
         except (json.JSONDecodeError, ValueError):
             pass
 
     # Fall back to comma-separated values (e.g., "123,456,789")
     return [
-        int(uid.strip()) for uid in admin_ids_env.split(",") if uid.strip().isdigit()
+        int(uid.strip()) for uid in ids_env.split(",") if uid.strip().isdigit()
     ]
+
+
+def _parse_admin_ids() -> list[int]:
+    """
+    Parse TELEGRAM_ADMIN_IDS from environment variable.
+    Supports both comma-separated values and JSON array format.
+    """
+    return _parse_user_ids("TELEGRAM_ADMIN_IDS")
+
+
+def _parse_viewer_ids() -> list[int]:
+    """
+    Parse TELEGRAM_VIEWER_IDS from environment variable.
+    Supports both comma-separated values and JSON array format.
+    """
+    return _parse_user_ids("TELEGRAM_VIEWER_IDS")
+
+
+def _parse_coordinator_ids() -> list[int]:
+    """
+    Parse TELEGRAM_COORDINATOR_IDS from environment variable.
+    Supports both comma-separated values and JSON array format.
+    """
+    return _parse_user_ids("TELEGRAM_COORDINATOR_IDS")
 
 
 @dataclass
@@ -272,6 +302,10 @@ class TelegramSettings:
 
     # Admin settings
     admin_user_ids: list[int] = field(default_factory=lambda: _parse_admin_ids())
+
+    # Role-based authorization settings
+    viewer_user_ids: list[int] = field(default_factory=lambda: _parse_viewer_ids())
+    coordinator_user_ids: list[int] = field(default_factory=lambda: _parse_coordinator_ids())
 
     def validate(self) -> None:
         """
@@ -549,6 +583,8 @@ class Settings:
                 "max_message_length": self.telegram.max_message_length,
                 "command_timeout": self.telegram.command_timeout,
                 "admin_count": len(self.telegram.admin_user_ids),
+                "coordinator_count": len(self.telegram.coordinator_user_ids),
+                "viewer_count": len(self.telegram.viewer_user_ids),
                 "startup_retry_attempts": self.telegram.startup_retry_attempts,
                 "startup_retry_delay_seconds": (
                     self.telegram.startup_retry_delay_seconds
