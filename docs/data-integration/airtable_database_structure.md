@@ -33,6 +33,10 @@ AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
 # Bot Access Requests table
 AIRTABLE_ACCESS_REQUESTS_TABLE_NAME=BotAccessRequests
 AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN
+
+# AuthorizedUsers table
+AIRTABLE_AUTHORIZED_USERS_TABLE_NAME=AuthorizedUsers
+AIRTABLE_AUTHORIZED_USERS_TABLE_ID=tblQ5i7EwSZrVYwT6A
 ```
 
 ## Tables Overview
@@ -53,17 +57,27 @@ AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN
 **Table ID**: `tblQWWEcHx9sfhsgN`
 **Primary Field**: `TelegramUserId` (fldeiF3gxg4fZMirc)
 
+### 5. AuthorizedUsers Table
+**Table ID**: `tblQ5i7EwSZrVYwT6A`
+**Primary Field**: `TelegramUserId` (fldMwpp0K6deDnZwQ)
+
+#### Purpose
+- Serves as the source of truth for Telegram bot authorization assignments
+- Enables dynamic authorization updates without restarting the bot
+- Provides audit context for access control changes
+
+#### Core Fields (current schema)
+- `TelegramUserId` (Number, primary, required) – Unique Telegram user identifier
+- `Status` (Single select) – Operational status for the user (e.g., `Active`, `Suspended`, `Revoked`)
+- `AccessLevel` (Single select) – Role granted to the user (`VIEWER`, `COORDINATOR`, `ADMIN`)
+
+#### Recommended Views
+- **Active Users** – Filters `Status = Active`; consumed by authorization sync job
+- **Suspended Users** – Tracks suspended/blocked accounts for review
+
 ## Field Specifications
 
 ### Text Fields
-
-#### TelegramUsername
-- **Field ID**: `fld1RzNGWTGl8fSE4`
-- **Type**: `singleLineText`
-- **Purpose**: Telegram username captured without @ prefix
-- **Required**: No
-- **Example**: `basisalexandr`
-
 
 #### FullNameRU
 - **Field ID**: `fldOcpA3JW5MRmR6R`
@@ -584,3 +598,9 @@ The following views have been precisely documented to support view-driven export
 - **Primary View**: `Grid view` (viwVDrguxKWbRS9Xz)
 - **Key Fields**: TelegramUserId (primary), Status, AccessLevel
 - **Usage Notes**: Pending requests filtered in application code; AccessLevel defaults to VIEWER upon creation.
+
+## Authorized Users Table Details
+- **Table ID**: tblQ5i7EwSZrVYwT6A
+- **Primary View**: `Active Users` (viwL5vrKDM6C8CRJf)
+- **Key Fields**: TelegramUserId, AccessLevel, Status, UpdatedAt, UpdatedBy
+- **Usage Notes**: Bot downloads this view on a schedule to refresh the in-memory authorization cache. Only records with `Status = Active` are treated as authorized; suspended or revoked users are excluded but retained for auditing. UpdatedAt/UpdatedBy fields support audit log correlation.

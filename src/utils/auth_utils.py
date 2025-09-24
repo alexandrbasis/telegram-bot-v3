@@ -5,11 +5,17 @@ Provides functions for user authorization and access control.
 """
 
 import logging
-from typing import Union
+import time
+from typing import Dict, Tuple, Union
 
 from src.config.settings import Settings
 
 logger = logging.getLogger(__name__)
+
+# Role resolution cache with TTL
+# Cache format: {user_id: (role, timestamp)}
+_ROLE_CACHE: Dict[int, Tuple[Union[str, None], float]] = {}
+_ROLE_CACHE_TTL_SECONDS = 300  # 5 minutes cache for role lookups
 
 
 def _convert_user_id(user_id: Union[int, str, None]) -> Union[int, None]:
@@ -84,6 +90,9 @@ def _has_role_access(user_id: int, required_role: str, settings: Settings) -> bo
 
     Returns:
         True if user has required role access or higher, False otherwise
+
+    Raises:
+        ValueError: If required_role is not supported
     """
     # Define role hierarchy order (highest to lowest)
     role_hierarchy = ["admin", "coordinator", "viewer"]
@@ -93,19 +102,28 @@ def _has_role_access(user_id: int, required_role: str, settings: Settings) -> bo
         "viewer": settings.telegram.viewer_user_ids,
     }
 
+    # Guard against unknown roles
+    if required_role not in role_hierarchy:
+        logger.warning(f"Unknown role '{required_role}' requested, denying access")
+        return False
+
     # Check roles in hierarchy order until we reach the required role
     required_role_index = role_hierarchy.index(required_role)
 
     for i in range(required_role_index + 1):
         role_name = role_hierarchy[i]
         if user_id in role_lists[role_name]:
+            # Use hashed user ID for privacy in logs
+            user_hash = hash(str(user_id)) & 0x7FFFFFFF  # Positive 31-bit hash
             if i < required_role_index:
-                logger.info(f"{required_role.title()} access granted for {role_name} user ID: {user_id}")
+                logger.debug(f"{required_role.title()} access granted for {role_name} user (hash: {user_hash})")
             else:
-                logger.info(f"{required_role.title()} access granted for user ID: {user_id}")
+                logger.debug(f"{required_role.title()} access granted for user (hash: {user_hash})")
             return True
 
-    logger.debug(f"{required_role.title()} access denied for user ID: {user_id}")
+    # Use hashed user ID for privacy in logs
+    user_hash = hash(str(user_id)) & 0x7FFFFFFF  # Positive 31-bit hash
+    logger.debug(f"{required_role.title()} access denied for user (hash: {user_hash})")
     return False
 
 
@@ -155,7 +173,7 @@ def is_viewer_user(user_id: Union[int, str, None], settings: Settings) -> bool:
 
 def get_user_role(user_id: Union[int, str, None], settings: Settings) -> Union[str, None]:
     """
-    Get the highest role for a user based on role hierarchy.
+    Get the highest role for a user based on role hierarchy with caching.
 
     Role hierarchy: admin > coordinator > viewer
 
@@ -171,6 +189,33 @@ def get_user_role(user_id: Union[int, str, None], settings: Settings) -> Union[s
     if user_id is None:
         return None
 
+    # Check cache first
+    current_time = time.time()
+    if user_id in _ROLE_CACHE:
+        cached_role, timestamp = _ROLE_CACHE[user_id]
+        if current_time - timestamp <= _ROLE_CACHE_TTL_SECONDS:
+            return cached_role
+
+    # Cache miss or expired - resolve role
+    role = _resolve_user_role_uncached(user_id, settings)
+
+    # Cache the result
+    _ROLE_CACHE[user_id] = (role, current_time)
+
+    return role
+
+
+def _resolve_user_role_uncached(user_id: int, settings: Settings) -> Union[str, None]:
+    """
+    Resolve user role without caching (internal function).
+
+    Args:
+        user_id: Validated user ID (guaranteed to be int)
+        settings: Application settings containing role user IDs
+
+    Returns:
+        The highest role name ("admin", "coordinator", "viewer") or None if no role
+    """
     # Check roles in hierarchy order (highest to lowest)
     if user_id in settings.telegram.admin_user_ids:
         return "admin"
@@ -182,3 +227,24 @@ def get_user_role(user_id: Union[int, str, None], settings: Settings) -> Union[s
         return "viewer"
 
     return None
+
+
+def invalidate_role_cache(user_id: Union[int, str, None] = None) -> None:
+    """
+    Invalidate role cache for a specific user or all users.
+
+    Args:
+        user_id: User ID to invalidate, or None to clear entire cache
+    """
+    global _ROLE_CACHE
+
+    if user_id is None:
+        # Clear entire cache
+        _ROLE_CACHE.clear()
+        logger.debug("Role cache cleared for all users")
+    else:
+        # Convert and validate user ID
+        user_id = _convert_user_id(user_id)
+        if user_id is not None and user_id in _ROLE_CACHE:
+            del _ROLE_CACHE[user_id]
+            logger.debug(f"Role cache cleared for user ID: {user_id}")

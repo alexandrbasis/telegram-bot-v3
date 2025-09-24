@@ -26,6 +26,7 @@ from src.services.search_service import (
     detect_language,
     format_participant_result,
 )
+from src.utils.participant_filter import filter_participants_by_role
 
 logger = logging.getLogger(__name__)
 
@@ -725,15 +726,16 @@ class AirtableParticipantRepository(ParticipantRepository):
                 f"Unexpected error finding participant by Telegram ID: {e}", e
             )
 
-    async def search_by_name(self, name_pattern: str) -> List[Participant]:
+    async def search_by_name(self, name_pattern: str, user_role: Optional[str] = None) -> List[Participant]:
         """
-        Search participants by name pattern.
+        Search participants by name pattern with role-based filtering.
 
         Args:
             name_pattern: Pattern to search for in names
+            user_role: User's role for data filtering ("admin", "coordinator", "viewer", or None)
 
         Returns:
-            List of matching participants
+            List of matching participants filtered by user role
 
         Raises:
             RepositoryError: If search fails
@@ -774,7 +776,12 @@ class AirtableParticipantRepository(ParticipantRepository):
             logger.debug(
                 f"Found {len(participants)} participants matching name pattern"
             )
-            return participants
+
+            # Apply role-based filtering
+            filtered_participants = filter_participants_by_role(participants, user_role)
+            logger.debug(f"Applied role filtering for user role: {user_role}")
+
+            return filtered_participants
 
         except AirtableAPIError as e:
             raise RepositoryError(
@@ -1054,22 +1061,24 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(f"Unexpected error in health check: {e}", e)
 
     async def search_by_name_fuzzy(
-        self, query: str, threshold: float = 0.8, limit: int = 5
+        self, query: str, threshold: float = 0.8, limit: int = 5, user_role: Optional[str] = None
     ) -> List[Tuple[Participant, float]]:
         """
-        Search participants by name with fuzzy matching.
+        Search participants by name with fuzzy matching and role-based filtering.
 
         Uses SearchService to perform fuzzy matching on both Russian and English names
-        with configurable similarity threshold and result limit.
+        with configurable similarity threshold and result limit. Results are filtered
+        based on user role permissions.
 
         Args:
             query: Name or partial name to search for
             threshold: Minimum similarity score (0.0-1.0) to include in results
             limit: Maximum number of results to return
+            user_role: User's role for data filtering ("admin", "coordinator", "viewer", or None)
 
         Returns:
             List of tuples containing (Participant, similarity_score) sorted by
-            similarity score in descending order
+            similarity score in descending order, filtered by user role
 
         Raises:
             RepositoryError: If search fails
@@ -1096,13 +1105,18 @@ class AirtableParticipantRepository(ParticipantRepository):
             )
             search_results = search_service.search_participants(query, all_participants)
 
+            # Apply role-based filtering to participants
+            filtered_participants = filter_participants_by_role(
+                [result.participant for result in search_results], user_role
+            )
+
             # Convert SearchResult objects to (Participant, float) tuples (backward compatible)
             fuzzy_results = [
-                (result.participant, result.similarity_score)
-                for result in search_results
+                (filtered_participants[i], result.similarity_score)
+                for i, result in enumerate(search_results)
             ]
 
-            logger.debug(f"Fuzzy search found {len(fuzzy_results)} matches")
+            logger.debug(f"Fuzzy search found {len(fuzzy_results)} matches (role: {user_role})")
             return fuzzy_results
 
         except Exception as e:
@@ -1111,22 +1125,24 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(f"Failed to perform fuzzy name search: {e}", e)
 
     async def search_by_name_enhanced(
-        self, query: str, threshold: float = 0.8, limit: int = 5
+        self, query: str, threshold: float = 0.8, limit: int = 5, user_role: Optional[str] = None
     ) -> List[Tuple[Participant, float, str]]:
         """
         Enhanced search with language detection, multi-field search, and rich formatting.
 
         Uses the enhanced search service with language detection, first/last name search,
-        and returns results with rich participant information formatting.
+        and returns results with rich participant information formatting. Results are
+        filtered based on user role permissions.
 
         Args:
             query: Name or partial name to search for
             threshold: Minimum similarity score (0.0-1.0) to include in results
             limit: Maximum number of results to return
+            user_role: User's role for data filtering ("admin", "coordinator", "viewer", or None)
 
         Returns:
             List of tuples containing (Participant, similarity_score, formatted_result)
-            sorted by similarity score in descending order
+            sorted by similarity score in descending order, filtered by user role
 
         Raises:
             RepositoryError: If search fails
@@ -1158,17 +1174,24 @@ class AirtableParticipantRepository(ParticipantRepository):
                 query, all_participants
             )
 
+            # Apply role-based filtering to participants before formatting
+            filtered_participants = filter_participants_by_role(
+                [result.participant for result in search_results], user_role
+            )
+
             # Convert SearchResult objects to (Participant, float, str) tuples with rich formatting
             enhanced_results = []
-            for result in search_results:
+            for i, result in enumerate(search_results):
+                # Use filtered participant instead of original
+                filtered_participant = filtered_participants[i]
                 formatted_result = format_participant_result(
-                    result.participant, detected_lang
+                    filtered_participant, detected_lang
                 )
                 enhanced_results.append(
-                    (result.participant, result.similarity_score, formatted_result)
+                    (filtered_participant, result.similarity_score, formatted_result)
                 )
 
-            logger.debug(f"Enhanced search found {len(enhanced_results)} matches")
+            logger.debug(f"Enhanced search found {len(enhanced_results)} matches (role: {user_role})")
             return enhanced_results
 
         except Exception as e:

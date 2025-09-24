@@ -68,6 +68,10 @@ class AirtableFieldMapping:
         "RoomNumber": "fldJTPjo8AHQaADVu",
         # Department chief field
         "IsDepartmentChief": "fldWAay3tQiXN9888",
+        # AuthorizedUsers table fields for role-based authorization
+        "AccessLevel": "fldAUTH_ACCESS_LVL01",  # Single select field for viewer/coordinator/admin
+        "Status": "fldAUTH_STATUS_FLD01",      # Single select field for active/inactive
+        "TelegramUserID": "fldAUTH_TGUSER_ID01", # Number field for Telegram user ID
     }
 
     # Select option value -> Option ID mapping (exact Option IDs from Airtable base)
@@ -111,6 +115,16 @@ class AirtableFieldMapping:
             "Partial": "sel1WOFITijjZqaPQ",
             "Unpaid": "selFWmvtAQC7EEB72",
         },
+        # AuthorizedUsers table field options
+        "AccessLevel": {
+            "viewer": "selAUTH_VIEWER_001",
+            "coordinator": "selAUTH_COORD_001",
+            "admin": "selAUTH_ADMIN_001",
+        },
+        "Status": {
+            "active": "selAUTH_ACTIVE_001",
+            "inactive": "selAUTH_INACTIVE01",
+        },
     }
 
     # Python field name -> Airtable field name mapping
@@ -144,6 +158,10 @@ class AirtableFieldMapping:
         "room_number": "RoomNumber",
         # Department chief field
         "is_department_chief": "IsDepartmentChief",
+        # AuthorizedUsers table fields for role-based authorization
+        "access_level": "AccessLevel",
+        "status": "Status",
+        "telegram_user_id": "TelegramUserID",
         # Record ID (special field)
         "record_id": "id",
     }
@@ -178,6 +196,10 @@ class AirtableFieldMapping:
         "RoomNumber": FieldType.NUMBER,
         # Department chief field
         "IsDepartmentChief": FieldType.CHECKBOX,
+        # AuthorizedUsers table fields for role-based authorization
+        "AccessLevel": FieldType.SINGLE_SELECT,
+        "Status": FieldType.SINGLE_SELECT,
+        "TelegramUserID": FieldType.NUMBER,
     }
 
     # Formula field reference constants for consistent field naming in Airtable formulas
@@ -265,6 +287,9 @@ class AirtableFieldMapping:
         "Role": [role.value for role in Role],
         "Department": [dept.value for dept in Department],
         "PaymentStatus": [status.value for status in PaymentStatus],
+        # AuthorizedUsers table field options (hardcoded since enums may not exist yet)
+        "AccessLevel": ["viewer", "coordinator", "admin"],
+        "Status": ["active", "inactive"],
     }
 
     @classmethod

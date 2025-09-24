@@ -283,7 +283,9 @@ class TestRoleBasedAuthorizationFunctions:
 
     def test_role_functions_handle_empty_lists(self):
         """Test that role functions handle empty user ID lists."""
-        # RED phase - this test will fail until we implement empty list handling
+        # Clear cache to prevent interference from other tests
+        from src.utils.auth_utils import invalidate_role_cache
+        invalidate_role_cache()
 
         settings = MagicMock(spec=Settings)
         settings.telegram = MagicMock(spec=TelegramSettings)
@@ -328,7 +330,9 @@ class TestIntegrationWithRealSettings:
 
     def test_role_functions_with_real_settings_object(self):
         """Test that role functions work with real Settings object."""
-        # RED phase - this test will fail until we implement the functions
+        # Clear cache to prevent interference from other tests
+        from src.utils.auth_utils import invalidate_role_cache
+        invalidate_role_cache()
 
         env_vars = {
             "AIRTABLE_API_KEY": "test_key",
