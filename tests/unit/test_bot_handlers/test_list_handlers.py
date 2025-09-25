@@ -45,14 +45,17 @@ class TestGetListRequestHandler:
         self, mock_update, mock_context
     ):
         """Test that get list request shows role selection keyboard."""
-        await handle_get_list_request(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
 
-        # Should reply with role selection message and keyboard
-        mock_update.message.reply_text.assert_called_once()
-        call_args = mock_update.message.reply_text.call_args
+            await handle_get_list_request(mock_update, mock_context)
 
-        # Check message text
-        assert "Выберите тип списка участников:" in call_args[1]["text"]
+            # Should reply with role selection message and keyboard
+            mock_update.message.reply_text.assert_called_once()
+            call_args = mock_update.message.reply_text.call_args
+
+            # Check message text
+            assert "Выберите тип списка участников:" in call_args[1]["text"]
 
         # Check that inline keyboard is provided
         assert "reply_markup" in call_args[1]
@@ -1181,3 +1184,241 @@ class TestNavigationWithDepartmentContext:
         call_args = mock_next_update.callback_query.edit_message_text.call_args
         message_text = call_args[1]["text"]
         assert "Finance" in message_text
+
+
+class TestListHandlersAuthorization:
+    """Test authorization controls for list handlers."""
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.fixture
+    def mock_update_unauthorized(self):
+        """Mock unauthorized user update."""
+        from telegram import User
+
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 999999
+        update.effective_user.first_name = "Unauthorized"
+
+        # For regular message handlers
+        update.message = Mock(spec=Message)
+        update.message.reply_text = AsyncMock()
+
+        # For callback handlers
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
+
+        return update
+
+    @pytest.fixture
+    def mock_update_viewer(self):
+        """Mock authorized viewer user update."""
+        from telegram import User
+
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 12345
+        update.effective_user.first_name = "Viewer"
+
+        # For regular message handlers
+        update.message = Mock(spec=Message)
+        update.message.reply_text = AsyncMock()
+
+        # For callback handlers
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
+
+        return update
+
+    # Authorization tests for handle_get_list_request
+    @pytest.mark.asyncio
+    async def test_get_list_request_denies_unauthorized_user(
+        self, mock_update_unauthorized, mock_context
+    ):
+        """Test get list request denies access to unauthorized users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            await handle_get_list_request(mock_update_unauthorized, mock_context)
+
+            # Should deny access
+            mock_update_unauthorized.message.reply_text.assert_called_once()
+            call_args = mock_update_unauthorized.message.reply_text.call_args
+            message_text = call_args[0][0]  # First positional argument
+            assert "❌" in message_text
+            assert "доступ" in message_text.lower()
+
+    @pytest.mark.asyncio
+    async def test_get_list_request_allows_authorized_viewer(
+        self, mock_update_viewer, mock_context
+    ):
+        """Test get list request allows access to authorized viewer users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            await handle_get_list_request(mock_update_viewer, mock_context)
+
+            # Should allow access and show role selection
+            mock_update_viewer.message.reply_text.assert_called_once()
+            call_args = mock_update_viewer.message.reply_text.call_args
+            message_text = call_args[1]["text"]
+            assert "Выберите тип списка" in message_text
+
+    # Authorization tests for handle_role_selection
+    @pytest.mark.asyncio
+    async def test_role_selection_denies_unauthorized_user(
+        self, mock_update_unauthorized, mock_context
+    ):
+        """Test role selection denies access to unauthorized users."""
+        mock_update_unauthorized.callback_query.data = "list_role:TEAM"
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            await handle_role_selection(mock_update_unauthorized, mock_context)
+
+            # Should deny access
+            mock_update_unauthorized.callback_query.message.reply_text.assert_called_once()
+            call_args = mock_update_unauthorized.callback_query.message.reply_text.call_args
+            message_text = call_args[0][0]  # First positional argument
+            assert "❌" in message_text
+            assert "доступ" in message_text.lower()
+
+    @pytest.mark.asyncio
+    async def test_role_selection_allows_authorized_viewer(
+        self, mock_update_viewer, mock_context
+    ):
+        """Test role selection allows access to authorized viewer users."""
+        mock_update_viewer.callback_query.data = "list_role:TEAM"
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            await handle_role_selection(mock_update_viewer, mock_context)
+
+            # Should allow access and show department selection
+            mock_update_viewer.callback_query.edit_message_text.assert_called_once()
+            call_args = mock_update_viewer.callback_query.edit_message_text.call_args
+            message_text = call_args[1]["text"]
+            assert "Выберите департамент" in message_text
+
+    # Authorization tests for handle_list_navigation
+    @pytest.mark.asyncio
+    async def test_list_navigation_denies_unauthorized_user(
+        self, mock_update_unauthorized, mock_context
+    ):
+        """Test list navigation denies access to unauthorized users."""
+        mock_update_unauthorized.callback_query.data = "list_nav:NEXT"
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await handle_list_navigation(mock_update_unauthorized, mock_context)
+
+            # Should deny access and return appropriate state
+            assert result is None  # Authorization blocks execution, returns None
+            mock_update_unauthorized.callback_query.message.reply_text.assert_called_once()
+            call_args = mock_update_unauthorized.callback_query.message.reply_text.call_args
+            message_text = call_args[0][0]  # First positional argument
+            assert "❌" in message_text
+            assert "доступ" in message_text.lower()
+
+    @pytest.mark.asyncio
+    async def test_list_navigation_allows_authorized_viewer(
+        self, mock_update_viewer, mock_context
+    ):
+        """Test list navigation allows access to authorized viewer users."""
+        # Setup context for navigation
+        mock_context.user_data = {
+            "current_role": "TEAM",
+            "current_department": "finance",
+            "current_offset": 0
+        }
+        mock_update_viewer.callback_query.data = "list_nav:NEXT"
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role, \
+             patch("src.services.service_factory.get_participant_list_service") as mock_service:
+            mock_get_role.return_value = "viewer"
+
+            # Mock service response
+            mock_list_service = Mock()
+            mock_list_service.get_team_members_list = AsyncMock(return_value={
+                "formatted_list": "Test list",
+                "has_prev": False,
+                "has_next": True,
+                "total_count": 10,
+                "current_offset": 0,
+                "actual_displayed": 10
+            })
+            mock_service.return_value = mock_list_service
+
+            result = await handle_list_navigation(mock_update_viewer, mock_context)
+
+            # Should allow access and show navigation result
+            assert result is not None
+            mock_update_viewer.callback_query.edit_message_text.assert_called_once()
+
+    # Authorization tests for handle_department_filter_selection
+    @pytest.mark.asyncio
+    async def test_department_filter_denies_unauthorized_user(
+        self, mock_update_unauthorized, mock_context
+    ):
+        """Test department filter denies access to unauthorized users."""
+        mock_update_unauthorized.callback_query.data = "list:filter:all"
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            from src.bot.handlers.list_handlers import handle_department_filter_selection
+            await handle_department_filter_selection(mock_update_unauthorized, mock_context)
+
+            # Should deny access
+            mock_update_unauthorized.callback_query.message.reply_text.assert_called_once()
+            call_args = mock_update_unauthorized.callback_query.message.reply_text.call_args
+            message_text = call_args[0][0]  # First positional argument
+            assert "❌" in message_text
+            assert "доступ" in message_text.lower()
+
+    @pytest.mark.asyncio
+    async def test_department_filter_allows_authorized_viewer(
+        self, mock_update_viewer, mock_context
+    ):
+        """Test department filter allows access to authorized viewer users."""
+        mock_update_viewer.callback_query.data = "list:filter:all"
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role, \
+             patch("src.services.service_factory.get_participant_list_service") as mock_service:
+            mock_get_role.return_value = "viewer"
+
+            # Mock service response
+            mock_list_service = Mock()
+            mock_list_service.get_team_members_list = AsyncMock(return_value={
+                "formatted_list": "All team members",
+                "has_prev": False,
+                "has_next": False,
+                "total_count": 5,
+                "current_offset": 0,
+                "actual_displayed": 5
+            })
+            mock_service.return_value = mock_list_service
+
+            from src.bot.handlers.list_handlers import handle_department_filter_selection
+            await handle_department_filter_selection(mock_update_viewer, mock_context)
+
+            # Should allow access and show filtered results
+            mock_update_viewer.callback_query.edit_message_text.assert_called_once()
+            call_args = mock_update_viewer.callback_query.edit_message_text.call_args
+            message_text = call_args[1]["text"]
+            assert "Все Тимы" in message_text
