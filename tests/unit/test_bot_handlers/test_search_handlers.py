@@ -1791,7 +1791,9 @@ class TestSearchButtonAuthorization:
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = "viewer"
 
-            with patch("src.bot.handlers.search_handlers.create_search_mode_keyboard") as mock_keyboard:
+            with patch(
+                "src.bot.handlers.search_handlers.create_search_mode_keyboard"
+            ) as mock_keyboard:
                 mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
 
                 result = await search_button(mock_update_message, mock_context)
@@ -1884,7 +1886,9 @@ class TestMainMenuButtonAuthorization:
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = "viewer"
 
-            with patch("src.bot.handlers.search_handlers.create_main_menu_keyboard") as mock_keyboard:
+            with patch(
+                "src.bot.handlers.search_handlers.create_main_menu_keyboard"
+            ) as mock_keyboard:
                 mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
 
                 result = await main_menu_button(mock_update_message, mock_context)

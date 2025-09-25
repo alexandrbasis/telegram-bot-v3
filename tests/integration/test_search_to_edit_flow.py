@@ -41,6 +41,7 @@ class TestSearchToEditFlow:
         message.message_id = 1
         message.chat = mock_chat
         message.edit_text = AsyncMock()
+        message.reply_text = AsyncMock()  # Add reply_text for authorization decorator
         return message
 
     @pytest.fixture
@@ -54,10 +55,12 @@ class TestSearchToEditFlow:
         return query
 
     @pytest.fixture
-    def mock_update(self, mock_callback_query):
+    def mock_update(self, mock_callback_query, mock_user):
         """Mock Telegram update with callback query."""
         update = Mock(spec=Update)
         update.callback_query = mock_callback_query
+        update.effective_user = mock_user
+        update.message = None  # Explicitly set to None for callback queries
         return update
 
     @pytest.fixture
@@ -100,7 +103,9 @@ class TestSearchToEditFlow:
             show_participant_edit_menu,
         )
 
-        result = await show_participant_edit_menu(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_participant_edit_menu(mock_update, mock_context)
 
         # Should show editing interface
         mock_update.callback_query.message.edit_text.assert_called()
@@ -116,7 +121,9 @@ class TestSearchToEditFlow:
             handle_field_edit_selection,
         )
 
-        result = await handle_field_edit_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_field_edit_selection(mock_update, mock_context)
 
         # Should show role selection buttons
         mock_update.callback_query.message.edit_text.assert_called()
@@ -128,7 +135,9 @@ class TestSearchToEditFlow:
             handle_button_field_selection,
         )
 
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         # Should update editing changes and show updated edit menu
         assert mock_context.user_data["editing_changes"]["role"] == Role.TEAM
@@ -142,7 +151,9 @@ class TestSearchToEditFlow:
 
         from src.bot.handlers.edit_participant_handlers import handle_text_field_input
 
-        result = await handle_text_field_input(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_text_field_input(mock_update, mock_context)
 
         # Should update payment amount
         assert mock_context.user_data["editing_changes"]["payment_amount"] == 1500
@@ -152,7 +163,9 @@ class TestSearchToEditFlow:
 
         from src.bot.handlers.edit_participant_handlers import show_save_confirmation
 
-        result = await show_save_confirmation(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_save_confirmation(mock_update, mock_context)
 
         # Should show confirmation with changes summary
         mock_update.callback_query.message.edit_text.assert_called()
@@ -168,7 +181,9 @@ class TestSearchToEditFlow:
 
         from src.bot.handlers.edit_participant_handlers import save_changes
 
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         # Should call repository update with correct changes
         mock_repo.update_by_id.assert_called_once_with(
@@ -207,7 +222,9 @@ class TestSearchToEditFlow:
 
         from src.bot.handlers.edit_participant_handlers import cancel_editing
 
-        result = await cancel_editing(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await cancel_editing(mock_update, mock_context)
 
         # Should not call repository
         mock_repo.update_by_id.assert_not_called()
@@ -242,7 +259,9 @@ class TestSearchToEditFlow:
         # First save attempt (should fail)
         from src.bot.handlers.edit_participant_handlers import save_changes
 
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         # Should show error with retry option
         mock_update.callback_query.message.edit_text.assert_called()
@@ -263,7 +282,9 @@ class TestSearchToEditFlow:
 
         from src.bot.handlers.edit_participant_handlers import retry_save
 
-        result = await retry_save(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await retry_save(mock_update, mock_context)
 
         # Should call repository twice (initial + retry)
         assert mock_repo.update_by_id.call_count == 2
@@ -294,7 +315,9 @@ class TestSearchToEditFlow:
 
         from src.bot.handlers.edit_participant_handlers import handle_text_field_input
 
-        result = await handle_text_field_input(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_text_field_input(mock_update, mock_context)
 
         # Should not add invalid data to editing_changes
         editing_changes = mock_context.user_data.get("editing_changes", {})

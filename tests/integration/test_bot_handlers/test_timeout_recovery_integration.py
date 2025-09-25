@@ -209,7 +209,9 @@ class TestTimeoutRecoveryIntegration:
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = "viewer"
 
-            with patch("src.bot.handlers.search_handlers.get_main_menu_keyboard") as mock_keyboard:
+            with patch(
+                "src.bot.handlers.search_handlers.get_main_menu_keyboard"
+            ) as mock_keyboard:
                 mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
 
                 result = await main_menu_handler.callback(
@@ -266,10 +268,14 @@ class TestTimeoutRecoveryIntegration:
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = "viewer"
 
-            with patch("src.bot.handlers.search_handlers.get_search_mode_selection_keyboard") as mock_keyboard:
+            with patch(
+                "src.bot.handlers.search_handlers.get_search_mode_selection_keyboard"
+            ) as mock_keyboard:
                 mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
 
-                result = await search_handler.callback(mock_update_search_text, mock_context)
+                result = await search_handler.callback(
+                    mock_update_search_text, mock_context
+                )
 
         # Should return SEARCH_MODE_SELECTION state
         assert result == SearchStates.SEARCH_MODE_SELECTION

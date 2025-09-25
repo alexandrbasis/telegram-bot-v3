@@ -96,7 +96,9 @@ class TestRoomSearchHandlersAuthorization:
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = None
 
-            result = await handle_room_search_command(mock_unauthorized_update, mock_context)
+            result = await handle_room_search_command(
+                mock_unauthorized_update, mock_context
+            )
 
             # Should deny access
             mock_unauthorized_update.message.reply_text.assert_called_once()
@@ -112,13 +114,17 @@ class TestRoomSearchHandlersAuthorization:
     ):
         """Test room search command allows access to authorized users."""
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
-            with patch("src.services.service_factory.get_search_service") as mock_get_service:
+            with patch(
+                "src.services.service_factory.get_search_service"
+            ) as mock_get_service:
                 mock_get_role.return_value = "viewer"
                 mock_service = Mock()
                 mock_service.search_by_room.return_value = []
                 mock_get_service.return_value = mock_service
 
-                result = await handle_room_search_command(mock_authorized_update, mock_context)
+                result = await handle_room_search_command(
+                    mock_authorized_update, mock_context
+                )
 
                 # Should allow access and proceed
                 assert result == RoomSearchStates.SHOWING_ROOM_RESULTS
@@ -150,7 +156,9 @@ class TestRoomSearchHandlersAuthorization:
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = None
 
-            result = await process_room_search_with_number(mock_unauthorized_update, mock_context, "101")
+            result = await process_room_search_with_number(
+                mock_unauthorized_update, mock_context, "101"
+            )
 
             # Should deny access
             mock_unauthorized_update.message.reply_text.assert_called_once()

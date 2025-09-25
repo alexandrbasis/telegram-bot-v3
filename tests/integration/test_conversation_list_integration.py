@@ -39,10 +39,14 @@ class TestConversationListIntegration:
     def mock_role_callback_update(self):
         """Create mock update for role selection callback."""
         update = Mock(spec=Update)
+        update.message = None  # Explicitly set to None for callback queries
         update.callback_query = Mock(spec=CallbackQuery)
         update.callback_query.data = "list_role:TEAM"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+        # Add message property for access control decorator
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
         update.effective_chat = Mock()
         update.effective_chat.id = 12345
         update.effective_user = Mock()
@@ -168,7 +172,9 @@ class TestConversationListIntegration:
         # Call the handler directly to test integration with authorization mocking
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = "viewer"
-            await role_callback_handler.callback(mock_role_callback_update, mock_context)
+            await role_callback_handler.callback(
+                mock_role_callback_update, mock_context
+            )
 
         # Verify department selection keyboard was shown (not direct service call)
         mock_role_callback_update.callback_query.edit_message_text.assert_called_once()
@@ -243,10 +249,14 @@ class TestDepartmentFilteringIntegration:
     def mock_team_role_update(self):
         """Create mock update for team role selection."""
         update = Mock(spec=Update)
+        update.message = None  # Explicitly set to None for callback queries
         update.callback_query = Mock(spec=CallbackQuery)
         update.callback_query.data = "list_role:TEAM"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+        # Add message property for access control decorator
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
         update.effective_chat = Mock()
         update.effective_chat.id = 12345
         update.effective_user = Mock()
@@ -257,10 +267,14 @@ class TestDepartmentFilteringIntegration:
     def mock_department_finance_update(self):
         """Create mock update for Finance department selection."""
         update = Mock(spec=Update)
+        update.message = None  # Explicitly set to None for callback queries
         update.callback_query = Mock(spec=CallbackQuery)
         update.callback_query.data = "list:filter:department:Finance"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+        # Add message property for access control decorator
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
         update.effective_chat = Mock()
         update.effective_chat.id = 12345
         update.effective_user = Mock()
@@ -271,10 +285,14 @@ class TestDepartmentFilteringIntegration:
     def mock_department_all_update(self):
         """Create mock update for All participants selection."""
         update = Mock(spec=Update)
+        update.message = None  # Explicitly set to None for callback queries
         update.callback_query = Mock(spec=CallbackQuery)
         update.callback_query.data = "list:filter:all"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+        # Add message property for access control decorator
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
         update.effective_chat = Mock()
         update.effective_chat.id = 12345
         update.effective_user = Mock()
@@ -285,10 +303,14 @@ class TestDepartmentFilteringIntegration:
     def mock_navigation_next_update(self):
         """Create mock update for next page navigation."""
         update = Mock(spec=Update)
+        update.message = None  # Explicitly set to None for callback queries
         update.callback_query = Mock(spec=CallbackQuery)
         update.callback_query.data = "list_nav:NEXT"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+        # Add message property for access control decorator
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
         update.effective_chat = Mock()
         update.effective_chat.id = 12345
         update.effective_user = Mock()
@@ -518,8 +540,10 @@ class TestDepartmentFilteringIntegration:
 
         assert nav_handler is not None, "Navigation handler should be found"
 
-        # Execute navigation
-        await nav_handler.callback(mock_navigation_next_update, mock_context)
+        # Execute navigation with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await nav_handler.callback(mock_navigation_next_update, mock_context)
 
         # Verify service was called with preserved Finance filter
         assert mock_service.get_team_members_list.call_count == 2

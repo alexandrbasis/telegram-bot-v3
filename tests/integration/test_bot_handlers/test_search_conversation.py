@@ -155,10 +155,14 @@ class TestSearchConversationFlow:
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = "viewer"
 
-            with patch("src.bot.handlers.search_handlers.get_main_menu_keyboard") as mock_main_keyboard:
+            with patch(
+                "src.bot.handlers.search_handlers.get_main_menu_keyboard"
+            ) as mock_main_keyboard:
                 mock_main_keyboard.return_value = Mock()
 
-                with patch("src.bot.handlers.search_handlers.get_search_mode_selection_keyboard") as mock_search_keyboard:
+                with patch(
+                    "src.bot.handlers.search_handlers.get_search_mode_selection_keyboard"
+                ) as mock_search_keyboard:
                     mock_search_keyboard.return_value = Mock()
 
                     # Step 1: /start command
@@ -251,7 +255,9 @@ class TestSearchConversationFlow:
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = "viewer"
 
-            with patch("src.bot.handlers.search_handlers.get_main_menu_keyboard") as mock_keyboard:
+            with patch(
+                "src.bot.handlers.search_handlers.get_main_menu_keyboard"
+            ) as mock_keyboard:
                 mock_keyboard.return_value = Mock()
 
                 # Set up context with search results

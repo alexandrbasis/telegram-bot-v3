@@ -10,7 +10,7 @@ from src.services.user_interaction_logger import (
     is_user_interaction_logging_enabled,
     set_user_interaction_logging_enabled,
 )
-from src.utils.auth_utils import is_admin_user, invalidate_role_cache
+from src.utils.auth_utils import invalidate_role_cache, is_admin_user
 
 logger = logging.getLogger(__name__)
 
@@ -80,17 +80,13 @@ async def handle_auth_refresh_command(
         return
 
     if not is_admin_user(user.id, settings):
-        await message.reply_text(
-            "🚫 У вас нет прав для обновления кэша авторизации."
-        )
+        await message.reply_text("🚫 У вас нет прав для обновления кэша авторизации.")
         return
 
     # Clear the authorization cache
     invalidate_role_cache()
 
-    logger.info(
-        f"User {user.id} ({user.username}) cleared authorization cache"
-    )
+    logger.info(f"User {user.id} ({user.username}) cleared authorization cache")
 
     await message.reply_text(
         "✅ Кэш авторизации обновлен. Все роли пользователей будут "

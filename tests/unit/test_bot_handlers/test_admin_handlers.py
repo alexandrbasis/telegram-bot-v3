@@ -93,9 +93,7 @@ async def test_logging_toggle_disable(
 
 @patch("src.bot.handlers.admin_handlers.is_admin_user", return_value=False)
 @pytest.mark.asyncio
-async def test_auth_refresh_denies_non_admin(
-    mock_is_admin, mock_update, mock_context
-):
+async def test_auth_refresh_denies_non_admin(mock_is_admin, mock_update, mock_context):
     """Test auth refresh command denies access to non-admin users."""
     await handle_auth_refresh_command(mock_update, mock_context)
 
