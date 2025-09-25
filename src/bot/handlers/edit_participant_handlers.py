@@ -28,6 +28,7 @@ from src.services.participant_update_service import (
     ParticipantUpdateService,
     ValidationError,
 )
+from src.utils.access_control import require_coordinator_or_above
 from src.services.search_service import format_participant_full
 
 # Import repository factory at module level (no circular deps)
@@ -208,6 +209,7 @@ def reconstruct_participant_from_changes(
     return "\n".join(display_parts)
 
 
+@require_coordinator_or_above("❌ Доступ к редактированию участников для координаторов и администраторов.")
 async def show_participant_edit_menu(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -356,6 +358,7 @@ async def show_participant_edit_menu(
     return EditStates.FIELD_SELECTION
 
 
+@require_coordinator_or_above("❌ Доступ к выбору полей для координаторов и администраторов.")
 async def handle_field_edit_selection(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -463,6 +466,7 @@ async def handle_field_edit_selection(
         return EditStates.FIELD_SELECTION
 
 
+@require_coordinator_or_above("❌ Доступ к выбору значений для координаторов и администраторов.")
 async def show_field_button_selection(
     update: Update, context: ContextTypes.DEFAULT_TYPE, field_name: str
 ) -> int:
@@ -486,6 +490,7 @@ async def show_field_button_selection(
     return EditStates.BUTTON_SELECTION
 
 
+@require_coordinator_or_above("❌ Доступ к вводу текста для координаторов и администраторов.")
 async def show_field_text_prompt(
     update: Update, context: ContextTypes.DEFAULT_TYPE, field_name: str
 ) -> int:
@@ -525,6 +530,7 @@ async def show_field_text_prompt(
     return EditStates.TEXT_INPUT
 
 
+@require_coordinator_or_above("❌ Доступ к вводу данных для координаторов и администраторов.")
 async def handle_text_field_input(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -659,6 +665,7 @@ async def handle_text_field_input(
         return EditStates.TEXT_INPUT
 
 
+@require_coordinator_or_above("❌ Доступ к выбору кнопок для координаторов и администраторов.")
 async def handle_button_field_selection(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -855,6 +862,7 @@ async def handle_button_field_selection(
         return EditStates.BUTTON_SELECTION
 
 
+@require_coordinator_or_above("❌ Доступ к отмене редактирования для координаторов и администраторов.")
 async def cancel_editing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Cancel editing and return to search results.
@@ -914,6 +922,7 @@ async def cancel_editing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return SearchStates.SHOWING_RESULTS
 
 
+@require_coordinator_or_above("❌ Доступ к сохранению изменений для координаторов и администраторов.")
 async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Save pending changes to repository.
@@ -1174,6 +1183,7 @@ async def save_changes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return SearchStates.SHOWING_RESULTS
 
 
+@require_coordinator_or_above("❌ Доступ к подтверждению для координаторов и администраторов.")
 async def show_save_confirmation(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -1318,6 +1328,7 @@ async def show_save_confirmation(
     return EditStates.CONFIRMATION
 
 
+@require_coordinator_or_above("❌ Доступ к повторному сохранению для координаторов и администраторов.")
 async def retry_save(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Retry save operation after previous failure.
