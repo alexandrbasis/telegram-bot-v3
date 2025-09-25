@@ -439,12 +439,15 @@ async def process_name_search_enhanced(
     return await process_name_search(update, context)
 
 
-@require_viewer_or_above("❌ Доступ к меню только для авторизованных пользователей.")
-async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def _return_to_main_menu(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
     """
-    Handle main menu button callback.
+    Core logic for returning to main menu.
 
-    Returns user to main menu and clears search results.
+    Private helper function that contains the main menu logic.
+    Used by both main_menu_button (with auth decorator) and internal calls
+    that already have authorization context.
 
     Args:
         update: Telegram update object
@@ -504,6 +507,24 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
 
     return SearchStates.MAIN_MENU
+
+
+@require_viewer_or_above("❌ Доступ к меню только для авторизованных пользователей.")
+async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handle main menu button callback.
+
+    Returns user to main menu and clears search results.
+    This function maintains authorization checks via decorator for external calls.
+
+    Args:
+        update: Telegram update object
+        context: Bot context
+
+    Returns:
+        Next conversation state (MAIN_MENU)
+    """
+    return await _return_to_main_menu(update, context)
 
 
 async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

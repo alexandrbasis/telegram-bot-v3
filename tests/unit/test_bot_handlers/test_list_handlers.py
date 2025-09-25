@@ -620,10 +620,10 @@ class TestPaginationNavigationHandler:
         assert len(main_buttons) == 1
 
     @pytest.mark.asyncio
-    @patch("src.bot.handlers.list_handlers.main_menu_button")
+    @patch("src.bot.handlers.list_handlers._return_to_main_menu")
     @patch("src.utils.access_control.get_user_role")
     async def test_main_menu_navigation_calls_proper_handler(
-        self, mock_get_role, mock_main_menu_button
+        self, mock_get_role, mock_return_to_main_menu
     ):
         """Test that MAIN_MENU navigation calls the proper handler."""
         # Mock user role for access control
@@ -643,14 +643,14 @@ class TestPaginationNavigationHandler:
         update.effective_user = update.callback_query.from_user
 
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context.user_data = {}  # Real dict needed for main_menu_button
-        mock_main_menu_button.return_value = 10  # SearchStates.MAIN_MENU
+        context.user_data = {}  # Real dict needed for _return_to_main_menu
+        mock_return_to_main_menu.return_value = 10  # SearchStates.MAIN_MENU
 
         # Execute
         result = await handle_list_navigation(update, context)
 
-        # Should call main_menu_button handler
-        mock_main_menu_button.assert_called_once_with(update, context)
+        # Should call _return_to_main_menu handler
+        mock_return_to_main_menu.assert_called_once_with(update, context)
         assert result == 10
 
     @pytest.mark.asyncio
