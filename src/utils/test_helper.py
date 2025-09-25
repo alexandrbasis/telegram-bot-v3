@@ -56,3 +56,8 @@ class TestHelper:
         """Increment test counter to verify hook functionality."""
         self.test_counter += 1
         return self.test_counter
+
+    def reset_counter(self) -> int:
+        """Reset the counter to its initial state for repeatable tests."""
+        self.test_counter = 0
+        return self.test_counter
