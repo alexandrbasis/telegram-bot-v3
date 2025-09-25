@@ -29,6 +29,7 @@ from src.services.search_service import (
 )
 from src.services.service_factory import get_participant_repository
 from src.services.user_interaction_logger import get_user_interaction_logger
+from src.utils.access_control import require_viewer_or_above
 from src.utils.auth_utils import get_user_role
 from src.utils.participant_filter import filter_participants_by_role
 
@@ -130,6 +131,7 @@ def create_participant_selection_keyboard(
     return InlineKeyboardMarkup(keyboard)
 
 
+@require_viewer_or_above("❌ Доступ к боту только для авторизованных пользователей.")
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Handle /start command.
