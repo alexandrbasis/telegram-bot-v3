@@ -9,10 +9,10 @@ and compliance with security monitoring requirements.
 import logging
 import json
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 
-from src.config.settings import get_settings
+# Configuration imported where needed
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class AuthorizationEvent:
     result: str  # "granted", "denied"
     user_role: Optional[str]
     cache_state: str  # "hit", "miss", "refresh", "error"
-    timestamp: datetime = None
+    timestamp: Optional[datetime] = None
     airtable_metadata: Optional[Dict[str, Any]] = None
     error_details: Optional[str] = None
 
@@ -60,9 +60,9 @@ class SyncEvent:
     duration_ms: int
     records_processed: int
     success: bool
-    timestamp: datetime = None
+    timestamp: Optional[datetime] = None
     error_details: Optional[str] = None
-    failed_record_ids: List[str] = None
+    failed_record_ids: Optional[List[str]] = None
 
     def __post_init__(self):
         """Set defaults if not provided."""
@@ -88,7 +88,7 @@ class PerformanceMetrics:
     duration_ms: int
     cache_hit: bool
     user_role: Optional[str]
-    timestamp: datetime = None
+    timestamp: Optional[datetime] = None
     additional_context: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
@@ -124,7 +124,7 @@ class SecurityAuditService:
             event: Authorization event to log
         """
         # Create structured log message
-        log_data = {
+        log_data: Dict[str, Any] = {
             "event_type": "authorization_event",
             "user_id": event.user_id,
             "action": event.action,

@@ -7,9 +7,8 @@ manual refresh endpoints, and comprehensive performance monitoring.
 
 import time
 import threading
-from typing import Dict, Tuple, Union, Optional, Set
+from typing import Dict, Tuple, Union, Optional, cast
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 
 from src.services.security_audit_service import get_security_audit_service
 
@@ -405,7 +404,8 @@ def is_cache_healthy() -> bool:
     MIN_HIT_RATE = 0.7  # At least 70% hit rate
     MAX_SIZE_UTILIZATION = 0.9  # No more than 90% size utilization
 
-    hit_rate_healthy = stats['hit_rate'] >= MIN_HIT_RATE or stats['total_requests'] < 10
-    size_healthy = stats['memory_efficiency'] <= MAX_SIZE_UTILIZATION
+    hit_rate_healthy = (cast(float, stats['hit_rate']) >= MIN_HIT_RATE or
+                         cast(int, stats['total_requests']) < 10)
+    size_healthy = cast(float, stats['memory_efficiency']) <= MAX_SIZE_UTILIZATION
 
     return hit_rate_healthy and size_healthy
