@@ -85,14 +85,21 @@ Apply authorization controls to all bot handlers leveraging the Airtable-synced 
       - `src/bot/handlers/search_handlers.py:320-326` - VERIFIED: Critical fallback search path applies role-based filtering via `filter_participants_by_role`
       - **Notes**: Search operations were already secured from the authorization foundation implementation; no additional changes required
 
-- [ ] Step 2: Secure Room Search Handlers
-  - [ ] Sub-step 2.1: Apply authorization checks
+- [x] ✅ Step 2: Secure Room Search Handlers - Completed 2025-09-25 13:30
+  - [x] ✅ Sub-step 2.1: Apply authorization checks - Completed 2025-09-25 13:30
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/room_search_handlers.py`
     - **Accept**: Room search requires authorization
     - **Tests**: `tests/unit/test_bot_handlers/test_room_search_handlers.py`
     - **Done**: Room operations access-controlled
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `src/bot/handlers/room_search_handlers.py:23` - Added import for `require_viewer_or_above` access control decorator
+      - `src/bot/handlers/room_search_handlers.py:42,87,105` - Applied `@require_viewer_or_above` decorators to all room search handlers:
+        - `handle_room_search_command` - Secures /search_room command entry point
+        - `process_room_search` - Secures room number input processing
+        - `process_room_search_with_number` - Secures direct room search with number
+      - `tests/unit/test_bot_handlers/test_room_search_handlers.py:1-162` - Added imports and comprehensive TDD test suite `TestRoomSearchHandlersAuthorization` with 4 authorization tests
+      - **Notes**: All room search entry points now secured; unauthorized users receive clear Russian denial messages; test coverage improved from 0% to 64%
 
 - [ ] Step 3: Secure Floor Search Handlers
   - [ ] Sub-step 3.1: Apply authorization checks

@@ -23,6 +23,7 @@ from src.bot.keyboards.search_keyboards import (
 from src.bot.messages import ErrorMessages, InfoMessages, RetryMessages
 from src.models.participant import Participant
 from src.services.service_factory import get_search_service
+from src.utils.access_control import require_viewer_or_above
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,7 @@ def format_floor_results(participants: List[Participant], floor: int) -> str:
     return "\n".join(result_lines)
 
 
+@require_viewer_or_above("❌ Доступ к поиску по этажам только для авторизованных пользователей.")
 async def handle_floor_search_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -144,6 +146,7 @@ async def handle_floor_search_command(
         return FloorSearchStates.WAITING_FOR_FLOOR
 
 
+@require_viewer_or_above("❌ Доступ к поиску по этажам только для авторизованных пользователей.")
 async def process_floor_search(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
