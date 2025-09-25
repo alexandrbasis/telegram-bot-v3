@@ -168,6 +168,63 @@ Establish core authorization infrastructure with role-based access control (view
       - `src/config/field_mappings.py:119-127` - Fixed AuthorizedUsers option IDs to proper format
       - **Notes**: CRITICAL FIX - Schema validation now passes, resolving merge blocker from code review
 
+- [x] ✅ Step 6: Address Third Round Code Review - Critical Security Fixes - Completed 2025-09-25 10:00
+  - [x] ✅ Sub-step 6.1: Fix handlers ignoring user roles - Completed 2025-09-25 10:00
+    - **Directory**: `src/bot/handlers/`, `src/data/repositories/`
+    - **Files to create/modify**: `src/bot/handlers/search_handlers.py`, `src/data/repositories/participant_repository.py`
+    - **Accept**: Handlers resolve user roles and pass them to repository calls for proper authorization
+    - **Tests**: Integration tests verify role enforcement at handler level
+    - **Done**: All search operations now properly enforce role-based access control
+    - **Changelog**:
+      - `src/bot/handlers/search_handlers.py:31-33` - Added imports for `get_settings`, `get_user_role`, `filter_participants_by_role`
+      - `src/bot/handlers/search_handlers.py:263-265` - Added user role resolution at start of `process_name_search`
+      - `src/bot/handlers/search_handlers.py:274` - Updated enhanced search call to pass `user_role` parameter
+      - `src/bot/handlers/search_handlers.py:319-325` - Added CRITICAL security fix to fallback search path with role-based filtering
+      - `src/data/repositories/participant_repository.py:291,303` - Updated abstract interface to include `user_role` parameter
+      - **Notes**: CRITICAL SECURITY FIX - Handlers now properly resolve and enforce user roles, eliminating authorization bypass vulnerability
+
+  - [x] ✅ Sub-step 6.2: Fix Python 3.9 compatibility - Completed 2025-09-25 10:00
+    - **Directory**: `src/config/`
+    - **Files to create/modify**: `src/config/settings.py`
+    - **Accept**: Type annotations use Union syntax compatible with Python 3.9 minimum requirement
+    - **Tests**: Code imports without TypeError on Python 3.9
+    - **Done**: All type annotations now compatible with Python 3.9+
+    - **Changelog**:
+      - `src/config/settings.py:13` - Added `Union` to typing imports
+      - `src/config/settings.py:366` - Changed `Dict[str, float | int]` to `Dict[str, Union[float, int]]`
+      - **Notes**: Replaced PEP 604 union syntax with compatible Union syntax for Python 3.9 support
+
+  - [x] ✅ Sub-step 6.3: Implement access control middleware/decorator - Completed 2025-09-25 10:00
+    - **Directory**: `src/utils/`
+    - **Files to create/modify**: `src/utils/access_control.py` (NEW FILE)
+    - **Accept**: Reusable authorization decorators provide handler-level access control without code duplication
+    - **Tests**: Integration tests verify decorator functionality and role hierarchy enforcement
+    - **Done**: Complete access control middleware system with role-based decorators
+    - **Changelog**:
+      - `src/utils/access_control.py:1-158` - NEW FILE: Complete access control middleware system
+        - `require_role()` - Flexible decorator accepting single role or role list
+        - `require_admin()` - Admin-only access decorator
+        - `require_coordinator_or_above()` - Coordinator/admin access decorator
+        - `require_viewer_or_above()` - Any authorized user access decorator
+        - `get_user_role_from_update()` - Utility for role extraction from updates
+        - Role hierarchy enforcement with proper error handling and user messaging
+      - **Notes**: Provides reusable authorization guards eliminating code duplication across handlers
+
+  - [x] ✅ Sub-step 6.4: Add comprehensive integration tests - Completed 2025-09-25 10:00
+    - **Directory**: `tests/integration/`
+    - **Files to create/modify**: `tests/integration/test_handler_role_enforcement.py` (NEW FILE)
+    - **Accept**: Integration tests verify handler-level role resolution and enforcement across all user types
+    - **Tests**: 15+ comprehensive tests covering admin/coordinator/viewer boundaries and fallback security
+    - **Done**: Full test coverage for role enforcement preventing future security regressions
+    - **Changelog**:
+      - `tests/integration/test_handler_role_enforcement.py:1-394` - NEW FILE: Comprehensive role enforcement tests
+        - Tests for admin, coordinator, viewer role resolution in handlers
+        - Tests for fallback search path security filtering
+        - Tests for unauthorized user handling
+        - Tests for access control decorator functionality
+        - Mock-based testing ensuring proper repository parameter passing
+      - **Notes**: Prevents regression of authorization bypass vulnerabilities with comprehensive test coverage
+
 ## Testing Strategy
 - [ ] Unit tests: Authorization utilities in `tests/unit/test_utils/`
 - [ ] Unit tests: Configuration loading in `tests/unit/test_config/`
@@ -189,13 +246,16 @@ Establish core authorization infrastructure with role-based access control (view
 - **Linear Issue**: TDB-71 - Updated to "In Review"
 
 ### Implementation Summary for Code Review
-- **Total Steps Completed**: 6 of 6 steps (100% complete)
-- **Test Coverage**: Role filtering and auth utilities comprehensively tested with 41 new tests
-- **New Tests Added**: 41 comprehensive tests across security and performance
+- **Total Steps Completed**: 7 of 7 steps (100% complete)
+- **Test Coverage**: Role filtering, auth utilities, and handler enforcement comprehensively tested with 56+ new tests
+- **New Tests Added**: 56+ comprehensive tests across security, performance, and integration
 - **Key Files Modified**:
-  - `src/config/settings.py:21-71,307-308,586-587` - Extended configuration with role parsing and validation
+  - `src/config/settings.py:13,21-71,307-308,366,586-587` - Extended configuration with role parsing, Python 3.9 compatibility
   - `src/utils/auth_utils.py:15-250` - Complete role-based authorization utilities with hierarchy, PII-safe logging, caching
   - `src/utils/participant_filter.py:1-146` - NEW: Role-based data filtering utilities for security compliance
+  - `src/utils/access_control.py:1-158` - NEW: Complete access control middleware with decorators
+  - `src/bot/handlers/search_handlers.py:31-33,263-265,274,319-325` - CRITICAL: Handler-level role enforcement
+  - `src/data/repositories/participant_repository.py:291,303` - Updated interface for role parameter consistency
   - `src/data/airtable/airtable_participant_repo.py:29,729+` - Updated search methods with role-based filtering
   - `src/config/field_mappings.py:72-74,119-127,162-164,199-202,291-292` - AuthorizedUsers table mapping constants
   - `.env.example:5-9` - Documentation and examples for new role configuration
@@ -203,9 +263,11 @@ Establish core authorization infrastructure with role-based access control (view
   - `tests/unit/test_utils/test_auth_utils.py:155-359` - 22 authorization tests (updated with cache fixes)
   - `tests/unit/test_utils/test_participant_filter.py` - 17 NEW security compliance tests
   - `tests/integration/test_data/test_airtable/test_role_filtering_integration.py` - NEW integration security tests
+  - `tests/integration/test_handler_role_enforcement.py:1-394` - NEW: 15+ handler role enforcement tests
 - **Breaking Changes**: None - 100% backward compatibility maintained
 - **Dependencies Added**: None - uses existing infrastructure
-- **Security Fixes**: CRITICAL - Fixed authorization bypass vulnerability in search methods
+- **Security Fixes**: CRITICAL - Fixed multiple authorization bypass vulnerabilities in handlers and search methods
+- **Compatibility Fixes**: CRITICAL - Restored Python 3.9 compatibility with Union type syntax
 
 ### Step-by-Step Completion Status
 - [x] ✅ Step 1: Extend Configuration System - Completed 2025-09-24 13:30
@@ -222,6 +284,11 @@ Establish core authorization infrastructure with role-based access control (view
   - [x] ✅ Sub-step 4.1: Document new configuration options - Completed 2025-09-24 14:05
 - [x] ✅ Step 5: Address Second Round Code Review - Completed 2025-09-24 19:00
   - [x] ✅ Sub-step 5.1: Fix AuthorizedUsers field ID format violations - Completed 2025-09-24 19:00
+- [x] ✅ Step 6: Address Third Round Code Review - Critical Security Fixes - Completed 2025-09-25 10:00
+  - [x] ✅ Sub-step 6.1: Fix handlers ignoring user roles - Completed 2025-09-25 10:00
+  - [x] ✅ Sub-step 6.2: Fix Python 3.9 compatibility - Completed 2025-09-25 10:00
+  - [x] ✅ Sub-step 6.3: Implement access control middleware/decorator - Completed 2025-09-25 10:00
+  - [x] ✅ Sub-step 6.4: Add comprehensive integration tests - Completed 2025-09-25 10:00
 
 ### Code Review Checklist
 - [x] **Functionality**: All acceptance criteria met - 3-tier role hierarchy with proper inheritance

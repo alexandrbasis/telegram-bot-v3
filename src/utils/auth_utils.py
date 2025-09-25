@@ -116,9 +116,15 @@ def _has_role_access(user_id: int, required_role: str, settings: Settings) -> bo
             # Use hashed user ID for privacy in logs
             user_hash = hash(str(user_id)) & 0x7FFFFFFF  # Positive 31-bit hash
             if i < required_role_index:
-                logger.debug(f"{required_role.title()} access granted for {role_name} user (hash: {user_hash})")
+                logger.debug(
+                    f"{required_role.title()} access granted for "
+                    f"{role_name} user (hash: {user_hash})"
+                )
             else:
-                logger.debug(f"{required_role.title()} access granted for user (hash: {user_hash})")
+                logger.debug(
+                    f"{required_role.title()} access granted for "
+                    f"user (hash: {user_hash})"
+                )
             return True
 
     # Use hashed user ID for privacy in logs
@@ -171,7 +177,9 @@ def is_viewer_user(user_id: Union[int, str, None], settings: Settings) -> bool:
     return _has_role_access(user_id, "viewer", settings)
 
 
-def get_user_role(user_id: Union[int, str, None], settings: Settings) -> Union[str, None]:
+def get_user_role(
+    user_id: Union[int, str, None], settings: Settings
+) -> Union[str, None]:
     """
     Get the highest role for a user based on role hierarchy with caching.
 
@@ -236,8 +244,6 @@ def invalidate_role_cache(user_id: Union[int, str, None] = None) -> None:
     Args:
         user_id: User ID to invalidate, or None to clear entire cache
     """
-    global _ROLE_CACHE
-
     if user_id is None:
         # Clear entire cache
         _ROLE_CACHE.clear()

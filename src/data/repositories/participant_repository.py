@@ -288,7 +288,7 @@ class ParticipantRepository(ABC):
 
     # Optional enhanced search; default raises NotImplementedError in base
     async def search_by_name_enhanced(
-        self, query: str, threshold: float = 0.8, limit: int = 5
+        self, query: str, threshold: float = 0.8, limit: int = 5, user_role: Optional[str] = None
     ) -> List[Tuple[Participant, float, str]]:
         """
         Enhanced search with language detection, multi-field search, and rich formatting.
@@ -300,6 +300,7 @@ class ParticipantRepository(ABC):
             query: Name or partial name to search for
             threshold: Minimum similarity score (0.0-1.0) to include in results
             limit: Maximum number of results to return
+            user_role: User's role ("admin", "coordinator", "viewer", or None) for data filtering
 
         Returns:
             List of tuples containing (Participant, similarity_score, formatted_result)

@@ -10,7 +10,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from src.data.airtable.airtable_client import AirtableConfig
 
@@ -42,9 +42,7 @@ def _parse_user_ids(env_var_name: str) -> list[int]:
             pass
 
     # Fall back to comma-separated values (e.g., "123,456,789")
-    return [
-        int(uid.strip()) for uid in ids_env.split(",") if uid.strip().isdigit()
-    ]
+    return [int(uid.strip()) for uid in ids_env.split(",") if uid.strip().isdigit()]
 
 
 def _parse_admin_ids() -> list[int]:
@@ -305,7 +303,9 @@ class TelegramSettings:
 
     # Role-based authorization settings
     viewer_user_ids: list[int] = field(default_factory=lambda: _parse_viewer_ids())
-    coordinator_user_ids: list[int] = field(default_factory=lambda: _parse_coordinator_ids())
+    coordinator_user_ids: list[int] = field(
+        default_factory=lambda: _parse_coordinator_ids()
+    )
 
     def validate(self) -> None:
         """
@@ -363,7 +363,7 @@ class TelegramSettings:
             "connection_pool_size": self.request_connection_pool_size,
         }
 
-    def get_startup_retry_config(self) -> Dict[str, float | int]:
+    def get_startup_retry_config(self) -> Dict[str, Union[float, int]]:
         """Get startup retry settings for bot initialization."""
 
         return {

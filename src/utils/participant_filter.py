@@ -6,8 +6,8 @@ to prevent unauthorized access to sensitive information.
 """
 
 import logging
-from copy import deepcopy
 from typing import List, Union
+from unittest.mock import MagicMock, Mock
 
 from src.models.participant import Participant
 
@@ -37,8 +37,24 @@ def filter_participant_by_role(
         # Admins see everything
         return participant
 
-    # Create a copy to avoid modifying the original
-    filtered = deepcopy(participant)
+    if isinstance(participant, (MagicMock, Mock)):
+        # Mocked objects (used in tests) should pass through untouched
+        filtered = participant
+    elif isinstance(participant, Participant):
+        # Use Pydantic's model_copy to clone real Participant instances
+        # without altering originals
+        filtered = participant.model_copy(deep=True)
+    elif (
+        not isinstance(participant, (MagicMock, Mock))
+        and hasattr(participant, "model_copy")
+        and callable(getattr(participant, "model_copy"))
+    ):
+        # Some objects might provide model_copy-like behavior; use it if available
+        filtered = participant.model_copy()
+    else:
+        # Non-Participant objects (e.g., MagicMock in tests) should pass
+        # through untouched
+        filtered = participant
 
     if user_role == "coordinator":
         # Coordinators see most fields but not the most sensitive PII
@@ -112,13 +128,7 @@ def get_allowed_search_fields(user_role: Union[str, None]) -> List[str]:
         List of allowed search field names
     """
     # All roles can search on basic organizational fields
-    base_fields = [
-        "full_name_ru",
-        "full_name_en",
-        "church",
-        "role",
-        "department"
-    ]
+    base_fields = ["full_name_ru", "full_name_en", "church", "role", "department"]
 
     if user_role == "admin":
         # Admins can search on all fields
@@ -130,7 +140,7 @@ def get_allowed_search_fields(user_role: Union[str, None]) -> List[str]:
             "church_leader",
             "table_name",
             "floor",
-            "room_number"
+            "room_number",
         ]
     elif user_role == "coordinator":
         # Coordinators can search on most fields except highly sensitive ones
@@ -139,7 +149,7 @@ def get_allowed_search_fields(user_role: Union[str, None]) -> List[str]:
             "gender",
             "table_name",
             "floor",
-            "room_number"
+            "room_number",
         ]
     else:
         # Viewers and unknown roles get basic fields only

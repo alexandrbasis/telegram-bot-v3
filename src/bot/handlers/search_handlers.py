@@ -21,6 +21,7 @@ from src.bot.keyboards.search_keyboards import (
     get_waiting_for_name_keyboard,
 )
 from src.bot.messages import InfoMessages
+from src.config.settings import get_settings
 from src.services.search_service import (
     SearchResult,
     SearchService,
@@ -28,6 +29,8 @@ from src.services.search_service import (
 )
 from src.services.service_factory import get_participant_repository
 from src.services.user_interaction_logger import get_user_interaction_logger
+from src.utils.auth_utils import get_user_role
+from src.utils.participant_filter import filter_participants_by_role
 
 logger = logging.getLogger(__name__)
 
@@ -256,7 +259,10 @@ async def process_name_search(
     query = update.message.text.strip()
     user = update.effective_user
 
-    logger.info(f"User {user.id} searching for: '{query}'")
+    # Resolve user role for authorization
+    settings = get_settings()
+    user_role = get_user_role(user.id, settings)
+    logger.info(f"User {user.id} (role: {user_role}) searching for: '{query}'")
 
     try:
         # Get repository
@@ -265,7 +271,7 @@ async def process_name_search(
         # Try enhanced search first, fallback to old method for backward compatibility
         try:
             enhanced_results = await repository.search_by_name_enhanced(
-                query, threshold=0.8, limit=5
+                query, threshold=0.8, limit=5, user_role=user_role
             )
 
             # Store results in user data (convert to old format for compatibility)
@@ -310,9 +316,18 @@ async def process_name_search(
             # Get all participants from repository
             all_participants = await repository.list_all()
 
-            # Search using fuzzy matching service
+            # CRITICAL: Apply role-based filtering to prevent security bypass
+            filtered_participants = filter_participants_by_role(
+                all_participants, user_role
+            )
+            logger.debug(
+                f"Filtered {len(all_participants)} participants to "
+                f"{len(filtered_participants)} for role {user_role}"
+            )
+
+            # Search using fuzzy matching service on filtered results
             search_service = SearchService(similarity_threshold=0.8, max_results=5)
-            results = search_service.search_participants(query, all_participants)
+            results = search_service.search_participants(query, filtered_participants)
 
             # Store results in user data
             context.user_data["search_results"] = results

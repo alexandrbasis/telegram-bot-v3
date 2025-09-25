@@ -71,7 +71,7 @@ class AirtableFieldMapping:
         # AuthorizedUsers table fields for role-based authorization
         "AccessLevel": "fldAUTHAccessLvl1",  # Single select field for viewer/coordinator/admin
         "Status": "fldAUTHStatus0123",      # Single select field for active/inactive
-        "TelegramUserID": "fldAUTHTgUserId01", # Number field for Telegram user ID
+        "TelegramUserID": "fldAUTHTgUserId01",  # Number field for Telegram user ID
     }
 
     # Select option value -> Option ID mapping (exact Option IDs from Airtable base)

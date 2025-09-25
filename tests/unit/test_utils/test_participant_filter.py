@@ -5,11 +5,12 @@ Verifies that sensitive data is properly filtered based on user roles
 to prevent unauthorized access to PII and financial information.
 """
 
-import pytest
-from datetime import date
 from copy import deepcopy
+from datetime import date
 
-from src.models.participant import Participant, Gender, PaymentStatus, Role, Department
+import pytest
+
+from src.models.participant import Department, Gender, Participant, PaymentStatus, Role
 from src.utils.participant_filter import (
     filter_participant_by_role,
     filter_participants_by_role,
@@ -70,14 +71,22 @@ class TestFilterParticipantByRole:
 
         # Coordinators see most fields but not the most sensitive PII
         assert filtered.full_name_ru == sample_participant.full_name_ru
-        assert filtered.contact_information == sample_participant.contact_information  # Still visible
-        assert filtered.payment_amount == sample_participant.payment_amount  # Still visible
+        assert (
+            filtered.contact_information == sample_participant.contact_information
+        )  # Still visible
+        assert (
+            filtered.payment_amount == sample_participant.payment_amount
+        )  # Still visible
         assert filtered.payment_date == sample_participant.payment_date  # Still visible
-        assert filtered.payment_status == sample_participant.payment_status  # Still visible
+        assert (
+            filtered.payment_status == sample_participant.payment_status
+        )  # Still visible
         assert filtered.age == sample_participant.age  # Still visible
         assert filtered.notes == sample_participant.notes  # Still visible
         assert filtered.submitted_by == sample_participant.submitted_by  # Still visible
-        assert filtered.church_leader == sample_participant.church_leader  # Still visible
+        assert (
+            filtered.church_leader == sample_participant.church_leader
+        )  # Still visible
 
         # But highly sensitive PII is filtered
         assert filtered.date_of_birth is None
@@ -187,7 +196,9 @@ class TestFilterParticipantsByRole:
         ]
 
         admin_filtered = filter_participants_by_role(participants, "admin")[0]
-        coordinator_filtered = filter_participants_by_role(participants, "coordinator")[0]
+        coordinator_filtered = filter_participants_by_role(participants, "coordinator")[
+            0
+        ]
         viewer_filtered = filter_participants_by_role(participants, "viewer")[0]
 
         # Admin sees everything
@@ -288,18 +299,20 @@ class TestRoleFilteringSecurityCompliance:
 
         # Critical PII fields must be None for viewers
         pii_fields = [
-            'contact_information',
-            'date_of_birth',
-            'payment_amount',
-            'payment_date',
-            'payment_status',
-            'notes',
-            'submitted_by'
+            "contact_information",
+            "date_of_birth",
+            "payment_amount",
+            "payment_date",
+            "payment_status",
+            "notes",
+            "submitted_by",
         ]
 
         for field_name in pii_fields:
             field_value = getattr(filtered, field_name)
-            assert field_value is None, f"PII field '{field_name}' leaked to viewer: {field_value}"
+            assert (
+                field_value is None
+            ), f"PII field '{field_name}' leaked to viewer: {field_value}"
 
     def test_coordinator_financial_access(self, sample_participant):
         """Coordinators should have access to operational financial data."""
@@ -321,4 +334,6 @@ class TestRoleFilteringSecurityCompliance:
         for field_name in Participant.model_fields:
             original_value = getattr(sample_participant, field_name)
             filtered_value = getattr(filtered, field_name)
-            assert original_value == filtered_value, f"Admin access restricted for field: {field_name}"
+            assert (
+                original_value == filtered_value
+            ), f"Admin access restricted for field: {field_name}"
