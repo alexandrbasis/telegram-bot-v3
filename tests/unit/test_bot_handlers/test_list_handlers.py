@@ -1572,3 +1572,211 @@ class TestListHandlersAuthorization:
             call_args = mock_update_viewer.callback_query.edit_message_text.call_args
             message_text = call_args[1]["text"]
             assert "Все Тимы" in message_text
+
+
+class TestListHandlerErrorHandling:
+    """Test error handling in list handlers."""
+
+    @pytest.fixture
+    def mock_update(self):
+        """Create mock update for error handling tests."""
+        update = Mock(spec=Update)
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.data = "list_role:CANDIDATE"
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+        update.effective_user = Mock()
+        update.effective_user.id = 123456
+        return update
+
+    @pytest.fixture
+    def mock_context(self):
+        """Create mock context."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {"list_state": {"type": "participants", "role": "participant"}}
+        return context
+
+    @pytest.mark.asyncio
+    async def test_badrequest_message_not_modified_is_ignored(
+        self, mock_update, mock_context
+    ):
+        """Test that BadRequest with message-not-modified is ignored."""
+        from telegram.error import BadRequest
+
+        # Make edit_message_text raise BadRequest with message-not-modified
+        mock_update.callback_query.edit_message_text.side_effect = BadRequest(
+            "Bad Request: message is not modified: specified new message content "
+            "and reply markup are exactly the same as a current content and reply "
+            "markup of the message"
+        )
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch(
+                "src.bot.handlers.list_handlers.service_factory"
+            ) as mock_service_factory:
+                mock_service = Mock()
+                mock_service.get_participants_list = AsyncMock(
+                    return_value={
+                        "formatted_list": "Test list",
+                        "has_prev": False,
+                        "has_next": False,
+                        "total_count": 1,
+                        "current_offset": 0,
+                        "actual_displayed": 1,
+                    }
+                )
+                mock_service_factory.get_participant_list_service.return_value = mock_service
+
+                # Should not raise, just log and return
+                await handle_role_selection(mock_update, mock_context)
+
+                # Verify answer was called (happens before the error)
+                mock_update.callback_query.answer.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_badrequest_other_errors_are_raised(
+        self, mock_update, mock_context
+    ):
+        """Test that BadRequest errors other than message-not-modified are raised."""
+        from telegram.error import BadRequest
+
+        # Make edit_message_text raise BadRequest with different message
+        mock_update.callback_query.edit_message_text.side_effect = BadRequest(
+            "Bad Request: some other error"
+        )
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch(
+                "src.bot.handlers.list_handlers.service_factory"
+            ) as mock_service_factory:
+                mock_service = Mock()
+                mock_service.get_participants_list = AsyncMock(
+                    return_value={
+                        "formatted_list": "Test list",
+                        "has_prev": False,
+                        "has_next": False,
+                        "total_count": 1,
+                        "current_offset": 0,
+                        "actual_displayed": 1,
+                    }
+                )
+                mock_service_factory.get_participant_list_service.return_value = mock_service
+
+                # Should raise the error
+                with pytest.raises(BadRequest, match="[Ss]ome other error"):
+                    await handle_role_selection(mock_update, mock_context)
+
+    @pytest.mark.asyncio
+    async def test_handle_role_selection_unknown_list_type(
+        self, mock_update, mock_context
+    ):
+        """Test handling of unknown list type."""
+        # Set unknown role type
+        mock_update.callback_query.data = "list_role:UNKNOWN"
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            await handle_role_selection(mock_update, mock_context)
+
+            # Should show error message
+            mock_update.callback_query.edit_message_text.assert_called_once()
+            call_args = mock_update.callback_query.edit_message_text.call_args
+            assert "Неизвестный тип списка" in call_args[1]["text"]
+
+    @pytest.mark.asyncio
+    async def test_handle_role_selection_service_exception(
+        self, mock_update, mock_context
+    ):
+        """Test handling of service exceptions."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch(
+                "src.bot.handlers.list_handlers.service_factory"
+            ) as mock_service_factory:
+                mock_service = Mock()
+                mock_service.get_candidates_list = AsyncMock(
+                    side_effect=Exception("Database error")
+                )
+                mock_service_factory.get_participant_list_service.return_value = mock_service
+
+                await handle_role_selection(mock_update, mock_context)
+
+                # Should show error message
+                mock_update.callback_query.edit_message_text.assert_called()
+                call_args = mock_update.callback_query.edit_message_text.call_args
+                assert "Произошла ошибка при получении списка участников" in call_args[1]["text"]
+                assert "Database error" in call_args[1]["text"]
+
+    @pytest.mark.asyncio
+    async def test_handle_list_navigation_department_filter(
+        self, mock_update, mock_context
+    ):
+        """Test department filter navigation path."""
+        # Set up for department filter action
+        mock_update.callback_query.data = "list_nav:DEPARTMENT"
+        mock_context.user_data = {
+            "list_state": {
+                "type": "team",
+                "offset": 0,
+                "role": "member"
+            }
+        }
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            result = await handle_list_navigation(mock_update, mock_context)
+
+            # Should show department filter menu
+            mock_update.callback_query.edit_message_text.assert_called_once()
+            call_args = mock_update.callback_query.edit_message_text.call_args
+            message_text = call_args[1]["text"]
+
+            assert "Выберите департамент для фильтрации" in message_text
+            assert "🌐 **Все Тимы**" in message_text
+            assert "🏢 **Департамент**" in message_text
+            assert "❓ **Без департамента**" in message_text
+            assert result == SearchStates.MAIN_MENU
+
+    @pytest.mark.asyncio
+    async def test_handle_list_navigation_service_exception(
+        self, mock_update, mock_context
+    ):
+        """Test navigation error handling."""
+        mock_update.callback_query.data = "list_nav:NEXT"
+        mock_context.user_data = {
+            "list_state": {
+                "type": "participants",
+                "offset": 0,
+                "role": "participant"
+            },
+            "current_role": "CANDIDATE",
+            "current_offset": 0
+        }
+
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch(
+                "src.bot.handlers.list_handlers.service_factory"
+            ) as mock_service_factory:
+                mock_service = Mock()
+                mock_service.get_candidates_list = AsyncMock(
+                    side_effect=Exception("Navigation error")
+                )
+                mock_service_factory.get_participant_list_service.return_value = mock_service
+
+                result = await handle_list_navigation(mock_update, mock_context)
+
+                # Should show error message
+                mock_update.callback_query.edit_message_text.assert_called()
+                call_args = mock_update.callback_query.edit_message_text.call_args[-1]
+                assert "Произошла ошибка при навигации" in call_args["text"]
+                assert "Navigation error" in call_args["text"]
+                assert result == SearchStates.MAIN_MENU

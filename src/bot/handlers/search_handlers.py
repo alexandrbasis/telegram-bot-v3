@@ -9,7 +9,12 @@ import logging
 from enum import IntEnum
 from typing import List
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+    Update,
+)
 from telegram.ext import ContextTypes
 
 from src.bot.keyboards.search_keyboards import (
@@ -131,13 +136,13 @@ def create_participant_selection_keyboard(
     return InlineKeyboardMarkup(keyboard)
 
 
-def create_search_mode_keyboard() -> InlineKeyboardMarkup:
+def create_search_mode_keyboard() -> ReplyKeyboardMarkup:
     """Provide compatibility wrapper for search mode keyboard creation."""
 
     return get_search_mode_selection_keyboard()
 
 
-def create_main_menu_keyboard() -> InlineKeyboardMarkup:
+def create_main_menu_keyboard() -> ReplyKeyboardMarkup:
     """Provide compatibility wrapper for main menu keyboard creation."""
 
     return get_main_menu_keyboard()

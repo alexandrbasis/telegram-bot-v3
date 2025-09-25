@@ -38,7 +38,12 @@ pip install -r requirements/base.txt   # Production dependencies
 ./venv/bin/pytest tests/unit/test_data/test_airtable/test_airtable_client.py -v
 
 # Coverage enforcement for specific test suites (when needed)
-./venv/bin/pytest tests/unit/test_bot_handlers/ --cov=src --cov-fail-under=80
+# For targeted runs specify the module(s) under test to avoid counting unrelated files:
+./venv/bin/pytest tests/unit/test_bot_handlers/test_list_handlers.py \
+  --cov=src/bot/handlers/list_handlers.py --cov-fail-under=80
+
+./venv/bin/pytest tests/unit/test_bot_handlers/test_search_handlers.py \
+  --cov=src/bot/handlers/search_handlers.py --cov-fail-under=80
 ```
 
 ### Code Quality
