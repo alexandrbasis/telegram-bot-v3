@@ -817,7 +817,11 @@ class TestDepartmentSelectionHandler:
     @patch("src.services.service_factory.get_participant_list_service")
     @patch("src.utils.access_control.get_user_role")
     async def test_all_participants_filter_calls_service_without_department(
-        self, mock_get_role, mock_get_service, mock_all_participants_update, mock_context
+        self,
+        mock_get_role,
+        mock_get_service,
+        mock_all_participants_update,
+        mock_context,
     ):
         """Test all participants filter calls service without department filter."""
         # Mock user role for access control
@@ -1192,7 +1196,11 @@ class TestNavigationWithDepartmentContext:
     @patch("src.services.service_factory.get_participant_list_service")
     @patch("src.utils.access_control.get_user_role")
     async def test_navigation_preserves_all_participants_filter(
-        self, mock_get_role, mock_get_service, mock_prev_update, mock_all_participants_context
+        self,
+        mock_get_role,
+        mock_get_service,
+        mock_prev_update,
+        mock_all_participants_context,
     ):
         """Test that navigation preserves 'all participants' filter (None department)."""
         # Mock user role for access control
@@ -1593,7 +1601,9 @@ class TestListHandlerErrorHandling:
     def mock_context(self):
         """Create mock context."""
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context.user_data = {"list_state": {"type": "participants", "role": "participant"}}
+        context.user_data = {
+            "list_state": {"type": "participants", "role": "participant"}
+        }
         return context
 
     @pytest.mark.asyncio
@@ -1627,7 +1637,9 @@ class TestListHandlerErrorHandling:
                         "actual_displayed": 1,
                     }
                 )
-                mock_service_factory.get_participant_list_service.return_value = mock_service
+                mock_service_factory.get_participant_list_service.return_value = (
+                    mock_service
+                )
 
                 # Should not raise, just log and return
                 await handle_role_selection(mock_update, mock_context)
@@ -1636,9 +1648,7 @@ class TestListHandlerErrorHandling:
                 mock_update.callback_query.answer.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_badrequest_other_errors_are_raised(
-        self, mock_update, mock_context
-    ):
+    async def test_badrequest_other_errors_are_raised(self, mock_update, mock_context):
         """Test that BadRequest errors other than message-not-modified are raised."""
         from telegram.error import BadRequest
 
@@ -1664,7 +1674,9 @@ class TestListHandlerErrorHandling:
                         "actual_displayed": 1,
                     }
                 )
-                mock_service_factory.get_participant_list_service.return_value = mock_service
+                mock_service_factory.get_participant_list_service.return_value = (
+                    mock_service
+                )
 
                 # Should raise the error
                 with pytest.raises(BadRequest, match="[Ss]ome other error"):
@@ -1703,14 +1715,19 @@ class TestListHandlerErrorHandling:
                 mock_service.get_candidates_list = AsyncMock(
                     side_effect=Exception("Database error")
                 )
-                mock_service_factory.get_participant_list_service.return_value = mock_service
+                mock_service_factory.get_participant_list_service.return_value = (
+                    mock_service
+                )
 
                 await handle_role_selection(mock_update, mock_context)
 
                 # Should show error message
                 mock_update.callback_query.edit_message_text.assert_called()
                 call_args = mock_update.callback_query.edit_message_text.call_args
-                assert "Произошла ошибка при получении списка участников" in call_args[1]["text"]
+                assert (
+                    "Произошла ошибка при получении списка участников"
+                    in call_args[1]["text"]
+                )
                 assert "Database error" in call_args[1]["text"]
 
     @pytest.mark.asyncio
@@ -1721,11 +1738,7 @@ class TestListHandlerErrorHandling:
         # Set up for department filter action
         mock_update.callback_query.data = "list_nav:DEPARTMENT"
         mock_context.user_data = {
-            "list_state": {
-                "type": "team",
-                "offset": 0,
-                "role": "member"
-            }
+            "list_state": {"type": "team", "offset": 0, "role": "member"}
         }
 
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
@@ -1751,13 +1764,9 @@ class TestListHandlerErrorHandling:
         """Test navigation error handling."""
         mock_update.callback_query.data = "list_nav:NEXT"
         mock_context.user_data = {
-            "list_state": {
-                "type": "participants",
-                "offset": 0,
-                "role": "participant"
-            },
+            "list_state": {"type": "participants", "offset": 0, "role": "participant"},
             "current_role": "CANDIDATE",
-            "current_offset": 0
+            "current_offset": 0,
         }
 
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
@@ -1770,7 +1779,9 @@ class TestListHandlerErrorHandling:
                 mock_service.get_candidates_list = AsyncMock(
                     side_effect=Exception("Navigation error")
                 )
-                mock_service_factory.get_participant_list_service.return_value = mock_service
+                mock_service_factory.get_participant_list_service.return_value = (
+                    mock_service
+                )
 
                 result = await handle_list_navigation(mock_update, mock_context)
 
