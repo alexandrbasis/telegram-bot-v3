@@ -24,15 +24,26 @@ pip install -r requirements/base.txt   # Production dependencies
 # Run all tests
 ./venv/bin/pytest tests/ -v
 
-# Run tests with coverage
+# Run tests with coverage (no enforcement - for focused development)
 ./venv/bin/pytest tests/ --cov=src --cov-report=html --cov-report=term
 
-# Run specific test types
+# Run tests with coverage enforcement (for CI/full validation)
+./venv/bin/pytest tests/ --cov=src --cov-report=html --cov-report=term --cov-fail-under=80
+
+# Run specific test types (focused runs - no coverage enforcement)
 ./venv/bin/pytest tests/unit/ -v      # Unit tests only
 ./venv/bin/pytest tests/integration/ -v  # Integration tests only
 
-# Run single test file
+# Run single test file (focused development - no coverage enforcement)
 ./venv/bin/pytest tests/unit/test_data/test_airtable/test_airtable_client.py -v
+
+# Coverage enforcement for specific test suites (when needed)
+# For targeted runs specify the module(s) under test to avoid counting unrelated files:
+./venv/bin/pytest tests/unit/test_bot_handlers/test_list_handlers.py \
+  --cov=src/bot/handlers/list_handlers.py --cov-fail-under=80
+
+./venv/bin/pytest tests/unit/test_bot_handlers/test_search_handlers.py \
+  --cov=src/bot/handlers/search_handlers.py --cov-fail-under=80
 ```
 
 ### Code Quality

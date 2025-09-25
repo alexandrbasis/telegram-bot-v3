@@ -9,7 +9,12 @@ import logging
 from enum import IntEnum
 from typing import List
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+    Update,
+)
 from telegram.ext import ContextTypes
 
 from src.bot.keyboards.search_keyboards import (
@@ -29,6 +34,7 @@ from src.services.search_service import (
 )
 from src.services.service_factory import get_participant_repository
 from src.services.user_interaction_logger import get_user_interaction_logger
+from src.utils.access_control import require_viewer_or_above
 from src.utils.auth_utils import get_user_role
 from src.utils.participant_filter import filter_participants_by_role
 
@@ -130,6 +136,19 @@ def create_participant_selection_keyboard(
     return InlineKeyboardMarkup(keyboard)
 
 
+def create_search_mode_keyboard() -> ReplyKeyboardMarkup:
+    """Provide compatibility wrapper for search mode keyboard creation."""
+
+    return get_search_mode_selection_keyboard()
+
+
+def create_main_menu_keyboard() -> ReplyKeyboardMarkup:
+    """Provide compatibility wrapper for main menu keyboard creation."""
+
+    return get_main_menu_keyboard()
+
+
+@require_viewer_or_above("❌ Доступ к боту только для авторизованных пользователей.")
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Handle /start command.
@@ -154,12 +173,13 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     await update.message.reply_text(
         text=welcome_message,
-        reply_markup=get_main_menu_keyboard(),
+        reply_markup=create_main_menu_keyboard(),
     )
 
     return SearchStates.MAIN_MENU
 
 
+@require_viewer_or_above("❌ Доступ к поиску только для авторизованных пользователей.")
 async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Handle search button callback.
@@ -223,12 +243,12 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         await query.message.edit_text(text=search_prompt)
         await query.message.reply_text(
             text="Используйте клавиатуру ниже для выбора типа поиска.",
-            reply_markup=get_search_mode_selection_keyboard(),
+            reply_markup=create_search_mode_keyboard(),
         )
     elif message:
         await message.reply_text(
             text=search_prompt,
-            reply_markup=get_search_mode_selection_keyboard(),
+            reply_markup=create_search_mode_keyboard(),
         )
 
     if user_logger:
@@ -424,11 +444,15 @@ async def process_name_search_enhanced(
     return await process_name_search(update, context)
 
 
-async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def _return_to_main_menu(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
     """
-    Handle main menu button callback.
+    Core logic for returning to main menu.
 
-    Returns user to main menu and clears search results.
+    Private helper function that contains the main menu logic.
+    Used by both main_menu_button (with auth decorator) and internal calls
+    that already have authorization context.
 
     Args:
         update: Telegram update object
@@ -470,12 +494,12 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         # Send a new message to apply the reply keyboard
         await query.message.reply_text(
             text="Используйте клавиатуру ниже для навигации.",
-            reply_markup=get_main_menu_keyboard(),
+            reply_markup=create_main_menu_keyboard(),
         )
     elif message:
         await message.reply_text(
             text=welcome_message,
-            reply_markup=get_main_menu_keyboard(),
+            reply_markup=create_main_menu_keyboard(),
         )
 
     # Log bot response if logging is enabled
@@ -488,6 +512,24 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
 
     return SearchStates.MAIN_MENU
+
+
+@require_viewer_or_above("❌ Доступ к меню только для авторизованных пользователей.")
+async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handle main menu button callback.
+
+    Returns user to main menu and clears search results.
+    This function maintains authorization checks via decorator for external calls.
+
+    Args:
+        update: Telegram update object
+        context: Bot context
+
+    Returns:
+        Next conversation state (MAIN_MENU)
+    """
+    return await _return_to_main_menu(update, context)
 
 
 async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -503,7 +545,7 @@ async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     await update.message.reply_text(
         text=welcome_message,
-        reply_markup=get_main_menu_keyboard(),
+        reply_markup=create_main_menu_keyboard(),
     )
 
     return SearchStates.MAIN_MENU
@@ -573,7 +615,7 @@ async def handle_participant_selection(
             )
 
         await query.message.edit_text(
-            text="❌ Участник не найден.", reply_markup=get_main_menu_keyboard()
+            text="❌ Участник не найден.", reply_markup=create_main_menu_keyboard()
         )
         return SearchStates.SHOWING_RESULTS
 

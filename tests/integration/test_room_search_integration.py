@@ -97,8 +97,10 @@ class TestRoomSearchIntegration:
             mock_service.search_by_room = AsyncMock(return_value=sample_participants)
             mock_get_service.return_value = mock_service
 
-            # Execute room search
-            result_state = await handle_room_search_command(update, context)
+            # Execute room search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await handle_room_search_command(update, context)
 
             # Verify service calls
             mock_service.search_by_room.assert_called_once_with("201")
@@ -139,8 +141,10 @@ class TestRoomSearchIntegration:
         update, context = mock_update_and_context
         update.message.text = "/search_room"
 
-        # Execute room search
-        result_state = await handle_room_search_command(update, context)
+        # Execute room search with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result_state = await handle_room_search_command(update, context)
 
         # Verify prompt message sent
         update.message.reply_text.assert_called_once()
@@ -156,8 +160,10 @@ class TestRoomSearchIntegration:
         update, context = mock_update_and_context
         update.message.text = "ABC"
 
-        # Execute room search processing
-        result_state = await process_room_search(update, context)
+        # Execute room search processing with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result_state = await process_room_search(update, context)
 
         # Verify error message sent
         update.message.reply_text.assert_called_once()
@@ -183,8 +189,10 @@ class TestRoomSearchIntegration:
             mock_service.search_by_room = AsyncMock(return_value=[])
             mock_get_service.return_value = mock_service
 
-            # Execute room search
-            result_state = await process_room_search(update, context)
+            # Execute room search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await process_room_search(update, context)
 
             # Verify service calls
             mock_service.search_by_room.assert_called_once_with("999")
@@ -211,8 +219,10 @@ class TestRoomSearchIntegration:
             mock_service.search_by_room = AsyncMock(side_effect=Exception("API Error"))
             mock_get_service.return_value = mock_service
 
-            # Execute room search
-            result_state = await process_room_search(update, context)
+            # Execute room search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await process_room_search(update, context)
 
             # Verify error message sent
             update.message.reply_text.assert_called_once()
@@ -250,7 +260,9 @@ class TestRoomSearchIntegration:
             import time
 
             start_time = time.time()
-            result_state = await process_room_search(update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await process_room_search(update, context)
             end_time = time.time()
 
             execution_time = end_time - start_time
@@ -295,8 +307,10 @@ class TestRoomSearchIntegration:
             )
             mock_get_service.return_value = mock_service
 
-            # Execute room search
-            result_state = await process_room_search(update, context)
+            # Execute room search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await process_room_search(update, context)
 
             # Verify service calls with alphanumeric room
             mock_service.search_by_room.assert_called_once_with("A201")

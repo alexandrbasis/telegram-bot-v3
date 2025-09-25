@@ -101,10 +101,14 @@ class TestSearchConversationFloorIntegration:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.floor_search_handlers.get_search_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_floor_search_command_integration(
-        self, mock_get_service, mock_update_floor_command, mock_context
+        self, mock_get_role, mock_get_service, mock_update_floor_command, mock_context
     ):
         """Test that /search_floor command works through conversation handler."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock search service
         mock_service = AsyncMock()
         mock_service.search_by_floor.return_value = []

@@ -75,10 +75,14 @@ class TestHandleFloorSearchCommand:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.floor_search_handlers.get_search_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_handle_floor_search_command_with_floor_number(
-        self, mock_get_service, mock_update_message, mock_context
+        self, mock_get_role, mock_get_service, mock_update_message, mock_context
     ):
         """Test /search_floor command with floor number."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock search service
         mock_service = AsyncMock()
         mock_service.search_by_floor.return_value = [
@@ -114,8 +118,14 @@ class TestHandleFloorSearchCommand:
         )
 
     @pytest.mark.asyncio
-    async def test_handle_floor_search_command_without_floor_number(self, mock_context):
+    @patch("src.utils.access_control.get_user_role")
+    async def test_handle_floor_search_command_without_floor_number(
+        self, mock_get_role, mock_context
+    ):
         """Test /search_floor command without floor number."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock update with just /search_floor
         update = Mock(spec=Update)
         message = Mock(spec=Message)
@@ -207,14 +217,19 @@ class TestProcessFloorSearch:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.floor_search_handlers.get_search_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_process_floor_search_found_participants(
         self,
+        mock_get_role,
         mock_get_service,
         mock_update_message,
         mock_context,
         sample_floor_participants,
     ):
         """Test processing floor search with found participants grouped by room."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock search service
         mock_service = AsyncMock()
         mock_service.search_by_floor.return_value = sample_floor_participants
@@ -244,10 +259,14 @@ class TestProcessFloorSearch:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.floor_search_handlers.get_search_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_process_floor_search_no_participants(
-        self, mock_get_service, mock_update_message, mock_context
+        self, mock_get_role, mock_get_service, mock_update_message, mock_context
     ):
         """Test processing floor search with no participants found."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock empty search results
         mock_service = AsyncMock()
         mock_service.search_by_floor.return_value = []
@@ -265,10 +284,14 @@ class TestProcessFloorSearch:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.floor_search_handlers.get_search_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_process_floor_search_invalid_floor_number(
-        self, mock_get_service, mock_context
+        self, mock_get_role, mock_get_service, mock_context
     ):
         """Test processing floor search with invalid floor number."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock update with non-numeric floor
         update = Mock(spec=Update)
         message = Mock(spec=Message)
@@ -300,10 +323,14 @@ class TestProcessFloorSearch:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.floor_search_handlers.get_search_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_process_floor_search_service_error(
-        self, mock_get_service, mock_update_message, mock_context
+        self, mock_get_role, mock_get_service, mock_update_message, mock_context
     ):
         """Test handling search service error."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock service error
         mock_service = AsyncMock()
         mock_service.search_by_floor.side_effect = Exception("Service error")
@@ -321,10 +348,14 @@ class TestProcessFloorSearch:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.floor_search_handlers.get_search_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_process_floor_search_room_grouping(
-        self, mock_get_service, mock_update_message, mock_context
+        self, mock_get_role, mock_get_service, mock_update_message, mock_context
     ):
         """Test that floor search results are properly grouped by room."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock participants in different rooms
         participants = [
             Participant(

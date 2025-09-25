@@ -82,7 +82,9 @@ class TestEditHandlerLoggingIntegration:
         mock_update.callback_query.data = "edit_field:gender"
 
         # Execute
-        result = await handle_field_edit_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_field_edit_selection(mock_update, mock_context)
 
         # Verify button click logging
         mock_user_logger.log_button_click.assert_called_once_with(
@@ -118,7 +120,9 @@ class TestEditHandlerLoggingIntegration:
         mock_update.callback_query.data = "edit_field:full_name_ru"
 
         # Execute
-        result = await handle_field_edit_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_field_edit_selection(mock_update, mock_context)
 
         # Verify button click logging
         mock_user_logger.log_button_click.assert_called_once_with(
@@ -144,7 +148,9 @@ class TestEditHandlerLoggingIntegration:
         mock_update.callback_query.data = "edit_field:unknown_field"
 
         # Execute
-        result = await handle_field_edit_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_field_edit_selection(mock_update, mock_context)
 
         # Verify button click logging
         mock_user_logger.log_button_click.assert_called_once_with(
@@ -185,7 +191,9 @@ class TestEditHandlerLoggingIntegration:
         mock_service.return_value = service_instance
 
         # Execute
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         # Verify button click logging
         mock_user_logger.log_button_click.assert_called_once_with(
@@ -211,7 +219,9 @@ class TestEditHandlerLoggingIntegration:
         mock_context.user_data["editing_field"] = None
 
         # Execute
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         # Verify button click logging
         mock_user_logger.log_button_click.assert_called_once_with(
@@ -244,7 +254,9 @@ class TestEditHandlerLoggingIntegration:
         # Execute
         from src.bot.handlers.search_handlers import SearchStates
 
-        result = await cancel_editing(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await cancel_editing(mock_update, mock_context)
 
         # Verify button click logging
         mock_user_logger.log_button_click.assert_called_once_with(
@@ -277,7 +289,9 @@ class TestEditHandlerLoggingIntegration:
         }
 
         # Execute
-        result = await show_save_confirmation(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_save_confirmation(mock_update, mock_context)
 
         # Verify button click logging
         mock_user_logger.log_button_click.assert_called_once_with(
@@ -316,7 +330,9 @@ class TestEditHandlerLoggingIntegration:
         # Execute
         from src.bot.handlers.search_handlers import SearchStates
 
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         # Verify button click logging
         mock_user_logger.log_button_click.assert_called_once_with(
@@ -349,7 +365,9 @@ class TestEditHandlerLoggingIntegration:
         mock_repo.return_value = repo_instance
 
         # Execute
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         # Verify missing response logging for failed save
         mock_user_logger.log_missing_response.assert_called_once_with(
@@ -375,7 +393,9 @@ class TestEditHandlerLoggingIntegration:
             mock_save.return_value = MagicMock()
 
             # Execute
-            result = await retry_save(mock_update, mock_context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await retry_save(mock_update, mock_context)
 
             # Verify button click logging
             mock_user_logger.log_button_click.assert_called_once_with(
@@ -394,7 +414,9 @@ class TestEditHandlerLoggingIntegration:
 
         # Execute
         with patch("src.bot.handlers.search_handlers.get_results_navigation_keyboard"):
-            result = await cancel_editing(mock_update, mock_context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await cancel_editing(mock_update, mock_context)
 
         # Verify no logging calls were made since logger is None
         # This test passes if no AttributeError is raised
@@ -412,7 +434,9 @@ class TestEditHandlerLoggingIntegration:
 
         # Execute
         with patch("src.bot.handlers.search_handlers.get_results_navigation_keyboard"):
-            result = await cancel_editing(mock_update, mock_context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await cancel_editing(mock_update, mock_context)
 
         # Verify button click logging with None username
         mock_user_logger.log_button_click.assert_called_once_with(

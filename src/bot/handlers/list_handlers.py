@@ -7,13 +7,14 @@ from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from src.bot.handlers.search_handlers import SearchStates, main_menu_button
+from src.bot.handlers.search_handlers import SearchStates, _return_to_main_menu
 from src.bot.keyboards.list_keyboards import (
     create_department_filter_keyboard,
     get_list_pagination_keyboard,
     get_role_selection_keyboard,
 )
 from src.services import service_factory
+from src.utils.access_control import require_viewer_or_above
 from src.utils.translations import department_to_russian
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,9 @@ async def _safe_edit_message_text(
         raise
 
 
+@require_viewer_or_above(
+    "❌ Доступ к спискам участников только для авторизованных пользователей."
+)
 async def handle_get_list_request(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
@@ -65,6 +69,9 @@ async def handle_get_list_request(
     )
 
 
+@require_viewer_or_above(
+    "❌ Доступ к выбору типа списка только для авторизованных пользователей."
+)
 async def handle_role_selection(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
@@ -150,6 +157,9 @@ async def handle_role_selection(
         )
 
 
+@require_viewer_or_above(
+    "❌ Доступ к навигации по спискам только для авторизованных пользователей."
+)
 async def handle_list_navigation(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -168,8 +178,10 @@ async def handle_list_navigation(
     action = query.data.split(":")[1]
 
     if action == "MAIN_MENU":
-        # Return to main menu using proper navigation (main_menu_button handles answer)
-        return await main_menu_button(update, context)
+        # Return to main menu using proper navigation with auth-safe helper
+        # Note: _return_to_main_menu is auth-safe as handle_list_navigation
+        # is already decorated
+        return await _return_to_main_menu(update, context)
 
     if action == "DEPARTMENT":
         # Return to department selection for team members
@@ -332,6 +344,9 @@ async def handle_list_navigation(
     return SearchStates.MAIN_MENU
 
 
+@require_viewer_or_above(
+    "❌ Доступ к фильтрации по департаментам только для авторизованных пользователей."
+)
 async def handle_department_filter_selection(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:

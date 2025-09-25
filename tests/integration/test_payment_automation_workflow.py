@@ -49,6 +49,7 @@ class TestPaymentAutomationWorkflow:
         message.message_id = 1
         message.chat = mock_chat
         message.edit_text = AsyncMock()
+        message.reply_text = AsyncMock()  # Add reply_text for authorization decorator
         return message
 
     @pytest.fixture
@@ -62,10 +63,12 @@ class TestPaymentAutomationWorkflow:
         return query
 
     @pytest.fixture
-    def mock_update(self, mock_callback_query):
+    def mock_update(self, mock_callback_query, mock_user):
         """Mock Telegram update."""
         update = Mock(spec=Update)
         update.callback_query = mock_callback_query
+        update.effective_user = mock_user
+        update.message = None  # Explicitly set to None for callback queries
         return update
 
     @pytest.fixture
@@ -103,6 +106,7 @@ class TestPaymentAutomationWorkflow:
             patch(
                 "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
             ) as mock_logger,
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
 
             # Setup repository mock
@@ -110,6 +114,7 @@ class TestPaymentAutomationWorkflow:
             mock_repo.update_by_id.return_value = True
             mock_get_repo.return_value = mock_repo
             mock_logger.return_value = None
+            mock_get_role.return_value = "coordinator"  # Set appropriate role
 
             # Execute save_changes
             await save_changes(mock_update, mock_context)
@@ -140,6 +145,7 @@ class TestPaymentAutomationWorkflow:
             patch(
                 "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
             ) as mock_logger,
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
 
             # Setup repository mock
@@ -147,6 +153,7 @@ class TestPaymentAutomationWorkflow:
             mock_repo.update_by_id.return_value = True
             mock_get_repo.return_value = mock_repo
             mock_logger.return_value = None
+            mock_get_role.return_value = "coordinator"  # Set appropriate role
 
             # Execute save_changes
             await save_changes(mock_update, mock_context)
@@ -173,6 +180,7 @@ class TestPaymentAutomationWorkflow:
             patch(
                 "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
             ) as mock_logger,
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
 
             # Setup repository mock
@@ -180,6 +188,7 @@ class TestPaymentAutomationWorkflow:
             mock_repo.update_by_id.return_value = True
             mock_get_repo.return_value = mock_repo
             mock_logger.return_value = None
+            mock_get_role.return_value = "coordinator"  # Set appropriate role
 
             # Execute save_changes
             await save_changes(mock_update, mock_context)
@@ -210,6 +219,7 @@ class TestPaymentAutomationWorkflow:
             patch(
                 "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
             ) as mock_logger,
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
 
             # Setup repository mock
@@ -217,6 +227,7 @@ class TestPaymentAutomationWorkflow:
             mock_repo.update_by_id.return_value = True
             mock_get_repo.return_value = mock_repo
             mock_logger.return_value = None
+            mock_get_role.return_value = "coordinator"  # Set appropriate role
 
             # Execute save_changes
             await save_changes(mock_update, mock_context)
@@ -249,6 +260,7 @@ class TestPaymentAutomationWorkflow:
             patch(
                 "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
             ) as mock_logger,
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
 
             # Setup repository mock
@@ -256,6 +268,7 @@ class TestPaymentAutomationWorkflow:
             mock_repo.update_by_id.return_value = True
             mock_get_repo.return_value = mock_repo
             mock_logger.return_value = None
+            mock_get_role.return_value = "coordinator"  # Set appropriate role
 
             # Execute save_changes
             await save_changes(mock_update, mock_context)
@@ -286,6 +299,7 @@ class TestPaymentAutomationWorkflow:
             patch(
                 "src.bot.handlers.edit_participant_handlers.get_user_interaction_logger"
             ) as mock_logger,
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
 
             # Setup repository mock
@@ -293,6 +307,7 @@ class TestPaymentAutomationWorkflow:
             mock_repo.update_by_id.return_value = True
             mock_get_repo.return_value = mock_repo
             mock_logger.return_value = None
+            mock_get_role.return_value = "coordinator"  # Set appropriate role
 
             # Capture logs at INFO level
             caplog.set_level("INFO")

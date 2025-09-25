@@ -90,44 +90,52 @@ class TestStartCommandHandler:
         self, mock_update_message, mock_context
     ):
         """Test /start command sends Russian greeting with search button."""
-        result = await start_command(mock_update_message, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"  # Mock authorized user
 
-        # Should send Russian welcome message
-        mock_update_message.message.reply_text.assert_called_once()
-        call_args = mock_update_message.message.reply_text.call_args
+            result = await start_command(mock_update_message, mock_context)
 
-        # Check Russian text in message
-        message_text = call_args[1]["text"]
-        assert "Добро пожаловать" in message_text
-        assert "Tres Dias" in message_text
-        assert "участников" in message_text
+            # Should send Russian welcome message
+            mock_update_message.message.reply_text.assert_called_once()
+            call_args = mock_update_message.message.reply_text.call_args
 
-        # Should include reply keyboard for navigation
-        assert "reply_markup" in call_args[1]
-        keyboard = call_args[1]["reply_markup"]
-        assert isinstance(keyboard, ReplyKeyboardMarkup)
+            # Check Russian text in message
+            message_text = call_args[1]["text"]
+            assert "Добро пожаловать" in message_text
+            assert "Tres Dias" in message_text
+            assert "участников" in message_text
 
-        # Should return MAIN_MENU state
-        assert result == SearchStates.MAIN_MENU
+            # Should include reply keyboard for navigation
+            assert "reply_markup" in call_args[1]
+            keyboard = call_args[1]["reply_markup"]
+            assert isinstance(keyboard, ReplyKeyboardMarkup)
+
+            # Should return MAIN_MENU state
+            assert result == SearchStates.MAIN_MENU
 
     @pytest.mark.asyncio
     async def test_start_command_user_data_initialization(
         self, mock_update_message, mock_context
     ):
         """Test that /start command initializes user data."""
-        await start_command(mock_update_message, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"  # Mock authorized user
 
-        # Should initialize user_data
-        assert "search_results" in mock_context.user_data
-        assert mock_context.user_data["search_results"] == []
-        assert "force_direct_name_input" in mock_context.user_data
-        assert mock_context.user_data["force_direct_name_input"] is True
+            await start_command(mock_update_message, mock_context)
+
+            # Should initialize user_data
+            assert "search_results" in mock_context.user_data
+            assert mock_context.user_data["search_results"] == []
+            assert "force_direct_name_input" in mock_context.user_data
+            assert mock_context.user_data["force_direct_name_input"] is True
 
     @patch("src.bot.handlers.search_handlers.initialize_main_menu_session")
     @patch("src.bot.handlers.search_handlers.get_welcome_message")
+    @patch("src.utils.access_control.get_user_role")
     @pytest.mark.asyncio
     async def test_start_command_uses_shared_initialization(
         self,
+        mock_get_user_role,
         mock_get_welcome_message,
         mock_initialize_main_menu_session,
         mock_update_message,
@@ -135,6 +143,7 @@ class TestStartCommandHandler:
     ):
         """Test that start_command uses shared initialization helpers."""
         # Setup mocks
+        mock_get_user_role.return_value = "viewer"  # Mock authorized user
         mock_get_welcome_message.return_value = "Test welcome message"
 
         # Execute handler
@@ -189,7 +198,10 @@ class TestSearchButtonHandler:
     @pytest.mark.asyncio
     async def test_search_button_handler(self, mock_callback_query, mock_context):
         """Test search button click handler."""
-        result = await search_button(mock_callback_query, mock_context)
+        # Execute with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result = await search_button(mock_callback_query, mock_context)
 
         # Should answer callback query
         mock_callback_query.callback_query.answer.assert_called_once()
@@ -430,7 +442,10 @@ class TestMainMenuButtonHandler:
     @pytest.mark.asyncio
     async def test_main_menu_button_handler(self, mock_callback_query, mock_context):
         """Test main menu button click handler."""
-        result = await main_menu_button(mock_callback_query, mock_context)
+        # Execute with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result = await main_menu_button(mock_callback_query, mock_context)
 
         # Should answer callback query
         mock_callback_query.callback_query.answer.assert_called_once()
@@ -468,8 +483,10 @@ class TestMainMenuButtonHandler:
         # Setup mocks
         mock_get_welcome_message.return_value = "Test unified welcome message"
 
-        # Execute handler
-        result = await main_menu_button(mock_callback_query, mock_context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result = await main_menu_button(mock_callback_query, mock_context)
 
         # Verify shared helpers were called
         mock_initialize_main_menu_session.assert_called_once_with(mock_context)
@@ -495,8 +512,10 @@ class TestMainMenuButtonHandler:
         )
         mock_get_welcome_message.return_value = unified_message
 
-        # Execute handler
-        await main_menu_button(mock_callback_query, mock_context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await main_menu_button(mock_callback_query, mock_context)
 
         # Verify the unified welcome message is used
         mock_get_welcome_message.assert_called_once()
@@ -512,6 +531,8 @@ class TestHandlerIntegration:
         """Test that handlers return correct conversation states."""
         # This is a basic integration test to verify state flow
         mock_update = Mock()
+        mock_update.effective_user = Mock()
+        mock_update.effective_user.id = 12345
         mock_context = Mock()
         mock_context.user_data = {}
 
@@ -519,7 +540,9 @@ class TestHandlerIntegration:
         with (
             patch("src.bot.handlers.search_handlers.get_main_menu_keyboard"),
             patch("src.bot.handlers.search_handlers.get_waiting_for_name_keyboard"),
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
+            mock_get_role.return_value = "viewer"
 
             # Mock message for start command
             mock_update.message = Mock()
@@ -1001,8 +1024,10 @@ class TestUserInteractionLogging:
         mock_logger_instance = Mock()
         mock_get_logger.return_value = mock_logger_instance
 
-        # Execute search button handler
-        await search_button(mock_callback_query_with_user_details, mock_context)
+        # Execute search button handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await search_button(mock_callback_query_with_user_details, mock_context)
 
         # Verify logger was instantiated
         mock_get_logger.assert_called_once()
@@ -1031,8 +1056,10 @@ class TestUserInteractionLogging:
         mock_logger_instance = Mock()
         mock_get_logger.return_value = mock_logger_instance
 
-        # Execute handler
-        await main_menu_button(mock_callback_query_with_user_details, mock_context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await main_menu_button(mock_callback_query_with_user_details, mock_context)
 
         # Verify button click logging
         mock_logger_instance.log_button_click.assert_called_once_with(
@@ -1136,8 +1163,10 @@ class TestUserInteractionLogging:
         mock_logger_instance = Mock()
         mock_get_logger.return_value = mock_logger_instance
 
-        # Execute handler
-        await search_button(update, context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await search_button(update, context)
 
         # Verify logging called with None username
         mock_logger_instance.log_button_click.assert_called_once_with(
@@ -1213,8 +1242,10 @@ class TestUserInteractionLogging:
         update.callback_query = callback_query
         context.user_data = {}
 
-        # Execute handler
-        await search_button(update, context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await search_button(update, context)
 
         # Provider is consulted but no logger is used
         mock_get_logger.assert_called_once()
@@ -1475,101 +1506,414 @@ class TestStartCommandMainMenuButtonEquivalence:
         self, mock_update_message, mock_update_callback, mock_context
     ):
         """Test that both handlers initialize user_data identically."""
-        # Test start_command initialization
-        context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context1.user_data = {}
-        await start_command(mock_update_message, context1)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"  # Mock authorized user
 
-        # Test main_menu_button initialization
-        context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context2.user_data = {}
-        await main_menu_button(mock_update_callback, context2)
+            # Test start_command initialization
+            context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+            context1.user_data = {}
+            await start_command(mock_update_message, context1)
 
-        # Both should have identical user_data initialization
-        assert (
-            context1.user_data["search_results"]
-            == context2.user_data["search_results"]
-            == []
-        )
-        assert (
-            context1.user_data["force_direct_name_input"]
-            == context2.user_data["force_direct_name_input"]
-            == True
-        )
+            # Test main_menu_button initialization
+            context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+            context2.user_data = {}
+            await main_menu_button(mock_update_callback, context2)
+
+            # Both should have identical user_data initialization
+            assert (
+                context1.user_data["search_results"]
+                == context2.user_data["search_results"]
+                == []
+            )
+            assert (
+                context1.user_data["force_direct_name_input"]
+                == context2.user_data["force_direct_name_input"]
+                == True
+            )
 
     @pytest.mark.asyncio
     async def test_start_command_and_main_menu_button_equivalent_welcome_message(
         self, mock_update_message, mock_update_callback, mock_context
     ):
         """Test that both handlers use identical welcome message."""
-        # Test start_command welcome message
-        context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context1.user_data = {}
-        await start_command(mock_update_message, context1)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"  # Mock authorized user
 
-        start_call_args = mock_update_message.message.reply_text.call_args
-        start_welcome_message = start_call_args[1]["text"]
+            # Test start_command welcome message
+            context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+            context1.user_data = {}
+            await start_command(mock_update_message, context1)
 
-        # Test main_menu_button welcome message
-        context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context2.user_data = {}
-        await main_menu_button(mock_update_callback, context2)
+            start_call_args = mock_update_message.message.reply_text.call_args
+            start_welcome_message = start_call_args[1]["text"]
 
-        main_menu_edit_args = (
-            mock_update_callback.callback_query.message.edit_text.call_args
-        )
-        main_menu_welcome_message = main_menu_edit_args[1]["text"]
+            # Test main_menu_button welcome message
+            context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+            context2.user_data = {}
+            await main_menu_button(mock_update_callback, context2)
 
-        # Both should use identical welcome message
-        assert start_welcome_message == main_menu_welcome_message
-        assert "Добро пожаловать в бот Tres Dias! 🙏" in start_welcome_message
-        assert "Выберите тип поиска участников" in start_welcome_message
+            main_menu_edit_args = (
+                mock_update_callback.callback_query.message.edit_text.call_args
+            )
+            main_menu_welcome_message = main_menu_edit_args[1]["text"]
+
+            # Both should use identical welcome message
+            assert start_welcome_message == main_menu_welcome_message
+            assert "Добро пожаловать в бот Tres Dias! 🙏" in start_welcome_message
+            assert "Выберите тип поиска участников" in start_welcome_message
 
     @pytest.mark.asyncio
     async def test_start_command_and_main_menu_button_equivalent_return_state(
         self, mock_update_message, mock_update_callback, mock_context
     ):
         """Test that both handlers return identical conversation state."""
-        # Test start_command return state
-        context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context1.user_data = {}
-        result1 = await start_command(mock_update_message, context1)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"  # Mock authorized user
 
-        # Test main_menu_button return state
-        context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context2.user_data = {}
-        result2 = await main_menu_button(mock_update_callback, context2)
+            # Test start_command return state
+            context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+            context1.user_data = {}
+            result1 = await start_command(mock_update_message, context1)
 
-        # Both should return identical conversation state
-        assert result1 == result2 == SearchStates.MAIN_MENU
+            # Test main_menu_button return state
+            context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+            context2.user_data = {}
+            result2 = await main_menu_button(mock_update_callback, context2)
+
+            # Both should return identical conversation state
+            assert result1 == result2 == SearchStates.MAIN_MENU
 
     @pytest.mark.asyncio
     async def test_start_command_and_main_menu_button_keyboard_equivalence(
         self, mock_update_message, mock_update_callback, mock_context
     ):
         """Test that both handlers provide equivalent keyboard functionality."""
-        # Test start_command keyboard
-        context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context1.user_data = {}
-        await start_command(mock_update_message, context1)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"  # Mock authorized user
 
-        start_call_args = mock_update_message.message.reply_text.call_args
-        start_keyboard = start_call_args[1]["reply_markup"]
+            # Test start_command keyboard
+            context1 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+            context1.user_data = {}
+            await start_command(mock_update_message, context1)
 
-        # Test main_menu_button keyboard (from the reply_text call)
-        context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
-        context2.user_data = {}
-        await main_menu_button(mock_update_callback, context2)
+            start_call_args = mock_update_message.message.reply_text.call_args
+            start_keyboard = start_call_args[1]["reply_markup"]
 
-        main_menu_reply_args = (
-            mock_update_callback.callback_query.message.reply_text.call_args
-        )
-        main_menu_keyboard = main_menu_reply_args[1]["reply_markup"]
+            # Test main_menu_button keyboard (from the reply_text call)
+            context2 = Mock(spec=ContextTypes.DEFAULT_TYPE)
+            context2.user_data = {}
+            await main_menu_button(mock_update_callback, context2)
 
-        # Both should provide ReplyKeyboardMarkup
-        assert isinstance(start_keyboard, ReplyKeyboardMarkup)
-        assert isinstance(main_menu_keyboard, ReplyKeyboardMarkup)
+            main_menu_reply_args = (
+                mock_update_callback.callback_query.message.reply_text.call_args
+            )
+            main_menu_keyboard = main_menu_reply_args[1]["reply_markup"]
 
-        # Both should have the same keyboard structure
-        assert len(start_keyboard.keyboard) == len(main_menu_keyboard.keyboard)
-        assert start_keyboard.resize_keyboard == main_menu_keyboard.resize_keyboard
+            # Both should provide ReplyKeyboardMarkup
+            assert isinstance(start_keyboard, ReplyKeyboardMarkup)
+            assert isinstance(main_menu_keyboard, ReplyKeyboardMarkup)
+
+            # Both should have the same keyboard structure
+            assert len(start_keyboard.keyboard) == len(main_menu_keyboard.keyboard)
+            assert start_keyboard.resize_keyboard == main_menu_keyboard.resize_keyboard
+
+
+class TestStartCommandAuthorization:
+    """Test authorization controls for start command."""
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.fixture
+    def mock_user_unauthorized(self):
+        """Mock unauthorized user."""
+        user = Mock(spec=User)
+        user.id = 999999
+        user.first_name = "Unauthorized"
+        return user
+
+    @pytest.fixture
+    def mock_user_viewer(self):
+        """Mock viewer role user."""
+        user = Mock(spec=User)
+        user.id = 123456
+        user.first_name = "Viewer"
+        return user
+
+    @pytest.fixture
+    def mock_update_unauthorized(self, mock_user_unauthorized):
+        """Mock update with unauthorized user."""
+        update = Mock(spec=Update)
+        update.effective_user = mock_user_unauthorized
+        update.message = Mock(spec=Message)
+        update.message.reply_text = AsyncMock()
+        return update
+
+    @pytest.fixture
+    def mock_update_viewer(self, mock_user_viewer):
+        """Mock update with viewer role user."""
+        update = Mock(spec=Update)
+        update.effective_user = mock_user_viewer
+        update.message = Mock(spec=Message)
+        update.message.reply_text = AsyncMock()
+        return update
+
+    @pytest.mark.asyncio
+    async def test_start_command_denies_unauthorized_user(
+        self, mock_update_unauthorized, mock_context
+    ):
+        """Test start command denies access to unauthorized users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await start_command(mock_update_unauthorized, mock_context)
+
+            # Should deny access
+            mock_update_unauthorized.message.reply_text.assert_called_once()
+            call_args = mock_update_unauthorized.message.reply_text.call_args
+            # Message is passed as positional argument
+            message_text = call_args[0][0]  # First positional argument
+            assert "❌" in message_text
+            assert "доступ" in message_text.lower()
+
+            # Should not proceed to main menu
+            assert result is None
+
+    @pytest.mark.asyncio
+    async def test_start_command_allows_authorized_viewer(
+        self, mock_update_viewer, mock_context
+    ):
+        """Test start command allows access to authorized viewer users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            result = await start_command(mock_update_viewer, mock_context)
+
+            # Should allow access and display menu
+            mock_update_viewer.message.reply_text.assert_called_once()
+            call_args = mock_update_viewer.message.reply_text.call_args
+            message_text = call_args[1]["text"]
+            assert "Добро пожаловать" in message_text
+
+            # Should return MAIN_MENU state
+            assert result == SearchStates.MAIN_MENU
+
+    @pytest.mark.asyncio
+    async def test_start_command_allows_authorized_coordinator(
+        self, mock_update_viewer, mock_context
+    ):
+        """Test start command allows access to coordinator users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+
+            result = await start_command(mock_update_viewer, mock_context)
+
+            # Should allow access
+            assert result == SearchStates.MAIN_MENU
+
+    @pytest.mark.asyncio
+    async def test_start_command_allows_authorized_admin(
+        self, mock_update_viewer, mock_context
+    ):
+        """Test start command allows access to admin users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "admin"
+
+            result = await start_command(mock_update_viewer, mock_context)
+
+            # Should allow access
+            assert result == SearchStates.MAIN_MENU
+
+
+class TestSearchButtonAuthorization:
+    """Test authorization controls for search button handler."""
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.fixture
+    def mock_update_message(self):
+        """Mock update with message (text button)."""
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 123456
+
+        update.message = Mock(spec=Message)
+        update.message.reply_text = AsyncMock()
+        update.callback_query = None
+
+        return update
+
+    @pytest.fixture
+    def mock_update_callback(self):
+        """Mock update with callback query (inline button)."""
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 123456
+
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
+        update.callback_query.answer = AsyncMock()
+
+        update.message = None
+
+        return update
+
+    @pytest.mark.asyncio
+    async def test_search_button_blocks_unauthorized_message(
+        self, mock_update_message, mock_context
+    ):
+        """Test search button blocks unauthorized users via message."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await search_button(mock_update_message, mock_context)
+
+            # Should block access and not return a state
+            assert result is None
+
+            # Should send unauthorized message
+            mock_update_message.message.reply_text.assert_called_once_with(
+                "❌ Доступ к поиску только для авторизованных пользователей."
+            )
+
+    @pytest.mark.asyncio
+    async def test_search_button_blocks_unauthorized_callback(
+        self, mock_update_callback, mock_context
+    ):
+        """Test search button blocks unauthorized users via callback query."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await search_button(mock_update_callback, mock_context)
+
+            # Should block access and not return a state
+            assert result is None
+
+            # Should send unauthorized message and answer callback
+            mock_update_callback.callback_query.message.reply_text.assert_called_once_with(
+                "❌ Доступ к поиску только для авторизованных пользователей."
+            )
+            mock_update_callback.callback_query.answer.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_search_button_allows_authorized_viewer(
+        self, mock_update_message, mock_context
+    ):
+        """Test search button allows access to viewer users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch(
+                "src.bot.handlers.search_handlers.create_search_mode_keyboard"
+            ) as mock_keyboard:
+                mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
+
+                result = await search_button(mock_update_message, mock_context)
+
+                # Should allow access
+                assert result == SearchStates.SEARCH_MODE_SELECTION
+
+
+class TestMainMenuButtonAuthorization:
+    """Test authorization controls for main menu button handler."""
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.fixture
+    def mock_update_message(self):
+        """Mock update with message (text button)."""
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 123456
+
+        update.message = Mock(spec=Message)
+        update.message.reply_text = AsyncMock()
+        update.callback_query = None
+
+        return update
+
+    @pytest.fixture
+    def mock_update_callback(self):
+        """Mock update with callback query (inline button)."""
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 123456
+
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
+        update.callback_query.answer = AsyncMock()
+
+        update.message = None
+
+        return update
+
+    @pytest.mark.asyncio
+    async def test_main_menu_button_blocks_unauthorized_message(
+        self, mock_update_message, mock_context
+    ):
+        """Test main menu button blocks unauthorized users via message."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await main_menu_button(mock_update_message, mock_context)
+
+            # Should block access and not return a state
+            assert result is None
+
+            # Should send unauthorized message
+            mock_update_message.message.reply_text.assert_called_once_with(
+                "❌ Доступ к меню только для авторизованных пользователей."
+            )
+
+    @pytest.mark.asyncio
+    async def test_main_menu_button_blocks_unauthorized_callback(
+        self, mock_update_callback, mock_context
+    ):
+        """Test main menu button blocks unauthorized users via callback query."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await main_menu_button(mock_update_callback, mock_context)
+
+            # Should block access and not return a state
+            assert result is None
+
+            # Should send unauthorized message and answer callback
+            mock_update_callback.callback_query.message.reply_text.assert_called_once_with(
+                "❌ Доступ к меню только для авторизованных пользователей."
+            )
+            mock_update_callback.callback_query.answer.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_main_menu_button_allows_authorized_viewer(
+        self, mock_update_message, mock_context
+    ):
+        """Test main menu button allows access to viewer users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch(
+                "src.bot.handlers.search_handlers.create_main_menu_keyboard"
+            ) as mock_keyboard:
+                mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
+
+                result = await main_menu_button(mock_update_message, mock_context)
+
+                # Should allow access
+                assert result == SearchStates.MAIN_MENU

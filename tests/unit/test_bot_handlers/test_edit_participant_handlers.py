@@ -95,7 +95,9 @@ class TestShowParticipantEditMenu:
         self, mock_update, mock_context
     ):
         """Test showing edit menu with participant data displays all fields."""
-        result = await show_participant_edit_menu(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_participant_edit_menu(mock_update, mock_context)
 
         # Should return FIELD_SELECTION state
         assert result == EditStates.FIELD_SELECTION
@@ -125,7 +127,9 @@ class TestShowParticipantEditMenu:
         mock_context.user_data["current_participant"].date_of_birth = date(1990, 5, 15)
         mock_context.user_data["current_participant"].age = 33
 
-        result = await show_participant_edit_menu(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_participant_edit_menu(mock_update, mock_context)
 
         # Should return FIELD_SELECTION state
         assert result == EditStates.FIELD_SELECTION
@@ -144,7 +148,9 @@ class TestShowParticipantEditMenu:
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {}
 
-        result = await show_participant_edit_menu(mock_update, context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_participant_edit_menu(mock_update, context)
 
         # Should return FIELD_SELECTION state (graceful handling)
         assert result == EditStates.FIELD_SELECTION
@@ -164,7 +170,9 @@ class TestHandleFieldEditSelection:
         """Test handling text field edit selection prompts for input."""
         mock_update.callback_query.data = "edit_field:full_name_ru"
 
-        result = await handle_field_edit_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_field_edit_selection(mock_update, mock_context)
 
         assert result == EditStates.TEXT_INPUT
         assert mock_context.user_data["editing_field"] == "full_name_ru"
@@ -180,7 +188,9 @@ class TestHandleFieldEditSelection:
         """Test handling button field edit selection shows options."""
         mock_update.callback_query.data = "edit_field:gender"
 
-        result = await handle_field_edit_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_field_edit_selection(mock_update, mock_context)
 
         assert result == EditStates.BUTTON_SELECTION
         assert mock_context.user_data["editing_field"] == "gender"
@@ -201,7 +211,9 @@ class TestHandleFieldEditSelection:
         """Test handling special field (payment_amount) edit selection."""
         mock_update.callback_query.data = "edit_field:payment_amount"
 
-        result = await handle_field_edit_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_field_edit_selection(mock_update, mock_context)
 
         assert result == EditStates.TEXT_INPUT
         assert mock_context.user_data["editing_field"] == "payment_amount"
@@ -232,7 +244,9 @@ class TestHandleTextFieldInput:
         mock_context.user_data["editing_field"] = "full_name_ru"
         mock_update.message.text = "Петр Петров"
 
-        result = await handle_text_field_input(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_text_field_input(mock_update, mock_context)
 
         assert result == EditStates.FIELD_SELECTION
         assert (
@@ -255,7 +269,9 @@ class TestHandleTextFieldInput:
         mock_context.user_data["editing_field"] = "payment_amount"
         mock_update.message.text = "1500"
 
-        result = await handle_text_field_input(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_text_field_input(mock_update, mock_context)
 
         assert result == EditStates.FIELD_SELECTION
         assert mock_context.user_data["editing_changes"]["payment_amount"] == 1500
@@ -268,7 +284,9 @@ class TestHandleTextFieldInput:
         mock_context.user_data["editing_field"] = "payment_amount"
         mock_update.message.text = "not_a_number"
 
-        result = await handle_text_field_input(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_text_field_input(mock_update, mock_context)
 
         assert result == EditStates.TEXT_INPUT  # Stay in input state
         assert "payment_amount" not in mock_context.user_data["editing_changes"]
@@ -288,7 +306,9 @@ class TestHandleTextFieldInput:
         mock_context.user_data["editing_field"] = "payment_date"
         mock_update.message.text = "invalid-date"
 
-        result = await handle_text_field_input(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_text_field_input(mock_update, mock_context)
 
         assert result == EditStates.TEXT_INPUT  # Stay in input state
         assert "payment_date" not in mock_context.user_data["editing_changes"]
@@ -319,7 +339,9 @@ class TestHandleTextFieldInput:
         mock_context.user_data["editing_changes"] = {}
         mock_update.message.text = "Петр Петров"
 
-        result = await handle_text_field_input(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_text_field_input(mock_update, mock_context)
 
         # Should return to field selection state
         assert result == EditStates.FIELD_SELECTION
@@ -364,7 +386,9 @@ class TestHandleButtonFieldSelection:
         mock_context.user_data["editing_field"] = "gender"
         mock_update.callback_query.data = "select_value:F"
 
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         assert result == EditStates.FIELD_SELECTION
         assert mock_context.user_data["editing_changes"]["gender"] == Gender.FEMALE
@@ -387,7 +411,9 @@ class TestHandleButtonFieldSelection:
         mock_context.user_data["editing_field"] = "size"
         mock_update.callback_query.data = "select_value:XL"
 
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         assert result == EditStates.FIELD_SELECTION
         assert mock_context.user_data["editing_changes"]["size"] == Size.XL
@@ -400,7 +426,9 @@ class TestHandleButtonFieldSelection:
         mock_context.user_data["editing_field"] = "gender"
         mock_update.callback_query.data = "select_value:INVALID"
 
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         assert result == EditStates.BUTTON_SELECTION  # Stay in selection state
         assert "gender" not in mock_context.user_data["editing_changes"]
@@ -421,7 +449,9 @@ class TestHandleButtonFieldSelection:
         mock_context.user_data["editing_field"] = "role"
         mock_update.callback_query.data = "select_value:CANDIDATE"
 
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         assert result == EditStates.FIELD_SELECTION
         assert mock_context.user_data["editing_changes"]["role"] == Role.CANDIDATE
@@ -449,7 +479,9 @@ class TestHandleButtonFieldSelection:
         mock_context.user_data["editing_field"] = "role"
         mock_update.callback_query.data = "select_value:TEAM"
 
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         assert result == EditStates.BUTTON_SELECTION
         # Should set editing field to department for immediate prompt
@@ -484,7 +516,9 @@ class TestSaveEnforcement:
         }
 
         # Try to save
-        result = await save_changes(mock_update, context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, context)
 
         # Should block and prompt for department selection
         assert result == EditStates.BUTTON_SELECTION
@@ -505,7 +539,9 @@ class TestCancelEditing:
         # Import the SearchStates from search_handlers for return state
         from src.bot.handlers.search_handlers import SearchStates
 
-        result = await cancel_editing(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await cancel_editing(mock_update, mock_context)
 
         assert result == SearchStates.SHOWING_RESULTS
         assert mock_context.user_data["editing_changes"] == {}
@@ -525,7 +561,9 @@ class TestSaveChanges:
 
         from src.bot.handlers.search_handlers import SearchStates
 
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         assert result == SearchStates.SHOWING_RESULTS
 
@@ -553,7 +591,9 @@ class TestSaveChanges:
 
         from src.bot.handlers.search_handlers import SearchStates
 
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         assert result == SearchStates.SHOWING_RESULTS
 
@@ -584,7 +624,9 @@ class TestSaveChanges:
 
         from src.bot.handlers.search_handlers import SearchStates
 
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         assert result == SearchStates.SHOWING_RESULTS
 
@@ -623,7 +665,9 @@ class TestSaveChanges:
         mock_repo.update_by_id = AsyncMock(return_value=True)
         mock_get_repo.return_value = mock_repo
 
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         # Should call repository update
         mock_repo.update_by_id.assert_called_once_with("rec123", changes)
@@ -665,7 +709,9 @@ class TestSaveChanges:
         mock_context.user_data["editing_changes"] = {}
         mock_update.callback_query.data = "select_value:TEAM"
 
-        result = await handle_button_field_selection(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_button_field_selection(mock_update, mock_context)
 
         # New behavior: prompt for department selection when upgrading to TEAM
         assert result == EditStates.BUTTON_SELECTION
@@ -703,7 +749,9 @@ class TestSaveConfirmation:
 
         from src.bot.handlers.edit_participant_handlers import show_save_confirmation
 
-        result = await show_save_confirmation(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_save_confirmation(mock_update, mock_context)
 
         # Should show confirmation with changes summary
         mock_update.callback_query.message.edit_text.assert_called()
@@ -736,7 +784,9 @@ class TestSaveConfirmation:
 
         from src.bot.handlers.edit_participant_handlers import show_save_confirmation
 
-        result = await show_save_confirmation(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_save_confirmation(mock_update, mock_context)
 
         # Should show confirmation with changes summary
         mock_update.callback_query.message.edit_text.assert_called()
@@ -757,7 +807,9 @@ class TestSaveConfirmation:
 
         from src.bot.handlers.edit_participant_handlers import show_save_confirmation
 
-        result = await show_save_confirmation(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await show_save_confirmation(mock_update, mock_context)
 
         mock_update.callback_query.message.edit_text.assert_called()
         call_args = mock_update.callback_query.message.edit_text.call_args
@@ -786,7 +838,9 @@ class TestErrorHandlingWithRetry:
 
         from src.bot.handlers.edit_participant_handlers import save_changes
 
-        result = await save_changes(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await save_changes(mock_update, mock_context)
 
         # Should show error with retry button
         mock_update.callback_query.message.edit_text.assert_called()
@@ -822,7 +876,9 @@ class TestErrorHandlingWithRetry:
 
         from src.bot.handlers.edit_participant_handlers import retry_save
 
-        result = await retry_save(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await retry_save(mock_update, mock_context)
 
         # Should retry and succeed
         mock_repo.update_by_id.assert_called_once()
@@ -950,7 +1006,9 @@ class TestEditMenuDisplay:
         )
         mock_context.user_data["current_participant"] = participant
 
-        await show_participant_edit_menu(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            await show_participant_edit_menu(mock_update, mock_context)
 
         # Get the message text that was sent
         call_args = mock_update.callback_query.message.edit_text.call_args
@@ -979,7 +1037,9 @@ class TestEditMenuDisplay:
         )
         mock_context.user_data["current_participant"] = participant
 
-        await show_participant_edit_menu(mock_update, mock_context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            await show_participant_edit_menu(mock_update, mock_context)
 
         # Get the message text that was sent
         call_args = mock_update.callback_query.message.edit_text.call_args
@@ -1210,7 +1270,9 @@ class TestDisplayRegressionIssue:
             mock_service.return_value.validate_field_input.return_value = "Новое имя"
 
             # This should trigger the fallback behavior (simple message instead of complete display)
-            result = await handle_text_field_input(mock_update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await handle_text_field_input(mock_update, context)
 
             # Should return to field selection state
             from src.bot.handlers.edit_participant_handlers import EditStates
@@ -1261,7 +1323,9 @@ class TestDisplayRegressionIssue:
             mock_service.return_value.get_russian_display_value.return_value = "Мужской"
 
             # This should trigger the fallback behavior
-            result = await handle_button_field_selection(mock_update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await handle_button_field_selection(mock_update, context)
 
             # Should return to field selection state
             from src.bot.handlers.edit_participant_handlers import EditStates
@@ -1321,7 +1385,9 @@ class TestComprehensiveDisplayRegressionPrevention:
             mock_display.side_effect = Exception("Display function failed")
 
             # This should handle the exception gracefully
-            result = await handle_text_field_input(mock_update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await handle_text_field_input(mock_update, context)
 
             # Should still return to field selection
             from src.bot.handlers.edit_participant_handlers import EditStates
@@ -1375,7 +1441,9 @@ class TestComprehensiveDisplayRegressionPrevention:
             # Make display function throw an exception
             mock_display.side_effect = Exception("Display formatting failed")
 
-            result = await handle_button_field_selection(mock_update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await handle_button_field_selection(mock_update, context)
 
             from src.bot.handlers.edit_participant_handlers import EditStates
 
@@ -1402,7 +1470,9 @@ class TestComprehensiveDisplayRegressionPrevention:
         mock_update.message.text = "Test"
         mock_update.effective_user.id = 12345
 
-        result = await handle_text_field_input(mock_update, context)
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "coordinator"
+            result = await handle_text_field_input(mock_update, context)
 
         from src.bot.handlers.edit_participant_handlers import EditStates
 
@@ -1421,7 +1491,9 @@ class TestComprehensiveDisplayRegressionPrevention:
             mock_service.return_value.validate_field_input.return_value = "Test"
 
             # Should handle invalid participant gracefully
-            result = await handle_text_field_input(mock_update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await handle_text_field_input(mock_update, context)
             assert result == EditStates.FIELD_SELECTION
 
     @pytest.mark.asyncio
@@ -1446,12 +1518,16 @@ class TestComprehensiveDisplayRegressionPrevention:
         mock_update.callback_query.from_user.id = 12345
 
         # Mock successful save
-        with patch(
-            "src.bot.handlers.edit_participant_handlers.get_participant_repository"
-        ) as mock_repo_func:
+        with (
+            patch(
+                "src.bot.handlers.edit_participant_handlers.get_participant_repository"
+            ) as mock_repo_func,
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
+        ):
             mock_repo = AsyncMock()
             mock_repo_func.return_value = mock_repo
             mock_repo.update_by_id.return_value = True
+            mock_get_role.return_value = "coordinator"
 
             result = await save_changes(mock_update, context)
 
@@ -1500,7 +1576,9 @@ class TestComprehensiveDisplayRegressionPrevention:
             mock_display.return_value = "📋 **New Name** (updated)\n🏠 Original Church"
 
             # First edit
-            result = await handle_text_field_input(mock_update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await handle_text_field_input(mock_update, context)
 
             # Participant should still be in context
             assert context.user_data["current_participant"] == participant
@@ -1512,7 +1590,9 @@ class TestComprehensiveDisplayRegressionPrevention:
             mock_service.return_value.validate_field_input.return_value = "New Church"
             mock_display.return_value = "📋 **New Name**\n🏠 New Church (both updated)"
 
-            result = await handle_text_field_input(mock_update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "coordinator"
+                result = await handle_text_field_input(mock_update, context)
 
             # Context should still be maintained
             assert context.user_data["current_participant"] == participant

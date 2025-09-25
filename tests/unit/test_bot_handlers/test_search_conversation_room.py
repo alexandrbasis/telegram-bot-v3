@@ -73,10 +73,14 @@ class TestSearchConversationRoomIntegration:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.room_search_handlers.get_search_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_room_search_command_integration(
-        self, mock_get_service, mock_update_room_command, mock_context
+        self, mock_get_role, mock_get_service, mock_update_room_command, mock_context
     ):
         """Test that /search_room command works through conversation handler."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Mock search service
         mock_service = AsyncMock()
         mock_service.search_by_room_formatted.return_value = [

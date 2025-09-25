@@ -124,8 +124,10 @@ class TestFloorSearchIntegration:
             )
             mock_get_service.return_value = mock_service
 
-            # Execute floor search
-            result_state = await handle_floor_search_command(update, context)
+            # Execute floor search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await handle_floor_search_command(update, context)
 
             # Verify service call
             mock_service.search_by_floor.assert_called_once_with(2)
@@ -171,8 +173,10 @@ class TestFloorSearchIntegration:
         update, context = mock_update_and_context
         update.message.text = "/search_floor"
 
-        # Execute floor search
-        result_state = await handle_floor_search_command(update, context)
+        # Execute floor search with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result_state = await handle_floor_search_command(update, context)
 
         # Verify prompt messages sent (now sends two messages)
         assert update.message.reply_text.call_count == 2
@@ -196,8 +200,10 @@ class TestFloorSearchIntegration:
         update, context = mock_update_and_context
         update.message.text = "ABC"
 
-        # Execute floor search processing
-        result_state = await process_floor_search(update, context)
+        # Execute floor search processing with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result_state = await process_floor_search(update, context)
 
         # Verify error message sent
         update.message.reply_text.assert_called_once()
@@ -223,8 +229,10 @@ class TestFloorSearchIntegration:
             mock_service.search_by_floor = AsyncMock(return_value=[])
             mock_get_service.return_value = mock_service
 
-            # Execute floor search
-            result_state = await process_floor_search(update, context)
+            # Execute floor search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await process_floor_search(update, context)
 
             # Verify service call
             mock_service.search_by_floor.assert_called_once_with(99)
@@ -251,8 +259,10 @@ class TestFloorSearchIntegration:
             mock_service.search_by_floor = AsyncMock(side_effect=Exception("API Error"))
             mock_get_service.return_value = mock_service
 
-            # Execute floor search
-            result_state = await process_floor_search(update, context)
+            # Execute floor search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await process_floor_search(update, context)
 
             # Verify error message sent
             update.message.reply_text.assert_called_once()
@@ -405,7 +415,9 @@ class TestFloorSearchIntegration:
             import time
 
             start_time = time.time()
-            result_state = await process_floor_search(update, context)
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await process_floor_search(update, context)
             end_time = time.time()
 
             execution_time = end_time - start_time
@@ -436,8 +448,10 @@ class TestFloorSearchIntegration:
             )
             mock_get_service.return_value = mock_service
 
-            # Execute floor search
-            result_state = await process_floor_search(update, context)
+            # Execute floor search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                result_state = await process_floor_search(update, context)
 
             # Verify service called with converted integer
             mock_service.search_by_floor.assert_called_once_with(2)
@@ -792,13 +806,19 @@ class TestFloorSearchCallbackIntegration:
             )
             mock_get_service.return_value = mock_service
 
-            # Execute traditional search
-            traditional_state = await process_floor_search(text_update, text_context)
+            # Execute traditional search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                traditional_state = await process_floor_search(
+                    text_update, text_context
+                )
 
-            # Execute callback search
-            callback_state = await handle_floor_selection_callback(
-                callback_update, callback_context
-            )
+            # Execute callback search with authorization mocking
+            with patch("src.utils.access_control.get_user_role") as mock_get_role:
+                mock_get_role.return_value = "viewer"
+                callback_state = await handle_floor_selection_callback(
+                    callback_update, callback_context
+                )
 
             # Both should reach the same final state
             assert traditional_state == FloorSearchStates.SHOWING_FLOOR_RESULTS
