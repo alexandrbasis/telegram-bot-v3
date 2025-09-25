@@ -8,6 +8,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Handler-Level Security Implementation with 22+ Secured Bot Endpoints** – Complete implementation of role-based access control across all bot handlers using decorator-based authorization system, eliminating unauthorized access pathways and establishing comprehensive three-tier security enforcement (TDB-72, completed 2025-09-25, branch `feature/TDB-72-handler-security-implementation`)
+  - Main search handler security with /start command protection (`src/bot/handlers/search_handlers.py:32,134`)
+    - Applied @require_viewer_or_above decorator to start_command function blocking unauthorized users at bot entry point
+    - Enhanced search entry points (search_button:165, main_menu_button:430) with viewer+ authorization requirements
+    - Comprehensive TDD authorization test suite with 11 tests covering unauthorized/authorized access scenarios (`tests/unit/test_bot_handlers/test_search_handlers.py:1599-1893`)
+  - Room search handler complete security implementation (`src/bot/handlers/room_search_handlers.py:42,87,105`)
+    - All 3 room search entry points secured: handle_room_search_command, process_room_search, process_room_search_with_number
+    - Unauthorized users receive clear Russian denial messages following established hierarchy patterns
+    - Authorization test coverage with 4 comprehensive tests validating access control (`tests/unit/test_bot_handlers/test_room_search_handlers.py:1-162`)
+  - Floor search handler security with core entry point protection (`src/bot/handlers/floor_search_handlers.py:98,149`)
+    - handle_floor_search_command and process_floor_search functions secured with @require_viewer_or_above decorators
+    - Discovery and selection callbacks remain available for future incremental security enhancement
+  - List generation handler complete security coverage (`src/bot/handlers/list_handlers.py:46,68,153,335`)
+    - All 4 list handlers secured: handle_get_list_request, handle_role_selection, handle_list_navigation, handle_department_filter_selection
+    - TDD authorization test suite with 8 tests covering unauthorized denial and authorized access patterns (`tests/unit/test_bot_handlers/test_list_handlers.py:1186-1418`)
+  - Edit participant handler CRITICAL security implementation (`src/bot/handlers/edit_participant_handlers.py:211,359,466,489,528,662,858,917,1177,1321`)
+    - All 10 edit handlers secured with @require_coordinator_or_above decorator enforcing write operation restrictions
+    - Critical data modification operations protected: show_participant_edit_menu, handle_field_edit_selection, save_changes, retry_save
+    - Viewer-level users completely blocked from participant data modification maintaining data integrity
+  - Admin command implementation with /auth_refresh cache invalidation (`src/bot/handlers/admin_handlers.py:66-94`)
+    - Complete /auth_refresh admin command enabling role updates without bot restart
+    - Admin role verification with cache invalidation and success confirmation messaging
+    - Comprehensive test coverage with 5 tests validating admin-only access and cache refresh functionality (`tests/unit/test_bot_handlers/test_admin_handlers.py:94-168`)
+  - Conversation handler middleware with complete entry point protection (`src/bot/handlers/search_conversation.py:328`)
+    - /auth_refresh command added to conversation fallbacks for administrator accessibility
+    - All conversation entry points now require appropriate authorization levels preventing bypass scenarios
+  - Enhanced documentation with security implementation details and authorization examples
+    - Architecture overview updated with handler security implementation and decorator-based security patterns
+    - Security documentation enhanced with role-based access control examples and handler-level enforcement details
+    - Testing strategy updated with comprehensive authorization test coverage (35+ tests) and security validation requirements
+    - Bot commands reference updated with /auth_refresh admin command and role-based access requirements
+    - Development workflow enhanced with security review checklist and authorization testing requirements
 - **Comprehensive Role-Based Access Control Foundation with Three-Tier Authorization** – Complete implementation of admin > coordinator > viewer role hierarchy with environment configuration, data filtering, handler-level enforcement, and critical security fixes eliminating unauthorized access vulnerabilities (TDB-71, completed 2025-09-25, PR #63, branch `feature/TDB-71-authorization-foundation`)
   - Extended configuration system with role-based environment variables (`src/config/settings.py:21-71,307-308`)
     - TELEGRAM_VIEWER_IDS and TELEGRAM_COORDINATOR_IDS parsing and validation with comma-separated user ID support
