@@ -198,7 +198,10 @@ class TestSearchButtonHandler:
     @pytest.mark.asyncio
     async def test_search_button_handler(self, mock_callback_query, mock_context):
         """Test search button click handler."""
-        result = await search_button(mock_callback_query, mock_context)
+        # Execute with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result = await search_button(mock_callback_query, mock_context)
 
         # Should answer callback query
         mock_callback_query.callback_query.answer.assert_called_once()
@@ -439,7 +442,10 @@ class TestMainMenuButtonHandler:
     @pytest.mark.asyncio
     async def test_main_menu_button_handler(self, mock_callback_query, mock_context):
         """Test main menu button click handler."""
-        result = await main_menu_button(mock_callback_query, mock_context)
+        # Execute with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result = await main_menu_button(mock_callback_query, mock_context)
 
         # Should answer callback query
         mock_callback_query.callback_query.answer.assert_called_once()
@@ -477,8 +483,10 @@ class TestMainMenuButtonHandler:
         # Setup mocks
         mock_get_welcome_message.return_value = "Test unified welcome message"
 
-        # Execute handler
-        result = await main_menu_button(mock_callback_query, mock_context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            result = await main_menu_button(mock_callback_query, mock_context)
 
         # Verify shared helpers were called
         mock_initialize_main_menu_session.assert_called_once_with(mock_context)
@@ -504,8 +512,10 @@ class TestMainMenuButtonHandler:
         )
         mock_get_welcome_message.return_value = unified_message
 
-        # Execute handler
-        await main_menu_button(mock_callback_query, mock_context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await main_menu_button(mock_callback_query, mock_context)
 
         # Verify the unified welcome message is used
         mock_get_welcome_message.assert_called_once()
@@ -521,6 +531,8 @@ class TestHandlerIntegration:
         """Test that handlers return correct conversation states."""
         # This is a basic integration test to verify state flow
         mock_update = Mock()
+        mock_update.effective_user = Mock()
+        mock_update.effective_user.id = 12345
         mock_context = Mock()
         mock_context.user_data = {}
 
@@ -528,7 +540,9 @@ class TestHandlerIntegration:
         with (
             patch("src.bot.handlers.search_handlers.get_main_menu_keyboard"),
             patch("src.bot.handlers.search_handlers.get_waiting_for_name_keyboard"),
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
+            mock_get_role.return_value = "viewer"
 
             # Mock message for start command
             mock_update.message = Mock()
@@ -1010,8 +1024,10 @@ class TestUserInteractionLogging:
         mock_logger_instance = Mock()
         mock_get_logger.return_value = mock_logger_instance
 
-        # Execute search button handler
-        await search_button(mock_callback_query_with_user_details, mock_context)
+        # Execute search button handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await search_button(mock_callback_query_with_user_details, mock_context)
 
         # Verify logger was instantiated
         mock_get_logger.assert_called_once()
@@ -1040,8 +1056,10 @@ class TestUserInteractionLogging:
         mock_logger_instance = Mock()
         mock_get_logger.return_value = mock_logger_instance
 
-        # Execute handler
-        await main_menu_button(mock_callback_query_with_user_details, mock_context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await main_menu_button(mock_callback_query_with_user_details, mock_context)
 
         # Verify button click logging
         mock_logger_instance.log_button_click.assert_called_once_with(
@@ -1145,8 +1163,10 @@ class TestUserInteractionLogging:
         mock_logger_instance = Mock()
         mock_get_logger.return_value = mock_logger_instance
 
-        # Execute handler
-        await search_button(update, context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await search_button(update, context)
 
         # Verify logging called with None username
         mock_logger_instance.log_button_click.assert_called_once_with(
@@ -1222,8 +1242,10 @@ class TestUserInteractionLogging:
         update.callback_query = callback_query
         context.user_data = {}
 
-        # Execute handler
-        await search_button(update, context)
+        # Execute handler with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await search_button(update, context)
 
         # Provider is consulted but no logger is used
         mock_get_logger.assert_called_once()

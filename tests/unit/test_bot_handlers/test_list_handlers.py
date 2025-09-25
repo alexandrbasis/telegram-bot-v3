@@ -540,10 +540,14 @@ class TestPaginationNavigationHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_navigation_handles_candidates_role(
-        self, mock_get_service, mock_next_update, mock_service_data_page2
+        self, mock_get_role, mock_get_service, mock_next_update, mock_service_data_page2
     ):
         """Test navigation works with CANDIDATE role."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Setup context with candidate role
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {"current_role": "CANDIDATE", "current_offset": 0}
@@ -574,14 +578,19 @@ class TestPaginationNavigationHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_navigation_shows_pagination_controls(
         self,
+        mock_get_role,
         mock_get_service,
         mock_next_update,
         mock_context_with_state,
         mock_service_data_page2,
     ):
         """Test that navigation displays proper pagination controls."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Setup
         mock_service = Mock()
         mock_service.get_team_members_list = AsyncMock(
@@ -612,10 +621,14 @@ class TestPaginationNavigationHandler:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.list_handlers.main_menu_button")
+    @patch("src.utils.access_control.get_user_role")
     async def test_main_menu_navigation_calls_proper_handler(
-        self, mock_main_menu_button
+        self, mock_get_role, mock_main_menu_button
     ):
         """Test that MAIN_MENU navigation calls the proper handler."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         # Setup
         update = Mock(spec=Update)
         update.callback_query = Mock(spec=CallbackQuery)
@@ -649,12 +662,16 @@ class TestPaginationNavigationHandler:
         update.callback_query.data = "list_role:TEAM"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+        update.effective_user = Mock()
+        update.effective_user.id = 12345
 
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {}
 
-        # Execute
-        await handle_role_selection(update, context)
+        # Execute with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await handle_role_selection(update, context)
 
         # Verify state stored (TEAM role now stores selected_role and shows department selection)
         assert context.user_data["selected_role"] == "TEAM"
@@ -688,12 +705,16 @@ class TestTrimmingLogicAndPagination:
         update.callback_query.data = "list_role:TEAM"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+        update.effective_user = Mock()
+        update.effective_user.id = 12345
 
         context = Mock(spec=ContextTypes.DEFAULT_TYPE)
         context.user_data = {}
 
-        # Execute
-        await handle_role_selection(update, context)
+        # Execute with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await handle_role_selection(update, context)
 
         # Should show department keyboard, not a list with pagination
         call_args = update.callback_query.edit_message_text.call_args
@@ -754,10 +775,14 @@ class TestDepartmentSelectionHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_department_filter_selection_calls_service_with_department(
-        self, mock_get_service, mock_department_update, mock_context
+        self, mock_get_role, mock_get_service, mock_department_update, mock_context
     ):
         """Test department filter selection calls service with specific department."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         from src.bot.handlers.list_handlers import handle_department_filter_selection
 
         # Setup mock service
@@ -790,10 +815,14 @@ class TestDepartmentSelectionHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_all_participants_filter_calls_service_without_department(
-        self, mock_get_service, mock_all_participants_update, mock_context
+        self, mock_get_role, mock_get_service, mock_all_participants_update, mock_context
     ):
         """Test all participants filter calls service without department filter."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         from src.bot.handlers.list_handlers import handle_department_filter_selection
 
         # Setup mock service
@@ -824,10 +853,14 @@ class TestDepartmentSelectionHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_no_department_filter_calls_service_with_unassigned(
-        self, mock_get_service, mock_no_department_update, mock_context
+        self, mock_get_role, mock_get_service, mock_no_department_update, mock_context
     ):
         """Test no department filter calls service with unassigned filter."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         from src.bot.handlers.list_handlers import handle_department_filter_selection
 
         # Setup mock service
@@ -858,10 +891,14 @@ class TestDepartmentSelectionHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_department_filter_stores_context_state(
-        self, mock_get_service, mock_department_update, mock_context
+        self, mock_get_role, mock_get_service, mock_department_update, mock_context
     ):
         """Test department filter stores pagination and filter state in context."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         from src.bot.handlers.list_handlers import handle_department_filter_selection
 
         # Setup mock service
@@ -890,10 +927,14 @@ class TestDepartmentSelectionHandler:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_department_filter_includes_filter_in_title(
-        self, mock_get_service, mock_department_update, mock_context
+        self, mock_get_role, mock_get_service, mock_department_update, mock_context
     ):
         """Test department filter includes department name in list title."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
+
         from src.bot.handlers.list_handlers import handle_department_filter_selection
 
         # Setup mock service
@@ -956,7 +997,10 @@ class TestRoleSelectionWithDepartmentFilter:
         self, mock_team_update, mock_context
     ):
         """Test that team role selection now shows department filter keyboard instead of direct list."""
-        await handle_role_selection(mock_team_update, mock_context)
+        # Execute with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await handle_role_selection(mock_team_update, mock_context)
 
         # Should answer the callback query
         mock_team_update.callback_query.answer.assert_called_once()
@@ -999,10 +1043,13 @@ class TestRoleSelectionWithDepartmentFilter:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_candidate_role_selection_still_shows_direct_list(
-        self, mock_get_service, mock_candidate_update, mock_context
+        self, mock_get_role, mock_get_service, mock_candidate_update, mock_context
     ):
         """Test that candidate role selection still shows direct list (no department filtering)."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
         # Setup mock service for candidates
         mock_service = Mock()
         mock_service.get_candidates_list = AsyncMock(
@@ -1034,7 +1081,10 @@ class TestRoleSelectionWithDepartmentFilter:
         self, mock_team_update, mock_context
     ):
         """Test that team role selection stores role state for department filtering."""
-        await handle_role_selection(mock_team_update, mock_context)
+        # Execute with access control mock
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await handle_role_selection(mock_team_update, mock_context)
 
         # Should store team role in context for later use by department filter
         assert mock_context.user_data.get("selected_role") == "TEAM"
@@ -1087,10 +1137,13 @@ class TestNavigationWithDepartmentContext:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_navigation_preserves_department_filter(
-        self, mock_get_service, mock_next_update, mock_department_context
+        self, mock_get_role, mock_get_service, mock_next_update, mock_department_context
     ):
         """Test that navigation preserves department filter when paginating."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
         # Setup mock service
         mock_service = Mock()
         current_data = {
@@ -1137,10 +1190,13 @@ class TestNavigationWithDepartmentContext:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_navigation_preserves_all_participants_filter(
-        self, mock_get_service, mock_prev_update, mock_all_participants_context
+        self, mock_get_role, mock_get_service, mock_prev_update, mock_all_participants_context
     ):
         """Test that navigation preserves 'all participants' filter (None department)."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
         # Setup mock service
         mock_service = Mock()
         current_data = {
@@ -1187,10 +1243,13 @@ class TestNavigationWithDepartmentContext:
 
     @pytest.mark.asyncio
     @patch("src.services.service_factory.get_participant_list_service")
+    @patch("src.utils.access_control.get_user_role")
     async def test_navigation_shows_department_in_title(
-        self, mock_get_service, mock_next_update, mock_department_context
+        self, mock_get_role, mock_get_service, mock_next_update, mock_department_context
     ):
         """Test that navigation displays department filter in list title."""
+        # Mock user role for access control
+        mock_get_role.return_value = "viewer"
         # Setup mock service
         mock_service = Mock()
         current_data = {
@@ -1324,6 +1383,8 @@ class TestListHandlersAuthorization:
     ):
         """Test role selection denies access to unauthorized users."""
         mock_update_unauthorized.callback_query.data = "list_role:TEAM"
+        # Remove message attribute to force callback query path
+        mock_update_unauthorized.message = None
 
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = None
@@ -1364,6 +1425,8 @@ class TestListHandlersAuthorization:
     ):
         """Test list navigation denies access to unauthorized users."""
         mock_update_unauthorized.callback_query.data = "list_nav:NEXT"
+        # Remove message attribute to force callback query path
+        mock_update_unauthorized.message = None
 
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = None
@@ -1394,6 +1457,8 @@ class TestListHandlersAuthorization:
             "current_offset": 0,
         }
         mock_update_viewer.callback_query.data = "list_nav:NEXT"
+        # Remove message attribute to force callback query path for consistency
+        mock_update_viewer.message = None
 
         with (
             patch("src.utils.access_control.get_user_role") as mock_get_role,
@@ -1406,14 +1471,28 @@ class TestListHandlersAuthorization:
             # Mock service response
             mock_list_service = Mock()
             mock_list_service.get_team_members_list = AsyncMock(
-                return_value={
-                    "formatted_list": "Test list",
-                    "has_prev": False,
-                    "has_next": True,
-                    "total_count": 10,
-                    "current_offset": 0,
-                    "actual_displayed": 10,
-                }
+                side_effect=[
+                    # First call to get current data
+                    {
+                        "formatted_list": "Test list",
+                        "has_prev": False,
+                        "has_next": True,
+                        "total_count": 10,
+                        "current_offset": 0,
+                        "next_offset": 10,  # Required for NEXT navigation
+                        "actual_displayed": 10,
+                    },
+                    # Second call with new offset
+                    {
+                        "formatted_list": "Test list page 2",
+                        "has_prev": True,
+                        "has_next": False,
+                        "total_count": 10,
+                        "current_offset": 10,
+                        "prev_offset": 0,
+                        "actual_displayed": 0,
+                    },
+                ]
             )
             mock_service.return_value = mock_list_service
 
@@ -1430,6 +1509,8 @@ class TestListHandlersAuthorization:
     ):
         """Test department filter denies access to unauthorized users."""
         mock_update_unauthorized.callback_query.data = "list:filter:all"
+        # Remove message attribute to force callback query path
+        mock_update_unauthorized.message = None
 
         with patch("src.utils.access_control.get_user_role") as mock_get_role:
             mock_get_role.return_value = None

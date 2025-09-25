@@ -131,6 +131,18 @@ def create_participant_selection_keyboard(
     return InlineKeyboardMarkup(keyboard)
 
 
+def create_search_mode_keyboard() -> InlineKeyboardMarkup:
+    """Provide compatibility wrapper for search mode keyboard creation."""
+
+    return get_search_mode_selection_keyboard()
+
+
+def create_main_menu_keyboard() -> InlineKeyboardMarkup:
+    """Provide compatibility wrapper for main menu keyboard creation."""
+
+    return get_main_menu_keyboard()
+
+
 @require_viewer_or_above("❌ Доступ к боту только для авторизованных пользователей.")
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
@@ -156,7 +168,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     await update.message.reply_text(
         text=welcome_message,
-        reply_markup=get_main_menu_keyboard(),
+        reply_markup=create_main_menu_keyboard(),
     )
 
     return SearchStates.MAIN_MENU
@@ -226,12 +238,12 @@ async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         await query.message.edit_text(text=search_prompt)
         await query.message.reply_text(
             text="Используйте клавиатуру ниже для выбора типа поиска.",
-            reply_markup=get_search_mode_selection_keyboard(),
+            reply_markup=create_search_mode_keyboard(),
         )
     elif message:
         await message.reply_text(
             text=search_prompt,
-            reply_markup=get_search_mode_selection_keyboard(),
+            reply_markup=create_search_mode_keyboard(),
         )
 
     if user_logger:
@@ -474,12 +486,12 @@ async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         # Send a new message to apply the reply keyboard
         await query.message.reply_text(
             text="Используйте клавиатуру ниже для навигации.",
-            reply_markup=get_main_menu_keyboard(),
+            reply_markup=create_main_menu_keyboard(),
         )
     elif message:
         await message.reply_text(
             text=welcome_message,
-            reply_markup=get_main_menu_keyboard(),
+            reply_markup=create_main_menu_keyboard(),
         )
 
     # Log bot response if logging is enabled
@@ -507,7 +519,7 @@ async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     await update.message.reply_text(
         text=welcome_message,
-        reply_markup=get_main_menu_keyboard(),
+        reply_markup=create_main_menu_keyboard(),
     )
 
     return SearchStates.MAIN_MENU
@@ -577,7 +589,7 @@ async def handle_participant_selection(
             )
 
         await query.message.edit_text(
-            text="❌ Участник не найден.", reply_markup=get_main_menu_keyboard()
+            text="❌ Участник не найден.", reply_markup=create_main_menu_keyboard()
         )
         return SearchStates.SHOWING_RESULTS
 
