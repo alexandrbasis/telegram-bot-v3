@@ -1,9 +1,35 @@
 # Bot Commands Reference
 
+## Security Implementation (Updated 2025-09-25)
+
+### Role-Based Access Control for All Commands
+
+All bot commands now implement mandatory authorization checks using decorator-based security:
+
+**Authorization Requirements**:
+- **Search/View Operations**: Require viewer-level access or above (@require_viewer_or_above)
+- **Participant Editing**: Require coordinator-level access or above (@require_coordinator_or_above)
+- **Administrative Functions**: Require admin-level access (@require_admin)
+
+**Unauthorized Access Handling**:
+- Users without appropriate roles receive clear Russian denial messages
+- No functionality is accessible to unauthorized users
+- All authorization attempts are logged for security monitoring
+
+**Admin Commands**:
+- **/auth_refresh**: Admin-only command to clear authorization caches and refresh user roles without bot restart
+
 ## Search Commands
 
 ### /search [query] and Search Button
+**Authorization Required**: Viewer-level access or above
+
 Search for participants by name (Russian or English), nickname, or other details. Available via command or main menu "🔍 Поиск участников" button.
+
+**Security Implementation**:
+- All search entry points protected with @require_viewer_or_above decorators
+- Unauthorized users receive Russian denial message and cannot access search functionality
+- Search results are role-filtered based on user's permission level
 
 **Main Menu Button Equivalence** (Enhanced 2025-09-09):
 - Main Menu button provides identical functionality to `/start` command
@@ -12,7 +38,14 @@ Search for participants by name (Russian or English), nickname, or other details
 - **Entry Point Recovery**: Text button handlers enable conversation re-entry after timeout without manual `/start`
 
 ### /search_room [room_number]
+**Authorization Required**: Viewer-level access or above
+
 Search for participants assigned to a specific room number with enhanced structured Russian results. Supports alphanumeric room identifiers.
+
+**Security Implementation**:
+- All room search handlers protected with @require_viewer_or_above decorators
+- Includes /search_room command, room input processing, and direct room search functions
+- Unauthorized access blocked at all entry points
 
 **Usage Examples:**
 - `/search_room 205` - Find participants in room 205
@@ -44,7 +77,14 @@ Search for participants assigned to a specific room number with enhanced structu
 ```
 
 ### /search_floor [floor_number]
+**Authorization Required**: Viewer-level access or above
+
 Search for participants on a specific floor with room-by-room breakdown. Features interactive floor discovery for enhanced user experience.
+
+**Security Implementation**:
+- Core floor search handlers protected with @require_viewer_or_above decorators
+- Covers /search_floor command and floor number input processing
+- Unauthorized users cannot access floor-based search functionality
 
 **Usage Examples:**
 - `/search_floor 2` - Find all participants on floor 2
@@ -103,7 +143,14 @@ Complete department filtering feature enabling users to navigate from team selec
 ## Get List Commands
 
 ### Get List Button and Bulk Access
+**Authorization Required**: Viewer-level access or above
+
 Access pre-filtered participant lists by role for quick bulk viewing. Available via main menu "📋 Получить список" button alongside the search functionality.
+
+**Security Implementation**:
+- All 4 list generation handlers protected with @require_viewer_or_above decorators
+- Includes list request handling, role selection, navigation, and department filtering
+- Unauthorized users cannot access participant lists in any form
 
 **Main Menu Integration**: The Get List button provides instant access to categorized participant lists without requiring search queries, ideal for administrative tasks and logistics planning.
 
@@ -248,6 +295,17 @@ Graceful handling when no participants exist for selected role.
 - Enhanced display format includes demographic info: "Date of Birth: YYYY-MM-DD | Age: XX years" (or "N/A" for missing data)
 
 ## Participant Editing Interface
+
+### Security Requirements (Updated 2025-09-25)
+**Authorization Required**: Coordinator-level access or above
+
+All participant editing functionality requires elevated permissions beyond basic viewing:
+
+**Security Implementation**:
+- All 10 editing handlers protected with @require_coordinator_or_above decorators
+- Includes editing menu, field selection, text input, button selection, and save operations
+- Viewers cannot access editing functionality - only coordinators and admins
+- Critical security measure preventing unauthorized data modification
 
 ### Participant Selection
 After searching, click "Подробнее" (Details) on any participant to access the comprehensive editing interface.
@@ -543,15 +601,36 @@ Error handling has been enhanced with centralized message templates located in `
 7. User can start fresh conversation without any residual context
 8. **Alternative**: User can also ignore timeout message and use any main menu command
 
+## Administrative Commands
+
+### /auth_refresh (New - 2025-09-25)
+**Authorization Required**: Admin-level access only
+
+Admin-only command to clear authorization caches and refresh user roles without requiring bot restart.
+
+**Functionality**:
+- Clears role resolution cache to pick up configuration changes
+- Enables real-time role updates during operations
+- Provides confirmation message upon successful cache invalidation
+- Logs cache refresh operations for audit purposes
+
+**Usage Example**:
+```
+Admin: /auth_refresh
+Bot: ✅ Кэш авторизации очищен. Роли пользователей будут обновлены при следующем обращении.
+```
+
 ## Data Export Commands
 
 ### /export
+**Authorization Required**: Admin-level access only
+
 Interactive export conversation flow for administrative data export. Available to authorized administrators only. Converts the direct export command into a conversation with 6 targeted export options.
 
 **Admin-Only Access Control**:
-- Command validates user authorization using `auth_utils.is_admin_user()` function
-- Unauthorized users receive appropriate error message: "Доступ запрещён. Эта команда доступна только администраторам."
-- Admin user IDs configured via `ADMIN_USER_IDS` environment variable
+- Command protected with @require_admin decorator
+- Unauthorized users receive Russian denial message and cannot access export functionality
+- Admin user IDs configured via environment variables
 - Comprehensive logging for security monitoring and access control
 
 **Interactive Export Conversation Flow**:

@@ -262,6 +262,14 @@ async def find_by_name(self, query: str, user_role: str = None) -> List[Particip
 
 ### Test Coverage
 
+**Handler Security Tests** (35+ comprehensive authorization tests - Added 2025-09-25):
+- **Search Handlers**: 11 authorization tests with TDD methodology
+- **Room Search Handlers**: 4 authorization tests covering all entry points
+- **Floor Search Handlers**: Authorization validation for core handlers
+- **List Handlers**: 8 authorization tests for all list generation functions
+- **Edit Handlers**: Complete authorization test suite for all 10 editing operations
+- **Admin Handlers**: 5 tests for /auth_refresh command functionality
+
 **Unit Tests** (22+ security-focused tests):
 - Role resolution and caching functionality
 - Authorization utilities comprehensive testing
@@ -273,12 +281,14 @@ async def find_by_name(self, query: str, user_role: str = None) -> List[Particip
 - Repository security parameter passing
 - Data filtering across complete request flows
 - Authorization bypass prevention
+- Updated with authorization mocks for compatibility
 
 **Security Regression Tests**:
 - Authorization bypass vulnerability prevention
 - PII leakage prevention in all code paths
 - Role hierarchy enforcement across updates
 - Fallback security path validation
+- Handler security implementation verification
 
 ### Continuous Security Validation
 
