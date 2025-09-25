@@ -288,7 +288,11 @@ class ParticipantRepository(ABC):
 
     # Optional enhanced search; default raises NotImplementedError in base
     async def search_by_name_enhanced(
-        self, query: str, threshold: float = 0.8, limit: int = 5, user_role: Optional[str] = None
+        self,
+        query: str,
+        threshold: float = 0.8,
+        limit: int = 5,
+        user_role: Optional[str] = None,
     ) -> List[Tuple[Participant, float, str]]:
         """
         Enhanced search with language detection, multi-field search, and rich formatting.

@@ -726,7 +726,9 @@ class AirtableParticipantRepository(ParticipantRepository):
                 f"Unexpected error finding participant by Telegram ID: {e}", e
             )
 
-    async def search_by_name(self, name_pattern: str, user_role: Optional[str] = None) -> List[Participant]:
+    async def search_by_name(
+        self, name_pattern: str, user_role: Optional[str] = None
+    ) -> List[Participant]:
         """
         Search participants by name pattern with role-based filtering.
 
@@ -1061,7 +1063,11 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(f"Unexpected error in health check: {e}", e)
 
     async def search_by_name_fuzzy(
-        self, query: str, threshold: float = 0.8, limit: int = 5, user_role: Optional[str] = None
+        self,
+        query: str,
+        threshold: float = 0.8,
+        limit: int = 5,
+        user_role: Optional[str] = None,
     ) -> List[Tuple[Participant, float]]:
         """
         Search participants by name with fuzzy matching and role-based filtering.
@@ -1116,7 +1122,9 @@ class AirtableParticipantRepository(ParticipantRepository):
                 for i, result in enumerate(search_results)
             ]
 
-            logger.debug(f"Fuzzy search found {len(fuzzy_results)} matches (role: {user_role})")
+            logger.debug(
+                f"Fuzzy search found {len(fuzzy_results)} matches (role: {user_role})"
+            )
             return fuzzy_results
 
         except Exception as e:
@@ -1125,7 +1133,11 @@ class AirtableParticipantRepository(ParticipantRepository):
             raise RepositoryError(f"Failed to perform fuzzy name search: {e}", e)
 
     async def search_by_name_enhanced(
-        self, query: str, threshold: float = 0.8, limit: int = 5, user_role: Optional[str] = None
+        self,
+        query: str,
+        threshold: float = 0.8,
+        limit: int = 5,
+        user_role: Optional[str] = None,
     ) -> List[Tuple[Participant, float, str]]:
         """
         Enhanced search with language detection, multi-field search, and rich formatting.
@@ -1191,7 +1203,9 @@ class AirtableParticipantRepository(ParticipantRepository):
                     (filtered_participant, result.similarity_score, formatted_result)
                 )
 
-            logger.debug(f"Enhanced search found {len(enhanced_results)} matches (role: {user_role})")
+            logger.debug(
+                f"Enhanced search found {len(enhanced_results)} matches (role: {user_role})"
+            )
             return enhanced_results
 
         except Exception as e:

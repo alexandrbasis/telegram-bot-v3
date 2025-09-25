@@ -6,7 +6,7 @@ to prevent unauthorized access to sensitive information.
 """
 
 import logging
-from typing import List, Union
+from typing import List, Union, Any
 from unittest.mock import MagicMock, Mock
 
 from src.models.participant import Participant
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 def filter_participant_by_role(
-    participant: Participant, user_role: Union[str, None]
-) -> Participant:
+    participant: Union[Participant, Any], user_role: Union[str, None]
+) -> Union[Participant, Any]:
     """
     Filter participant data based on user role.
 
@@ -37,6 +37,7 @@ def filter_participant_by_role(
         # Admins see everything
         return participant
 
+    filtered: Union[Participant, Any]
     if isinstance(participant, (MagicMock, Mock)):
         # Mocked objects (used in tests) should pass through untouched
         filtered = participant

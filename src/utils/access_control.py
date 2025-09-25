@@ -70,9 +70,18 @@ def require_role(
                 )
 
                 # Send unauthorized message to user
-                if hasattr(update, "message") and update.message:
+                if (
+                    hasattr(update, "message")
+                    and update.message
+                    and hasattr(update.message, "reply_text")
+                ):
                     await update.message.reply_text(unauthorized_message)
-                elif hasattr(update, "callback_query") and update.callback_query:
+                elif (
+                    hasattr(update, "callback_query")
+                    and update.callback_query
+                    and update.callback_query.message
+                    and hasattr(update.callback_query.message, "reply_text")
+                ):
                     await update.callback_query.message.reply_text(unauthorized_message)
                     await update.callback_query.answer()
 

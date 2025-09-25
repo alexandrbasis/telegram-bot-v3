@@ -285,6 +285,7 @@ class TestRoleBasedAuthorizationFunctions:
         """Test that role functions handle empty user ID lists."""
         # Clear cache to prevent interference from other tests
         from src.utils.auth_utils import invalidate_role_cache
+
         invalidate_role_cache()
 
         settings = MagicMock(spec=Settings)
@@ -322,7 +323,9 @@ class TestAuthorizationPerformance:
 
         # Average should be well under 50ms (0.05 seconds)
         average_time = (end_time - start_time) / 300  # 300 total function calls
-        assert average_time < 0.05, f"Authorization functions too slow: {average_time:.3f}s average"
+        assert (
+            average_time < 0.05
+        ), f"Authorization functions too slow: {average_time:.3f}s average"
 
 
 class TestIntegrationWithRealSettings:
@@ -332,6 +335,7 @@ class TestIntegrationWithRealSettings:
         """Test that role functions work with real Settings object."""
         # Clear cache to prevent interference from other tests
         from src.utils.auth_utils import invalidate_role_cache
+
         invalidate_role_cache()
 
         env_vars = {
@@ -352,9 +356,15 @@ class TestIntegrationWithRealSettings:
             assert is_admin_user(123456789, settings) is True
 
             # Should respect role hierarchy
-            assert is_viewer_user(444444444, settings) is True  # Coordinator has viewer access
-            assert is_viewer_user(123456789, settings) is True  # Admin has viewer access
-            assert is_coordinator_user(123456789, settings) is True  # Admin has coordinator access
+            assert (
+                is_viewer_user(444444444, settings) is True
+            )  # Coordinator has viewer access
+            assert (
+                is_viewer_user(123456789, settings) is True
+            )  # Admin has viewer access
+            assert (
+                is_coordinator_user(123456789, settings) is True
+            )  # Admin has coordinator access
 
             # Should return correct roles
             assert get_user_role(111111111, settings) == "viewer"

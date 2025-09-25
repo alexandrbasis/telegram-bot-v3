@@ -70,7 +70,7 @@ class AirtableFieldMapping:
         "IsDepartmentChief": "fldWAay3tQiXN9888",
         # AuthorizedUsers table fields for role-based authorization
         "AccessLevel": "fldAUTHAccessLvl1",  # Single select field for viewer/coordinator/admin
-        "Status": "fldAUTHStatus0123",      # Single select field for active/inactive
+        "Status": "fldAUTHStatus0123",  # Single select field for active/inactive
         "TelegramUserID": "fldAUTHTgUserId01",  # Number field for Telegram user ID
     }
 
