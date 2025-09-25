@@ -39,7 +39,9 @@ class RoomSearchStates(IntEnum):
 # Room search keyboards are now imported from search_keyboards module
 
 
-@require_viewer_or_above("❌ Доступ к поиску по комнатам только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к поиску по комнатам только для авторизованных пользователей."
+)
 async def handle_room_search_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -84,7 +86,9 @@ async def handle_room_search_command(
         return RoomSearchStates.WAITING_FOR_ROOM
 
 
-@require_viewer_or_above("❌ Доступ к поиску по комнатам только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к поиску по комнатам только для авторизованных пользователей."
+)
 async def process_room_search(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -102,7 +106,9 @@ async def process_room_search(
     return await process_room_search_with_number(update, context, room_number)
 
 
-@require_viewer_or_above("❌ Доступ к поиску по комнатам только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к поиску по комнатам только для авторизованных пользователей."
+)
 async def process_room_search_with_number(
     update: Update, context: ContextTypes.DEFAULT_TYPE, room_number: str
 ) -> int:

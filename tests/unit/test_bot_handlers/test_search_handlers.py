@@ -1705,3 +1705,189 @@ class TestStartCommandAuthorization:
 
             # Should allow access
             assert result == SearchStates.MAIN_MENU
+
+
+class TestSearchButtonAuthorization:
+    """Test authorization controls for search button handler."""
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.fixture
+    def mock_update_message(self):
+        """Mock update with message (text button)."""
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 123456
+
+        update.message = Mock(spec=Message)
+        update.message.reply_text = AsyncMock()
+        update.callback_query = None
+
+        return update
+
+    @pytest.fixture
+    def mock_update_callback(self):
+        """Mock update with callback query (inline button)."""
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 123456
+
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
+        update.callback_query.answer = AsyncMock()
+
+        update.message = None
+
+        return update
+
+    @pytest.mark.asyncio
+    async def test_search_button_blocks_unauthorized_message(
+        self, mock_update_message, mock_context
+    ):
+        """Test search button blocks unauthorized users via message."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await search_button(mock_update_message, mock_context)
+
+            # Should block access and not return a state
+            assert result is None
+
+            # Should send unauthorized message
+            mock_update_message.message.reply_text.assert_called_once_with(
+                "❌ Доступ к поиску только для авторизованных пользователей."
+            )
+
+    @pytest.mark.asyncio
+    async def test_search_button_blocks_unauthorized_callback(
+        self, mock_update_callback, mock_context
+    ):
+        """Test search button blocks unauthorized users via callback query."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await search_button(mock_update_callback, mock_context)
+
+            # Should block access and not return a state
+            assert result is None
+
+            # Should send unauthorized message and answer callback
+            mock_update_callback.callback_query.message.reply_text.assert_called_once_with(
+                "❌ Доступ к поиску только для авторизованных пользователей."
+            )
+            mock_update_callback.callback_query.answer.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_search_button_allows_authorized_viewer(
+        self, mock_update_message, mock_context
+    ):
+        """Test search button allows access to viewer users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch("src.bot.handlers.search_handlers.create_search_mode_keyboard") as mock_keyboard:
+                mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
+
+                result = await search_button(mock_update_message, mock_context)
+
+                # Should allow access
+                assert result == SearchStates.SEARCH_MODE_SELECTION
+
+
+class TestMainMenuButtonAuthorization:
+    """Test authorization controls for main menu button handler."""
+
+    @pytest.fixture
+    def mock_context(self):
+        """Mock context object."""
+        context = Mock(spec=ContextTypes.DEFAULT_TYPE)
+        context.user_data = {}
+        return context
+
+    @pytest.fixture
+    def mock_update_message(self):
+        """Mock update with message (text button)."""
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 123456
+
+        update.message = Mock(spec=Message)
+        update.message.reply_text = AsyncMock()
+        update.callback_query = None
+
+        return update
+
+    @pytest.fixture
+    def mock_update_callback(self):
+        """Mock update with callback query (inline button)."""
+        update = Mock(spec=Update)
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 123456
+
+        update.callback_query = Mock(spec=CallbackQuery)
+        update.callback_query.message = Mock(spec=Message)
+        update.callback_query.message.reply_text = AsyncMock()
+        update.callback_query.answer = AsyncMock()
+
+        update.message = None
+
+        return update
+
+    @pytest.mark.asyncio
+    async def test_main_menu_button_blocks_unauthorized_message(
+        self, mock_update_message, mock_context
+    ):
+        """Test main menu button blocks unauthorized users via message."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await main_menu_button(mock_update_message, mock_context)
+
+            # Should block access and not return a state
+            assert result is None
+
+            # Should send unauthorized message
+            mock_update_message.message.reply_text.assert_called_once_with(
+                "❌ Доступ к меню только для авторизованных пользователей."
+            )
+
+    @pytest.mark.asyncio
+    async def test_main_menu_button_blocks_unauthorized_callback(
+        self, mock_update_callback, mock_context
+    ):
+        """Test main menu button blocks unauthorized users via callback query."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = None
+
+            result = await main_menu_button(mock_update_callback, mock_context)
+
+            # Should block access and not return a state
+            assert result is None
+
+            # Should send unauthorized message and answer callback
+            mock_update_callback.callback_query.message.reply_text.assert_called_once_with(
+                "❌ Доступ к меню только для авторизованных пользователей."
+            )
+            mock_update_callback.callback_query.answer.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_main_menu_button_allows_authorized_viewer(
+        self, mock_update_message, mock_context
+    ):
+        """Test main menu button allows access to viewer users."""
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch("src.bot.handlers.search_handlers.create_main_menu_keyboard") as mock_keyboard:
+                mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
+
+                result = await main_menu_button(mock_update_message, mock_context)
+
+                # Should allow access
+                assert result == SearchStates.MAIN_MENU

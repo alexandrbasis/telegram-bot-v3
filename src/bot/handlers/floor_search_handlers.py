@@ -95,7 +95,9 @@ def format_floor_results(participants: List[Participant], floor: int) -> str:
     return "\n".join(result_lines)
 
 
-@require_viewer_or_above("❌ Доступ к поиску по этажам только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к поиску по этажам только для авторизованных пользователей."
+)
 async def handle_floor_search_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -146,7 +148,9 @@ async def handle_floor_search_command(
         return FloorSearchStates.WAITING_FOR_FLOOR
 
 
-@require_viewer_or_above("❌ Доступ к поиску по этажам только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к поиску по этажам только для авторизованных пользователей."
+)
 async def process_floor_search(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:

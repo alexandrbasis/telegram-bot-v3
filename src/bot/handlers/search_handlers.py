@@ -162,6 +162,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return SearchStates.MAIN_MENU
 
 
+@require_viewer_or_above("❌ Доступ к поиску только для авторизованных пользователей.")
 async def search_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Handle search button callback.
@@ -426,6 +427,7 @@ async def process_name_search_enhanced(
     return await process_name_search(update, context)
 
 
+@require_viewer_or_above("❌ Доступ к меню только для авторизованных пользователей.")
 async def main_menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Handle main menu button callback.

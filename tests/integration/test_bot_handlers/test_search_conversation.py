@@ -152,18 +152,28 @@ class TestSearchConversationFlow:
         """Test complete flow from /start to search button to name input."""
         from src.bot.handlers.search_handlers import search_button, start_command
 
-        # Step 1: /start command
-        result = await start_command(mock_update_message, mock_context)
-        assert result == SearchStates.MAIN_MENU
-        assert "search_results" in mock_context.user_data
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
 
-        # Step 2: Search button click
-        mock_update_callback.callback_query.data = "search"
-        result = await search_button(mock_update_callback, mock_context)
-        assert result == SearchStates.WAITING_FOR_NAME
+            with patch("src.bot.handlers.search_handlers.get_main_menu_keyboard") as mock_main_keyboard:
+                mock_main_keyboard.return_value = Mock()
 
-        mock_update_callback.callback_query.answer.assert_called_once()
-        mock_update_callback.callback_query.message.edit_text.assert_called_once()
+                with patch("src.bot.handlers.search_handlers.get_search_mode_selection_keyboard") as mock_search_keyboard:
+                    mock_search_keyboard.return_value = Mock()
+
+                    # Step 1: /start command
+                    result = await start_command(mock_update_message, mock_context)
+                    assert result == SearchStates.MAIN_MENU
+                    assert "search_results" in mock_context.user_data
+
+                    # Step 2: Search button click (goes directly to name input due to backward compatibility)
+                    mock_update_callback.callback_query.data = "search"
+                    result = await search_button(mock_update_callback, mock_context)
+                    # The function has backward compatibility that goes directly to name input
+                    assert result == SearchStates.WAITING_FOR_NAME
+
+                    mock_update_callback.callback_query.answer.assert_called_once()
+                    mock_update_callback.callback_query.message.edit_text.assert_called_once()
 
     async def test_conversation_search_to_results_flow(
         self, mock_update_message, mock_context
@@ -176,7 +186,9 @@ class TestSearchConversationFlow:
             patch(
                 "src.bot.handlers.search_handlers.SearchService"
             ) as mock_search_service,
+            patch("src.utils.access_control.get_user_role") as mock_get_role,
         ):
+            mock_get_role.return_value = "viewer"
 
             from src.bot.handlers.search_handlers import process_name_search
             from src.models.participant import Participant
@@ -236,18 +248,24 @@ class TestSearchConversationFlow:
         """Test flow from search results back to main menu."""
         from src.bot.handlers.search_handlers import main_menu_button
 
-        # Set up context with search results
-        mock_context.user_data = {"search_results": [Mock()]}  # Some results
-        mock_update_callback.callback_query.data = "main_menu"
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
 
-        # Return to main menu
-        result = await main_menu_button(mock_update_callback, mock_context)
+            with patch("src.bot.handlers.search_handlers.get_main_menu_keyboard") as mock_keyboard:
+                mock_keyboard.return_value = Mock()
 
-        assert result == SearchStates.MAIN_MENU
-        assert mock_context.user_data["search_results"] == []
+                # Set up context with search results
+                mock_context.user_data = {"search_results": [Mock()]}  # Some results
+                mock_update_callback.callback_query.data = "main_menu"
 
-        mock_update_callback.callback_query.answer.assert_called_once()
-        mock_update_callback.callback_query.message.edit_text.assert_called_once()
+                # Return to main menu
+                result = await main_menu_button(mock_update_callback, mock_context)
+
+                assert result == SearchStates.MAIN_MENU
+                assert mock_context.user_data["search_results"] == []
+
+                mock_update_callback.callback_query.answer.assert_called_once()
+                mock_update_callback.callback_query.message.edit_text.assert_called_once()
 
 
 class TestConversationHandlerImport:

@@ -123,8 +123,10 @@ class TestConversationListIntegration:
             get_list_handler, "callback"
         ), "Handler should have callback method"
 
-        # Call the handler directly to test integration
-        await get_list_handler.callback(mock_get_list_message_update, mock_context)
+        # Call the handler directly to test integration with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await get_list_handler.callback(mock_get_list_message_update, mock_context)
 
         # Verify role selection keyboard was shown
         mock_get_list_message_update.message.reply_text.assert_called_once()
@@ -163,8 +165,10 @@ class TestConversationListIntegration:
             role_callback_handler, "callback"
         ), "Handler should have callback method"
 
-        # Call the handler directly to test integration
-        await role_callback_handler.callback(mock_role_callback_update, mock_context)
+        # Call the handler directly to test integration with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await role_callback_handler.callback(mock_role_callback_update, mock_context)
 
         # Verify department selection keyboard was shown (not direct service call)
         mock_role_callback_update.callback_query.edit_message_text.assert_called_once()
@@ -351,8 +355,10 @@ class TestDepartmentFilteringIntegration:
         assert role_handler is not None, "Role handler should be found"
         assert filter_handler is not None, "Filter handler should be found"
 
-        # Step 1: Team role selection (should show department selection)
-        await role_handler.callback(mock_team_role_update, mock_context)
+        # Step 1: Team role selection (should show department selection) with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await role_handler.callback(mock_team_role_update, mock_context)
 
         # Verify department selection was shown
         mock_team_role_update.callback_query.edit_message_text.assert_called_once()
@@ -365,8 +371,10 @@ class TestDepartmentFilteringIntegration:
         # Verify selected_role was stored
         assert mock_context.user_data.get("selected_role") == "TEAM"
 
-        # Step 2: Finance department selection (should show filtered list)
-        await filter_handler.callback(mock_department_finance_update, mock_context)
+        # Step 2: Finance department selection (should show filtered list) with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await filter_handler.callback(mock_department_finance_update, mock_context)
 
         # Verify service was called with Finance filter
         mock_service.get_team_members_list.assert_called_once_with(
@@ -426,11 +434,15 @@ class TestDepartmentFilteringIntegration:
                     elif "list:filter:" in pattern and not filter_handler:
                         filter_handler = handler
 
-        # Step 1: Team role selection
-        await role_handler.callback(mock_team_role_update, mock_context)
+        # Step 1: Team role selection with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await role_handler.callback(mock_team_role_update, mock_context)
 
-        # Step 2: All participants selection
-        await filter_handler.callback(mock_department_all_update, mock_context)
+        # Step 2: All participants selection with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+            await filter_handler.callback(mock_department_all_update, mock_context)
 
         # Verify service was called with None filter (all participants)
         mock_service.get_team_members_list.assert_called_once_with(

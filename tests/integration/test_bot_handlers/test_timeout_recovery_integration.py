@@ -5,7 +5,7 @@ Tests that the Main Menu and Search text buttons can re-enter the conversation
 after a ConversationHandler timeout, without requiring the user to type /start.
 """
 
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from telegram import Message, ReplyKeyboardMarkup, Update, User
@@ -205,10 +205,16 @@ class TestTimeoutRecoveryIntegration:
 
         assert main_menu_handler is not None, "Main Menu entry point handler not found"
 
-        # Execute the handler (should be start_command)
-        result = await main_menu_handler.callback(
-            mock_update_main_menu_text, mock_context
-        )
+        # Execute the handler (should be start_command) with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch("src.bot.handlers.search_handlers.get_main_menu_keyboard") as mock_keyboard:
+                mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
+
+                result = await main_menu_handler.callback(
+                    mock_update_main_menu_text, mock_context
+                )
 
         # Should return MAIN_MENU state
         assert result == SearchStates.MAIN_MENU
@@ -256,8 +262,14 @@ class TestTimeoutRecoveryIntegration:
         # Mock reply_text for the follow-up message that search_button sends
         mock_update_search_text.message.reply_text = AsyncMock()
 
-        # Execute the handler (should be search_button)
-        result = await search_handler.callback(mock_update_search_text, mock_context)
+        # Execute the handler (should be search_button) with authorization mocking
+        with patch("src.utils.access_control.get_user_role") as mock_get_role:
+            mock_get_role.return_value = "viewer"
+
+            with patch("src.bot.handlers.search_handlers.get_search_mode_selection_keyboard") as mock_keyboard:
+                mock_keyboard.return_value = Mock(spec=ReplyKeyboardMarkup)
+
+                result = await search_handler.callback(mock_update_search_text, mock_context)
 
         # Should return SEARCH_MODE_SELECTION state
         assert result == SearchStates.SEARCH_MODE_SELECTION

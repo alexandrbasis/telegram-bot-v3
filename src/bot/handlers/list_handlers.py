@@ -44,7 +44,9 @@ async def _safe_edit_message_text(
         raise
 
 
-@require_viewer_or_above("❌ Доступ к спискам участников только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к спискам участников только для авторизованных пользователей."
+)
 async def handle_get_list_request(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
@@ -67,7 +69,9 @@ async def handle_get_list_request(
     )
 
 
-@require_viewer_or_above("❌ Доступ к выбору типа списка только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к выбору типа списка только для авторизованных пользователей."
+)
 async def handle_role_selection(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
@@ -153,7 +157,9 @@ async def handle_role_selection(
         )
 
 
-@require_viewer_or_above("❌ Доступ к навигации по спискам только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к навигации по спискам только для авторизованных пользователей."
+)
 async def handle_list_navigation(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -336,7 +342,9 @@ async def handle_list_navigation(
     return SearchStates.MAIN_MENU
 
 
-@require_viewer_or_above("❌ Доступ к фильтрации по департаментам только для авторизованных пользователей.")
+@require_viewer_or_above(
+    "❌ Доступ к фильтрации по департаментам только для авторизованных пользователей."
+)
 async def handle_department_filter_selection(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
