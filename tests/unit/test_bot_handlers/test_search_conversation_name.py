@@ -166,7 +166,7 @@ class TestNameSearchButtonBug:
 
             # Assert: Repository search method should be called for real names
             mock_repo.search_by_name_enhanced.assert_called_once_with(
-                "Александр", threshold=0.8, limit=5
+                "Александр", threshold=0.8, limit=5, user_role=None
             )
 
 
@@ -296,7 +296,7 @@ class TestStateTransitions:
 
             # Assert: Repository search method called with correct name
             mock_repo.search_by_name_enhanced.assert_called_once_with(
-                "Александр", threshold=0.8, limit=5
+                "Александр", threshold=0.8, limit=5, user_role=None
             )
 
     def test_navigation_buttons_behavior(self):

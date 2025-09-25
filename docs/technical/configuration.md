@@ -23,7 +23,9 @@
 | `LOG_LEVEL` | Logging level | `INFO`, `DEBUG`, `WARNING` | `INFO` |
 | `ENVIRONMENT` | Runtime environment | `development`, `production` | `development` |
 | `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` | Conversation timeout in minutes | `30`, `60` | `30` |
-| `ADMIN_USER_IDS` | Comma-separated admin user IDs | `123456789,987654321` | None |
+| `TELEGRAM_ADMIN_IDS` | Comma-separated admin user IDs | `123456789,987654321` | None |
+| `TELEGRAM_COORDINATOR_IDS` | Comma-separated coordinator user IDs | `555666777,444333222` | None |
+| `TELEGRAM_VIEWER_IDS` | Comma-separated viewer user IDs | `111222333,999888777` | None |
 
 ### Optional Variables
 
@@ -51,29 +53,105 @@ TELEGRAM_CONVERSATION_TIMEOUT_MINUTES=30
 TELEGRAM_CONVERSATION_TIMEOUT_MINUTES=60
 ```
 
-### Admin Authentication
+### Role-Based Authorization System (Added 2025-09-24)
 
-The bot includes admin-only features that require proper user authorization. Admin access is controlled through environment configuration.
+The bot implements a comprehensive three-tier role-based access control system with environment-based configuration.
 
-- **Environment Variable**: `ADMIN_USER_IDS`
-- **Format**: Comma-separated list of Telegram user IDs
-- **Example**: `123456789,987654321`
-- **Usage**: Controls access to admin features like CSV export functionality
+#### Role Hierarchy
+**Admin > Coordinator > Viewer** (roles inherit permissions from lower tiers)
+
+- **Admin**: Full access to all functionality including exports and sensitive participant data
+- **Coordinator**: Access to participant data with some restrictions (no financial/payment info)
+- **Viewer**: Limited access with strict data filtering (no PII, contact info, or sensitive data)
+
+#### Environment Configuration
+
+**Role-Based User ID Variables:**
+- **TELEGRAM_ADMIN_IDS**: Comma-separated list of admin user IDs
+- **TELEGRAM_COORDINATOR_IDS**: Comma-separated list of coordinator user IDs
+- **TELEGRAM_VIEWER_IDS**: Comma-separated list of viewer user IDs
 
 **Configuration Examples:**
 ```bash
-# Single admin user
-ADMIN_USER_IDS=123456789
+# Complete role-based configuration
+TELEGRAM_ADMIN_IDS=123456789,987654321
+TELEGRAM_COORDINATOR_IDS=555666777,444333222,333444555
+TELEGRAM_VIEWER_IDS=111222333,999888777,777666555
 
-# Multiple admin users
-ADMIN_USER_IDS=123456789,987654321,555666777
+# Single user per role
+TELEGRAM_ADMIN_IDS=123456789
+TELEGRAM_COORDINATOR_IDS=555666777
+TELEGRAM_VIEWER_IDS=111222333
+
+# Mixed configuration (some roles empty)
+TELEGRAM_ADMIN_IDS=123456789,987654321
+TELEGRAM_COORDINATOR_IDS=555666777
+# No viewers configured - TELEGRAM_VIEWER_IDS can be omitted
 ```
 
-**Authentication Utilities:**
-- **Function**: `is_admin_user(user_id, settings)` in `src/utils/auth_utils.py`
+#### Authorization Utilities
+
+**Core Functions** (`src/utils/auth_utils.py`):
+- **`get_user_role(user_id, settings)`**: Returns highest role for a user ("admin", "coordinator", "viewer", or None)
+- **`is_admin_user(user_id, settings)`**: Checks admin access (existing function, maintained for compatibility)
+- **`is_coordinator_user(user_id, settings)`**: Checks coordinator or above access
+- **`is_viewer_user(user_id, settings)`**: Checks viewer or above access (any authorized user)
+
+**Access Control Middleware** (`src/utils/access_control.py`):
+- **`@require_admin()`**: Decorator for admin-only handlers
+- **`@require_coordinator_or_above()`**: Decorator for coordinator/admin handlers
+- **`@require_viewer_or_above()`**: Decorator for any authorized user handlers
+- **`@require_role(roles)`**: Flexible decorator accepting single role or role list
+
+#### Performance & Security Features
+
+**Caching System:**
+- **Performance**: Role resolution cached with 5-minute TTL for <50ms response times
+- **Cache Invalidation**: Manual cache clearing via `invalidate_role_cache()` for testing
+- **Memory Efficient**: Module-level cache prevents memory leaks
+
+**Security Features:**
 - **Type Safety**: Handles Union[int, str, None] user ID types with robust validation
-- **Logging**: Comprehensive logging for authentication attempts and failures
-- **Integration**: Uses existing settings configuration for admin user list
+- **Privacy Compliance**: User IDs hashed in authorization logs to protect privacy
+- **Secure by Default**: Unknown roles default to viewer-level access
+- **Input Validation**: Comprehensive validation with clear error messages
+
+**Data Filtering** (`src/utils/participant_filter.py`):
+- **Role-Based Filtering**: `filter_participants_by_role(participants, user_role)` applies appropriate restrictions
+- **PII Protection**: Viewers cannot access phone, email, contact information
+- **Financial Data Protection**: Coordinators cannot access payment amounts or financial data
+- **Field-Level Security**: Granular control over which fields each role can access
+
+#### Integration Examples
+
+**Handler Integration:**
+```python
+from src.utils.auth_utils import get_user_role
+from src.utils.participant_filter import filter_participants_by_role
+
+async def search_handler(update, context):
+    user_id = update.effective_user.id
+    user_role = get_user_role(user_id, get_settings())
+
+    # Get search results with role-based filtering
+    participants = await repo.find_by_name(query, user_role=user_role)
+    filtered_participants = filter_participants_by_role(participants, user_role)
+```
+
+**Decorator Usage:**
+```python
+from src.utils.access_control import require_admin, require_coordinator_or_above
+
+@require_admin()
+async def export_handler(update, context):
+    # Admin-only export functionality
+    pass
+
+@require_coordinator_or_above()
+async def participant_details_handler(update, context):
+    # Coordinator/admin access to detailed participant info
+    pass
+```
 
 ### Multi-Table Configuration
 
@@ -142,7 +220,8 @@ roe_sessions = await roe_repo.get_by_roista_id("rec456...")
 - **Bot Token**: Must be provided for bot functionality
 - **Airtable API Key**: Required for data persistence
 - **Environment**: Validates against known environments
-- **Admin User IDs**: Must be valid integer user IDs if provided
+- **Role User IDs**: Must be valid integer user IDs if provided (TELEGRAM_ADMIN_IDS, TELEGRAM_COORDINATOR_IDS, TELEGRAM_VIEWER_IDS)
+- **Role Hierarchy**: Enforced at runtime - users with multiple roles receive highest role privileges
 - **Multi-Table Configuration**: All table configurations validated with defaults and error cases
 - **Table Type Validation**: Factory validates supported table types (participants, bible_readers, roe)
 - **Field Mapping Validation**: Each table has dedicated field mapping helpers with comprehensive field ID validation

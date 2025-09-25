@@ -15,9 +15,91 @@ Tres Dias Telegram Bot v3 follows a clean 3-layer architecture pattern:
 - **Validation**: Field-specific validation rules
 
 ### Data Layer (`src/data/`)
-- **Repositories**: Abstract data access interfaces
-- **Implementations**: Airtable-specific data access
+- **Repositories**: Abstract data access interfaces with role-based filtering
+- **Implementations**: Airtable-specific data access with security compliance
 - **Models**: Pydantic data models
+
+## Authorization Architecture (Added 2025-09-24)
+
+### Role-Based Access Control System
+
+The bot implements a comprehensive three-tier role-based access control (RBAC) system:
+
+**Role Hierarchy**: Admin > Coordinator > Viewer
+- **Admin**: Full access to all functionality including exports and sensitive data
+- **Coordinator**: Access to participant data with some restrictions (no PII)
+- **Viewer**: Limited access with strict data filtering and no sensitive information
+
+### Core Authorization Components
+
+#### Configuration Layer (`src/config/settings.py`)
+- **Role Parsing**: Environment variable parsing for TELEGRAM_VIEWER_IDS, TELEGRAM_COORDINATOR_IDS
+- **Type Safety**: Robust handling of Union[int, str, None] user ID types
+- **Validation**: Comprehensive validation with clear error messages for invalid configurations
+- **Backward Compatibility**: Maintains existing TELEGRAM_ADMIN_IDS functionality
+
+#### Authorization Utilities (`src/utils/auth_utils.py`)
+- **Role Resolution**: `get_user_role()` function determines highest role for a user
+- **Hierarchy Functions**: `is_admin_user()`, `is_coordinator_user()`, `is_viewer_user()` with proper inheritance
+- **Performance Caching**: 5-minute TTL cache with manual invalidation support for <50ms response times
+- **Privacy-Compliant Logging**: Hashed user IDs in logs to protect user privacy
+- **Secure Defaults**: Unknown roles default to viewer-level access
+
+#### Access Control Middleware (`src/utils/access_control.py`)
+- **Flexible Decorators**: `@require_role()` accepts single role or role list
+- **Convenience Decorators**: `@require_admin()`, `@require_coordinator_or_above()`, `@require_viewer_or_above()`
+- **Error Handling**: Proper unauthorized access messages and user feedback
+- **Update Integration**: `get_user_role_from_update()` utility for role extraction
+
+#### Data Filtering (`src/utils/participant_filter.py`)
+- **Role-Based Filtering**: `filter_participants_by_role()` applies appropriate data restrictions
+- **PII Protection**: Viewers cannot access sensitive fields (phone, email, payment info)
+- **Security Compliance**: Prevents data leakage through comprehensive field filtering
+- **Coordinator Restrictions**: Coordinators have access to most data except financial information
+
+### Handler-Level Enforcement
+
+#### Search Handler Authorization (`src/bot/handlers/search_handlers.py`)
+- **Role Resolution**: Handlers determine user role at conversation start
+- **Repository Integration**: User role passed to repository methods for filtering
+- **Fallback Security**: All search paths include role-based filtering to prevent bypass
+- **Critical Security Fix**: Eliminated authorization bypass vulnerabilities
+
+#### Repository Interface Updates (`src/data/repositories/participant_repository.py`)
+- **Role Parameters**: Repository methods accept `user_role` parameter for filtering
+- **Consistent Interface**: All search methods updated to enforce role-based access
+- **Abstract Compliance**: Interface ensures all implementations apply proper filtering
+
+### Security Features
+
+#### Multi-Layer Security
+1. **Configuration Validation**: Role assignments validated at startup
+2. **Handler Enforcement**: Authorization checks at conversation entry points
+3. **Service Layer Filtering**: Data filtering applied before UI presentation
+4. **Repository Security**: Final data access layer enforces role restrictions
+
+#### Performance & Reliability
+- **Caching**: Role resolution cached with 5-minute TTL for optimal performance
+- **Fallback Configuration**: Environment variables provide backup when Airtable unavailable
+- **Error Recovery**: Graceful degradation with clear error messaging
+- **Test Coverage**: 64+ comprehensive tests covering security scenarios
+
+#### Privacy Compliance
+- **Hashed Logging**: User IDs hashed in authorization logs to protect privacy
+- **Minimal Data Exposure**: Viewers see only non-sensitive participant information
+- **Secure by Default**: Unknown users/roles receive minimal access permissions
+
+### Future Airtable Integration Readiness
+
+#### AuthorizedUsers Table Mapping (`src/config/field_mappings.py`)
+- **Field Mapping Constants**: AccessLevel, Status, TelegramUserID field mappings
+- **Option ID Support**: Role option IDs for future Airtable sync implementation
+- **Schema Compliance**: Field IDs follow proper Airtable format (17 characters, 'fld' prefix)
+
+#### Sync Architecture Foundation
+- **Environment Fallback**: Current role configuration serves as backup during Airtable sync failures
+- **Cache Invalidation**: Manual cache invalidation support for real-time role updates
+- **Extensible Design**: Authorization utilities designed for future Airtable integration
 
 ## Key Architectural Components
 

@@ -14,7 +14,8 @@ This bot serves as a centralized participant management system for Tres Dias spi
   - **BibleReaders Export**: Bible reading assignments with participant name resolution
   - **ROE Export**: Session data with presenter/assistant/prayer partner details
 - **Location-based Search**: Room and floor-based participant discovery with interactive UI
-- **Role-based Access**: Team member and candidate list views with pagination
+- **Role-based Access Control**: Three-tier authorization hierarchy (admin/coordinator/viewer) with granular data filtering and handler-level enforcement
+- **Enhanced Security**: Role-based data filtering prevents unauthorized access to sensitive participant information
 
 ## 🏗️ Technical Architecture
 
@@ -168,10 +169,15 @@ USER app
 - **File Delivery**: Direct Telegram document upload with size validation
 - **Error Recovery**: Automatic retry with exponential backoff
 
-#### Authentication
-- **Settings-based**: Admin users defined in environment configuration
-- **Type-safe**: Robust validation with comprehensive edge case handling
-- **Audit Trail**: Complete logging of admin actions
+#### Role-Based Authorization System
+- **Three-Tier Hierarchy**: Admin > Coordinator > Viewer with proper inheritance
+- **Environment Configuration**: Role-based user IDs (TELEGRAM_ADMIN_IDS, TELEGRAM_COORDINATOR_IDS, TELEGRAM_VIEWER_IDS)
+- **Data Filtering**: Role-based access to participant data with PII protection for viewers
+- **Handler Enforcement**: Authorization checks at handler level prevent unauthorized access
+- **Caching**: Sub-50ms role resolution performance with 5-minute TTL caching
+- **Access Control Middleware**: Reusable decorators (@require_admin, @require_coordinator_or_above)
+- **Type-safe**: Robust validation with comprehensive edge case handling and Python 3.9+ compatibility
+- **Audit Trail**: Privacy-compliant logging with hashed user IDs
 
 ### Russian Localization
 
@@ -291,12 +297,16 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 AIRTABLE_API_KEY=your_api_key
 AIRTABLE_BASE_ID=appRp7Vby2JMzN0mC
 
+# Role-Based Authorization (Role hierarchy: admin > coordinator > viewer)
+TELEGRAM_ADMIN_IDS=123456789,987654321
+TELEGRAM_COORDINATOR_IDS=555666777,444333222
+TELEGRAM_VIEWER_IDS=111222333,999888777
+
 # Optional
 AIRTABLE_TABLE_NAME=Participants
 AIRTABLE_TABLE_ID=tbl8ivwOdAUvMi3Jy
 LOG_LEVEL=INFO
 ENVIRONMENT=development
-ADMIN_USER_IDS=123456789,987654321
 TELEGRAM_CONVERSATION_TIMEOUT_MINUTES=30
 ```
 
@@ -341,8 +351,13 @@ async def test_search_conversation(update, context):
 ## 🔒 Security & Compliance
 
 ### Security Measures
-- **Authentication**: Admin-only commands with user ID validation
-- **Input Sanitization**: Protection against injection attacks
+- **Role-Based Access Control**: Three-tier hierarchy with granular permissions and data filtering
+- **Authorization Middleware**: Handler-level access control with reusable decorators
+- **PII Protection**: Role-based data filtering prevents viewers from accessing sensitive information
+- **Input Sanitization**: Protection against injection attacks and formula injection
+- **Privacy-Compliant Logging**: Hashed user IDs in authorization logs to protect privacy
+- **Secure by Default**: Unknown roles default to viewer-level access
+- **Performance Security**: Sub-50ms authorization checks with caching to prevent DoS
 - **Secure File Handling**: Automatic cleanup of temporary files
 - **Environment Isolation**: Secrets management through environment variables
 - **Container Security**: Non-root user execution in Docker

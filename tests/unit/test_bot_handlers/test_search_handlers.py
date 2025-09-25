@@ -631,7 +631,7 @@ class TestEnhancedSearchHandlers:
 
             # Should call enhanced search method
             mock_repo.search_by_name_enhanced.assert_called_once_with(
-                "Александр", threshold=0.8, limit=5
+                "Александр", threshold=0.8, limit=5, user_role=None
             )
 
             # Should reply twice: results (inline) and navigation keyboard update
@@ -682,7 +682,7 @@ class TestEnhancedSearchHandlers:
             # Test Russian input
             await process_name_search_enhanced(russian_update, mock_context)
             mock_repo.search_by_name_enhanced.assert_called_with(
-                "Александр", threshold=0.8, limit=5
+                "Александр", threshold=0.8, limit=5, user_role=None
             )
 
             # Reset mock
@@ -691,7 +691,7 @@ class TestEnhancedSearchHandlers:
             # Test English input
             await process_name_search_enhanced(english_update, mock_context)
             mock_repo.search_by_name_enhanced.assert_called_with(
-                "Alexander", threshold=0.8, limit=5
+                "Alexander", threshold=0.8, limit=5, user_role=None
             )
 
     @pytest.mark.asyncio
@@ -800,7 +800,7 @@ class TestEnhancedSearchHandlers:
             result = await process_name_search_enhanced(first_name_update, mock_context)
             assert result == SearchStates.SHOWING_RESULTS
             mock_repo.search_by_name_enhanced.assert_called_with(
-                "Александр", threshold=0.8, limit=5
+                "Александр", threshold=0.8, limit=5, user_role=None
             )
 
             # Reset and test last name search
@@ -808,7 +808,7 @@ class TestEnhancedSearchHandlers:
             result = await process_name_search_enhanced(last_name_update, mock_context)
             assert result == SearchStates.SHOWING_RESULTS
             mock_repo.search_by_name_enhanced.assert_called_with(
-                "Иванов", threshold=0.8, limit=5
+                "Иванов", threshold=0.8, limit=5, user_role=None
             )
 
 

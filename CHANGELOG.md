@@ -8,6 +8,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Role-Based Access Control Foundation with Three-Tier Authorization** – Complete implementation of admin > coordinator > viewer role hierarchy with environment configuration, data filtering, handler-level enforcement, and critical security fixes eliminating unauthorized access vulnerabilities (TDB-71, completed 2025-09-25, PR #63, branch `feature/TDB-71-authorization-foundation`)
+  - Extended configuration system with role-based environment variables (`src/config/settings.py:21-71,307-308`)
+    - TELEGRAM_VIEWER_IDS and TELEGRAM_COORDINATOR_IDS parsing and validation with comma-separated user ID support
+    - Maintains 100% backward compatibility with existing TELEGRAM_ADMIN_IDS functionality
+    - Python 3.9 compatibility fix with Union type syntax instead of PEP 604 union operators
+  - Complete role-based authorization utilities with performance optimization (`src/utils/auth_utils.py:15-250`)
+    - Three-tier role hierarchy (admin > coordinator > viewer) with proper inheritance checking
+    - Role resolution caching with 5-minute TTL achieving <50ms performance requirement
+    - PII-safe logging using hashed user IDs instead of raw IDs for privacy compliance
+    - Unknown role guards providing secure fallback to viewer-level access by default
+  - Critical security data filtering preventing unauthorized PII access (`src/utils/participant_filter.py:1-146`)
+    - Role-based participant data filtering with viewer/coordinator/admin access levels
+    - Viewers restricted from financial data, sensitive personal information, and coordinator/admin-only fields
+    - Coordinators granted access to participant management data while protecting financial/admin information
+    - Complete integration with existing search and repository patterns
+  - Handler-level authorization enforcement eliminating bypass vulnerabilities (`src/bot/handlers/search_handlers.py:31-33,263-265,274,319-325`)
+    - User role resolution at handler entry points with proper parameter passing to repositories
+    - Critical security fix in fallback search path preventing unauthorized data access
+    - Integration with existing search conversation flows maintaining user experience
+  - Complete access control middleware system (`src/utils/access_control.py:1-158`)
+    - Reusable authorization decorators: require_role(), require_admin(), require_coordinator_or_above(), require_viewer_or_above()
+    - Role hierarchy enforcement with proper error handling and user messaging
+    - Integration utilities for extracting user roles from Telegram updates
+  - Repository interface updates for role-based data access (`src/data/repositories/participant_repository.py:291,303`)
+    - Enhanced abstract interface with user_role parameter for consistent authorization
+    - Airtable repository implementation with role-based filtering integration (`src/data/airtable/airtable_participant_repo.py:29,729-784`)
+  - Environment configuration documentation and examples (`.env.example:5-9`)
+    - Clear role hierarchy documentation with admin > coordinator > viewer explanation
+    - Configuration examples for operations team setup with multiple user IDs
+  - AuthorizedUsers table mapping constants for future Airtable sync (`src/config/field_mappings.py:72-74,119-127`)
+    - AccessLevel, Status, and TelegramUserID field mappings with proper Airtable schema compliance
+    - Support for future Airtable-driven user management with proper field ID and option ID mappings
+  - Comprehensive test coverage with 64+ new security and performance tests
+    - Configuration parsing tests (`tests/unit/test_config/test_auth_settings.py`) with 13 test cases
+    - Authorization utilities tests (`tests/unit/test_utils/test_auth_utils.py:155-359`) with role hierarchy validation
+    - Data filtering security tests (`tests/unit/test_utils/test_participant_filter.py`) with 17 comprehensive test cases
+    - Handler role enforcement integration tests (`tests/integration/test_handler_role_enforcement.py:1-394`) with 15+ test cases
+    - Role filtering repository integration tests preventing security regression
+  - Enhanced documentation with comprehensive security and authorization guidance
+    - README.md updated with role-based access control details and security section explaining three-tier hierarchy
+    - NEW comprehensive security documentation (`docs/technical/security.md`) covering authorization architecture, threat model, and best practices
+    - Architecture overview enhanced with authorization middleware, role hierarchy, and security patterns (`docs/architecture/architecture-overview.md`)
+    - Configuration documentation updated with role-based environment variables and setup examples (`docs/technical/configuration.md`)
+    - Development workflow enhanced with security guidelines and authorization testing requirements (`docs/development/development-workflow.md`)
+
+### Changed
 - **Airtable View-Based Participant Export Alignment** – Complete alignment of participant exports with Airtable Тимы/Кандидаты views enabling direct comparability between export files and live base structure for improved data consistency and workflow efficiency (PR #57, completed 2025-09-23, merged at SHA ee3d204, merged on 2025-09-23T06:08:00Z, PR URL https://github.com/alexandrbasis/telegram-bot-v3/pull/57)
   - Enhanced repository interface with view-based record retrieval capability (`src/data/repositories/participant_repository.py:399-408`)
     - Added list_view_records abstract method supporting raw Airtable view data fetching with filter preservation
