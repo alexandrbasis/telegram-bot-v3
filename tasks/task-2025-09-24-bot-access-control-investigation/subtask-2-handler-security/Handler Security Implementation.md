@@ -59,22 +59,31 @@ Apply authorization controls to all bot handlers leveraging the Airtable-synced 
 - [ ] Provide appropriate error messaging
 
 ## Implementation Steps & Change Log
-- [ ] Step 1: Secure Main Search Handlers
-  - [ ] Sub-step 1.1: Apply authorization to start command
+- [x] ✅ Step 1: Secure Main Search Handlers - Completed 2025-09-25 13:00
+  - [x] ✅ Sub-step 1.1: Apply authorization to start command - Completed 2025-09-25 13:00
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/search_handlers.py`
     - **Accept**: /start command checks authorization via cache before menu display; triggers cache refresh when requested by admin command
     - **Tests**: `tests/unit/test_bot_handlers/test_search_handlers.py`
     - **Done**: Unauthorized users blocked at entry
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `src/bot/handlers/search_handlers.py:32` - Added import for `require_viewer_or_above` access control decorator
+      - `src/bot/handlers/search_handlers.py:134` - Applied `@require_viewer_or_above` decorator to `start_command` function
+      - `tests/unit/test_bot_handlers/test_search_handlers.py:1599-1700` - Added comprehensive TDD test suite `TestStartCommandAuthorization` with 4 authorization tests
+      - `tests/unit/test_bot_handlers/test_search_handlers.py:93-114,121-130,134-162,1487-1596` - Updated all existing start_command tests to mock authorization for compatibility
+      - **Notes**: TDD Red-Green-Refactor approach followed; unauthorized users receive clear Russian denial messages; all tests passing
 
-  - [ ] Sub-step 1.2: Secure all search functions
+  - [x] ✅ Sub-step 1.2: Search functions already secured - Completed (verified existing implementation)
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/search_handlers.py`
     - **Accept**: Search operations verify user authorization
     - **Tests**: `tests/unit/test_bot_handlers/test_search_handlers.py`
     - **Done**: All search paths protected
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - `src/bot/handlers/search_handlers.py:262-265` - VERIFIED: User role resolution already implemented in `process_name_search`
+      - `src/bot/handlers/search_handlers.py:274` - VERIFIED: Enhanced search passes `user_role` parameter for authorization
+      - `src/bot/handlers/search_handlers.py:320-326` - VERIFIED: Critical fallback search path applies role-based filtering via `filter_participants_by_role`
+      - **Notes**: Search operations were already secured from the authorization foundation implementation; no additional changes required
 
 - [ ] Step 2: Secure Room Search Handlers
   - [ ] Sub-step 2.1: Apply authorization checks
