@@ -9,6 +9,7 @@ import time
 from typing import Dict, Tuple, Union
 
 from src.config.settings import Settings
+from src.services.security_audit_service import get_security_audit_service
 
 logger = logging.getLogger(__name__)
 
@@ -60,19 +61,58 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool:
         >>> is_admin_user(999999, settings)
         False
     """
+    start_time = time.time()
+    audit_service = get_security_audit_service()
+
     # Convert and validate user ID
-    user_id = _convert_user_id(user_id)
-    if user_id is None:
+    converted_user_id = _convert_user_id(user_id)
+    if converted_user_id is None:
         logger.debug("User ID is None or invalid, denying admin access")
+
+        # Log authorization event for invalid user ID
+        auth_event = audit_service.create_authorization_event(
+            user_id=None,
+            action="admin_check",
+            result="denied",
+            user_role=None,
+            cache_state="invalid_user_id",
+            error_details="Invalid or None user ID provided"
+        )
+        audit_service.log_authorization_event(auth_event)
+
         return False
 
     # Check if user is in admin list
-    is_admin = user_id in settings.telegram.admin_user_ids
+    is_admin = converted_user_id in settings.telegram.admin_user_ids
+
+    # Calculate performance metrics
+    duration_ms = int((time.time() - start_time) * 1000)
+
+    # Log authorization event
+    user_role = "admin" if is_admin else None
+    auth_event = audit_service.create_authorization_event(
+        user_id=converted_user_id,
+        action="admin_check",
+        result="granted" if is_admin else "denied",
+        user_role=user_role,
+        cache_state="direct_check",  # Direct settings check, no cache involved
+        error_details=None if is_admin else "User not in admin list"
+    )
+    audit_service.log_authorization_event(auth_event)
+
+    # Log performance metrics
+    perf_metrics = audit_service.create_performance_metrics(
+        operation="admin_check",
+        duration_ms=duration_ms,
+        cache_hit=False,  # Direct settings lookup
+        user_role=user_role
+    )
+    audit_service.log_performance_metrics(perf_metrics)
 
     if is_admin:
-        logger.info(f"Admin access granted for user ID: {user_id}")
+        logger.info(f"Admin access granted for user ID: {converted_user_id}")
     else:
-        logger.debug(f"Admin access denied for user ID: {user_id}")
+        logger.debug(f"Admin access denied for user ID: {converted_user_id}")
 
     return is_admin
 
@@ -192,23 +232,73 @@ def get_user_role(
     Returns:
         The highest role name ("admin", "coordinator", "viewer") or None if no role
     """
+    start_time = time.time()
+    audit_service = get_security_audit_service()
+
     # Convert and validate user ID
-    user_id = _convert_user_id(user_id)
-    if user_id is None:
+    converted_user_id = _convert_user_id(user_id)
+    if converted_user_id is None:
+        # Log authorization event for invalid user ID
+        auth_event = audit_service.create_authorization_event(
+            user_id=None,
+            action="role_resolution",
+            result="denied",
+            user_role=None,
+            cache_state="invalid_user_id",
+            error_details="Invalid or None user ID provided"
+        )
+        audit_service.log_authorization_event(auth_event)
+
         return None
 
     # Check cache first
     current_time = time.time()
-    if user_id in _ROLE_CACHE:
-        cached_role, timestamp = _ROLE_CACHE[user_id]
+    cache_hit = False
+    cache_state = "miss"
+
+    if converted_user_id in _ROLE_CACHE:
+        cached_role, timestamp = _ROLE_CACHE[converted_user_id]
         if current_time - timestamp <= _ROLE_CACHE_TTL_SECONDS:
-            return cached_role
+            cache_hit = True
+            cache_state = "hit"
+            role = cached_role
+        else:
+            cache_state = "expired"
+            role = _resolve_user_role_uncached(converted_user_id, settings)
+            # Cache the result
+            _ROLE_CACHE[converted_user_id] = (role, current_time)
+    else:
+        cache_state = "miss"
+        role = _resolve_user_role_uncached(converted_user_id, settings)
+        # Cache the result
+        _ROLE_CACHE[converted_user_id] = (role, current_time)
 
-    # Cache miss or expired - resolve role
-    role = _resolve_user_role_uncached(user_id, settings)
+    # Calculate performance metrics
+    duration_ms = int((time.time() - start_time) * 1000)
 
-    # Cache the result
-    _ROLE_CACHE[user_id] = (role, current_time)
+    # Log authorization event
+    auth_event = audit_service.create_authorization_event(
+        user_id=converted_user_id,
+        action="role_resolution",
+        result="granted" if role else "denied",
+        user_role=role,
+        cache_state=cache_state,
+        error_details=None if role else "User has no assigned role"
+    )
+    audit_service.log_authorization_event(auth_event)
+
+    # Log performance metrics
+    perf_metrics = audit_service.create_performance_metrics(
+        operation="role_resolution",
+        duration_ms=duration_ms,
+        cache_hit=cache_hit,
+        user_role=role,
+        additional_context={
+            "cache_size": len(_ROLE_CACHE),
+            "cache_ttl_seconds": _ROLE_CACHE_TTL_SECONDS
+        }
+    )
+    audit_service.log_performance_metrics(perf_metrics)
 
     return role
 
@@ -244,13 +334,49 @@ def invalidate_role_cache(user_id: Union[int, str, None] = None) -> None:
     Args:
         user_id: User ID to invalidate, or None to clear entire cache
     """
+    start_time = time.time()
+    audit_service = get_security_audit_service()
+
     if user_id is None:
         # Clear entire cache
+        cache_size_before = len(_ROLE_CACHE)
         _ROLE_CACHE.clear()
         logger.debug("Role cache cleared for all users")
+
+        # Log sync event for cache invalidation
+        duration_ms = int((time.time() - start_time) * 1000)
+        sync_event = audit_service.create_sync_event(
+            sync_type="cache_invalidation_all",
+            duration_ms=duration_ms,
+            records_processed=cache_size_before,
+            success=True
+        )
+        audit_service.log_sync_event(sync_event)
+
     else:
         # Convert and validate user ID
-        user_id = _convert_user_id(user_id)
-        if user_id is not None and user_id in _ROLE_CACHE:
-            del _ROLE_CACHE[user_id]
-            logger.debug(f"Role cache cleared for user ID: {user_id}")
+        converted_user_id = _convert_user_id(user_id)
+        if converted_user_id is not None and converted_user_id in _ROLE_CACHE:
+            del _ROLE_CACHE[converted_user_id]
+            logger.debug(f"Role cache cleared for user ID: {converted_user_id}")
+
+            # Log sync event for specific user cache invalidation
+            duration_ms = int((time.time() - start_time) * 1000)
+            sync_event = audit_service.create_sync_event(
+                sync_type="cache_invalidation_user",
+                duration_ms=duration_ms,
+                records_processed=1,
+                success=True
+            )
+            audit_service.log_sync_event(sync_event)
+        else:
+            # Log failed cache invalidation
+            duration_ms = int((time.time() - start_time) * 1000)
+            sync_event = audit_service.create_sync_event(
+                sync_type="cache_invalidation_user",
+                duration_ms=duration_ms,
+                records_processed=0,
+                success=False,
+                error_details=f"User {user_id} not found in cache or invalid ID"
+            )
+            audit_service.log_sync_event(sync_event)
