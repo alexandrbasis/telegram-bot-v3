@@ -513,4 +513,4 @@ class TestSecurityAuditIntegration:
             service.log_performance_metrics(perf_metrics)
 
             # Verify logging occurred (specific assertions depend on implementation)
-            assert mock_warning.call_count >= 0 or mock_error.call_count >= 0
+            assert mock_warning.call_count >= 1 or mock_error.call_count >= 1

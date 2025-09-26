@@ -424,8 +424,9 @@ class TestEndToEndSecurityIntegration:
                 await process_name_search(update, context)
 
         # Verify all test scenarios were executed
-        # Since get_user_role is mocked, audit logging from that function is bypassed
-        # The audit service would be called in real usage but not in this test setup
+        # Since get_user_role is mocked, audit logging from that
+        # function is bypassed. The audit service would be called in
+        # real usage but not in this test setup.
         assert len(test_scenarios) == 4  # Confirm all scenarios were tested
 
         # In a real scenario, audit events would contain required fields:

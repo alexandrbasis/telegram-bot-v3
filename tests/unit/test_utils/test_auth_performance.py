@@ -290,8 +290,8 @@ class TestAuthorizationPerformanceBenchmarks:
 
             assert result1 == result2
 
-            # Cache hit should be at least as fast as initial lookup (and usually faster)
-            # With current optimized implementation, both are extremely fast
+            # Cache hit should be at least as fast as initial lookup and usually faster
+            # With the optimized implementation, both execution paths remain fast
             assert (
                 cache_hit_time <= initial_time + 0.1
             ), f"Cache hit slower than expected: {cache_hit_time:.2f}ms vs {initial_time:.2f}ms"
@@ -420,10 +420,10 @@ class TestAuthorizationScalabilityBenchmarks:
         """Test performance with larger role lists."""
         # Test various users from different role lists
         test_users = [
-            (100005, "admin"),  # Admin user
-            (200025, "coordinator"),  # Coordinator user
-            (300100, "viewer"),  # Viewer user
-            (999999, None),  # Unauthorized user
+            (100005, "admin"),  # Admin user for large list performance
+            (200025, "coordinator"),  # Coordinator user performance case
+            (300100, "viewer"),  # Viewer user performance case
+            (999999, None),  # Unauthorized user performance case
         ]
 
         execution_times = []

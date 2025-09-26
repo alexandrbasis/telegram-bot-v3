@@ -108,12 +108,12 @@ class TestSecurityBypassAttempts:
         """
         # Test various injection payloads
         malicious_user_ids = [
-            "'; DROP TABLE participants; --",  # SQL injection
-            "<script>alert('xss')</script>",  # XSS attempt
-            "../../etc/passwd",  # Path traversal
-            "A" * 10000,  # Buffer overflow attempt
-            "admin' OR '1'='1",  # Authentication bypass
-            "100; INSERT INTO users VALUES('hacker')",  # Command injection
+            "'; DROP TABLE participants; --",  # SQL injection attack payload
+            "<script>alert('xss')</script>",  # XSS attempt via payload
+            "../../etc/passwd",  # Path traversal attempt
+            "A" * 10000,  # Buffer overflow / resource exhaustion attempt
+            "admin' OR '1'='1",  # Authentication bypass attempt
+            "100; INSERT INTO users VALUES('hacker')",  # Command injection attempt
             None,  # Null injection
             "",  # Empty string
             "NaN",  # Type confusion
@@ -272,7 +272,7 @@ class TestSecurityBypassAttempts:
         # Timing should be consistent (no significant variance indicating user existence)
         # In practice, microsecond-level timing variations are normal and not security issues
         # Focus on ensuring no timing is excessively slow (which would indicate problems)
-        # Allow reasonable variance - timing attacks typically need much larger differences
+        # Allow reasonable variance; timing attacks typically need much larger differences
         assert (
             time_variance < 10.0  # 10ms variance is reasonable for this test
         ), f"Timing variance ({time_variance:.2f}ms) too high, may reveal user info"

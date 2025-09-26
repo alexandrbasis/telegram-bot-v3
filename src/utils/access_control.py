@@ -114,10 +114,11 @@ def require_role(
                 )
                 audit_service.log_performance_metrics(perf_metrics)
 
-                logger.warning(
-                    f"Access denied: User {user.id} (role: {user_role}) "
-                    f"attempted to access handler requiring roles: {required_roles}"
+                denied_message = (
+                    f"Access denied: User {user.id} (role: {user_role}) attempted "
+                    f"to access handler requiring roles: {required_roles}"
                 )
+                logger.warning(denied_message)
 
                 # Send unauthorized message to user
                 if (

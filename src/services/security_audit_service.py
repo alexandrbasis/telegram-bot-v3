@@ -149,10 +149,12 @@ class SecurityAuditService:
 
         # Log at appropriate level based on result
         if event.result == "denied":
-            self.logger.warning(
-                f"SECURITY_AUDIT: DENIED access attempt - User {event.user_id} "
-                f"(role: {event.user_role}) attempted '{event.action}' - {log_message}"
+            denied_message = (
+                "SECURITY_AUDIT: DENIED access attempt - "
+                f"User {event.user_id} (role: {event.user_role}) "
+                f"attempted '{event.action}'"
             )
+            self.logger.warning(f"{denied_message} - {log_message}")
         else:
             self.logger.info(log_message)
 
