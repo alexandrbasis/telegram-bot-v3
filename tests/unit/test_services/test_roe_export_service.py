@@ -682,3 +682,87 @@ class TestLineNumberIntegration:
 
         # Cleanup
         Path(file_path).unlink()
+
+
+class TestAsyncExportInterface:
+    """Test async export interface methods."""
+
+    @pytest.mark.asyncio
+    async def test_export_to_csv_async_method_exists(
+        self, mock_roe_repository, mock_participant_repository, sample_roe_sessions, sample_participants
+    ):
+        """Test that export_to_csv_async method exists and works like get_all_roe_as_csv."""
+        # Arrange
+        mock_roe_repository.list_all.return_value = sample_roe_sessions
+
+        # Mock participant hydration
+        async def mock_get_by_id(participant_id):
+            for p in sample_participants:
+                if p.record_id == participant_id:
+                    return p
+            return None
+
+        mock_participant_repository.get_by_id = mock_get_by_id
+
+        service = ROEExportService(
+            roe_repository=mock_roe_repository,
+            participant_repository=mock_participant_repository,
+        )
+
+        # Act
+        csv_data = await service.export_to_csv_async()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Should have same format as existing method
+        assert "#" in reader.fieldnames
+        assert len(rows) == len(sample_roe_sessions)
+        assert rows[0]["#"] == "1"
+
+    def test_export_to_csv_sync_wrapper_no_running_loop(
+        self, mock_roe_repository, mock_participant_repository, sample_roe_sessions, sample_participants
+    ):
+        """Test synchronous export_to_csv wrapper when no event loop is running."""
+        # Arrange
+        mock_roe_repository.list_all.return_value = sample_roe_sessions
+
+        # Mock participant hydration
+        async def mock_get_by_id(participant_id):
+            for p in sample_participants:
+                if p.record_id == participant_id:
+                    return p
+            return None
+
+        mock_participant_repository.get_by_id = mock_get_by_id
+
+        service = ROEExportService(
+            roe_repository=mock_roe_repository,
+            participant_repository=mock_participant_repository,
+        )
+
+        # Act
+        csv_data = service.export_to_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        assert "#" in reader.fieldnames
+        assert len(rows) == len(sample_roe_sessions)
+
+    @pytest.mark.asyncio
+    async def test_export_to_csv_sync_wrapper_raises_with_active_loop(
+        self, mock_roe_repository, mock_participant_repository
+    ):
+        """Test that sync wrapper raises error when called from async context."""
+        # Arrange
+        service = ROEExportService(
+            roe_repository=mock_roe_repository,
+            participant_repository=mock_participant_repository,
+        )
+
+        # Act & Assert
+        with pytest.raises(RuntimeError, match="cannot be called while an event loop is running"):
+            service.export_to_csv()
