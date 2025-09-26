@@ -73,13 +73,17 @@ class TestAuthorizationPerformanceBenchmarks:
                 result = get_user_role(user_id, self.test_settings)
 
             end_time = time.perf_counter()
-            execution_times.append((end_time - start_time) * 1000)  # Convert to milliseconds
+            execution_times.append(
+                (end_time - start_time) * 1000
+            )  # Convert to milliseconds
 
             # Verify we got the expected result
             assert result == "admin"
 
         # Calculate performance statistics
-        percentile_95 = statistics.quantiles(execution_times, n=20)[18]  # 95th percentile
+        percentile_95 = statistics.quantiles(execution_times, n=20)[
+            18
+        ]  # 95th percentile
         avg_time = statistics.mean(execution_times)
         max_time = max(execution_times)
 
@@ -116,13 +120,17 @@ class TestAuthorizationPerformanceBenchmarks:
                 result = get_user_role(user_id, self.test_settings)
 
             end_time = time.perf_counter()
-            execution_times.append((end_time - start_time) * 1000)  # Convert to milliseconds
+            execution_times.append(
+                (end_time - start_time) * 1000
+            )  # Convert to milliseconds
 
             # Verify we got a valid result
             assert result in ["admin", "coordinator", "viewer", None]
 
         # Calculate performance statistics
-        percentile_99 = statistics.quantiles(execution_times, n=100)[98]  # 99th percentile
+        percentile_99 = statistics.quantiles(execution_times, n=100)[
+            98
+        ]  # 99th percentile
         avg_time = statistics.mean(execution_times)
         max_time = max(execution_times)
 
@@ -214,7 +222,9 @@ class TestAuthorizationPerformanceBenchmarks:
         invalidate_role_cache(123456)
         individual_time = (time.perf_counter() - start_time) * 1000
 
-        assert individual_time < 10, f"Individual cache invalidation too slow: {individual_time:.2f}ms"
+        assert (
+            individual_time < 10
+        ), f"Individual cache invalidation too slow: {individual_time:.2f}ms"
         assert len(_ROLE_CACHE) == len(user_ids) - 1
 
         # Test full cache invalidation performance
@@ -222,7 +232,9 @@ class TestAuthorizationPerformanceBenchmarks:
         invalidate_role_cache()  # Clear all
         full_clear_time = (time.perf_counter() - start_time) * 1000
 
-        assert full_clear_time < 10, f"Full cache invalidation too slow: {full_clear_time:.2f}ms"
+        assert (
+            full_clear_time < 10
+        ), f"Full cache invalidation too slow: {full_clear_time:.2f}ms"
         assert len(_ROLE_CACHE) == 0
 
     def test_concurrent_access_simulation(self):
@@ -253,7 +265,9 @@ class TestAuthorizationPerformanceBenchmarks:
         percentile_95 = statistics.quantiles(execution_times, n=20)[18]
 
         assert avg_time < 25, f"Concurrent access avg too slow: {avg_time:.2f}ms"
-        assert percentile_95 < 75, f"Concurrent access 95th percentile too slow: {percentile_95:.2f}ms"
+        assert (
+            percentile_95 < 75
+        ), f"Concurrent access 95th percentile too slow: {percentile_95:.2f}ms"
 
     def test_cache_ttl_performance_impact(self):
         """Test performance impact of cache TTL expiration."""
@@ -278,9 +292,9 @@ class TestAuthorizationPerformanceBenchmarks:
 
             # Cache hit should be at least as fast as initial lookup (and usually faster)
             # With current optimized implementation, both are extremely fast
-            assert cache_hit_time <= initial_time + 0.1, (
-                f"Cache hit slower than expected: {cache_hit_time:.2f}ms vs {initial_time:.2f}ms"
-            )
+            assert (
+                cache_hit_time <= initial_time + 0.1
+            ), f"Cache hit slower than expected: {cache_hit_time:.2f}ms vs {initial_time:.2f}ms"
 
     @patch("src.utils.auth_utils._ROLE_CACHE_TTL_SECONDS", 1)  # Short TTL for testing
     def test_cache_expiration_performance(self):
@@ -406,10 +420,10 @@ class TestAuthorizationScalabilityBenchmarks:
         """Test performance with larger role lists."""
         # Test various users from different role lists
         test_users = [
-            (100005, "admin"),      # Admin user
-            (200025, "coordinator"), # Coordinator user
-            (300100, "viewer"),     # Viewer user
-            (999999, None)          # Unauthorized user
+            (100005, "admin"),  # Admin user
+            (200025, "coordinator"),  # Coordinator user
+            (300100, "viewer"),  # Viewer user
+            (999999, None),  # Unauthorized user
         ]
 
         execution_times = []
@@ -431,7 +445,9 @@ class TestAuthorizationScalabilityBenchmarks:
         avg_time = statistics.mean(execution_times)
         max_time = max(execution_times)
 
-        assert avg_time < 50, f"Large role list performance degraded: avg {avg_time:.2f}ms"
+        assert (
+            avg_time < 50
+        ), f"Large role list performance degraded: avg {avg_time:.2f}ms"
         assert max_time < 100, f"Large role list max time too high: {max_time:.2f}ms"
 
     def test_cache_scalability_with_many_users(self):
@@ -472,4 +488,6 @@ class TestAuthorizationScalabilityBenchmarks:
                 execution_times.append((end_time - start_time) * 1000)
 
             avg_time = statistics.mean(execution_times)
-            assert avg_time < 50, f"Large cache performance degraded: avg {avg_time:.2f}ms"
+            assert (
+                avg_time < 50
+            ), f"Large cache performance degraded: avg {avg_time:.2f}ms"

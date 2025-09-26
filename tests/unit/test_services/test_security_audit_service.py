@@ -171,11 +171,7 @@ class TestPerformanceMetrics:
 
     def test_performance_metrics_with_context(self):
         """Test performance metrics with additional context."""
-        context = {
-            "cache_size": 150,
-            "concurrent_users": 5,
-            "sync_in_progress": True
-        }
+        context = {"cache_size": 150, "concurrent_users": 5, "sync_in_progress": True}
 
         metrics = PerformanceMetrics(
             operation="role_resolution",
@@ -227,7 +223,7 @@ class TestSecurityAuditService:
         """Test logging authorization event at info level."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
             event = AuthorizationEvent(
                 user_id=123456,
                 action="search_participant",
@@ -250,7 +246,7 @@ class TestSecurityAuditService:
         """Test logging authorization event with airtable metadata."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
             airtable_data = {
                 "telegram_user_id": 123456,
                 "status": "Active",
@@ -277,7 +273,7 @@ class TestSecurityAuditService:
         """Test logging denied authorization event with warning level."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'warning') as mock_warning:
+        with patch.object(service.logger, "warning") as mock_warning:
             event = AuthorizationEvent(
                 user_id=789012,
                 action="admin_export",
@@ -299,7 +295,7 @@ class TestSecurityAuditService:
         """Test logging successful sync event."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
             event = SyncEvent(
                 sync_type="scheduled_refresh",
                 duration_ms=250,
@@ -321,7 +317,7 @@ class TestSecurityAuditService:
         """Test logging failed sync event with error level."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'error') as mock_error:
+        with patch.object(service.logger, "error") as mock_error:
             event = SyncEvent(
                 sync_type="manual_refresh",
                 duration_ms=1500,
@@ -344,7 +340,7 @@ class TestSecurityAuditService:
         """Test logging performance metrics for fast operation."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'debug') as mock_debug:
+        with patch.object(service.logger, "debug") as mock_debug:
             metrics = PerformanceMetrics(
                 operation="authorization_check",
                 duration_ms=45,
@@ -365,7 +361,7 @@ class TestSecurityAuditService:
         """Test logging performance metrics for slow operation with warning."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'warning') as mock_warning:
+        with patch.object(service.logger, "warning") as mock_warning:
             metrics = PerformanceMetrics(
                 operation="authorization_check",
                 duration_ms=350,
@@ -440,8 +436,10 @@ class TestSecurityAuditIntegration:
         """Test complete authorization flow with audit logging."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info, \
-             patch.object(service.logger, 'debug') as mock_debug:
+        with (
+            patch.object(service.logger, "info") as mock_info,
+            patch.object(service.logger, "debug") as mock_debug,
+        ):
 
             # Create and log authorization event
             auth_event = service.create_authorization_event(
@@ -470,7 +468,7 @@ class TestSecurityAuditIntegration:
         """Test complete sync flow with audit logging."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
 
             # Create and log sync event
             sync_event = service.create_sync_event(
@@ -490,8 +488,10 @@ class TestSecurityAuditIntegration:
         """Test audit service handles various edge cases gracefully."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'warning') as mock_warning, \
-             patch.object(service.logger, 'error') as mock_error:
+        with (
+            patch.object(service.logger, "warning") as mock_warning,
+            patch.object(service.logger, "error") as mock_error,
+        ):
 
             # Test with None user_id (should still log)
             auth_event = AuthorizationEvent(

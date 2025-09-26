@@ -29,6 +29,7 @@ class AuthorizationEvent:
     Captures all relevant information about user authorization attempts
     including cache state and Airtable metadata for complete audit trail.
     """
+
     user_id: Optional[int]
     action: str
     result: str  # "granted", "denied"
@@ -56,6 +57,7 @@ class SyncEvent:
     Captures sync operation details including performance metrics,
     success/failure status, and failed record details for monitoring.
     """
+
     sync_type: str  # "scheduled_refresh", "manual_refresh", "cache_invalidation"
     duration_ms: int
     records_processed: int
@@ -84,6 +86,7 @@ class PerformanceMetrics:
     Captures timing and performance data for authorization operations
     to ensure performance requirements are met and monitored.
     """
+
     operation: str
     duration_ms: int
     cache_hit: bool
@@ -113,6 +116,29 @@ class SecurityAuditService:
         """Initialize security audit service."""
         self.logger = logging.getLogger(__name__)
 
+    def _safe_json_dumps(self, data: dict) -> str:
+        """
+        Safely serialize data to JSON, handling non-serializable objects.
+
+        Args:
+            data: Dictionary to serialize
+
+        Returns:
+            JSON string representation
+        """
+        try:
+            return json.dumps(data, default=str)
+        except (TypeError, ValueError):
+            # Fallback for non-serializable objects (like Mock objects in tests)
+            safe_data = {}
+            for key, value in data.items():
+                try:
+                    json.dumps(value)  # Test if value is serializable
+                    safe_data[key] = value
+                except (TypeError, ValueError):
+                    safe_data[key] = str(value)  # Convert to string as fallback
+            return json.dumps(safe_data)
+
     def log_authorization_event(self, event: AuthorizationEvent) -> None:
         """
         Log authorization event with appropriate severity level.
@@ -141,8 +167,8 @@ class SecurityAuditService:
         if event.error_details:
             log_data["error_details"] = event.error_details
 
-        # Format log message
-        log_message = f"SECURITY_AUDIT: {json.dumps(log_data)}"
+        # Format log message with safe JSON serialization
+        log_message = f"SECURITY_AUDIT: {self._safe_json_dumps(log_data)}"
 
         # Log at appropriate level based on result
         if event.result == "denied":
@@ -189,14 +215,16 @@ class SecurityAuditService:
         )
 
         if event.success:
-            self.logger.info(f"{base_message} - SUCCESS: {json.dumps(log_data)}")
+            self.logger.info(
+                f"{base_message} - SUCCESS: {self._safe_json_dumps(log_data)}"
+            )
         else:
             failed_count = (
                 len(event.failed_record_ids) if event.failed_record_ids else 0
             )
             self.logger.error(
                 f"{base_message} - FAILED: {failed_count} failed records - "
-                f"{json.dumps(log_data)}"
+                f"{self._safe_json_dumps(log_data)}"
             )
 
     def log_performance_metrics(self, metrics: PerformanceMetrics) -> None:
@@ -232,12 +260,12 @@ class SecurityAuditService:
         # Log at appropriate level based on performance thresholds
         if metrics.duration_ms > AUTHORIZATION_SLOW_THRESHOLD_MS:
             self.logger.warning(
-                f"{base_message} - SLOW operation: {json.dumps(log_data)}"
+                f"{base_message} - SLOW operation: {self._safe_json_dumps(log_data)}"
             )
         elif metrics.duration_ms < AUTHORIZATION_FAST_THRESHOLD_MS:
-            self.logger.debug(f"{base_message} - {json.dumps(log_data)}")
+            self.logger.debug(f"{base_message} - {self._safe_json_dumps(log_data)}")
         else:
-            self.logger.info(f"{base_message} - {json.dumps(log_data)}")
+            self.logger.info(f"{base_message} - {self._safe_json_dumps(log_data)}")
 
     def create_authorization_event(
         self,
