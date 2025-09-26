@@ -9,7 +9,7 @@ from datetime import date
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from telegram import CallbackQuery, Message, Update
+from telegram import CallbackQuery, Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.list_handlers import (
@@ -31,6 +31,12 @@ class TestGetListRequestHandler:
         update.message = Mock(spec=Message)
         update.message.text = "📋 Получить список"
         update.message.reply_text = AsyncMock()
+
+        # Set up effective_user for access control decorator
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 12345
+        update.effective_user.username = "testuser"
+
         return update
 
     @pytest.fixture
@@ -96,6 +102,12 @@ class TestRoleSelectionHandler:
         update.callback_query.data = "list_role:TEAM"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+
+        # Set up effective_user for access control decorator
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 12345
+        update.effective_user.username = "testuser"
+
         return update
 
     @pytest.fixture
@@ -106,6 +118,12 @@ class TestRoleSelectionHandler:
         update.callback_query.data = "list_role:CANDIDATE"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+
+        # Set up effective_user for access control decorator
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 12345
+        update.effective_user.username = "testuser"
+
         return update
 
     @pytest.fixture
@@ -208,6 +226,12 @@ class TestListNavigationHandler:
         update.callback_query.message = Mock()
         update.callback_query.message.edit_text = AsyncMock()
         update.callback_query.message.reply_text = AsyncMock()
+
+        # Set up effective_user for access control decorator
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 12345
+        update.effective_user.username = "testuser"
+
         return update
 
     @pytest.fixture
@@ -258,6 +282,12 @@ class TestRoleSelectionWithServiceIntegration:
         update.callback_query.data = "list_role:TEAM"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+
+        # Set up effective_user for access control decorator
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 12345
+        update.effective_user.username = "testuser"
+
         return update
 
     @pytest.fixture
@@ -330,6 +360,11 @@ class TestRoleSelectionWithServiceIntegration:
         update.callback_query.data = "list_role:CANDIDATE"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+
+        # Set up effective_user for access control decorator
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 12345
+        update.effective_user.username = "testuser"
 
         mock_service = Mock()
         mock_service.get_candidates_list = AsyncMock(return_value=mock_service_data)
@@ -987,6 +1022,12 @@ class TestRoleSelectionWithDepartmentFilter:
         update.callback_query.data = "list_role:CANDIDATE"
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
+
+        # Set up effective_user for access control decorator
+        update.effective_user = Mock(spec=User)
+        update.effective_user.id = 12345
+        update.effective_user.username = "testuser"
+
         return update
 
     @pytest.fixture
