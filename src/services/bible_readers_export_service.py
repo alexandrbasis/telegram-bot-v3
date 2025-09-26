@@ -120,6 +120,39 @@ class BibleReadersExportService:
         logger.info(f"BibleReaders CSV export completed with {total_count} records")
         return csv_string
 
+    async def export_to_csv_async(self) -> str:
+        """Async wrapper matching the export interface pattern."""
+        return await self.get_all_bible_readers_as_csv()
+
+    def export_to_csv(self) -> str:
+        """
+        Export all Bible readers to CSV using a synchronous interface.
+
+        The method delegates to the async exporter when no event loop is
+        running. When called from an async context it raises a descriptive
+        error so callers can switch to the coroutine API instead of
+        triggering ``RuntimeError`` via ``run_until_complete``.
+
+        Returns:
+            CSV formatted string with all Bible readers data
+
+        Raises:
+            RuntimeError: If invoked while an event loop is already running
+        """
+        import asyncio
+
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            # Safe to run synchronously when no loop is active
+            return asyncio.run(self.get_all_bible_readers_as_csv())
+
+        raise RuntimeError(
+            "BibleReadersExportService.export_to_csv() cannot be called while an event "
+            "loop is running; use await "
+            "export_to_csv_async() in async contexts."
+        )
+
     async def save_to_file(
         self, directory: Optional[str] = None, filename_prefix: Optional[str] = None
     ) -> str:

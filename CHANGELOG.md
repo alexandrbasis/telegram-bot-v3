@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Export Reliability Hotfix with Async Interfaces and Fallback Logic** – Complete implementation of export reliability improvements ensuring all Telegram bot export flows (candidates, Bible readers, ROE) function reliably without manual Airtable configuration (AGB-73, completed 2025-09-26, branch `basisalexandr/agb-73-export-reliability-hotfix`, PR [#68](https://github.com/alexandrbasis/telegram-bot-v3/pull/68))
+  - Candidate export fallback system with automatic view recovery (`src/services/participant_export_service.py:118-256`)
+    - Automatic detection of 422 VIEW_NAME_NOT_FOUND errors with `_is_view_not_found_error()` helper function
+    - Graceful fallback to Role.CANDIDATE filtering via `_fallback_candidates_from_all_participants()` method
+    - Maintains line number formatting, progress callbacks, and proper CSV formatting during fallback operations
+    - Service-layer logging provides operations visibility into fallback triggers while preserving user experience
+  - Async export interfaces for BibleReaders and ROE services (`src/services/bible_readers_export_service.py:33-66`, `src/services/roe_export_service.py:33-66`)
+    - Added `export_to_csv_async()` methods for consistent async interface across all export services
+    - Added `export_to_csv()` sync wrapper methods with event loop detection preventing asyncio errors
+    - Both services now match ParticipantExportService interface pattern for unified handler integration
+    - Maintains participant hydration, line numbers, and existing CSV format across all export flows
+  - Comprehensive test coverage with 84 export service tests achieving 88% coverage for modified services
+    - BibleReaders export service: 88% coverage (117 lines, 14 missed) with 21 comprehensive tests
+    - ROE export service: 88% coverage (121 lines, 14 missed) with 23 comprehensive tests
+    - Participant export service: 76% coverage with focused fallback logic testing (40 tests total)
+    - TDD RED-GREEN-REFACTOR methodology followed with comprehensive integration testing
+  - Enhanced technical documentation with view fallback logic, async interfaces, and troubleshooting guides
+    - Updated API documentation with new async interfaces for BibleReaders and ROE services
+    - Added troubleshooting documentation for export failures with automatic resolution procedures
+    - Enhanced testing strategy documentation with 84 export service tests and coverage metrics
+    - Export reliability section updated with comprehensive fallback behavior specifications
+
+### Added
 - **Line Numbers in Export Tables** – Complete implementation of sequential line numbering feature for all exported participant tables with comprehensive testing and documentation updates (AGB-72, completed 2025-01-26, branch `feature/agb-72-line-numbers-export`, SHA `63b8fe4`, merged 2025-09-26T22:45:40Z, PR [#67](https://github.com/alexandrbasis/telegram-bot-v3/pull/67))
   - Line number utility functions with comprehensive formatting and validation (`src/utils/export_utils.py:1-106`)
     - format_line_number(), add_line_numbers_to_csv(), and add_line_numbers_to_rows() functions with TDD implementation

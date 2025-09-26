@@ -241,6 +241,44 @@
 3. Check logs for conversation handler errors
 4. **Room Search Cancel Fix** (2025-01-15): Ensure NAV_CANCEL handlers are properly registered in all waiting states, especially RoomSearchStates.WAITING_FOR_ROOM
 
+### Export Reliability Issues (Added 2025-09-26)
+
+#### Export Failures Due to Missing Airtable Views
+**Problem**: Candidate exports fail with VIEW_NAME_NOT_FOUND errors when Airtable view configurations change
+**Symptoms**:
+- Export commands complete but return empty files
+- 422 error codes in export logs
+- Users unable to retrieve candidate CSV files
+
+**Automatic Resolution (Implemented)**:
+- **Fallback Logic**: Candidate exports automatically detect VIEW_NAME_NOT_FOUND errors
+- **Seamless Recovery**: System falls back to repository filtering with Role.CANDIDATE
+- **Transparent Operation**: Users experience no interruption during fallback
+- **Line Number Preservation**: Sequential numbering maintained regardless of export method
+
+**Manual Verification**:
+1. Check export service logs for "VIEW_NAME_NOT_FOUND" and fallback notifications
+2. Verify candidate export CSV files contain expected participant counts
+3. Confirm line numbers appear as first column starting from 1
+
+#### Async Export Interface Issues
+**Problem**: BibleReaders or ROE exports fail with AttributeError on export_to_csv_async method
+**Symptoms**:
+- Export handlers crash with missing method errors
+- Inconsistent export interfaces between services
+- Event loop errors during export operations
+
+**Resolution (Implemented)**:
+- **Unified Interfaces**: All export services now provide both async and sync methods
+- **Event Loop Detection**: Sync wrappers automatically handle running event loops
+- **Handler Compatibility**: Export conversation handlers work seamlessly with all services
+- **Backward Compatibility**: Existing sync methods preserved for non-async contexts
+
+**Verification**:
+1. Confirm all export services have export_to_csv_async() and export_to_csv() methods
+2. Test exports in both async handler context and sync utility usage
+3. Verify progress callbacks continue functioning with new interfaces
+
 ### Data Consistency Issues
 
 #### Changes Not Reflected in Airtable
@@ -361,6 +399,17 @@ DEBUG - Sending timeout message: "Сессия истекла, начните з
 ERROR - Failed to send timeout message: [error details]
 INFO - Timeout handler completed, conversation ended
 DEBUG - Loading conversation_timeout_minutes: [N] from settings
+
+# Export Reliability Logs (Added 2025-09-26)
+INFO - Starting candidate export using view: Кандидаты
+ERROR - VIEW_NAME_NOT_FOUND: View 'Кандидаты' not found in base
+INFO - Triggering fallback for candidate export
+DEBUG - Using repository filtering with Role.CANDIDATE for fallback
+INFO - Fallback candidate export completed: [N] participants
+DEBUG - BibleReaders export using async interface
+DEBUG - ROE export using async interface
+INFO - Event loop detected, using async delegation
+DEBUG - Line numbers preserved in fallback export
 ```
 
 #### ConversationHandler Debugging

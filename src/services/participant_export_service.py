@@ -14,7 +14,11 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.config.field_mappings import AirtableFieldMapping
-from src.data.repositories.participant_repository import ParticipantRepository
+from src.data.airtable.airtable_client import AirtableAPIError
+from src.data.repositories.participant_repository import (
+    ParticipantRepository,
+    RepositoryError,
+)
 from src.models.participant import Department, Participant, Role
 from src.utils.export_utils import format_line_number
 
@@ -395,12 +399,26 @@ class ParticipantExportService:
         filter_func: Optional[Callable[[Dict[str, Any], Participant], bool]] = None,
     ) -> str:
         """Export Airtable view records to CSV, optionally filtering results."""
-        raw_records = await self.repository.list_view_records(view_name)
-        logger.info(
-            "Retrieved %s records from Airtable view '%s'",
-            len(raw_records),
-            view_name,
-        )
+        try:
+            raw_records = await self.repository.list_view_records(view_name)
+            logger.info(
+                "Retrieved %s records from Airtable view '%s'",
+                len(raw_records),
+                view_name,
+            )
+        except RepositoryError as error:
+            # Check if this is a 422 VIEW_NAME_NOT_FOUND error
+            if self._is_view_not_found_error(error):
+                logger.info(
+                    "View '%s' not found, falling back to list_all() with filtering",
+                    view_name,
+                )
+                return await self._fallback_candidates_from_all_participants(
+                    filter_func
+                )
+            else:
+                # Re-raise other repository errors
+                raise
 
         headers = self._determine_view_headers(view_name, raw_records)
 
@@ -578,3 +596,97 @@ class ParticipantExportService:
                 row[airtable_field] = str(value)
 
         return row
+
+    def _is_view_not_found_error(self, error: RepositoryError) -> bool:
+        """
+        Check if the RepositoryError represents a 422 VIEW_NAME_NOT_FOUND error.
+
+        Args:
+            error: The RepositoryError to check
+
+        Returns:
+            True if this is a view not found error, False otherwise
+        """
+        if not hasattr(error, "original_error") or error.original_error is None:
+            return False
+
+        original_error = error.original_error
+
+        # Check if it's an AirtableAPIError with status code 422
+        if not isinstance(original_error, AirtableAPIError):
+            return False
+
+        if getattr(original_error, "status_code", None) != 422:
+            return False
+
+        # Check if the error message contains VIEW_NAME_NOT_FOUND indicator
+        error_message = str(original_error)
+        return "not found" in error_message.lower()
+
+    async def _fallback_candidates_from_all_participants(
+        self,
+        filter_func: Optional[Callable[[Dict[str, Any], Participant], bool]] = None,
+    ) -> str:
+        """
+        Fallback method to export participants using list_all() with filtering.
+
+        Args:
+            filter_func: Optional filter function to apply to participants
+
+        Returns:
+            CSV formatted string with filtered participant data
+        """
+        logger.info("Using fallback export via list_all() with provided filtering")
+
+        # Get all participants
+        all_participants = await self.repository.list_all()
+
+        # Apply provided filter function if available, otherwise use all participants
+        if filter_func:
+            filtered_participants = []
+            for participant in all_participants:
+                # Pass empty dict as record since filter functions only use participant
+                record: Dict[str, Any] = {}
+                if filter_func(record, participant):
+                    filtered_participants.append(participant)
+        else:
+            # If no filter provided, fall back to candidate filtering for compatibility
+            filtered_participants = [
+                p
+                for p in all_participants
+                if p.role is not None and p.role == Role.CANDIDATE
+            ]
+
+        total_count = len(filtered_participants)
+        logger.info(f"Found {total_count} participants via fallback method")
+
+        # Report initial progress
+        if self.progress_callback:
+            self.progress_callback(0, total_count)
+
+        # Create CSV in memory
+        output = io.StringIO()
+        headers = self._get_csv_headers()
+        writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
+        writer.writeheader()
+
+        # Calculate width for line numbers based on total count
+        width = len(str(total_count)) if total_count > 0 else 1
+
+        # Process filtered participants
+        for index, participant in enumerate(filtered_participants):
+            row = self._participant_to_csv_row(participant)
+            # Add line number as first column with consistent width
+            row["#"] = format_line_number(index + 1, width)
+            writer.writerow(row)
+
+            # Report progress at intervals
+            if self.progress_callback:
+                if (index + 1) % 10 == 0 or (index + 1) == total_count:
+                    self.progress_callback(index + 1, total_count)
+
+        csv_string = output.getvalue()
+        output.close()
+
+        logger.info(f"Fallback export completed with {total_count} records")
+        return csv_string
