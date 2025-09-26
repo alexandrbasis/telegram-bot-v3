@@ -14,7 +14,10 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.config.field_mappings import AirtableFieldMapping
-from src.data.repositories.participant_repository import ParticipantRepository, RepositoryError
+from src.data.repositories.participant_repository import (
+    ParticipantRepository,
+    RepositoryError,
+)
 from src.data.airtable.airtable_client import AirtableAPIError
 from src.models.participant import Department, Participant, Role
 from src.utils.export_utils import format_line_number
@@ -410,7 +413,9 @@ class ParticipantExportService:
                     "View '%s' not found, falling back to list_all() with filtering",
                     view_name,
                 )
-                return await self._fallback_candidates_from_all_participants(filter_func)
+                return await self._fallback_candidates_from_all_participants(
+                    filter_func
+                )
             else:
                 # Re-raise other repository errors
                 raise
@@ -620,13 +625,16 @@ class ParticipantExportService:
 
     async def _fallback_candidates_from_all_participants(
         self,
-        filter_func: Optional[Callable[[Dict[str, Any], Participant], bool]] = None,
+        filter_func: Optional[
+            Callable[[Dict[str, Any], Participant], bool]
+        ] = None,
     ) -> str:
         """
         Fallback method to export candidates using list_all() with filtering.
 
         Args:
-            filter_func: Optional filter function to apply (should filter for candidates)
+            filter_func: Optional filter function to apply (should filter for
+                candidates)
 
         Returns:
             CSV formatted string with candidate data
@@ -636,7 +644,9 @@ class ParticipantExportService:
         # Get all participants and filter for candidates
         all_participants = await self.repository.list_all()
         candidate_participants = [
-            p for p in all_participants if p.role is not None and p.role == Role.CANDIDATE
+            p
+            for p in all_participants
+            if p.role is not None and p.role == Role.CANDIDATE
         ]
 
         total_count = len(candidate_participants)
