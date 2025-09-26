@@ -20,7 +20,8 @@ from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 import pytest
 
 from src.config.field_mappings import AirtableFieldMapping
-from src.data.repositories.participant_repository import ParticipantRepository
+from src.data.repositories.participant_repository import ParticipantRepository, RepositoryError
+from src.data.airtable.airtable_client import AirtableAPIError
 from src.models.participant import (
     Department,
     Gender,
@@ -809,6 +810,44 @@ class TestRoleBasedFiltering:
             "ContactInformation",
         ]
         assert actual_headers == expected_headers
+
+    @pytest.mark.asyncio
+    async def test_candidate_export_fallback_on_missing_view(self, mock_repository, sample_participants):
+        """Test that candidate export falls back to list_all() when Airtable view is missing."""
+        # Arrange
+        # Filter candidates from sample participants for expected result
+        candidate_participants = [p for p in sample_participants if p.role == Role.CANDIDATE]
+
+        # Mock repository to raise 422 error on list_view_records but succeed on list_all
+        view_error = AirtableAPIError(
+            "View 'Кандидаты' not found",
+            status_code=422
+        )
+        repository_error = RepositoryError("View lookup failed", original_error=view_error)
+
+        mock_repository.list_view_records.side_effect = repository_error
+        mock_repository.list_all.return_value = sample_participants
+
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_role_as_csv(Role.CANDIDATE)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Should get only candidates (filtered from list_all result)
+        expected_candidate_count = len(candidate_participants)
+        assert len(rows) == expected_candidate_count
+
+        # Verify line numbers are included
+        assert "#" in reader.fieldnames
+        assert rows[0]["#"] == "1" if expected_candidate_count > 0 else True
+
+        # Verify fallback was triggered - list_view_records called, then list_all
+        mock_repository.list_view_records.assert_called_once_with("Кандидаты")
+        mock_repository.list_all.assert_called_once()
 
 
 class TestDepartmentBasedFiltering:
