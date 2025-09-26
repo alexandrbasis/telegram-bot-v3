@@ -813,3 +813,51 @@ class TestFileLoggingSettings:
             assert str(file_config.log_dir) == "/test/logs"
             assert file_config.max_file_size == 1048576
             assert file_config.backup_count == 2
+
+
+class TestViewConfiguration:
+    """Test suite for Airtable view configuration."""
+
+    def test_default_view_names(self):
+        """Test that default view names are set correctly."""
+        with patch.dict(os.environ, {"AIRTABLE_API_KEY": "test_key"}, clear=True):
+            settings = DatabaseSettings()
+
+            # Should have the exact view names from business requirements
+            assert hasattr(settings, "participant_export_view")
+            assert settings.participant_export_view == "Кандидаты"
+
+            assert hasattr(settings, "roe_export_view")
+            assert settings.roe_export_view == "РОЕ: Расписание"
+
+            assert hasattr(settings, "bible_readers_export_view")
+            assert settings.bible_readers_export_view == "Чтецы: Расписание"
+
+    def test_environment_view_override(self):
+        """Test that view names can be overridden via environment variables."""
+        env_vars = {
+            "AIRTABLE_API_KEY": "test_key",
+            "AIRTABLE_PARTICIPANT_EXPORT_VIEW": "Custom Participants View",
+            "AIRTABLE_ROE_EXPORT_VIEW": "Custom ROE View",
+            "AIRTABLE_BIBLE_READERS_EXPORT_VIEW": "Custom Bible Readers View",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = DatabaseSettings()
+
+            assert settings.participant_export_view == "Custom Participants View"
+            assert settings.roe_export_view == "Custom ROE View"
+            assert settings.bible_readers_export_view == "Custom Bible Readers View"
+
+    def test_view_configuration_validation(self):
+        """Test that view names are validated at startup."""
+        env_vars = {
+            "AIRTABLE_API_KEY": "test_key",
+            "AIRTABLE_PARTICIPANT_EXPORT_VIEW": "",  # Empty view name should fail
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            settings = DatabaseSettings()
+
+            with pytest.raises(ValueError, match="Participant export view name cannot be empty"):
+                settings.validate()

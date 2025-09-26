@@ -131,6 +131,17 @@ class DatabaseSettings:
         default_factory=lambda: int(os.getenv("DB_CONNECTION_TIMEOUT", "60"))
     )
 
+    # Export view configuration
+    participant_export_view: str = field(
+        default_factory=lambda: os.getenv("AIRTABLE_PARTICIPANT_EXPORT_VIEW", "Кандидаты")
+    )
+    roe_export_view: str = field(
+        default_factory=lambda: os.getenv("AIRTABLE_ROE_EXPORT_VIEW", "РОЕ: Расписание")
+    )
+    bible_readers_export_view: str = field(
+        default_factory=lambda: os.getenv("AIRTABLE_BIBLE_READERS_EXPORT_VIEW", "Чтецы: Расписание")
+    )
+
     def validate(self) -> None:
         """
         Validate database settings and raise errors for missing required values.
@@ -172,6 +183,16 @@ class DatabaseSettings:
 
         if self.max_retries < 0:
             raise ValueError("Max retries cannot be negative")
+
+        # Validate export view configuration
+        if not self.participant_export_view:
+            raise ValueError("Participant export view name cannot be empty")
+
+        if not self.roe_export_view:
+            raise ValueError("ROE export view name cannot be empty")
+
+        if not self.bible_readers_export_view:
+            raise ValueError("Bible Readers export view name cannot be empty")
 
     def get_table_config(self, table_type: str) -> Dict[str, Any]:
         """
