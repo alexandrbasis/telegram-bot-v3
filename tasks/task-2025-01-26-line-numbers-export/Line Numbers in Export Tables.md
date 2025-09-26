@@ -1,5 +1,5 @@
 # Task: Add Line Numbers to Exported Participant Tables
-**Created**: 2025-01-26 | **Status**: In Progress | **Started**: 2025-01-26 14:30:00
+**Created**: 2025-01-26 | **Status**: 50% Complete - Ready for Handover | **Started**: 2025-01-26 14:30:00 | **Handover**: 2025-01-26 15:45:00
 
 ## Tracking & Progress
 ### Linear Issue
@@ -100,14 +100,94 @@ Target: 90%+ coverage across all export functionality with line number implement
 
 ### Implementation Steps & Change Log
 
-- [ ] Step 1: Create line number utility function
-  - [ ] Sub-step 1.1: Add line number formatting utility
+### Step 1: Line Number Utility Functions — 2025-01-26 14:45:00
+- **Files**: `src/utils/export_utils.py:1-106`, `tests/unit/test_utils/test_export_utils.py:1-325`
+- **Summary**: Implemented core line number utilities using TDD Red-Green-Refactor approach
+- **Impact**: Provides foundation for adding line numbers to all export services
+- **Tests**: 18 comprehensive test cases covering format_line_number(), add_line_numbers_to_csv(), add_line_numbers_to_rows()
+- **Verification**: All tests pass, handles Unicode content, edge cases, and validation
+- **Commit**: `a40b725` - feat: implement line number utility functions (Step 1)
+
+### Step 2: ParticipantExportService Integration — 2025-01-26 15:30:00
+- **Files**: `src/services/participant_export_service.py:1-560`, `tests/unit/test_services/test_participant_export_service.py:1-1190`
+- **Summary**: Updated all CSV export methods to include line numbers as first column using established TDD pattern
+- **Impact**: ParticipantExportService now generates CSV exports with sequential line numbers (1, 2, 3...)
+- **Tests**: Updated 34 existing tests + added 7 new line number integration tests covering all export methods
+- **Verification**: All export methods include "#" as first column, maintains backward compatibility
+- **Commit**: `aadbc2d` - feat: add line numbers to ParticipantExportService (Step 2)
+
+## 🔄 IMPLEMENTATION HANDOVER (50% Complete)
+
+**Status**: Steps 1-2 of 6 completed | **Branch**: `feature/agb-72-line-numbers-export` | **Next**: Step 3 - BibleReadersExportService
+
+### ✅ Completed Foundation
+- **Line Number Utilities**: Full TDD implementation with 18 test cases
+- **ParticipantExportService**: Complete integration with line numbers as first column
+- **Proven Pattern**: Established successful TDD approach for remaining services
+
+### 🔧 Implementation Pattern Established
+```python
+# 1. Import utilities
+from src.utils.export_utils import add_line_numbers_to_csv, add_line_numbers_to_rows
+
+# 2. Update headers method
+def _get_csv_headers(self) -> List[str]:
+    return ["#"] + original_headers
+
+# 3. Update row generation
+for index, item in enumerate(items):
+    row = self._item_to_csv_row(item)
+    row["#"] = str(index + 1)  # Add line number
+    writer.writerow(row)
+
+# 4. Update tests - add "#" as first expected header
+expected_headers = ["#", "OriginalHeader1", "OriginalHeader2", ...]
+```
+
+### 📋 Remaining Steps (Estimated: 2.5-3.5 hours)
+
+**Step 3: BibleReadersExportService** (45-60 min)
+- File: `src/services/bible_readers_export_service.py`
+- Pattern: Apply same approach as ParticipantExportService
+- TDD: Write failing tests, implement, refactor
+
+**Step 4: RoeExportService** (45-60 min)
+- File: `src/services/roe_export_service.py`
+- Pattern: Apply same approach as ParticipantExportService
+- TDD: Write failing tests, implement, refactor
+
+**Step 5: Export Message Formatting** (30-45 min)
+- Files: `src/bot/handlers/export_handlers.py`, `src/bot/handlers/export_conversation_handlers.py`
+- Goal: Include total participant count in success messages
+- Extract count from line numbers in CSV exports
+
+**Step 6: Integration Testing** (30-45 min)
+- Files: `tests/integration/test_export_command_integration.py`
+- Goal: End-to-end testing of all export flows with line numbers
+- Verify: All export paths produce CSV files with line numbers
+
+### 🎯 Next Developer Quick Start
+1. `git checkout feature/agb-72-line-numbers-export`
+2. Review: `src/services/participant_export_service.py` (implementation example)
+3. Start: Apply same pattern to `src/services/bible_readers_export_service.py`
+4. Reference: `tests/unit/test_services/test_participant_export_service.py::TestLineNumberIntegration`
+5. Follow: Strict TDD Red-Green-Refactor approach
+
+### ✅ Success Criteria
+- Line numbers appear as first column in 100% of exported tables
+- Sequential numbering (1, 2, 3...) for all participant lists
+- 90%+ test coverage across all export functionality
+- Backward compatibility maintained
+- Export success messages show total participant count
+
+- [x] ✅ Step 1: Create line number utility function - Completed 2025-01-26 14:45:00
+  - [x] ✅ Sub-step 1.1: Add line number formatting utility
     - **Directory**: `src/utils/`
     - **Files to create/modify**: `src/utils/export_utils.py`
     - **Accept**: Utility function that generates formatted line numbers
     - **Tests**: `tests/unit/test_utils/test_export_utils.py`
     - **Done**: Function can generate line numbers with proper formatting
-    - **Changelog**: Created export_utils.py with format_line_number() and add_line_numbers_to_csv() functions
+    - **Changelog**: Created export_utils.py with format_line_number(), add_line_numbers_to_csv(), and add_line_numbers_to_rows() functions. Implemented comprehensive TDD test suite with 18 test cases covering edge cases, Unicode support, and validation.
 
 - [ ] Step 2: Update ParticipantExportService
   - [ ] Sub-step 2.1: Modify CSV header generation
