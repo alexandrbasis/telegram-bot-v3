@@ -8,7 +8,7 @@ and reference capabilities.
 
 import csv
 import io
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
 
 
 def format_line_number(line_num: int) -> str:
@@ -110,3 +110,80 @@ def add_line_numbers_to_rows(
         new_rows.append(new_row)
 
     return new_headers, new_rows
+
+
+def extract_participant_count_from_csv(csv_string: str) -> Optional[int]:
+    """
+    Extract participant count from CSV string by counting data rows.
+
+    For CSV exports with line numbers, this counts all data rows
+    (excluding the header row) to provide the total participant count.
+
+    Args:
+        csv_string: CSV formatted string with headers and data rows
+
+    Returns:
+        Number of data rows (participants) in the CSV, or None if empty/invalid
+
+    Raises:
+        ValueError: If CSV data is malformed or cannot be parsed
+    """
+    if not csv_string or not csv_string.strip():
+        return None
+
+    try:
+        # Parse CSV data
+        reader = csv.DictReader(io.StringIO(csv_string))
+
+        # Count data rows
+        count = 0
+        for row in reader:
+            count += 1
+
+        return count if count > 0 else None
+
+    except Exception as e:
+        raise ValueError(f"Failed to parse CSV data: {e}")
+
+
+def format_export_success_message(
+    base_message: str,
+    file_size_mb: float,
+    timestamp: str,
+    csv_data: Optional[str] = None
+) -> str:
+    """
+    Format export success message with optional participant count.
+
+    Creates a standardized success message format for CSV exports
+    that includes file size, timestamp, and optionally participant count
+    extracted from the CSV data.
+
+    Args:
+        base_message: Base success message (e.g., "✅ Экспорт завершен успешно!")
+        file_size_mb: File size in megabytes
+        timestamp: Export timestamp string
+        csv_data: Optional CSV data to extract participant count from
+
+    Returns:
+        Formatted success message string
+    """
+    message_parts = [base_message, ""]
+
+    # Add participant count if available
+    if csv_data:
+        try:
+            count = extract_participant_count_from_csv(csv_data)
+            if count is not None:
+                message_parts.append(f"👥 Участников: {count}")
+        except Exception:
+            # Silently skip count if extraction fails
+            pass
+
+    # Add file info
+    message_parts.extend([
+        f"📁 Размер файла: {file_size_mb:.2f}MB",
+        f"📅 Дата экспорта: {timestamp}"
+    ])
+
+    return "\n".join(message_parts)

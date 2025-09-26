@@ -13,7 +13,9 @@ from typing import List
 from src.utils.export_utils import (
     format_line_number,
     add_line_numbers_to_csv,
-    add_line_numbers_to_rows
+    add_line_numbers_to_rows,
+    extract_participant_count_from_csv,
+    format_export_success_message,
 )
 
 
@@ -211,3 +213,176 @@ class TestAddLineNumbersToRows:
         assert result_rows[0]["Name"] == "John"
         assert result_rows[0]["Age"] == "25"
         # City field should be missing (not added by the function)
+
+
+class TestParticipantCountExtraction:
+    """Test participant count extraction from CSV data."""
+
+    def test_extract_count_from_valid_csv_with_line_numbers(self):
+        """Test extracting count from valid CSV with line numbers."""
+        csv_data = (
+            "#,Name,Age\n"
+            "1,John Doe,25\n"
+            "2,Jane Smith,30\n"
+            "3,Bob Johnson,35"
+        )
+
+        result = extract_participant_count_from_csv(csv_data)
+        assert result == 3
+
+    def test_extract_count_from_empty_csv(self):
+        """Test extracting count from empty CSV."""
+        csv_data = "#,Name,Age\n"  # Header only, no data rows
+
+        result = extract_participant_count_from_csv(csv_data)
+        assert result is None
+
+    def test_extract_count_from_empty_string(self):
+        """Test extracting count from empty string."""
+        result = extract_participant_count_from_csv("")
+        assert result is None
+
+        result = extract_participant_count_from_csv("   ")
+        assert result is None
+
+    def test_extract_count_from_none(self):
+        """Test extracting count from None."""
+        result = extract_participant_count_from_csv(None)
+        assert result is None
+
+    def test_extract_count_from_large_csv(self):
+        """Test extracting count from large CSV with many rows."""
+        lines = ["#,Name,Department"]
+        for i in range(500):
+            lines.append(f"{i+1},Person {i+1},Department {i % 5}")
+
+        csv_data = "\n".join(lines)
+        result = extract_participant_count_from_csv(csv_data)
+        assert result == 500
+
+    def test_extract_count_from_malformed_csv(self):
+        """Test extracting count from malformed CSV raises ValueError."""
+        malformed_csv = "Invalid\nCSV\nData"
+
+        # This should still work as DictReader is quite tolerant
+        result = extract_participant_count_from_csv(malformed_csv)
+        # DictReader will treat first line as headers and count remaining lines
+        assert result == 2
+
+    def test_extract_count_from_unicode_csv(self):
+        """Test extracting count from CSV with Unicode content."""
+        csv_data = (
+            "#,ФИО,Возраст\n"
+            "1,Иванов Иван,25\n"
+            "2,Петрова Мария,30"
+        )
+
+        result = extract_participant_count_from_csv(csv_data)
+        assert result == 2
+
+
+class TestExportSuccessMessageFormatting:
+    """Test export success message formatting with participant count."""
+
+    def test_format_message_with_participant_count(self):
+        """Test formatting message with participant count extracted from CSV."""
+        csv_data = (
+            "#,Name,Age\n"
+            "1,John Doe,25\n"
+            "2,Jane Smith,30"
+        )
+
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=1.5,
+            timestamp="2025-01-26 15:30:00 UTC",
+            csv_data=csv_data
+        )
+
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "\n"
+            "👥 Участников: 2\n"
+            "📁 Размер файла: 1.50MB\n"
+            "📅 Дата экспорта: 2025-01-26 15:30:00 UTC"
+        )
+        assert result == expected
+
+    def test_format_message_without_csv_data(self):
+        """Test formatting message without CSV data (no participant count)."""
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=2.75,
+            timestamp="2025-01-26 15:30:00 UTC"
+        )
+
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "\n"
+            "📁 Размер файла: 2.75MB\n"
+            "📅 Дата экспорта: 2025-01-26 15:30:00 UTC"
+        )
+        assert result == expected
+
+    def test_format_message_with_empty_csv(self):
+        """Test formatting message with empty CSV (no participant count shown)."""
+        csv_data = "#,Name,Age\n"  # Header only
+
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=0.1,
+            timestamp="2025-01-26 15:30:00 UTC",
+            csv_data=csv_data
+        )
+
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "\n"
+            "📁 Размер файла: 0.10MB\n"
+            "📅 Дата экспорта: 2025-01-26 15:30:00 UTC"
+        )
+        assert result == expected
+
+    def test_format_message_with_malformed_csv(self):
+        """Test formatting message with malformed CSV (gracefully skips count)."""
+        csv_data = "Invalid CSV Data"
+
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=1.0,
+            timestamp="2025-01-26 15:30:00 UTC",
+            csv_data=csv_data
+        )
+
+        # Should gracefully skip participant count and include other info
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "\n"
+            "📁 Размер файла: 1.00MB\n"
+            "📅 Дата экспорта: 2025-01-26 15:30:00 UTC"
+        )
+        assert result == expected
+
+    def test_format_message_with_large_count(self):
+        """Test formatting message with large participant count."""
+        lines = ["#,Name,Department"]
+        for i in range(1500):
+            lines.append(f"{i+1},Person {i+1},Department")
+
+        csv_data = "\n".join(lines)
+
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=10.25,
+            timestamp="2025-01-26 15:30:00 UTC",
+            csv_data=csv_data
+        )
+
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "\n"
+            "👥 Участников: 1500\n"
+            "📁 Размер файла: 10.25MB\n"
+            "📅 Дата экспорта: 2025-01-26 15:30:00 UTC"
+        )
+        assert result == expected

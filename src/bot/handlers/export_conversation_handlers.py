@@ -30,6 +30,7 @@ from src.models.participant import Department, Role
 from src.services import service_factory
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
+from src.utils.export_utils import format_export_success_message
 
 logger = logging.getLogger(__name__)
 
@@ -443,17 +444,21 @@ async def _send_export_file(
         with open(temp_file_path, "rb") as file:
             ts_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
+            # Format success message with participant count
+            caption = format_export_success_message(
+                base_message="✅ Экспорт завершен успешно!",
+                file_size_mb=file_size_mb,
+                timestamp=f"{ts_utc} UTC",
+                csv_data=csv_data
+            )
+
             await query.message.reply_document(
                 document=file,
                 filename=(
                     f"{filename_prefix}_"
                     f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
                 ),
-                caption=(
-                    f"✅ Экспорт завершен успешно!\n\n"
-                    f"📁 Размер файла: {file_size_mb:.2f}MB\n"
-                    f"📅 Дата экспорта: {ts_utc} UTC"
-                ),
+                caption=caption,
             )
 
         # Update final message
