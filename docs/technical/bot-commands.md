@@ -625,7 +625,7 @@ Bot: ✅ Кэш авторизации очищен. Роли пользоват
 ### /export
 **Authorization Required**: Admin-level access only
 
-Interactive export conversation flow for administrative data export. Available to authorized administrators only. Converts the direct export command into a conversation with 6 targeted export options.
+Interactive export conversation flow for administrative data export. Available to authorized administrators only. Converts the direct export command into a conversation with 6 targeted export options. All exported CSV files include sequential line numbers as the first column for easy reference and counting.
 
 **Admin-Only Access Control**:
 - Command protected with @require_admin decorator
@@ -637,17 +637,23 @@ Interactive export conversation flow for administrative data export. Available t
 1. User (admin) types: `/export`
 2. Bot validates admin access and displays interactive selection menu
 3. **Export Selection Menu**: 6 export options with Russian localization:
-   - "Экспорт всех данных" (Export All) - Complete participant database
-   - "Экспорт команды" (Export Team) - Team members only
-   - "Экспорт кандидатов" (Export Candidates) - Candidates only
-   - "Экспорт по департаменту" (Export by Department) - Department-specific export
-   - "Экспорт Bible Readers" (Export Bible Readers) - Bible reading assignments
-   - "Экспорт ROE" (Export ROE) - ROE session data
+   - "Экспорт всех данных" (Export All) - Complete participant database with line numbers
+   - "Экспорт команды" (Export Team) - Team members only with line numbers
+   - "Экспорт кандидатов" (Export Candidates) - Candidates only with line numbers
+   - "Экспорт по департаменту" (Export by Department) - Department-specific export with line numbers
+   - "Экспорт Bible Readers" (Export Bible Readers) - Bible reading assignments with line numbers
+   - "Экспорт ROE" (Export ROE) - ROE session data with line numbers
 4. **Department Selection Workflow**: When "Export by Department" is selected, displays submenu with all 13 departments
 5. **Export Processing**: Selected export type processed with progress notifications
 6. **Progress Notifications**: Real-time export progress updates with throttled notifications (minimum 2-second intervals)
-7. **File Delivery**: CSV file sent to user via Telegram file upload
+7. **File Delivery**: CSV file sent to user via Telegram file upload with line numbers as first column
 8. **Navigation**: Cancel option returns to main menu, back navigation between selection screens
+
+**Line Numbers Feature**:
+- **Sequential Numbering**: All exported CSV files include "#" as the first column with numbers starting from 1
+- **Participant Counting**: Export success messages display total participant count extracted from line numbers
+- **Professional Format**: Right-aligned line numbers with consistent formatting
+- **Quick Reference**: Staff can reference participants by line number during meetings ("participant #15")
 
 **Features**:
 - **Complete Data Export**: All participant fields included with exact Airtable field names
