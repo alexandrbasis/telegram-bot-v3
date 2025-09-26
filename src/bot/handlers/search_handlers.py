@@ -295,12 +295,10 @@ async def process_name_search(
     if cached_role is not None and cached_role != user_role:
         logger.info(f"Role change detected for user {user.id}: {cached_role} -> {user_role}")
         auth_cache.invalidate(user.id)
-    elif cached_role is not None:
-        # Proactively invalidate cache for active users to detect external role changes
-        logger.debug(f"Proactively invalidating cache for user {user.id} to ensure fresh role data")
-        auth_cache.invalidate(user.id)
+        # Set the new role in cache after invalidation
+        auth_cache.set(user.id, user_role)
     elif cache_state in ['miss', 'expired']:
-        # Update cache with current role
+        # Update cache with current role when it's missing or expired
         auth_cache.set(user.id, user_role)
 
     try:
