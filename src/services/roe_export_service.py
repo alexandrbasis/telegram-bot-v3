@@ -18,6 +18,7 @@ from src.config.field_mappings.roe import ROEFieldMapping
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.data.repositories.roe_repository import ROERepository
 from src.models.roe import ROE
+from src.utils.export_utils import add_line_numbers_to_csv
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,8 @@ class ROEExportService:
         for index, roe_session in enumerate(roe_sessions):
             # Convert ROE session to CSV row with participant hydration
             row = await self._roe_to_csv_row(roe_session)
+            # Add line number as first column
+            row["#"] = str(index + 1)
             writer.writerow(row)
 
             # Report progress at intervals (every 10 records or at end)
@@ -239,6 +242,7 @@ class ROEExportService:
             List of Airtable field names for CSV headers plus hydrated fields
         """
         return [
+            "#",
             "RoeTopic",
             "Roista",
             "RoeDate",
