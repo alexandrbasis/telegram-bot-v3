@@ -26,7 +26,9 @@ def format_line_number(line_num: int) -> str:
         TypeError: If line_num is not an integer
     """
     if not isinstance(line_num, int):
-        raise TypeError(f"Line number must be an integer, got {type(line_num).__name__}")
+        raise TypeError(
+            f"Line number must be an integer, got {type(line_num).__name__}"
+        )
 
     if line_num < 0:
         raise ValueError(f"Line number must be non-negative, got {line_num}")

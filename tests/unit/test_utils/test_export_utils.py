@@ -102,7 +102,7 @@ class TestAddLineNumbersToCSV:
         """Test line numbers with large dataset (3-digit numbers)."""
         # Create CSV with 150 rows to test 3-digit line numbers
         header = "Name,Value\n"
-        rows = "\n".join([f"Person{i},{i*10}" for i in range(1, 151)])
+        rows = "\n".join([f"Person{i},{i * 10}" for i in range(1, 151)])
         csv_input = header + rows + "\n"
 
         result = add_line_numbers_to_csv(csv_input)
@@ -254,7 +254,7 @@ class TestParticipantCountExtraction:
         """Test extracting count from large CSV with many rows."""
         lines = ["#,Name,Department"]
         for i in range(500):
-            lines.append(f"{i+1},Person {i+1},Department {i % 5}")
+            lines.append(f"{i + 1},Person {i + 1},Department {i % 5}")
 
         csv_data = "\n".join(lines)
         result = extract_participant_count_from_csv(csv_data)
@@ -367,7 +367,7 @@ class TestExportSuccessMessageFormatting:
         """Test formatting message with large participant count."""
         lines = ["#,Name,Department"]
         for i in range(1500):
-            lines.append(f"{i+1},Person {i+1},Department")
+            lines.append(f"{i + 1},Person {i + 1},Department")
 
         csv_data = "\n".join(lines)
 

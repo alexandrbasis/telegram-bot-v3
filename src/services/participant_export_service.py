@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from src.config.field_mappings import AirtableFieldMapping
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.participant import Department, Participant, Role
-from src.utils.export_utils import add_line_numbers_to_csv, add_line_numbers_to_rows
 
 logger = logging.getLogger(__name__)
 
@@ -428,11 +427,14 @@ class ParticipantExportService:
     def _determine_view_headers(
         self, view_name: str, records: List[Dict[str, Any]]
     ) -> List[str]:
-        """Determine CSV headers matching the Airtable view ordering with line numbers as first column."""
+        """
+        Determine CSV headers matching the Airtable view ordering with line
+        numbers as first column.
+        """
         if view_name in self.VIEW_HEADER_ORDER:
             headers = list(self.VIEW_HEADER_ORDER[view_name])
         else:
-            headers: List[str] = []
+            headers = []
             seen = set()
 
             for record in records:

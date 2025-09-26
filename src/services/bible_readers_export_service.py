@@ -17,7 +17,6 @@ from src.config.field_mappings.bible_readers import BibleReadersFieldMapping
 from src.data.repositories.bible_readers_repository import BibleReadersRepository
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.bible_readers import BibleReader
-from src.utils.export_utils import add_line_numbers_to_csv
 
 logger = logging.getLogger(__name__)
 

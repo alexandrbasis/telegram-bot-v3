@@ -18,7 +18,6 @@ from src.config.field_mappings.roe import ROEFieldMapping
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.data.repositories.roe_repository import ROERepository
 from src.models.roe import ROE
-from src.utils.export_utils import add_line_numbers_to_csv
 
 logger = logging.getLogger(__name__)
 

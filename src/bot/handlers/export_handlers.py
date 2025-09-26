@@ -265,8 +265,12 @@ async def handle_export_command(
                         )
 
                         # Format success message with participant count
+                        base_msg = (
+                            "✅ Экспорт завершен успешно!\n\n"
+                            "📊 Файл содержит данные всех участников"
+                        )
                         caption = format_export_success_message(
-                            base_message="✅ Экспорт завершен успешно!\n\n📊 Файл содержит данные всех участников",
+                            base_message=base_msg,
                             file_size_mb=file_size_mb,
                             timestamp=f"{ts_utc} UTC",
                             csv_data=csv_data
