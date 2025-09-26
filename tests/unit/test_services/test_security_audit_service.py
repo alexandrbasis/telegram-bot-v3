@@ -222,14 +222,8 @@ class TestSecurityAuditService:
 
         assert service.logger.name == "src.services.security_audit_service"
 
-    @patch('src.services.security_audit_service.get_settings')
-    def test_log_authorization_event_info_level(self, mock_get_settings):
+    def test_log_authorization_event_info_level(self):
         """Test logging authorization event at info level."""
-        # Mock settings to enable info level logging
-        mock_settings = MagicMock()
-        mock_settings.logging.log_level = "INFO"
-        mock_get_settings.return_value = mock_settings
-
         service = SecurityAuditService()
 
         with patch.object(service.logger, 'info') as mock_info:
@@ -251,13 +245,8 @@ class TestSecurityAuditService:
             assert "search_participant" in call_args
             assert "granted" in call_args
 
-    @patch('src.services.security_audit_service.get_settings')
-    def test_log_authorization_event_with_metadata(self, mock_get_settings):
+    def test_log_authorization_event_with_metadata(self):
         """Test logging authorization event with airtable metadata."""
-        mock_settings = MagicMock()
-        mock_settings.logging.log_level = "INFO"
-        mock_get_settings.return_value = mock_settings
-
         service = SecurityAuditService()
 
         with patch.object(service.logger, 'info') as mock_info:
@@ -283,13 +272,8 @@ class TestSecurityAuditService:
             assert "SECURITY_AUDIT" in call_args
             assert "airtable_metadata" in call_args
 
-    @patch('src.services.security_audit_service.get_settings')
-    def test_log_authorization_event_denied(self, mock_get_settings):
+    def test_log_authorization_event_denied(self):
         """Test logging denied authorization event with warning level."""
-        mock_settings = MagicMock()
-        mock_settings.logging.log_level = "INFO"
-        mock_get_settings.return_value = mock_settings
-
         service = SecurityAuditService()
 
         with patch.object(service.logger, 'warning') as mock_warning:
@@ -310,13 +294,8 @@ class TestSecurityAuditService:
             assert "DENIED" in call_args
             assert "789012" in call_args
 
-    @patch('src.services.security_audit_service.get_settings')
-    def test_log_sync_event_success(self, mock_get_settings):
+    def test_log_sync_event_success(self):
         """Test logging successful sync event."""
-        mock_settings = MagicMock()
-        mock_settings.logging.log_level = "INFO"
-        mock_get_settings.return_value = mock_settings
-
         service = SecurityAuditService()
 
         with patch.object(service.logger, 'info') as mock_info:
@@ -337,13 +316,8 @@ class TestSecurityAuditService:
             assert "250ms" in call_args
             assert "45 records" in call_args
 
-    @patch('src.services.security_audit_service.get_settings')
-    def test_log_sync_event_failure(self, mock_get_settings):
+    def test_log_sync_event_failure(self):
         """Test logging failed sync event with error level."""
-        mock_settings = MagicMock()
-        mock_settings.logging.log_level = "INFO"
-        mock_get_settings.return_value = mock_settings
-
         service = SecurityAuditService()
 
         with patch.object(service.logger, 'error') as mock_error:
@@ -365,13 +339,8 @@ class TestSecurityAuditService:
             assert "manual_refresh" in call_args
             assert "2 failed records" in call_args
 
-    @patch('src.services.security_audit_service.get_settings')
-    def test_log_performance_metrics_fast_operation(self, mock_get_settings):
+    def test_log_performance_metrics_fast_operation(self):
         """Test logging performance metrics for fast operation."""
-        mock_settings = MagicMock()
-        mock_settings.logging.log_level = "DEBUG"
-        mock_get_settings.return_value = mock_settings
-
         service = SecurityAuditService()
 
         with patch.object(service.logger, 'debug') as mock_debug:
@@ -391,13 +360,8 @@ class TestSecurityAuditService:
             assert "45ms" in call_args
             assert "cache_hit=True" in call_args
 
-    @patch('src.services.security_audit_service.get_settings')
-    def test_log_performance_metrics_slow_operation(self, mock_get_settings):
+    def test_log_performance_metrics_slow_operation(self):
         """Test logging performance metrics for slow operation with warning."""
-        mock_settings = MagicMock()
-        mock_settings.logging.log_level = "INFO"
-        mock_get_settings.return_value = mock_settings
-
         service = SecurityAuditService()
 
         with patch.object(service.logger, 'warning') as mock_warning:
