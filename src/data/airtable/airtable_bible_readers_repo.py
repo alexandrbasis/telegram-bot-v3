@@ -7,7 +7,7 @@ record format.
 """
 
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.config.field_mappings.bible_readers import BibleReadersFieldMapping
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
@@ -313,3 +313,27 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
             raise RepositoryError(
                 f"Failed to search BibleReaders by participant {participant_id}: {e}"
             ) from e
+
+    async def list_view_records(self, view: str) -> List[Dict[str, Any]]:
+        """
+        Retrieve raw Airtable records for a specific view.
+
+        Args:
+            view: Airtable view name to pull records from
+
+        Returns:
+            List of Airtable record dictionaries returned by the view
+
+        Raises:
+            RepositoryError: If retrieval fails
+        """
+        try:
+            logger.debug(f"Listing BibleReader records using view '{view}'")
+            records = await self.client.list_records(view=view)
+            logger.debug("Retrieved %s BibleReader records from view '%s'", len(records), view)
+            return records  # type: ignore
+        except AirtableAPIError as e:
+            logger.error(f"Airtable API error listing BibleReader records for view '{view}': {e}")
+            raise RepositoryError(
+                f"Failed to list BibleReader records for view '{view}': {e}", e.original_error
+            )

@@ -332,3 +332,22 @@ class TestAirtableBibleReadersRepository:
             repository.field_mapping.python_to_airtable_field("participants")
             == "Participants"
         )
+
+    async def test_list_view_records_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
+        """Test successful view records retrieval."""
+        mock_client.list_records.return_value = [sample_airtable_record]
+
+        result = await repository.list_view_records("Чтецы: Расписание")
+
+        assert len(result) == 1
+        assert result[0] == sample_airtable_record
+        mock_client.list_records.assert_called_once_with(view="Чтецы: Расписание")
+
+    async def test_list_view_records_api_error(self, repository, mock_client):
+        """Test view records retrieval with API error."""
+        mock_client.list_records.side_effect = AirtableAPIError("API error")
+
+        with pytest.raises(RepositoryError, match="Failed to list BibleReader records for view"):
+            await repository.list_view_records("Чтецы: Расписание")
