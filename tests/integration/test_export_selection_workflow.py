@@ -423,22 +423,28 @@ class TestExportLineNumberIntegration:
         ):
             with patch(
                 "src.bot.handlers.export_conversation_handlers._send_export_file",
-                side_effect=capture_send_file
+                side_effect=capture_send_file,
             ):
                 await handle_export_type_selection(update, context)
 
         # Verify CSV data contains line numbers
         assert captured_csv_data is not None
-        lines = captured_csv_data.strip().split('\n')
+        lines = captured_csv_data.strip().split("\n")
 
         # Check header has line number column
-        headers = lines[0].split(',')
+        headers = lines[0].split(",")
         assert headers[0] == "#", f"First header should be '#', got '{headers[0]}'"
 
         # Check data rows have sequential line numbers
-        assert lines[1].startswith("1,"), f"First row should start with '1,', got '{lines[1][:5]}'"
-        assert lines[2].startswith("2,"), f"Second row should start with '2,', got '{lines[2][:5]}'"
-        assert lines[3].startswith("3,"), f"Third row should start with '3,', got '{lines[3][:5]}'"
+        assert lines[1].startswith(
+            "1,"
+        ), f"First row should start with '1,', got '{lines[1][:5]}'"
+        assert lines[2].startswith(
+            "2,"
+        ), f"Second row should start with '2,', got '{lines[2][:5]}'"
+        assert lines[3].startswith(
+            "3,"
+        ), f"Third row should start with '3,', got '{lines[3][:5]}'"
 
     @pytest.mark.asyncio
     async def test_bible_readers_export_contains_line_numbers(self):
@@ -477,18 +483,22 @@ class TestExportLineNumberIntegration:
         ):
             with patch(
                 "src.bot.handlers.export_conversation_handlers._send_export_file",
-                side_effect=capture_send_file
+                side_effect=capture_send_file,
             ):
                 await handle_export_type_selection(update, context)
 
         # Verify Bible Readers CSV has line numbers
         assert captured_csv_data is not None
-        lines = captured_csv_data.strip().split('\n')
+        lines = captured_csv_data.strip().split("\n")
 
-        headers = lines[0].split(',')
-        assert headers[0] == "#", "Bible Readers export should start with line number column"
+        headers = lines[0].split(",")
+        assert (
+            headers[0] == "#"
+        ), "Bible Readers export should start with line number column"
         assert lines[1].startswith("1,"), "First Bible reader should have line number 1"
-        assert lines[2].startswith("2,"), "Second Bible reader should have line number 2"
+        assert lines[2].startswith(
+            "2,"
+        ), "Second Bible reader should have line number 2"
 
     @pytest.mark.asyncio
     async def test_roe_export_contains_line_numbers(self):
@@ -527,15 +537,15 @@ class TestExportLineNumberIntegration:
         ):
             with patch(
                 "src.bot.handlers.export_conversation_handlers._send_export_file",
-                side_effect=capture_send_file
+                side_effect=capture_send_file,
             ):
                 await handle_export_type_selection(update, context)
 
         # Verify ROE CSV has line numbers
         assert captured_csv_data is not None
-        lines = captured_csv_data.strip().split('\n')
+        lines = captured_csv_data.strip().split("\n")
 
-        headers = lines[0].split(',')
+        headers = lines[0].split(",")
         assert headers[0] == "#", "ROE export should start with line number column"
         assert lines[1].startswith("1,"), "First ROE session should have line number 1"
         assert lines[2].startswith("2,"), "Second ROE session should have line number 2"
@@ -547,7 +557,9 @@ class TestExportLineNumberIntegration:
         dept_update = MagicMock(spec=Update)
         dept_update.effective_user = User(id=123, first_name="Admin", is_bot=False)
         dept_update.callback_query = AsyncMock(spec=CallbackQuery)
-        dept_update.callback_query.data = ExportCallbackData.department_callback("Kitchen")
+        dept_update.callback_query.data = ExportCallbackData.department_callback(
+            "Kitchen"
+        )
         dept_update.callback_query.answer = AsyncMock()
         dept_update.callback_query.edit_message_text = AsyncMock()
 
@@ -579,19 +591,27 @@ class TestExportLineNumberIntegration:
         ):
             with patch(
                 "src.bot.handlers.export_conversation_handlers._send_export_file",
-                side_effect=capture_send_file
+                side_effect=capture_send_file,
             ):
                 await handle_department_selection(dept_update, context)
 
         # Verify department-filtered CSV has line numbers
         assert captured_csv_data is not None
-        lines = captured_csv_data.strip().split('\n')
+        lines = captured_csv_data.strip().split("\n")
 
-        headers = lines[0].split(',')
-        assert headers[0] == "#", "Department export should start with line number column"
-        assert lines[1].startswith("1,"), "First department participant should have line number 1"
-        assert lines[2].startswith("2,"), "Second department participant should have line number 2"
-        assert lines[3].startswith("3,"), "Third department participant should have line number 3"
+        headers = lines[0].split(",")
+        assert (
+            headers[0] == "#"
+        ), "Department export should start with line number column"
+        assert lines[1].startswith(
+            "1,"
+        ), "First department participant should have line number 1"
+        assert lines[2].startswith(
+            "2,"
+        ), "Second department participant should have line number 2"
+        assert lines[3].startswith(
+            "3,"
+        ), "Third department participant should have line number 3"
 
     @pytest.mark.asyncio
     async def test_role_filtered_export_contains_line_numbers(self):
@@ -632,15 +652,15 @@ class TestExportLineNumberIntegration:
         ):
             with patch(
                 "src.bot.handlers.export_conversation_handlers._send_export_file",
-                side_effect=capture_send_file
+                side_effect=capture_send_file,
             ):
                 await handle_export_type_selection(team_update, context)
 
         # Verify role-filtered CSV has line numbers
         assert captured_csv_data is not None
-        lines = captured_csv_data.strip().split('\n')
+        lines = captured_csv_data.strip().split("\n")
 
-        headers = lines[0].split(',')
+        headers = lines[0].split(",")
         assert headers[0] == "#", "Role export should start with line number column"
         assert lines[1].startswith("1,"), "First team member should have line number 1"
         assert lines[2].startswith("2,"), "Second team member should have line number 2"

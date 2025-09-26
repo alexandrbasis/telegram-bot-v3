@@ -273,7 +273,7 @@ async def handle_export_command(
                             base_message=base_msg,
                             file_size_mb=file_size_mb,
                             timestamp=f"{ts_utc} UTC",
-                            csv_data=csv_data
+                            csv_data=csv_data,
                         )
 
                         await update.message.reply_document(

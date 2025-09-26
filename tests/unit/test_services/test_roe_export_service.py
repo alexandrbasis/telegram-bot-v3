@@ -604,8 +604,8 @@ class TestLineNumberIntegration:
 
         assert len(rows) == 120
         # With 120 rows, line numbers should be right-aligned to width 3
-        assert rows[0]["#"] == "  1"    # First row (padded to 3 chars)
-        assert rows[99]["#"] == "100"   # 3-digit number
+        assert rows[0]["#"] == "  1"  # First row (padded to 3 chars)
+        assert rows[99]["#"] == "100"  # 3-digit number
         assert rows[119]["#"] == "120"  # 3-digit number
 
     @pytest.mark.asyncio
@@ -673,7 +673,10 @@ class TestLineNumberIntegration:
         with open(file_path, "r", encoding="utf-8-sig") as f:
             content = f.read()
             # Check that line numbers are present in headers and data
-            assert "#,RoeTopic,Roista,RoeDate,RoeTiming,RoeDuration,Assistant,Prayer" in content
+            assert (
+                "#,RoeTopic,Roista,RoeDate,RoeTiming,RoeDuration,Assistant,Prayer"
+                in content
+            )
             assert "1,Божья любовь" in content
             assert "2,Прощение" in content
 

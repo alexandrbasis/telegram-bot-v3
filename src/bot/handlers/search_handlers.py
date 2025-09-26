@@ -35,8 +35,8 @@ from src.services.search_service import (
 from src.services.service_factory import get_participant_repository
 from src.services.user_interaction_logger import get_user_interaction_logger
 from src.utils.access_control import require_viewer_or_above
-from src.utils.auth_utils import get_user_role
 from src.utils.auth_cache import get_authorization_cache
+from src.utils.auth_utils import get_user_role
 from src.utils.participant_filter import filter_participants_by_role
 
 logger = logging.getLogger(__name__)
@@ -293,11 +293,13 @@ async def process_name_search(
     # Dynamic role update detection: invalidate cache to ensure fresh role resolution
     # This ensures that any external role changes (e.g., in Airtable) are reflected
     if cached_role is not None and cached_role != user_role:
-        logger.info(f"Role change detected for user {user.id}: {cached_role} -> {user_role}")
+        logger.info(
+            f"Role change detected for user {user.id}: {cached_role} -> {user_role}"
+        )
         auth_cache.invalidate(user.id)
         # Set the new role in cache after invalidation
         auth_cache.set(user.id, user_role)
-    elif cache_state in ['miss', 'expired']:
+    elif cache_state in ["miss", "expired"]:
         # Update cache with current role when it's missing or expired
         auth_cache.set(user.id, user_role)
 

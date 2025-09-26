@@ -478,8 +478,8 @@ class TestLineNumberIntegration:
 
         assert len(rows) == 150
         # With 150 rows, line numbers should be right-aligned to width 3
-        assert rows[0]["#"] == "  1"    # First row (padded to 3 chars)
-        assert rows[99]["#"] == "100"   # 3-digit number
+        assert rows[0]["#"] == "  1"  # First row (padded to 3 chars)
+        assert rows[99]["#"] == "100"  # 3-digit number
         assert rows[149]["#"] == "150"  # 3-digit number
 
     @pytest.mark.asyncio

@@ -968,6 +968,7 @@ class TestLineNumberIntegration:
     @pytest.fixture
     def team_view_records(self) -> List[Dict[str, Any]]:
         """Simulate Airtable view records for team members."""
+
         def make_view_record(record_id: str, **fields) -> Dict[str, Any]:
             return {"id": record_id, "fields": fields}
 
@@ -989,6 +990,7 @@ class TestLineNumberIntegration:
     @pytest.fixture
     def department_view_records(self) -> List[Dict[str, Any]]:
         """Simulate Airtable team view records spanning multiple departments."""
+
         def make_view_record(record_id: str, **fields) -> Dict[str, Any]:
             return {"id": record_id, "fields": fields}
 
@@ -1074,7 +1076,9 @@ class TestLineNumberIntegration:
         service = ParticipantExportService(repository=mock_repository)
 
         # Act
-        csv_data = await service.get_participants_by_department_as_csv(Department.WORSHIP)
+        csv_data = await service.get_participants_by_department_as_csv(
+            Department.WORSHIP
+        )
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
@@ -1127,7 +1131,7 @@ class TestLineNumberIntegration:
                 size=Size.M,
                 payment_status=PaymentStatus.PAID,
                 date_of_birth=date(1990, 1, 1),
-                age=35
+                age=35,
             )
             large_dataset.append(participant)
 
@@ -1145,9 +1149,9 @@ class TestLineNumberIntegration:
         assert len(rows) == 150
 
         # Check specific line numbers with width consistency (150 rows = 3-digit width)
-        assert rows[0]["#"] == "  1"      # First row (padded to 3 chars)
-        assert rows[99]["#"] == "100"     # 3-digit line number
-        assert rows[149]["#"] == "150"    # Last row
+        assert rows[0]["#"] == "  1"  # First row (padded to 3 chars)
+        assert rows[99]["#"] == "100"  # 3-digit line number
+        assert rows[149]["#"] == "150"  # Last row
 
         # Verify participant data is preserved
         assert rows[0]["FullNameRU"] == "Участник 1"
@@ -1170,8 +1174,11 @@ class TestLineNumberIntegration:
         rows = list(reader)
 
         # Verify all expected Airtable fields are still present
-        expected_fields = [field for field in AirtableFieldMapping.PYTHON_TO_AIRTABLE.values()
-                          if field != "id"]  # Exclude internal 'id' field
+        expected_fields = [
+            field
+            for field in AirtableFieldMapping.PYTHON_TO_AIRTABLE.values()
+            if field != "id"
+        ]  # Exclude internal 'id' field
 
         for field in expected_fields:
             assert field in reader.fieldnames, f"Missing expected field: {field}"

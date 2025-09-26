@@ -449,7 +449,7 @@ async def _send_export_file(
                 base_message="✅ Экспорт завершен успешно!",
                 file_size_mb=file_size_mb,
                 timestamp=f"{ts_utc} UTC",
-                csv_data=csv_data
+                csv_data=csv_data,
             )
 
             await query.message.reply_document(

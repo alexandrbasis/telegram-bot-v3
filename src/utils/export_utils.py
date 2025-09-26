@@ -8,7 +8,7 @@ and reference capabilities.
 
 import csv
 import io
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 def format_line_number(line_num: int, width: Optional[int] = None) -> str:
@@ -37,9 +37,7 @@ def format_line_number(line_num: int, width: Optional[int] = None) -> str:
 
     if width is not None:
         if not isinstance(width, int):
-            raise TypeError(
-                f"Width must be an integer, got {type(width).__name__}"
-            )
+            raise TypeError(f"Width must be an integer, got {type(width).__name__}")
         if width <= 0:
             raise ValueError(f"Width must be positive, got {width}")
 
@@ -93,7 +91,7 @@ def add_line_numbers_to_csv(csv_string: str) -> str:
     headers = rows[0]
     new_headers = ["#"] + headers
 
-    writer = csv.writer(output_stream, lineterminator='\n')
+    writer = csv.writer(output_stream, lineterminator="\n")
     writer.writerow(new_headers)
 
     # Process data rows (add line numbers with consistent width)
@@ -108,8 +106,7 @@ def add_line_numbers_to_csv(csv_string: str) -> str:
 
 
 def add_line_numbers_to_rows(
-    headers: List[str],
-    rows: List[Dict[str, Any]]
+    headers: List[str], rows: List[Dict[str, Any]]
 ) -> Tuple[List[str], List[Dict[str, Any]]]:
     """
     Add line numbers to row data structures with consistent width formatting.
@@ -179,7 +176,7 @@ def format_export_success_message(
     base_message: str,
     file_size_mb: float,
     timestamp: str,
-    csv_data: Optional[str] = None
+    csv_data: Optional[str] = None,
 ) -> str:
     """
     Format export success message with optional participant count.
@@ -210,9 +207,8 @@ def format_export_success_message(
             pass
 
     # Add file info
-    message_parts.extend([
-        f"📁 Размер файла: {file_size_mb:.2f}MB",
-        f"📅 Дата экспорта: {timestamp}"
-    ])
+    message_parts.extend(
+        [f"📁 Размер файла: {file_size_mb:.2f}MB", f"📅 Дата экспорта: {timestamp}"]
+    )
 
     return "\n".join(message_parts)

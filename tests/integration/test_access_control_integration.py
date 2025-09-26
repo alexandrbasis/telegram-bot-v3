@@ -234,24 +234,48 @@ class TestEndToEndSecurityIntegration:
 
         # Simulate cache behavior for role transition
         mock_auth_cache.get.side_effect = [
-            ("viewer", "hit"),      # Initial cached role
-            ("viewer", "hit"),      # Cache still has viewer when role changes to coordinator
+            ("viewer", "hit"),  # Initial cached role
+            (
+                "viewer",
+                "hit",
+            ),  # Cache still has viewer when role changes to coordinator
         ]
 
-        with patch("src.bot.handlers.search_handlers.get_settings", return_value=mock_settings), \
-             patch("src.bot.handlers.search_handlers.get_user_role") as mock_get_role, \
-             patch("src.bot.handlers.search_handlers.get_participant_repository") as mock_get_repo, \
-             patch("src.bot.handlers.search_handlers.get_authorization_cache", return_value=mock_auth_cache), \
-             patch("src.bot.handlers.search_handlers.get_user_interaction_logger", return_value=None):
+        with (
+            patch(
+                "src.bot.handlers.search_handlers.get_settings",
+                return_value=mock_settings,
+            ),
+            patch("src.bot.handlers.search_handlers.get_user_role") as mock_get_role,
+            patch(
+                "src.bot.handlers.search_handlers.get_participant_repository"
+            ) as mock_get_repo,
+            patch(
+                "src.bot.handlers.search_handlers.get_authorization_cache",
+                return_value=mock_auth_cache,
+            ),
+            patch(
+                "src.bot.handlers.search_handlers.get_user_interaction_logger",
+                return_value=None,
+            ),
+        ):
 
             # First call returns viewer, second call returns coordinator (role change)
             mock_get_role.side_effect = ["viewer", "coordinator"]
 
             mock_repo = AsyncMock()
             mock_repo.search_by_name_enhanced.side_effect = [
-                [(comprehensive_participants[2], 0.8, "Peter Viewer - CANDIDATE")],  # Viewer results
-                [(comprehensive_participants[1], 0.9, "Ivan Coordinator - TEAM"),   # Coordinator results
-                 (comprehensive_participants[2], 0.8, "Peter Viewer - CANDIDATE")]   # More results for coordinator
+                [
+                    (comprehensive_participants[2], 0.8, "Peter Viewer - CANDIDATE")
+                ],  # Viewer results
+                [
+                    (
+                        comprehensive_participants[1],
+                        0.9,
+                        "Ivan Coordinator - TEAM",
+                    ),  # Coordinator results
+                    (comprehensive_participants[2], 0.8, "Peter Viewer - CANDIDATE"),
+                ],  # More results for coordinator
             ]
             mock_get_repo.return_value = mock_repo
 

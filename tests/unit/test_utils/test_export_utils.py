@@ -7,15 +7,16 @@ following TDD approach for AGB-72 implementation.
 
 import csv
 import io
-import pytest
 from typing import List
 
+import pytest
+
 from src.utils.export_utils import (
-    format_line_number,
     add_line_numbers_to_csv,
     add_line_numbers_to_rows,
     extract_participant_count_from_csv,
     format_export_success_message,
+    format_line_number,
 )
 
 
@@ -152,12 +153,14 @@ class TestAddLineNumbersToCSV:
         result = add_line_numbers_to_csv(csv_input)
 
         # Verify line numbers are present with consistent width
-        lines = result.strip().split('\n')
+        lines = result.strip().split("\n")
         assert lines[0] == "#,Name,Value"  # Header
 
         # With 150 rows, all line numbers should be right-aligned to width 3
         assert lines[1] == "  1,Person1,10"  # First row (padded to 3 chars)
-        assert lines[10] == " 10,Person10,100"  # Two-digit line number (padded to 3 chars)
+        assert (
+            lines[10] == " 10,Person10,100"
+        )  # Two-digit line number (padded to 3 chars)
         assert lines[100] == "100,Person100,1000"  # Three-digit line number
         assert lines[150] == "150,Person150,1500"  # Last row
         assert len(lines) == 151  # Header + 150 data rows
@@ -209,7 +212,7 @@ class TestAddLineNumbersToRows:
         rows = [
             {"Name": "John", "Age": "25"},
             {"Name": "Jane", "Age": "30"},
-            {"Name": "Bob", "Age": "35"}
+            {"Name": "Bob", "Age": "35"},
         ]
 
         result_headers, result_rows = add_line_numbers_to_rows(headers, rows)
@@ -289,10 +292,7 @@ class TestParticipantCountExtraction:
     def test_extract_count_from_valid_csv_with_line_numbers(self):
         """Test extracting count from valid CSV with line numbers."""
         csv_data = (
-            "#,Name,Age\n"
-            "1,John Doe,25\n"
-            "2,Jane Smith,30\n"
-            "3,Bob Johnson,35"
+            "#,Name,Age\n" "1,John Doe,25\n" "2,Jane Smith,30\n" "3,Bob Johnson,35"
         )
 
         result = extract_participant_count_from_csv(csv_data)
@@ -339,11 +339,7 @@ class TestParticipantCountExtraction:
 
     def test_extract_count_from_unicode_csv(self):
         """Test extracting count from CSV with Unicode content."""
-        csv_data = (
-            "#,ФИО,Возраст\n"
-            "1,Иванов Иван,25\n"
-            "2,Петрова Мария,30"
-        )
+        csv_data = "#,ФИО,Возраст\n" "1,Иванов Иван,25\n" "2,Петрова Мария,30"
 
         result = extract_participant_count_from_csv(csv_data)
         assert result == 2
@@ -354,17 +350,13 @@ class TestExportSuccessMessageFormatting:
 
     def test_format_message_with_participant_count(self):
         """Test formatting message with participant count extracted from CSV."""
-        csv_data = (
-            "#,Name,Age\n"
-            "1,John Doe,25\n"
-            "2,Jane Smith,30"
-        )
+        csv_data = "#,Name,Age\n" "1,John Doe,25\n" "2,Jane Smith,30"
 
         result = format_export_success_message(
             base_message="✅ Экспорт завершен успешно!",
             file_size_mb=1.5,
             timestamp="2025-01-26 15:30:00 UTC",
-            csv_data=csv_data
+            csv_data=csv_data,
         )
 
         expected = (
@@ -381,7 +373,7 @@ class TestExportSuccessMessageFormatting:
         result = format_export_success_message(
             base_message="✅ Экспорт завершен успешно!",
             file_size_mb=2.75,
-            timestamp="2025-01-26 15:30:00 UTC"
+            timestamp="2025-01-26 15:30:00 UTC",
         )
 
         expected = (
@@ -400,7 +392,7 @@ class TestExportSuccessMessageFormatting:
             base_message="✅ Экспорт завершен успешно!",
             file_size_mb=0.1,
             timestamp="2025-01-26 15:30:00 UTC",
-            csv_data=csv_data
+            csv_data=csv_data,
         )
 
         expected = (
@@ -419,7 +411,7 @@ class TestExportSuccessMessageFormatting:
             base_message="✅ Экспорт завершен успешно!",
             file_size_mb=1.0,
             timestamp="2025-01-26 15:30:00 UTC",
-            csv_data=csv_data
+            csv_data=csv_data,
         )
 
         # Should gracefully skip participant count and include other info
@@ -443,7 +435,7 @@ class TestExportSuccessMessageFormatting:
             base_message="✅ Экспорт завершен успешно!",
             file_size_mb=10.25,
             timestamp="2025-01-26 15:30:00 UTC",
-            csv_data=csv_data
+            csv_data=csv_data,
         )
 
         expected = (
