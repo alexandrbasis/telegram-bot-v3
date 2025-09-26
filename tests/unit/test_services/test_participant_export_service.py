@@ -245,6 +245,7 @@ class TestGetAllParticipantsAsCSV:
 
         # Expected headers from AirtableFieldMapping (excluding 'id')
         expected_headers = [
+            "#",
             "FullNameRU",
             "FullNameEN",
             "Church",
@@ -695,6 +696,7 @@ class TestRoleBasedFiltering:
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
         expected_headers = [
+            "#",
             "FullNameRU",
             "Gender",
             "DateOfBirth",
@@ -794,6 +796,7 @@ class TestRoleBasedFiltering:
         actual_headers = reader.fieldnames
 
         expected_headers = [
+            "#",
             "FullNameRU",
             "Gender",
             "DateOfBirth",
@@ -864,6 +867,7 @@ class TestDepartmentBasedFiltering:
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
         expected_headers = [
+            "#",
             "FullNameRU",
             "Gender",
             "DateOfBirth",
@@ -956,3 +960,236 @@ class TestDepartmentBasedFiltering:
         reader = csv.DictReader(io.StringIO(csv_data))
         rows = list(reader)
         assert len(rows) == 0  # Should return empty result set
+
+
+class TestLineNumberIntegration:
+    """Test line number integration with ParticipantExportService."""
+
+    @pytest.fixture
+    def team_view_records(self) -> List[Dict[str, Any]]:
+        """Simulate Airtable view records for team members."""
+        def make_view_record(record_id: str, **fields) -> Dict[str, Any]:
+            return {"id": record_id, "fields": fields}
+
+        return [
+            make_view_record(
+                "rec001",
+                FullNameRU="Тимлидер Один",
+                Role="TEAM",
+                Department="Worship",
+            ),
+            make_view_record(
+                "rec002",
+                FullNameRU="Тимлидер Два",
+                Role="TEAM",
+                Department="Kitchen",
+            ),
+        ]
+
+    @pytest.fixture
+    def department_view_records(self) -> List[Dict[str, Any]]:
+        """Simulate Airtable team view records spanning multiple departments."""
+        def make_view_record(record_id: str, **fields) -> Dict[str, Any]:
+            return {"id": record_id, "fields": fields}
+
+        return [
+            make_view_record(
+                "rec001",
+                FullNameRU="Worship Участник 1",
+                Role="TEAM",
+                Department="Worship",
+            ),
+            make_view_record(
+                "rec002",
+                FullNameRU="Worship Участник 2",
+                Role="TEAM",
+                Department="Worship",
+            ),
+            make_view_record(
+                "rec003",
+                FullNameRU="Kitchen Участник",
+                Role="TEAM",
+                Department="Kitchen",
+            ),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_get_all_participants_includes_line_numbers(
+        self, mock_repository, sample_participants
+    ):
+        """Test that get_all_participants_as_csv includes line numbers as first column."""
+        # Arrange
+        mock_repository.list_all.return_value = sample_participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_all_participants_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+
+        # Check that "#" is the first column
+        assert reader.fieldnames[0] == "#"
+
+        # Check line numbers in data rows
+        rows = list(reader)
+        assert len(rows) == 2
+        assert rows[0]["#"] == "1"
+        assert rows[1]["#"] == "2"
+
+        # Verify participant data is preserved
+        assert rows[0]["FullNameRU"] == "Иванов Иван Иванович"
+        assert rows[1]["FullNameRU"] == "Петрова Мария Сергеевна"
+
+    @pytest.mark.asyncio
+    async def test_get_participants_by_role_includes_line_numbers(
+        self, mock_repository, team_view_records
+    ):
+        """Test that role-filtered exports include line numbers."""
+        # Arrange
+        mock_repository.list_view_records.return_value = team_view_records
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_role_as_csv(Role.TEAM)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+
+        # Check that "#" is the first column
+        assert reader.fieldnames[0] == "#"
+
+        # Check line numbers are sequential
+        rows = list(reader)
+        for i, row in enumerate(rows, 1):
+            assert row["#"] == str(i)
+
+    @pytest.mark.asyncio
+    async def test_get_participants_by_department_includes_line_numbers(
+        self, mock_repository, department_view_records
+    ):
+        """Test that department-filtered exports include line numbers."""
+        # Arrange
+        mock_repository.list_view_records.return_value = department_view_records
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_participants_by_department_as_csv(Department.WORSHIP)
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+
+        # Check that "#" is the first column
+        assert reader.fieldnames[0] == "#"
+
+        # Check line numbers are sequential for filtered results
+        rows = list(reader)
+        for i, row in enumerate(rows, 1):
+            assert row["#"] == str(i)
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_with_empty_dataset(self, mock_repository):
+        """Test line numbers work correctly with empty participant list."""
+        # Arrange
+        mock_repository.list_all.return_value = []
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_all_participants_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+
+        # Check that "#" is the first column even with no data
+        assert reader.fieldnames[0] == "#"
+
+        # Check no data rows exist
+        rows = list(reader)
+        assert len(rows) == 0
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_with_large_dataset(self, mock_repository):
+        """Test line numbers work correctly with large datasets (3-digit numbers)."""
+        # Arrange - create 150 participants
+        large_dataset = []
+        for i in range(1, 151):
+            participant = Participant(
+                record_id=f"rec{i:03d}",
+                full_name_ru=f"Участник {i}",
+                full_name_en=f"Participant {i}",
+                church=f"Церковь {i}",
+                country_and_city="Россия, Москва",
+                submitted_by="Тест",
+                contact_information=f"+7 999 {i:03d}-45-67",
+                role=Role.CANDIDATE,
+                department=Department.WORSHIP,
+                gender=Gender.MALE,
+                size=Size.M,
+                payment_status=PaymentStatus.PAID,
+                date_of_birth=date(1990, 1, 1),
+                age=35
+            )
+            large_dataset.append(participant)
+
+        mock_repository.list_all.return_value = large_dataset
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_all_participants_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Check total count
+        assert len(rows) == 150
+
+        # Check specific line numbers
+        assert rows[0]["#"] == "1"        # First row
+        assert rows[99]["#"] == "100"     # 3-digit line number
+        assert rows[149]["#"] == "150"    # Last row
+
+        # Verify participant data is preserved
+        assert rows[0]["FullNameRU"] == "Участник 1"
+        assert rows[149]["FullNameRU"] == "Участник 150"
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_preserve_existing_functionality(
+        self, mock_repository, sample_participants
+    ):
+        """Test that adding line numbers doesn't break existing functionality."""
+        # Arrange
+        mock_repository.list_all.return_value = sample_participants
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        csv_data = await service.get_all_participants_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Verify all expected Airtable fields are still present
+        expected_fields = [field for field in AirtableFieldMapping.PYTHON_TO_AIRTABLE.values()
+                          if field != "id"]  # Exclude internal 'id' field
+
+        for field in expected_fields:
+            assert field in reader.fieldnames, f"Missing expected field: {field}"
+
+        # Verify data integrity - check key fields
+        assert rows[0]["FullNameRU"] == "Иванов Иван Иванович"
+        assert rows[0]["Role"] == "CANDIDATE"
+        assert rows[0]["Gender"] == "M"
+        assert rows[1]["FullNameRU"] == "Петрова Мария Сергеевна"
+
+    def test_csv_headers_include_line_number_column(self, mock_repository):
+        """Test that _get_csv_headers includes line number column as first header."""
+        # Arrange
+        service = ParticipantExportService(repository=mock_repository)
+
+        # Act
+        headers = service._get_csv_headers()
+
+        # Assert
+        assert headers[0] == "#"
+        assert len(headers) > 1  # Should have line number plus original headers
