@@ -94,8 +94,7 @@ def require_role(
                     user_role=user_role,
                     cache_state="role_resolved",
                     error_details=(
-                        f"User role '{user_role}' insufficient for "
-                        f"required roles: {required_roles}"
+                        f"User role '{user_role}' insufficient for required roles: {required_roles}"
                     ),
                 )
                 audit_service.log_authorization_event(auth_event)

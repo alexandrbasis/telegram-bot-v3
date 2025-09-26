@@ -6,10 +6,11 @@ role transitions, handler integration, and dynamic Airtable updates without rest
 Tests security across all user roles and system components.
 """
 
-import asyncio
-import time
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, call, patch
+
+import asyncio
+import time
 
 import pytest
 from telegram import Update, User
@@ -56,6 +57,7 @@ class TestEndToEndSecurityIntegration:
                 contact_information="+1234567890, admin@company.com",
                 church="Главная церковь",
                 country_and_city="Россия, Москва",
+                notes="VIP participant - sensitive data",
             ),
             Participant(
                 record_id="rec_coord_1",
@@ -96,26 +98,16 @@ class TestEndToEndSecurityIntegration:
         def create_auth_event(*args, **kwargs):
             return AuthorizationEvent(
                 user_id=kwargs.get("user_id", args[0] if args else 100),
-                action=kwargs.get(
-                    "action", args[1] if len(args) > 1 else "test_action"
-                ),
+                action=kwargs.get("action", args[1] if len(args) > 1 else "test_action"),
                 result=kwargs.get("result", args[2] if len(args) > 2 else "granted"),
-                user_role=kwargs.get(
-                    "user_role", args[3] if len(args) > 3 else "admin"
-                ),
-                cache_state=kwargs.get(
-                    "cache_state", args[4] if len(args) > 4 else "hit"
-                ),
+                user_role=kwargs.get("user_role", args[3] if len(args) > 3 else "admin"),
+                cache_state=kwargs.get("cache_state", args[4] if len(args) > 4 else "hit"),
             )
 
         audit_instance.create_authorization_event = MagicMock(
             side_effect=create_auth_event
         )
-        audit_instance.log_authorization_event = MagicMock()
-        audit_instance.create_performance_metrics = MagicMock()
-        audit_instance.log_performance_metrics = MagicMock()
 
-        # Patch the audit service in auth_utils where it's actually used
         with patch(
             "src.utils.auth_utils.get_security_audit_service",
             return_value=audit_instance,
@@ -276,29 +268,27 @@ class TestEndToEndSecurityIntegration:
             # Act: First search as viewer
             result1 = await process_name_search(update, context)
 
-            # Simulate Airtable role update and cache invalidation (external process)
-            # This would normally be triggered by an admin role update, not by the search
-            # We simulate this by manually calling invalidate before the second search
-            mock_auth_cache.invalidate(user_id)
+            # Simulate Airtable role update and cache invalidation
+            mock_auth_cache.invalidate.assert_called_with(user_id)
 
             # Second search after role promotion
             result2 = await process_name_search(update, context)
 
-            # Assert: Verify searches completed successfully
+            # Assert: Verify role transition captured in audit logs
+            assert mock_audit_service.create_authorization_event.call_count >= 2
+            assert mock_audit_service.log_authorization_event.call_count >= 2
+
+            # Verify different access levels between calls
             assert result1 is not None and result2 is not None
 
-            # Verify different user roles were used for the searches
-            assert mock_get_role.call_count == 2
-            mock_get_role.assert_any_call(user_id, mock_settings)
-
-            # Verify cache invalidation was called during our simulation
-            mock_auth_cache.invalidate.assert_called_with(user_id)
-
-            # Verify repository was called with different roles
-            assert mock_repo.search_by_name_enhanced.call_count == 2
+            # Verify cache invalidation was triggered
+            mock_auth_cache.invalidate.assert_called()
 
     async def test_decorator_integration_with_real_handlers(
-        self, mock_settings, mock_audit_service, mock_auth_cache
+        self,
+        mock_settings,
+        mock_audit_service,
+        mock_auth_cache
     ):
         """
         Test access control decorators in realistic handler contexts.
@@ -310,7 +300,6 @@ class TestEndToEndSecurityIntegration:
         - Error handling for unauthorized access
         - Performance tracking through decorators
         """
-
         # Test admin-only handler
         @require_admin()
         async def admin_only_handler(update, context):
@@ -423,15 +412,17 @@ class TestEndToEndSecurityIntegration:
                 # Execute handler
                 await process_name_search(update, context)
 
-        # Verify all test scenarios were executed
-        # Since get_user_role is mocked, audit logging from that
-        # function is bypassed. The audit service would be called in
-        # real usage but not in this test setup.
-        assert len(test_scenarios) == 4  # Confirm all scenarios were tested
+        # Verify comprehensive audit logging
+        assert mock_audit_service.create_authorization_event.call_count >= len(test_scenarios)
+        assert mock_audit_service.log_authorization_event.call_count >= len(test_scenarios)
 
-        # In a real scenario, audit events would contain required fields:
-        # - user_id, action, result, cache_state, user_role, timestamp
-        # This test validates the search function behavior with different user roles
+        # Verify audit events contain required fields
+        for call in mock_audit_service.create_authorization_event.call_args_list:
+            args, kwargs = call
+            assert 'user_id' in kwargs or len(args) > 0
+            assert 'action' in kwargs or len(args) > 1
+            assert 'result' in kwargs or len(args) > 2
+            assert 'cache_state' in kwargs or len(args) > 4
 
     async def test_cache_performance_under_load(
         self,
@@ -451,16 +442,7 @@ class TestEndToEndSecurityIntegration:
         """
         # Simulate concurrent authorization requests
         concurrent_users = [100, 100, 200, 200, 300, 300, 100, 200]  # Mix of user types
-        expected_roles = [
-            "admin",
-            "admin",
-            "coordinator",
-            "coordinator",
-            "viewer",
-            "viewer",
-            "admin",
-            "coordinator",
-        ]
+        expected_roles = ["admin", "admin", "coordinator", "coordinator", "viewer", "viewer", "admin", "coordinator"]
 
         # Mock fast cache responses for performance test
         mock_auth_cache.get.side_effect = [(role, "hit") for role in expected_roles]
@@ -516,22 +498,15 @@ class TestEndToEndSecurityIntegration:
         avg_time = sum(execution_times) / len(execution_times)
         max_time = max(execution_times)
 
-        assert (
-            avg_time < 100
-        ), f"Average execution time {avg_time:.2f}ms exceeds 100ms requirement"
-        assert (
-            max_time < 300
-        ), f"Maximum execution time {max_time:.2f}ms exceeds 300ms requirement"
-        assert (
-            total_time < 1000
-        ), f"Total concurrent execution time {total_time:.2f}ms too slow"
+        assert avg_time < 100, f"Average execution time {avg_time:.2f}ms exceeds 100ms requirement"
+        assert max_time < 300, f"Maximum execution time {max_time:.2f}ms exceeds 300ms requirement"
+        assert total_time < 1000, f"Total concurrent execution time {total_time:.2f}ms too slow"
 
         # Verify all requests succeeded
         assert all(result[0] is not None for result in results)
 
-        # Verify concurrent load handling completed successfully
-        # Audit logging would be called in real usage but is mocked here
-        assert len(concurrent_users) == 8  # Confirm all concurrent requests processed
+        # Verify audit logging handled concurrent load
+        assert mock_audit_service.log_authorization_event.call_count >= len(concurrent_users)
 
     async def test_error_recovery_and_fallback_behavior(
         self,
@@ -596,10 +571,7 @@ class TestEndToEndSecurityIntegration:
                 try:
                     result = await process_name_search(update, context)
                     # System should handle errors gracefully
-                    assert result is not None or error_type in [
-                        "repo_error",
-                        "timeout_error",
-                    ]
+                    assert result is not None or error_type in ["repo_error", "timeout_error"]
                 except Exception as e:
                     # Only certain errors should propagate
                     assert error_type in ["timeout_error"]
@@ -608,13 +580,12 @@ class TestEndToEndSecurityIntegration:
                 mock_auth_cache.reset_mock()
                 mock_audit_service.reset_mock()
 
-        # Verify all error scenarios were tested
-        # Error conditions are logged but audit service calls are mocked
-        assert len(error_scenarios) == 3  # Confirm all error scenarios tested
+        # Verify audit service captured error conditions
+        assert mock_audit_service.create_authorization_event.call_count >= len(error_scenarios)
 
         # Check that at least some error events were logged
         error_events_logged = any(
-            "error" in str(call).lower() or "exception" in str(call).lower()
+            'error' in str(call).lower() or 'exception' in str(call).lower()
             for call in mock_audit_service.log_authorization_event.call_args_list
         )
         # Note: Depending on implementation, error logging might be handled differently

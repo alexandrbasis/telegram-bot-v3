@@ -29,7 +29,6 @@ class AuthorizationEvent:
     Captures all relevant information about user authorization attempts
     including cache state and Airtable metadata for complete audit trail.
     """
-
     user_id: Optional[int]
     action: str
     result: str  # "granted", "denied"
@@ -57,7 +56,6 @@ class SyncEvent:
     Captures sync operation details including performance metrics,
     success/failure status, and failed record details for monitoring.
     """
-
     sync_type: str  # "scheduled_refresh", "manual_refresh", "cache_invalidation"
     duration_ms: int
     records_processed: int
@@ -86,7 +84,6 @@ class PerformanceMetrics:
     Captures timing and performance data for authorization operations
     to ensure performance requirements are met and monitored.
     """
-
     operation: str
     duration_ms: int
     cache_hit: bool
@@ -151,8 +148,8 @@ class SecurityAuditService:
         if event.result == "denied":
             denied_message = (
                 "SECURITY_AUDIT: DENIED access attempt - "
-                f"User {event.user_id} (role: {event.user_role}) "
-                f"attempted '{event.action}'"
+                f"User {event.user_id} (role: {event.user_role}) attempted "
+                f"'{event.action}'"
             )
             self.logger.warning(f"{denied_message} - {log_message}")
         else:

@@ -4,6 +4,7 @@
     "name": "telegram-bot-v3",
     "description": "A Telegram bot for managing event participants with enterprise-grade architecture, comprehensive testing, and seamless Airtable integration.",
     "main_language": "python",
+<<<<<<< HEAD
     "last_updated": "2025-09-26T15:13:50.889027"
   },
   "project_structure": {

@@ -14,13 +14,12 @@ from src.services.security_audit_service import get_security_audit_service
 
 # Default cache configuration
 DEFAULT_CACHE_TTL_SECONDS = 60  # 1 minute for more aggressive refresh
-DEFAULT_MAX_CACHE_SIZE = 10000  # Maximum number of cached entries
+DEFAULT_MAX_CACHE_SIZE = 10000   # Maximum number of cached entries
 
 
 @dataclass
 class CacheEntry:
     """Cache entry with metadata for performance tracking."""
-
     value: Optional[str]  # User role or None
     timestamp: float
     access_count: int = 0
@@ -52,7 +51,7 @@ class AuthorizationCache:
     def __init__(
         self,
         ttl_seconds: int = DEFAULT_CACHE_TTL_SECONDS,
-        max_size: int = DEFAULT_MAX_CACHE_SIZE,
+        max_size: int = DEFAULT_MAX_CACHE_SIZE
     ):
         """
         Initialize authorization cache.
@@ -66,11 +65,11 @@ class AuthorizationCache:
         self._cache: Dict[int, CacheEntry] = {}
         self._lock = threading.RLock()
         self._stats = {
-            "hits": 0,
-            "misses": 0,
-            "evictions": 0,
-            "invalidations": 0,
-            "refreshes": 0,
+            'hits': 0,
+            'misses': 0,
+            'evictions': 0,
+            'invalidations': 0,
+            'refreshes': 0
         }
         self.audit_service = get_security_audit_service()
 
@@ -169,7 +168,10 @@ class AuthorizationCache:
                 self._evict_lru()
 
             # Store or update cache entry
-            self._cache[user_id] = CacheEntry(value=role, timestamp=time.time())
+            self._cache[user_id] = CacheEntry(
+                value=role,
+                timestamp=time.time()
+            )
 
             duration_ms = int((time.time() - start_time) * 1000)
 
@@ -233,8 +235,7 @@ class AuthorizationCache:
         Refresh all cache entries by re-resolving roles.
 
         Args:
-            role_resolver_func: Function to resolve user roles
-                (user_id, settings) -> role
+            role_resolver_func: Function to resolve user roles (user_id, settings) -> role
 
         Returns:
             Number of entries refreshed
@@ -309,7 +310,8 @@ class AuthorizationCache:
 
         # Find LRU entry
         lru_user_id = min(
-            self._cache.keys(), key=lambda uid: self._cache[uid].last_access
+            self._cache.keys(),
+            key=lambda uid: self._cache[uid].last_access
         )
 
         del self._cache[lru_user_id]
@@ -410,10 +412,8 @@ def is_cache_healthy() -> bool:
     MIN_HIT_RATE = 0.7  # At least 70% hit rate
     MAX_SIZE_UTILIZATION = 0.9  # No more than 90% size utilization
 
-    hit_rate_healthy = (
-        cast(float, stats["hit_rate"]) >= MIN_HIT_RATE
-        or cast(int, stats["total_requests"]) < 10
-    )
-    size_healthy = cast(float, stats["memory_efficiency"]) <= MAX_SIZE_UTILIZATION
+    hit_rate_healthy = (cast(float, stats['hit_rate']) >= MIN_HIT_RATE or
+                         cast(int, stats['total_requests']) < 10)
+    size_healthy = cast(float, stats['memory_efficiency']) <= MAX_SIZE_UTILIZATION
 
     return hit_rate_healthy and size_healthy
