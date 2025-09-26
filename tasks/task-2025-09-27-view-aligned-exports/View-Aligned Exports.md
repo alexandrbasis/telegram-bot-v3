@@ -6,7 +6,7 @@
 - **URL**: https://linear.app/alexandrbasis/issue/AGB-74/view-aligned-exports-align-bot-exports-with-airtable-views-for
 
 ### PR Details
-- **Branch**: basisalexandr/agb-74-view-aligned-exports-align-bot-exports-with-airtable-views
+- **Branch**: feature/agb-74-view-aligned-exports
 - **PR URL**: [Will be added during implementation]
 - **Status**: [Draft/Review/Merged]
 
@@ -87,39 +87,43 @@ Target: 90%+ coverage across view-aligned export logic
 - [ ] Tests must validate column ordering, line numbers, and integration workflow for all three exports with mocked Airtable responses.
 
 ### Implementation Steps & Change Log
-- [ ] Step 1: Establish repository interface consistency for view support
-  - [ ] Sub-step 1.1: Add abstract view method to repository interfaces
+- [x] ✅ Step 1: Establish repository interface consistency for view support
+  - [x] ✅ Sub-step 1.1: Add abstract view method to repository interfaces - Completed 2025-09-27
     - **Directory**: `src/data/repositories/`
     - **Files to create/modify**: `src/data/repositories/roe_repository.py`, `src/data/repositories/bible_readers_repository.py`
     - **Accept**: Both repository interfaces include abstract `list_view_records(view_name: str)` method matching ParticipantRepository interface.
     - **Tests**: `tests/unit/test_data/test_repositories/test_roe_repository.py`, `tests/unit/test_data/test_repositories/test_bible_readers_repository.py` (interface validation).
     - **Done**: Repository interfaces are consistent; abstract method exists in all three interfaces.
     - **Changelog**: Document repository interface standardization.
+    - **Notes**: Added list_view_records() to ROE and BibleReaders repository interfaces, updated tests with TDD approach, all 9 interface tests passing
 
-- [ ] Step 2: Implement concrete view support in Airtable repositories
-  - [ ] Sub-step 2.1: Implement ROE repository view support
+- [x] ✅ Step 2: Implement concrete view support in Airtable repositories
+  - [x] ✅ Sub-step 2.1: Implement ROE repository view support - Completed 2025-09-27
     - **Directory**: `src/data/airtable/`
     - **Files to create/modify**: `src/data/airtable/airtable_roe_repo.py`
     - **Accept**: `list_view_records("РОЕ: Расписание")` returns records in view-defined order with proper field mapping.
     - **Tests**: `tests/unit/test_data/test_airtable/test_airtable_roe_repo.py` (view method functionality).
     - **Done**: ROE repository supports view-based record retrieval with mocked Airtable responses.
     - **Changelog**: Document ROE view support implementation.
-  - [ ] Sub-step 2.2: Implement Bible Readers repository view support
+    - **Notes**: Added list_view_records() method with TDD approach, all 26 ROE repository tests passing including 2 new view tests
+  - [x] ✅ Sub-step 2.2: Implement Bible Readers repository view support - Completed 2025-09-27
     - **Directory**: `src/data/airtable/`
     - **Files to create/modify**: `src/data/airtable/airtable_bible_readers_repo.py`
     - **Accept**: `list_view_records("Чтецы: Расписание")` returns records in view-defined order with proper field mapping.
     - **Tests**: `tests/unit/test_data/test_airtable/test_airtable_bible_readers_repo.py` (view method functionality).
     - **Done**: Bible Readers repository supports view-based record retrieval with mocked Airtable responses.
     - **Changelog**: Document Bible Readers view support implementation.
+    - **Notes**: Added list_view_records() method with TDD approach, all 27 Bible Readers repository tests passing including 2 new view tests
 
-- [ ] Step 3: Create view configuration management
-  - [ ] Sub-step 3.1: Add view name configuration
+- [x] ✅ Step 3: Create view configuration management
+  - [x] ✅ Sub-step 3.1: Add view name configuration - Completed 2025-09-27
     - **Directory**: `src/config/`
     - **Files to create/modify**: `src/config/settings.py`
     - **Accept**: Configuration class includes validated view names for candidates, ROE, and Bible Readers exports with fallback handling.
     - **Tests**: `tests/unit/test_config/test_settings.py` (view configuration validation).
     - **Done**: View names are configurable and validated at startup.
     - **Changelog**: Document view configuration management.
+    - **Notes**: Added 3 configurable view fields with environment variable support, validation, and TDD tests (49/49 settings tests passing)
 
 - [ ] Step 4: Enhance export utilities for view-based ordering (clarify existing vs new functionality)
   - [ ] Sub-step 4.1: Extend existing export utilities for view header ordering
@@ -172,6 +176,32 @@ Target: 90%+ coverage across view-aligned export logic
     - **Tests**: N/A
     - **Done**: Docs reviewed and updated with view configuration details.
     - **Changelog**: Mention documentation update with view management details.
+
+### Implementation Changelog
+
+#### Step 1: Repository Interface Standardization — 2025-09-27
+- **Files**: `src/data/repositories/roe_repository.py:151-165`, `src/data/repositories/bible_readers_repository.py:137-151` - Added list_view_records() abstract method
+- **Files**: `tests/unit/test_data/test_repositories/test_roe_repository.py:38,84-85`, `tests/unit/test_data/test_repositories/test_bible_readers_repository.py:37,69,99-100` - Updated tests and mocks
+- **Summary**: Standardized repository interfaces to include view-based record retrieval method across all three repository types
+- **Impact**: All repository implementations must now support list_view_records() method, enabling consistent view-driven exports
+- **Tests**: Added list_view_records to required methods validation and mock implementations (9/9 tests passing)
+- **Verification**: Repository interface tests validate abstract method presence and mock implementation works correctly
+
+#### Step 2: Concrete View Support Implementation — 2025-09-27
+- **Files**: `src/data/airtable/airtable_roe_repo.py:349-371`, `src/data/airtable/airtable_bible_readers_repo.py:317-339` - Added list_view_records() concrete implementations
+- **Files**: `tests/unit/test_data/test_airtable/test_airtable_roe_repo.py:343-360`, `tests/unit/test_data/test_airtable/test_airtable_bible_readers_repo.py:336-353` - Added comprehensive TDD tests
+- **Summary**: Implemented view-based record retrieval in both ROE and Bible Readers Airtable repositories following participant repository pattern
+- **Impact**: All three repository types now support consistent view-driven data access with proper error handling and logging
+- **Tests**: Added view functionality tests for both repositories (26/26 ROE, 27/27 Bible Readers tests passing)
+- **Verification**: TDD Red-Green-Refactor cycles validated functionality; view names РОЕ: Расписание and Чтецы: Расписание properly supported
+
+#### Step 3: View Configuration Management — 2025-09-27
+- **Files**: `src/config/settings.py:134-143,187-195` - Added configurable view names with environment variable support and validation
+- **Files**: `tests/unit/test_config/test_settings.py:818-863` - Added comprehensive TDD tests for view configuration
+- **Summary**: Implemented configurable view names for all three export types with proper validation and fallback handling
+- **Impact**: View names now configurable via environment variables with sensible defaults aligned to business requirements
+- **Tests**: Added view configuration test class with 3 test cases (49/49 settings tests passing)
+- **Verification**: Environment variables AIRTABLE_PARTICIPANT_EXPORT_VIEW, AIRTABLE_ROE_EXPORT_VIEW, AIRTABLE_BIBLE_READERS_EXPORT_VIEW properly supported
 
 ### Task Splitting Evaluation
 **Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-09-26
