@@ -1,5 +1,60 @@
 # API Design
 
+## Authorization and Performance API
+
+### Security Audit Service API (Added 2025-09-25)
+**Purpose**: Comprehensive security event logging and performance monitoring
+
+**Core Components**:
+- `SecurityAuditService`: Main service class for security event management
+- `AuthorizationEvent`: Structured authorization attempt logging
+- `SyncEvent`: Airtable synchronization event tracking
+- `PerformanceMetrics`: Authorization performance measurement
+
+**Authorization Event Structure**:
+```python
+@dataclass
+class AuthorizationEvent:
+    user_id: Optional[int]           # Telegram user ID
+    action: str                      # Action attempted
+    result: str                      # "granted" or "denied"
+    user_role: Optional[str]         # Resolved user role
+    cache_state: str                 # "hit", "miss", "expired", "error"
+    timestamp: datetime              # Event timestamp (UTC)
+    airtable_metadata: Optional[Dict] # Related Airtable data
+    error_details: Optional[str]     # Error context if applicable
+```
+
+**Performance Benchmarks**:
+- **Cache Hits**: 0.22ms at 95th percentile (requirement: <100ms) - 450x faster
+- **Cache Misses**: 0.45ms at 99th percentile (requirement: <300ms) - 665x faster
+- **Concurrent Access**: <75ms at 95th percentile under load
+- **Large Scale**: Performance maintained with 10K+ users
+
+**Security Vulnerabilities Discovered**:
+- **CRITICAL**: Cache poisoning vulnerability allowing privilege escalation
+- **MEDIUM**: Timing attack vulnerability (0.60ms variance) enabling user enumeration
+
+### Authorization Cache API (Added 2025-09-25)
+**Purpose**: High-performance authorization caching with thread safety and health monitoring
+
+**Core Features**:
+- **TTL Management**: 60-second default TTL with configurable options
+- **LRU Eviction**: 10,000 entry limit with intelligent eviction
+- **Thread Safety**: Concurrent access support with locking
+- **Health Monitoring**: Real-time statistics and performance tracking
+- **Manual Invalidation**: Selective cache clearing for security updates
+
+**API Methods**:
+```python
+cache = get_authorization_cache()
+role, cache_state = cache.get(user_id)    # Returns (role, "hit"/"miss"/"expired")
+cache.set(user_id, role)                  # Set role in cache
+cache.invalidate(user_id)                 # Remove specific user
+cache.clear()                             # Clear all entries
+stats = cache.get_stats()                 # Performance statistics
+```
+
 ## Bot Command API
 
 ### Search API
