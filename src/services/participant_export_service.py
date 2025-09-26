@@ -14,11 +14,11 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.config.field_mappings import AirtableFieldMapping
+from src.data.airtable.airtable_client import AirtableAPIError
 from src.data.repositories.participant_repository import (
     ParticipantRepository,
     RepositoryError,
 )
-from src.data.airtable.airtable_client import AirtableAPIError
 from src.models.participant import Department, Participant, Role
 from src.utils.export_utils import format_line_number
 
@@ -607,7 +607,7 @@ class ParticipantExportService:
         Returns:
             True if this is a view not found error, False otherwise
         """
-        if not hasattr(error, 'original_error') or error.original_error is None:
+        if not hasattr(error, "original_error") or error.original_error is None:
             return False
 
         original_error = error.original_error
@@ -616,7 +616,7 @@ class ParticipantExportService:
         if not isinstance(original_error, AirtableAPIError):
             return False
 
-        if getattr(original_error, 'status_code', None) != 422:
+        if getattr(original_error, "status_code", None) != 422:
             return False
 
         # Check if the error message contains VIEW_NAME_NOT_FOUND indicator
@@ -625,9 +625,7 @@ class ParticipantExportService:
 
     async def _fallback_candidates_from_all_participants(
         self,
-        filter_func: Optional[
-            Callable[[Dict[str, Any], Participant], bool]
-        ] = None,
+        filter_func: Optional[Callable[[Dict[str, Any], Participant], bool]] = None,
     ) -> str:
         """
         Fallback method to export participants using list_all() with filtering.

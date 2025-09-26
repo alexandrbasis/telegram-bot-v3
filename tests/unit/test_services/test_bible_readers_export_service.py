@@ -557,7 +557,11 @@ class TestAsyncExportInterface:
 
     @pytest.mark.asyncio
     async def test_export_to_csv_async_method_exists(
-        self, mock_bible_readers_repository, mock_participant_repository, sample_bible_readers, sample_participants
+        self,
+        mock_bible_readers_repository,
+        mock_participant_repository,
+        sample_bible_readers,
+        sample_participants,
     ):
         """Test that export_to_csv_async method exists and works like get_all_bible_readers_as_csv."""
         # Arrange
@@ -590,7 +594,11 @@ class TestAsyncExportInterface:
         assert rows[0]["#"] == "1"
 
     def test_export_to_csv_sync_wrapper_no_running_loop(
-        self, mock_bible_readers_repository, mock_participant_repository, sample_bible_readers, sample_participants
+        self,
+        mock_bible_readers_repository,
+        mock_participant_repository,
+        sample_bible_readers,
+        sample_participants,
     ):
         """Test synchronous export_to_csv wrapper when no event loop is running."""
         # Arrange
@@ -632,5 +640,7 @@ class TestAsyncExportInterface:
         )
 
         # Act & Assert
-        with pytest.raises(RuntimeError, match="cannot be called while an event loop is running"):
+        with pytest.raises(
+            RuntimeError, match="cannot be called while an event loop is running"
+        ):
             service.export_to_csv()
