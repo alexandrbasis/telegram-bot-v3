@@ -76,7 +76,7 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool:
             result="denied",
             user_role=None,
             cache_state="invalid_user_id",
-            error_details="Invalid or None user ID provided"
+            error_details="Invalid or None user ID provided",
         )
         audit_service.log_authorization_event(auth_event)
 
@@ -96,7 +96,7 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool:
         result="granted" if is_admin else "denied",
         user_role=user_role,
         cache_state="direct_check",  # Direct settings check, no cache involved
-        error_details=None if is_admin else "User not in admin list"
+        error_details=None if is_admin else "User not in admin list",
     )
     audit_service.log_authorization_event(auth_event)
 
@@ -105,7 +105,7 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool:
         operation="admin_check",
         duration_ms=duration_ms,
         cache_hit=False,  # Direct settings lookup
-        user_role=user_role
+        user_role=user_role,
     )
     audit_service.log_performance_metrics(perf_metrics)
 
@@ -245,7 +245,7 @@ def get_user_role(
             result="denied",
             user_role=None,
             cache_state="invalid_user_id",
-            error_details="Invalid or None user ID provided"
+            error_details="Invalid or None user ID provided",
         )
         audit_service.log_authorization_event(auth_event)
 
@@ -283,7 +283,7 @@ def get_user_role(
         result="granted" if role else "denied",
         user_role=role,
         cache_state=cache_state,
-        error_details=None if role else "User has no assigned role"
+        error_details=None if role else "User has no assigned role",
     )
     audit_service.log_authorization_event(auth_event)
 
@@ -295,8 +295,8 @@ def get_user_role(
         user_role=role,
         additional_context={
             "cache_size": len(_ROLE_CACHE),
-            "cache_ttl_seconds": _ROLE_CACHE_TTL_SECONDS
-        }
+            "cache_ttl_seconds": _ROLE_CACHE_TTL_SECONDS,
+        },
     )
     audit_service.log_performance_metrics(perf_metrics)
 
@@ -349,7 +349,7 @@ def invalidate_role_cache(user_id: Union[int, str, None] = None) -> None:
             sync_type="cache_invalidation_all",
             duration_ms=duration_ms,
             records_processed=cache_size_before,
-            success=True
+            success=True,
         )
         audit_service.log_sync_event(sync_event)
 
@@ -366,7 +366,7 @@ def invalidate_role_cache(user_id: Union[int, str, None] = None) -> None:
                 sync_type="cache_invalidation_user",
                 duration_ms=duration_ms,
                 records_processed=1,
-                success=True
+                success=True,
             )
             audit_service.log_sync_event(sync_event)
         else:
@@ -377,6 +377,6 @@ def invalidate_role_cache(user_id: Union[int, str, None] = None) -> None:
                 duration_ms=duration_ms,
                 records_processed=0,
                 success=False,
-                error_details=f"User {user_id} not found in cache or invalid ID"
+                error_details=f"User {user_id} not found in cache or invalid ID",
             )
             audit_service.log_sync_event(sync_event)

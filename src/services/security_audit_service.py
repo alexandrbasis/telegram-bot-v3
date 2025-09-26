@@ -6,11 +6,11 @@ Airtable sync operations, and performance metrics to ensure complete observabili
 and compliance with security monitoring requirements.
 """
 
-import logging
 import json
+import logging
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
 
 # Configuration imported where needed
 
@@ -29,6 +29,7 @@ class AuthorizationEvent:
     Captures all relevant information about user authorization attempts
     including cache state and Airtable metadata for complete audit trail.
     """
+
     user_id: Optional[int]
     action: str
     result: str  # "granted", "denied"
@@ -56,6 +57,7 @@ class SyncEvent:
     Captures sync operation details including performance metrics,
     success/failure status, and failed record details for monitoring.
     """
+
     sync_type: str  # "scheduled_refresh", "manual_refresh", "cache_invalidation"
     duration_ms: int
     records_processed: int
@@ -84,6 +86,7 @@ class PerformanceMetrics:
     Captures timing and performance data for authorization operations
     to ensure performance requirements are met and monitored.
     """
+
     operation: str
     duration_ms: int
     cache_hit: bool
@@ -146,8 +149,10 @@ class SecurityAuditService:
 
         # Log at appropriate level based on result
         if event.result == "denied":
-            self.logger.warning(f"SECURITY_AUDIT: DENIED access attempt - User {event.user_id} "
-                              f"(role: {event.user_role}) attempted '{event.action}' - {log_message}")
+            self.logger.warning(
+                f"SECURITY_AUDIT: DENIED access attempt - User {event.user_id} "
+                f"(role: {event.user_role}) attempted '{event.action}' - {log_message}"
+            )
         else:
             self.logger.info(log_message)
 
@@ -179,15 +184,21 @@ class SecurityAuditService:
                 # Don't log full record IDs for privacy, just count
 
         # Format log message
-        base_message = (f"SYNC_AUDIT: {event.sync_type} - {event.duration_ms}ms - "
-                       f"{event.records_processed} records")
+        base_message = (
+            f"SYNC_AUDIT: {event.sync_type} - {event.duration_ms}ms - "
+            f"{event.records_processed} records"
+        )
 
         if event.success:
             self.logger.info(f"{base_message} - SUCCESS: {json.dumps(log_data)}")
         else:
-            failed_count = len(event.failed_record_ids) if event.failed_record_ids else 0
-            self.logger.error(f"{base_message} - FAILED: {failed_count} failed records - "
-                            f"{json.dumps(log_data)}")
+            failed_count = (
+                len(event.failed_record_ids) if event.failed_record_ids else 0
+            )
+            self.logger.error(
+                f"{base_message} - FAILED: {failed_count} failed records - "
+                f"{json.dumps(log_data)}"
+            )
 
     def log_performance_metrics(self, metrics: PerformanceMetrics) -> None:
         """
@@ -214,12 +225,16 @@ class SecurityAuditService:
             log_data["additional_context"] = metrics.additional_context
 
         # Format log message
-        base_message = (f"PERFORMANCE: {metrics.operation} - {metrics.duration_ms}ms - "
-                       f"cache_hit={metrics.cache_hit} - role={metrics.user_role}")
+        base_message = (
+            f"PERFORMANCE: {metrics.operation} - {metrics.duration_ms}ms - "
+            f"cache_hit={metrics.cache_hit} - role={metrics.user_role}"
+        )
 
         # Log at appropriate level based on performance thresholds
         if metrics.duration_ms > AUTHORIZATION_SLOW_THRESHOLD_MS:
-            self.logger.warning(f"{base_message} - SLOW operation: {json.dumps(log_data)}")
+            self.logger.warning(
+                f"{base_message} - SLOW operation: {json.dumps(log_data)}"
+            )
         elif metrics.duration_ms < AUTHORIZATION_FAST_THRESHOLD_MS:
             self.logger.debug(f"{base_message} - {json.dumps(log_data)}")
         else:
@@ -233,7 +248,7 @@ class SecurityAuditService:
         user_role: Optional[str],
         cache_state: str,
         airtable_metadata: Optional[Dict[str, Any]] = None,
-        error_details: Optional[str] = None
+        error_details: Optional[str] = None,
     ) -> AuthorizationEvent:
         """
         Helper method to create authorization event.
@@ -257,7 +272,7 @@ class SecurityAuditService:
             user_role=user_role,
             cache_state=cache_state,
             airtable_metadata=airtable_metadata,
-            error_details=error_details
+            error_details=error_details,
         )
 
     def create_sync_event(
@@ -267,7 +282,7 @@ class SecurityAuditService:
         records_processed: int,
         success: bool,
         error_details: Optional[str] = None,
-        failed_record_ids: Optional[List[str]] = None
+        failed_record_ids: Optional[List[str]] = None,
     ) -> SyncEvent:
         """
         Helper method to create sync event.
@@ -289,7 +304,7 @@ class SecurityAuditService:
             records_processed=records_processed,
             success=success,
             error_details=error_details,
-            failed_record_ids=failed_record_ids or []
+            failed_record_ids=failed_record_ids or [],
         )
 
     def create_performance_metrics(
@@ -298,7 +313,7 @@ class SecurityAuditService:
         duration_ms: int,
         cache_hit: bool,
         user_role: Optional[str],
-        additional_context: Optional[Dict[str, Any]] = None
+        additional_context: Optional[Dict[str, Any]] = None,
     ) -> PerformanceMetrics:
         """
         Helper method to create performance metrics.
@@ -318,7 +333,7 @@ class SecurityAuditService:
             duration_ms=duration_ms,
             cache_hit=cache_hit,
             user_role=user_role,
-            additional_context=additional_context
+            additional_context=additional_context,
         )
 
 

@@ -14,8 +14,8 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from src.config.settings import get_settings
-from src.utils.auth_utils import get_user_role
 from src.services.security_audit_service import get_security_audit_service
+from src.utils.auth_utils import get_user_role
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def require_role(
                     result="denied",
                     user_role=None,
                     cache_state="no_user_info",
-                    error_details="No user information available in update"
+                    error_details="No user information available in update",
                 )
                 audit_service.log_authorization_event(auth_event)
 
@@ -93,7 +93,10 @@ def require_role(
                     result="denied",
                     user_role=user_role,
                     cache_state="role_resolved",
-                    error_details=f"User role '{user_role}' insufficient for required roles: {required_roles}"
+                    error_details=(
+                        f"User role '{user_role}' insufficient for "
+                        f"required roles: {required_roles}"
+                    ),
                 )
                 audit_service.log_authorization_event(auth_event)
 
@@ -106,8 +109,8 @@ def require_role(
                     additional_context={
                         "handler_name": handler_func.__name__,
                         "required_roles": required_roles,
-                        "access_result": "denied"
-                    }
+                        "access_result": "denied",
+                    },
                 )
                 audit_service.log_performance_metrics(perf_metrics)
 
@@ -143,7 +146,7 @@ def require_role(
                 action=handler_action,
                 result="granted",
                 user_role=user_role,
-                cache_state="role_resolved"
+                cache_state="role_resolved",
             )
             audit_service.log_authorization_event(auth_event)
 
@@ -156,8 +159,8 @@ def require_role(
                 additional_context={
                     "handler_name": handler_func.__name__,
                     "required_roles": required_roles,
-                    "access_result": "granted"
-                }
+                    "access_result": "granted",
+                },
             )
             audit_service.log_performance_metrics(perf_metrics)
 

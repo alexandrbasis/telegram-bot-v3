@@ -36,6 +36,12 @@ def mock_update():
     update.callback_query.message = MagicMock(spec=Message)
     update.callback_query.message.edit_text = AsyncMock()
     update.callback_query.data = "test_data"
+
+    # Set up effective_user for access control decorator
+    update.effective_user = MagicMock(spec=User)
+    update.effective_user.id = 12345
+    update.effective_user.username = "testuser"
+
     return update
 
 

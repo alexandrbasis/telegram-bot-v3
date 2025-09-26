@@ -5,21 +5,22 @@ Provides optimized caching for authorization operations with configurable TTL,
 manual refresh endpoints, and comprehensive performance monitoring.
 """
 
-import time
 import threading
-from typing import Dict, Tuple, Union, Optional, cast
+import time
 from dataclasses import dataclass, field
+from typing import Dict, Optional, Tuple, Union, cast
 
 from src.services.security_audit_service import get_security_audit_service
 
 # Default cache configuration
 DEFAULT_CACHE_TTL_SECONDS = 60  # 1 minute for more aggressive refresh
-DEFAULT_MAX_CACHE_SIZE = 10000   # Maximum number of cached entries
+DEFAULT_MAX_CACHE_SIZE = 10000  # Maximum number of cached entries
 
 
 @dataclass
 class CacheEntry:
     """Cache entry with metadata for performance tracking."""
+
     value: Optional[str]  # User role or None
     timestamp: float
     access_count: int = 0
@@ -51,7 +52,7 @@ class AuthorizationCache:
     def __init__(
         self,
         ttl_seconds: int = DEFAULT_CACHE_TTL_SECONDS,
-        max_size: int = DEFAULT_MAX_CACHE_SIZE
+        max_size: int = DEFAULT_MAX_CACHE_SIZE,
     ):
         """
         Initialize authorization cache.
@@ -65,11 +66,11 @@ class AuthorizationCache:
         self._cache: Dict[int, CacheEntry] = {}
         self._lock = threading.RLock()
         self._stats = {
-            'hits': 0,
-            'misses': 0,
-            'evictions': 0,
-            'invalidations': 0,
-            'refreshes': 0
+            "hits": 0,
+            "misses": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "refreshes": 0,
         }
         self.audit_service = get_security_audit_service()
 
@@ -90,7 +91,7 @@ class AuthorizationCache:
 
         with self._lock:
             if user_id not in self._cache:
-                self._stats['misses'] += 1
+                self._stats["misses"] += 1
                 duration_ms = int((time.time() - start_time) * 1000)
 
                 # Log cache miss performance
@@ -100,19 +101,19 @@ class AuthorizationCache:
                     cache_hit=False,
                     user_role=None,
                     additional_context={
-                        'cache_state': 'miss',
-                        'cache_size': len(self._cache)
-                    }
+                        "cache_state": "miss",
+                        "cache_size": len(self._cache),
+                    },
                 )
                 self.audit_service.log_performance_metrics(perf_metrics)
 
-                return None, 'miss'
+                return None, "miss"
 
             entry = self._cache[user_id]
 
             # Check if entry is expired
             if entry.is_expired(self.ttl_seconds):
-                self._stats['misses'] += 1
+                self._stats["misses"] += 1
                 duration_ms = int((time.time() - start_time) * 1000)
 
                 # Log expired cache performance
@@ -122,18 +123,18 @@ class AuthorizationCache:
                     cache_hit=False,
                     user_role=entry.value,
                     additional_context={
-                        'cache_state': 'expired',
-                        'cache_size': len(self._cache),
-                        'entry_age_seconds': time.time() - entry.timestamp
-                    }
+                        "cache_state": "expired",
+                        "cache_size": len(self._cache),
+                        "entry_age_seconds": time.time() - entry.timestamp,
+                    },
                 )
                 self.audit_service.log_performance_metrics(perf_metrics)
 
-                return entry.value, 'expired'
+                return entry.value, "expired"
 
             # Valid cache hit
             entry.access()
-            self._stats['hits'] += 1
+            self._stats["hits"] += 1
             duration_ms = int((time.time() - start_time) * 1000)
 
             # Log cache hit performance
@@ -143,14 +144,14 @@ class AuthorizationCache:
                 cache_hit=True,
                 user_role=entry.value,
                 additional_context={
-                    'cache_state': 'hit',
-                    'cache_size': len(self._cache),
-                    'entry_access_count': entry.access_count
-                }
+                    "cache_state": "hit",
+                    "cache_size": len(self._cache),
+                    "entry_access_count": entry.access_count,
+                },
             )
             self.audit_service.log_performance_metrics(perf_metrics)
 
-            return entry.value, 'hit'
+            return entry.value, "hit"
 
     def set(self, user_id: int, role: Optional[str]) -> None:
         """
@@ -168,10 +169,7 @@ class AuthorizationCache:
                 self._evict_lru()
 
             # Store or update cache entry
-            self._cache[user_id] = CacheEntry(
-                value=role,
-                timestamp=time.time()
-            )
+            self._cache[user_id] = CacheEntry(value=role, timestamp=time.time())
 
             duration_ms = int((time.time() - start_time) * 1000)
 
@@ -182,9 +180,9 @@ class AuthorizationCache:
                 cache_hit=False,  # Setting is not a hit
                 user_role=role,
                 additional_context={
-                    'cache_size': len(self._cache),
-                    'max_size': self.max_size
-                }
+                    "cache_size": len(self._cache),
+                    "max_size": self.max_size,
+                },
             )
             self.audit_service.log_performance_metrics(perf_metrics)
 
@@ -205,14 +203,14 @@ class AuthorizationCache:
                 # Clear entire cache
                 count = len(self._cache)
                 self._cache.clear()
-                self._stats['invalidations'] += count
+                self._stats["invalidations"] += count
                 cache_type = "full_invalidation"
             else:
                 # Invalidate specific user
                 if user_id in self._cache:
                     del self._cache[user_id]
                     count = 1
-                    self._stats['invalidations'] += 1
+                    self._stats["invalidations"] += 1
                 else:
                     count = 0
                 cache_type = "user_invalidation"
@@ -224,7 +222,7 @@ class AuthorizationCache:
                 sync_type=cache_type,
                 duration_ms=duration_ms,
                 records_processed=count,
-                success=True
+                success=True,
             )
             self.audit_service.log_sync_event(sync_event)
 
@@ -235,7 +233,8 @@ class AuthorizationCache:
         Refresh all cache entries by re-resolving roles.
 
         Args:
-            role_resolver_func: Function to resolve user roles (user_id, settings) -> role
+            role_resolver_func: Function to resolve user roles
+                (user_id, settings) -> role
 
         Returns:
             Number of entries refreshed
@@ -258,7 +257,7 @@ class AuthorizationCache:
                 except Exception:
                     failed_count += 1
 
-            self._stats['refreshes'] += refreshed_count
+            self._stats["refreshes"] += refreshed_count
 
             duration_ms = int((time.time() - start_time) * 1000)
 
@@ -268,7 +267,11 @@ class AuthorizationCache:
                 duration_ms=duration_ms,
                 records_processed=refreshed_count,
                 success=failed_count == 0,
-                error_details=f"Failed to refresh {failed_count} entries" if failed_count > 0 else None
+                error_details=(
+                    f"Failed to refresh {failed_count} entries"
+                    if failed_count > 0
+                    else None
+                ),
             )
             self.audit_service.log_sync_event(sync_event)
 
@@ -282,17 +285,21 @@ class AuthorizationCache:
             Dictionary with cache performance statistics
         """
         with self._lock:
-            total_requests = self._stats['hits'] + self._stats['misses']
-            hit_rate = self._stats['hits'] / total_requests if total_requests > 0 else 0.0
+            total_requests = self._stats["hits"] + self._stats["misses"]
+            hit_rate = (
+                self._stats["hits"] / total_requests if total_requests > 0 else 0.0
+            )
 
             return {
-                'size': len(self._cache),
-                'max_size': self.max_size,
-                'ttl_seconds': self.ttl_seconds,
-                'hit_rate': hit_rate,
-                'total_requests': total_requests,
-                'statistics': self._stats.copy(),
-                'memory_efficiency': len(self._cache) / self.max_size if self.max_size > 0 else 0.0
+                "size": len(self._cache),
+                "max_size": self.max_size,
+                "ttl_seconds": self.ttl_seconds,
+                "hit_rate": hit_rate,
+                "total_requests": total_requests,
+                "statistics": self._stats.copy(),
+                "memory_efficiency": (
+                    len(self._cache) / self.max_size if self.max_size > 0 else 0.0
+                ),
             }
 
     def _evict_lru(self) -> None:
@@ -302,12 +309,11 @@ class AuthorizationCache:
 
         # Find LRU entry
         lru_user_id = min(
-            self._cache.keys(),
-            key=lambda uid: self._cache[uid].last_access
+            self._cache.keys(), key=lambda uid: self._cache[uid].last_access
         )
 
         del self._cache[lru_user_id]
-        self._stats['evictions'] += 1
+        self._stats["evictions"] += 1
 
         # Log eviction event
         perf_metrics = self.audit_service.create_performance_metrics(
@@ -316,9 +322,9 @@ class AuthorizationCache:
             cache_hit=False,
             user_role=None,
             additional_context={
-                'evicted_user_id': lru_user_id,
-                'cache_size_after': len(self._cache)
-            }
+                "evicted_user_id": lru_user_id,
+                "cache_size_after": len(self._cache),
+            },
         )
         self.audit_service.log_performance_metrics(perf_metrics)
 
@@ -404,8 +410,10 @@ def is_cache_healthy() -> bool:
     MIN_HIT_RATE = 0.7  # At least 70% hit rate
     MAX_SIZE_UTILIZATION = 0.9  # No more than 90% size utilization
 
-    hit_rate_healthy = (cast(float, stats['hit_rate']) >= MIN_HIT_RATE or
-                         cast(int, stats['total_requests']) < 10)
-    size_healthy = cast(float, stats['memory_efficiency']) <= MAX_SIZE_UTILIZATION
+    hit_rate_healthy = (
+        cast(float, stats["hit_rate"]) >= MIN_HIT_RATE
+        or cast(int, stats["total_requests"]) < 10
+    )
+    size_healthy = cast(float, stats["memory_efficiency"]) <= MAX_SIZE_UTILIZATION
 
     return hit_rate_healthy and size_healthy

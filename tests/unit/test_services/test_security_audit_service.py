@@ -4,18 +4,19 @@ Tests for security audit service.
 Tests comprehensive security audit logging and sync telemetry functionality.
 """
 
-import logging
 import json
+import logging
 import time
-from unittest.mock import patch, mock_open, MagicMock
-import pytest
 from datetime import datetime
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 from src.services.security_audit_service import (
-    SecurityAuditService,
     AuthorizationEvent,
-    SyncEvent,
     PerformanceMetrics,
+    SecurityAuditService,
+    SyncEvent,
 )
 
 
@@ -29,7 +30,7 @@ class TestAuthorizationEvent:
             action="search_participant",
             result="granted",
             user_role="admin",
-            cache_state="hit"
+            cache_state="hit",
         )
 
         assert event.user_id == 123456
@@ -46,7 +47,7 @@ class TestAuthorizationEvent:
         airtable_data = {
             "telegram_user_id": 123456,
             "status": "Active",
-            "access_level": "Admin"
+            "access_level": "Admin",
         }
 
         event = AuthorizationEvent(
@@ -56,7 +57,7 @@ class TestAuthorizationEvent:
             user_role="viewer",
             cache_state="miss",
             airtable_metadata=airtable_data,
-            error_details="Insufficient permissions for admin export"
+            error_details="Insufficient permissions for admin export",
         )
 
         assert event.user_id == 123456
@@ -74,7 +75,7 @@ class TestAuthorizationEvent:
             action="list_participants",
             result="granted",
             user_role="coordinator",
-            cache_state="refresh"
+            cache_state="refresh",
         )
 
         event_dict = event.to_dict()
@@ -98,7 +99,7 @@ class TestSyncEvent:
             sync_type="scheduled_refresh",
             duration_ms=250,
             records_processed=45,
-            success=True
+            success=True,
         )
 
         assert event.sync_type == "scheduled_refresh"
@@ -119,7 +120,7 @@ class TestSyncEvent:
             records_processed=100,
             success=False,
             error_details="Rate limit exceeded during sync",
-            failed_record_ids=failed_ids
+            failed_record_ids=failed_ids,
         )
 
         assert event.sync_type == "manual_refresh"
@@ -135,7 +136,7 @@ class TestSyncEvent:
             sync_type="cache_invalidation",
             duration_ms=75,
             records_processed=12,
-            success=True
+            success=True,
         )
 
         event_dict = event.to_dict()
@@ -158,7 +159,7 @@ class TestPerformanceMetrics:
             operation="authorization_check",
             duration_ms=85,
             cache_hit=True,
-            user_role="admin"
+            user_role="admin",
         )
 
         assert metrics.operation == "authorization_check"
@@ -170,18 +171,14 @@ class TestPerformanceMetrics:
 
     def test_performance_metrics_with_context(self):
         """Test performance metrics with additional context."""
-        context = {
-            "cache_size": 150,
-            "concurrent_users": 5,
-            "sync_in_progress": True
-        }
+        context = {"cache_size": 150, "concurrent_users": 5, "sync_in_progress": True}
 
         metrics = PerformanceMetrics(
             operation="role_resolution",
             duration_ms=120,
             cache_hit=False,
             user_role="coordinator",
-            additional_context=context
+            additional_context=context,
         )
 
         assert metrics.operation == "role_resolution"
@@ -196,7 +193,7 @@ class TestPerformanceMetrics:
             operation="sync_operation",
             duration_ms=300,
             cache_hit=False,
-            user_role="viewer"
+            user_role="viewer",
         )
 
         metrics_dict = metrics.to_dict()
@@ -226,13 +223,13 @@ class TestSecurityAuditService:
         """Test logging authorization event at info level."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
             event = AuthorizationEvent(
                 user_id=123456,
                 action="search_participant",
                 result="granted",
                 user_role="admin",
-                cache_state="hit"
+                cache_state="hit",
             )
 
             service.log_authorization_event(event)
@@ -249,11 +246,11 @@ class TestSecurityAuditService:
         """Test logging authorization event with airtable metadata."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
             airtable_data = {
                 "telegram_user_id": 123456,
                 "status": "Active",
-                "access_level": "Admin"
+                "access_level": "Admin",
             }
 
             event = AuthorizationEvent(
@@ -262,7 +259,7 @@ class TestSecurityAuditService:
                 result="granted",
                 user_role="admin",
                 cache_state="miss",
-                airtable_metadata=airtable_data
+                airtable_metadata=airtable_data,
             )
 
             service.log_authorization_event(event)
@@ -276,14 +273,14 @@ class TestSecurityAuditService:
         """Test logging denied authorization event with warning level."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'warning') as mock_warning:
+        with patch.object(service.logger, "warning") as mock_warning:
             event = AuthorizationEvent(
                 user_id=789012,
                 action="admin_export",
                 result="denied",
                 user_role="viewer",
                 cache_state="hit",
-                error_details="Insufficient permissions"
+                error_details="Insufficient permissions",
             )
 
             service.log_authorization_event(event)
@@ -298,12 +295,12 @@ class TestSecurityAuditService:
         """Test logging successful sync event."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
             event = SyncEvent(
                 sync_type="scheduled_refresh",
                 duration_ms=250,
                 records_processed=45,
-                success=True
+                success=True,
             )
 
             service.log_sync_event(event)
@@ -320,14 +317,14 @@ class TestSecurityAuditService:
         """Test logging failed sync event with error level."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'error') as mock_error:
+        with patch.object(service.logger, "error") as mock_error:
             event = SyncEvent(
                 sync_type="manual_refresh",
                 duration_ms=1500,
                 records_processed=100,
                 success=False,
                 error_details="API rate limit exceeded",
-                failed_record_ids=["rec123", "rec456"]
+                failed_record_ids=["rec123", "rec456"],
             )
 
             service.log_sync_event(event)
@@ -343,12 +340,12 @@ class TestSecurityAuditService:
         """Test logging performance metrics for fast operation."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'debug') as mock_debug:
+        with patch.object(service.logger, "debug") as mock_debug:
             metrics = PerformanceMetrics(
                 operation="authorization_check",
                 duration_ms=45,
                 cache_hit=True,
-                user_role="admin"
+                user_role="admin",
             )
 
             service.log_performance_metrics(metrics)
@@ -364,12 +361,12 @@ class TestSecurityAuditService:
         """Test logging performance metrics for slow operation with warning."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'warning') as mock_warning:
+        with patch.object(service.logger, "warning") as mock_warning:
             metrics = PerformanceMetrics(
                 operation="authorization_check",
                 duration_ms=350,
                 cache_hit=False,
-                user_role="coordinator"
+                user_role="coordinator",
             )
 
             service.log_performance_metrics(metrics)
@@ -389,7 +386,7 @@ class TestSecurityAuditService:
             action="search_participant",
             result="granted",
             user_role="admin",
-            cache_state="hit"
+            cache_state="hit",
         )
 
         assert isinstance(event, AuthorizationEvent)
@@ -405,7 +402,7 @@ class TestSecurityAuditService:
             sync_type="scheduled_refresh",
             duration_ms=250,
             records_processed=45,
-            success=True
+            success=True,
         )
 
         assert isinstance(event, SyncEvent)
@@ -422,7 +419,7 @@ class TestSecurityAuditService:
             operation="authorization_check",
             duration_ms=85,
             cache_hit=True,
-            user_role="admin"
+            user_role="admin",
         )
 
         assert isinstance(metrics, PerformanceMetrics)
@@ -439,8 +436,10 @@ class TestSecurityAuditIntegration:
         """Test complete authorization flow with audit logging."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info, \
-             patch.object(service.logger, 'debug') as mock_debug:
+        with (
+            patch.object(service.logger, "info") as mock_info,
+            patch.object(service.logger, "debug") as mock_debug,
+        ):
 
             # Create and log authorization event
             auth_event = service.create_authorization_event(
@@ -448,7 +447,7 @@ class TestSecurityAuditIntegration:
                 action="search_participant",
                 result="granted",
                 user_role="admin",
-                cache_state="hit"
+                cache_state="hit",
             )
             service.log_authorization_event(auth_event)
 
@@ -457,7 +456,7 @@ class TestSecurityAuditIntegration:
                 operation="authorization_check",
                 duration_ms=45,
                 cache_hit=True,
-                user_role="admin"
+                user_role="admin",
             )
             service.log_performance_metrics(perf_metrics)
 
@@ -469,14 +468,14 @@ class TestSecurityAuditIntegration:
         """Test complete sync flow with audit logging."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
 
             # Create and log sync event
             sync_event = service.create_sync_event(
                 sync_type="scheduled_refresh",
                 duration_ms=250,
                 records_processed=45,
-                success=True
+                success=True,
             )
             service.log_sync_event(sync_event)
 
@@ -489,8 +488,10 @@ class TestSecurityAuditIntegration:
         """Test audit service handles various edge cases gracefully."""
         service = SecurityAuditService()
 
-        with patch.object(service.logger, 'warning') as mock_warning, \
-             patch.object(service.logger, 'error') as mock_error:
+        with (
+            patch.object(service.logger, "warning") as mock_warning,
+            patch.object(service.logger, "error") as mock_error,
+        ):
 
             # Test with None user_id (should still log)
             auth_event = AuthorizationEvent(
@@ -498,7 +499,7 @@ class TestSecurityAuditIntegration:
                 action="unknown_action",
                 result="denied",
                 user_role=None,
-                cache_state="error"
+                cache_state="error",
             )
             service.log_authorization_event(auth_event)
 
@@ -507,7 +508,7 @@ class TestSecurityAuditIntegration:
                 operation="quick_check",
                 duration_ms=0,
                 cache_hit=True,
-                user_role="admin"
+                user_role="admin",
             )
             service.log_performance_metrics(perf_metrics)
 
