@@ -34,6 +34,7 @@ class TestBibleReadersRepositoryInterface:
             "delete",
             "list_all",
             "get_by_participant_id",
+            "list_view_records",
         ]
 
         for method_name in required_methods:
@@ -65,6 +66,7 @@ class TestBibleReadersRepositoryInterface:
             "delete",
             "list_all",
             "get_by_participant_id",
+            "list_view_records",
         }
 
         assert methods == expected_methods
@@ -92,6 +94,9 @@ class MockBibleReadersRepository(BibleReadersRepository):
         return []
 
     async def get_by_participant_id(self, participant_id):
+        return []
+
+    async def list_view_records(self, view):
         return []
 
 

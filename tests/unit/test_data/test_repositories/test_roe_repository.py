@@ -35,6 +35,7 @@ class TestROERepositoryInterface:
             "list_all",
             "get_by_roista_id",
             "get_by_assistant_id",
+            "list_view_records",
         ]
 
         for method_name in required_methods:
@@ -78,6 +79,9 @@ class MockROERepository(ROERepository):
         return []
 
     async def get_by_assistant_id(self, assistant_id):
+        return []
+
+    async def list_view_records(self, view):
         return []
 
 
