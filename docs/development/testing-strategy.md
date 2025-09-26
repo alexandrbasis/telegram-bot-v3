@@ -234,6 +234,98 @@ test_partial_update_payload()
 test_update_error_handling()
 ```
 
+## Line Numbers Export Feature Testing (2025-01-26)
+
+### Test Coverage Summary
+**Total Tests**: 36 new line number specific tests (29 unit + 5 integration + 2 utility tests)
+**Pass Rate**: 100%
+**Coverage**: Complete line number functionality across all export services
+
+#### Line Number Utility Functions Testing (`test_export_utils.py`)
+**Tests**: 18 comprehensive unit tests covering core line number utilities
+**Coverage**:
+- `format_line_number()`: Line number formatting with consistent padding
+- `add_line_numbers_to_csv()`: CSV string enhancement with line numbers
+- `add_line_numbers_to_rows()`: Row data structure line number addition
+- `extract_participant_count_from_csv()`: Total count extraction from CSV
+- `format_export_success_message()`: Success message formatting with counts
+- Unicode content handling and edge case validation
+
+**Key Test Scenarios**:
+```python
+# Line number formatting testing
+test_format_line_number_basic()
+test_format_line_number_padding()
+test_format_line_number_edge_cases()
+
+# CSV enhancement testing
+test_add_line_numbers_to_csv_basic()
+test_add_line_numbers_to_csv_empty()
+test_add_line_numbers_to_csv_unicode_content()
+
+# Count extraction testing
+test_extract_participant_count_basic()
+test_extract_participant_count_empty()
+test_extract_participant_count_edge_cases()
+
+# Success message formatting
+test_format_export_success_message_basic()
+test_format_export_success_message_zero_count()
+```
+
+#### Export Services Line Number Integration Testing
+**ParticipantExportService Tests**: 7 new line number integration tests
+**BibleReadersExportService Tests**: 6 comprehensive line number tests
+**RoeExportService Tests**: 6 comprehensive line number tests
+
+**Coverage**:
+- Line numbers as first column in all CSV exports
+- Sequential numbering starting from 1
+- Header modification to include "#" column
+- Integration with existing export functionality
+- Backward compatibility preservation
+
+**Key Test Scenarios**:
+```python
+# Service integration testing
+test_line_numbers_appear_as_first_column()
+test_line_numbers_are_sequential()
+test_headers_include_line_number_column()
+test_empty_export_handles_line_numbers()
+test_large_export_line_numbering()
+```
+
+#### Integration Testing for Line Numbers (`test_export_selection_workflow.py`)
+**Tests**: 5 end-to-end integration tests validating complete export workflows
+**Coverage**:
+- Line numbers in participant exports (all, team, candidates)
+- Line numbers in department-specific exports
+- Line numbers in Bible readers and ROE exports
+- Export success message count display
+- Complete user workflow validation
+
+**Key Test Scenarios**:
+```python
+# End-to-end line number validation
+test_participant_export_includes_line_numbers()
+test_department_export_includes_line_numbers()
+test_bible_readers_export_includes_line_numbers()
+test_roe_export_includes_line_numbers()
+test_export_success_messages_show_counts()
+```
+
+#### Testing Methodology
+**TDD Implementation**: Strict Test-Driven Development with Red-Green-Refactor cycles
+- All utility functions developed using TDD approach
+- Comprehensive edge case coverage including empty exports
+- Unicode and Russian text validation
+- Error handling and validation testing
+
+**Performance Testing**: Line number addition tested with large datasets
+- No performance impact validation
+- Memory efficiency confirmation
+- Large export handling (100+ participants)
+
 ## CSV Export Service Testing (2025-01-15)
 
 ### Test Coverage Summary

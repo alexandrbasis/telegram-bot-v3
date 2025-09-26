@@ -21,6 +21,7 @@ from src.bot.handlers.export_conversation_handlers import start_export_selection
 from src.services import service_factory
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
+from src.utils.export_utils import format_export_success_message
 
 logger = logging.getLogger(__name__)
 
@@ -263,19 +264,25 @@ async def handle_export_command(
                             "%Y-%m-%d %H:%M:%S"
                         )
 
+                        # Format success message with participant count
+                        base_msg = (
+                            "✅ Экспорт завершен успешно!\n\n"
+                            "📊 Файл содержит данные всех участников"
+                        )
+                        caption = format_export_success_message(
+                            base_message=base_msg,
+                            file_size_mb=file_size_mb,
+                            timestamp=f"{ts_utc} UTC",
+                            csv_data=csv_data,
+                        )
+
                         await update.message.reply_document(
                             document=file,
                             filename=(
                                 f"participants_"
                                 f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
                             ),
-                            caption=(
-                                f"✅ Экспорт завершен успешно!\n\n"
-                                f"📊 Файл содержит данные всех участников\n"
-                                f"📁 Размер файла: {file_size_mb:.2f}MB\n"
-                                f"📅 Дата экспорта: "
-                                f"{ts_utc} UTC"
-                            ),
+                            caption=caption,
                         )
 
                     logger.info(

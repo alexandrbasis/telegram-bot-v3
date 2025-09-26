@@ -8,6 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Line Numbers in Export Tables** – Complete implementation of sequential line numbering feature for all exported participant tables with comprehensive testing and documentation updates (AGB-72, completed 2025-01-26, branch `feature/agb-72-line-numbers-export`)
+  - Line number utility functions with comprehensive formatting and validation (`src/utils/export_utils.py:1-106`)
+    - format_line_number(), add_line_numbers_to_csv(), and add_line_numbers_to_rows() functions with TDD implementation
+    - extract_participant_count_from_csv() and format_export_success_message() for enhanced user feedback
+    - 18 comprehensive test cases covering edge cases, Unicode support, and validation (`tests/unit/test_utils/test_export_utils.py:1-325`)
+  - ParticipantExportService integration with line numbers as first column (`src/services/participant_export_service.py:1-560`)
+    - Updated all CSV export methods: get_all_participants_as_csv(), get_participants_by_role_as_csv(), get_participants_by_department_as_csv()
+    - Modified _get_csv_headers() to include '#' as first column and _records_to_csv() for sequential numbering
+    - 7 new line number integration tests added to existing test suite (`tests/unit/test_services/test_participant_export_service.py`)
+  - BibleReadersExportService integration with sequential numbering (`src/services/bible_readers_export_service.py`)
+    - Updated get_all_bible_readers_as_csv() method with line number support
+    - 6 comprehensive TestLineNumberIntegration tests covering all Bible reader export scenarios
+  - RoeExportService integration with sequential numbering (`src/services/roe_export_service.py`)
+    - Updated get_all_roe_as_csv() method with line number support
+    - 6 comprehensive TestLineNumberIntegration tests covering all ROE export scenarios
+  - Enhanced export success messages with participant count display (`src/bot/handlers/export_handlers.py`, `src/bot/handlers/export_conversation_handlers.py`)
+    - Export completion messages now show total participant count extracted from CSV line numbers (e.g., "👥 Участников: 150")
+    - 12 comprehensive tests for participant count extraction and success message formatting
+  - End-to-end integration testing with line number validation (`tests/integration/test_export_selection_workflow.py`)
+    - 5 comprehensive integration tests validating line numbers across all export workflows
+    - Complete validation for participants, Bible readers, ROE, department, and role exports
+  - Comprehensive documentation updates with business requirements, technical specifications, and testing strategy
+    - Updated business feature documentation with use cases for quick participant counting and reference by number
+    - Enhanced technical command documentation with implementation patterns and TDD approach
+    - Expanded testing strategy documentation covering 36 new tests across unit and integration levels
 - **Comprehensive Security Audit System with Performance Optimization** – Complete implementation of security audit logging service, performance optimization achieving exceptional sub-100ms response times, and comprehensive testing framework discovering and documenting 2 security vulnerabilities for remediation (TDB-73, completed 2025-09-25, branch `feature/tdb-73-security-audit-testing`)
   - Security audit logging service with structured event tracking (`src/services/security_audit_service.py:1-400`)
     - AuthorizationEvent, SyncEvent, and PerformanceMetrics data structures for comprehensive audit trail

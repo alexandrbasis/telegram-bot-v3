@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from src.config.field_mappings import AirtableFieldMapping
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.participant import Department, Participant, Role
+from src.utils.export_utils import format_line_number
 
 logger = logging.getLogger(__name__)
 
@@ -120,10 +121,15 @@ class ParticipantExportService:
         # Write headers
         writer.writeheader()
 
+        # Calculate width for line numbers based on total participant count
+        width = len(str(total_count)) if total_count > 0 else 1
+
         # Process participants
         for index, participant in enumerate(participants):
             # Convert participant to CSV row
             row = self._participant_to_csv_row(participant)
+            # Add line number as first column with consistent width
+            row["#"] = format_line_number(index + 1, width)
             writer.writerow(row)
 
             # Report progress at intervals (every 10 records or at end)
@@ -324,8 +330,13 @@ class ParticipantExportService:
         writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
         writer.writeheader()
 
+        # Calculate width for line numbers based on total filtered count
+        width = len(str(total_count)) if total_count > 0 else 1
+
         for index, participant in enumerate(filtered_participants):
             row = self._participant_to_csv_row(participant)
+            # Add line number as first column with consistent width
+            row["#"] = format_line_number(index + 1, width)
             writer.writerow(row)
 
             if self.progress_callback:
@@ -423,23 +434,34 @@ class ParticipantExportService:
     def _determine_view_headers(
         self, view_name: str, records: List[Dict[str, Any]]
     ) -> List[str]:
-        """Determine CSV headers matching the Airtable view ordering."""
+        """
+        Determine CSV headers matching the Airtable view ordering with line
+        numbers as first column.
+        """
         if view_name in self.VIEW_HEADER_ORDER:
-            return list(self.VIEW_HEADER_ORDER[view_name])
+            headers = list(self.VIEW_HEADER_ORDER[view_name])
+        else:
+            headers = []
+            seen = set()
 
-        headers: List[str] = []
-        seen = set()
+            for record in records:
+                for field_name in record.get("fields", {}).keys():
+                    if field_name not in seen:
+                        headers.append(field_name)
+                        seen.add(field_name)
 
-        for record in records:
-            for field_name in record.get("fields", {}).keys():
-                if field_name not in seen:
-                    headers.append(field_name)
-                    seen.add(field_name)
+            if not headers:
+                # Get base headers without line number (will be added below)
+                headers = []
+                for (
+                    python_field,
+                    airtable_field,
+                ) in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
+                    if python_field != "record_id":
+                        headers.append(airtable_field)
 
-        if not headers:
-            headers = self._get_csv_headers()
-
-        return headers
+        # Add line number column as first header
+        return ["#"] + headers
 
     def _records_to_csv(
         self,
@@ -456,16 +478,23 @@ class ParticipantExportService:
             # Notify initial progress; guard division in callback implementation
             self.progress_callback(0, total_count)
 
+        # Calculate width for line numbers based on total row count
+        width = len(str(total_count)) if total_count > 0 else 1
+
         for index, (record, participant) in enumerate(rows):
             row_data = self._participant_to_csv_row(participant)
             airtable_fields = record.get("fields", {})
 
             formatted_row: Dict[str, Any] = {}
             for header in headers:
-                value = row_data.get(header)
-                if value is None:
-                    value = self._format_raw_value(airtable_fields.get(header))
-                formatted_row[header] = value
+                if header == "#":
+                    # Add line number for the "#" column with consistent width
+                    formatted_row[header] = format_line_number(index + 1, width)
+                else:
+                    value = row_data.get(header)
+                    if value is None:
+                        value = self._format_raw_value(airtable_fields.get(header))
+                    formatted_row[header] = value
 
             writer.writerow(formatted_row)
 
@@ -495,10 +524,10 @@ class ParticipantExportService:
 
     def _get_csv_headers(self) -> List[str]:
         """
-        Get CSV headers based on Airtable field names.
+        Get CSV headers based on Airtable field names with line numbers as first column.
 
         Returns:
-            List of Airtable field names for CSV headers
+            List of headers with "#" as first column, followed by Airtable field names
         """
         # Get all Airtable field names from mapping (excluding 'id')
         headers = []
@@ -509,7 +538,8 @@ class ParticipantExportService:
             if python_field != "record_id":  # Skip record_id as it's internal
                 headers.append(airtable_field)
 
-        return headers
+        # Add line number column as first header
+        return ["#"] + headers
 
     def _participant_to_csv_row(self, participant: Participant) -> Dict[str, str]:
         """

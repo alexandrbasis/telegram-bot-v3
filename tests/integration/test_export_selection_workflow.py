@@ -60,10 +60,10 @@ class TestExportSelectionWorkflow:
         query_update.callback_query.answer = AsyncMock()
         query_update.callback_query.edit_message_text = AsyncMock()
 
-        # Mock export service
+        # Mock export service with line numbers
         mock_export_service = AsyncMock()
         mock_export_service.export_to_csv_async = AsyncMock(
-            return_value="participant1,data\nparticipant2,data"
+            return_value="#,Name,Department\n1,participant1,data\n2,participant2,data"
         )
 
         with patch(
@@ -123,10 +123,10 @@ class TestExportSelectionWorkflow:
 
         context.bot_data = {"settings": MagicMock()}
 
-        # Mock export service for department filtering
+        # Mock export service for department filtering with line numbers
         mock_export_service = AsyncMock()
         mock_export_service.get_participants_by_department_as_csv = AsyncMock(
-            return_value="kitchen_participant,data"
+            return_value="#,Name,Department\n1,kitchen_participant,Kitchen"
         )
 
         with patch(
@@ -165,10 +165,10 @@ class TestExportSelectionWorkflow:
         context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
         context.bot_data = {"settings": MagicMock()}
 
-        # Mock Bible Readers export service
+        # Mock Bible Readers export service with line numbers
         mock_bible_service = AsyncMock()
         mock_bible_service.export_to_csv_async = AsyncMock(
-            return_value="reader1,scripture,location"
+            return_value="#,Where,Participants,When,Bible\n1,Morning Service,reader1,2025-01-26,John 3:16"
         )
 
         with patch(
@@ -202,10 +202,10 @@ class TestExportSelectionWorkflow:
         context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
         context.bot_data = {"settings": MagicMock()}
 
-        # Mock ROE export service
+        # Mock ROE export service with line numbers
         mock_roe_service = AsyncMock()
         mock_roe_service.export_to_csv_async = AsyncMock(
-            return_value="topic1,presenter,schedule"
+            return_value="#,RoeTopic,Roista,RoeDate,RoeTiming,RoeDuration,Assistant,Prayer\n1,topic1,presenter,2025-01-26,Morning,15,"
         )
 
         with patch(
@@ -278,10 +278,10 @@ class TestExportSelectionWorkflow:
         context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
         context.bot_data = {"settings": MagicMock()}
 
-        # Mock export service
+        # Mock export service with line numbers for role filtering
         mock_export_service = AsyncMock()
         mock_export_service.get_participants_by_role_as_csv = AsyncMock(
-            return_value="filtered,participants"
+            return_value="#,Name,Role,Department\n1,team_member1,TEAM,Kitchen\n2,team_member2,TEAM,Worship"
         )
 
         # Test Team export
@@ -378,3 +378,290 @@ class TestExportSelectionWorkflow:
                 break
 
         assert error_call is not None, "Error message should be sent"
+
+
+class TestExportLineNumberIntegration:
+    """Test line number integration in end-to-end export workflows."""
+
+    @pytest.mark.asyncio
+    async def test_participant_export_contains_line_numbers(self):
+        """Test that participant exports contain line numbers as first column."""
+        # Create mock update
+        update = MagicMock(spec=Update)
+        update.effective_user = User(id=123, first_name="Admin", is_bot=False)
+        update.callback_query = AsyncMock(spec=CallbackQuery)
+        update.callback_query.data = ExportCallbackData.EXPORT_ALL
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.bot_data = {"settings": MagicMock()}
+
+        # Mock export service with realistic CSV data including line numbers
+        csv_data_with_line_numbers = (
+            "#,Name,Role,Department\n"
+            "1,Иванов Иван,TEAM,Kitchen\n"
+            "2,Петрова Мария,CANDIDATE,Worship\n"
+            "3,Сидоров Петр,TEAM,Media"
+        )
+
+        mock_export_service = AsyncMock()
+        mock_export_service.export_to_csv_async = AsyncMock(
+            return_value=csv_data_with_line_numbers
+        )
+
+        # Capture the CSV data passed to _send_export_file
+        captured_csv_data = None
+
+        async def capture_send_file(csv_data, filename_prefix, query, user_id):
+            nonlocal captured_csv_data
+            captured_csv_data = csv_data
+
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file",
+                side_effect=capture_send_file,
+            ):
+                await handle_export_type_selection(update, context)
+
+        # Verify CSV data contains line numbers
+        assert captured_csv_data is not None
+        lines = captured_csv_data.strip().split("\n")
+
+        # Check header has line number column
+        headers = lines[0].split(",")
+        assert headers[0] == "#", f"First header should be '#', got '{headers[0]}'"
+
+        # Check data rows have sequential line numbers
+        assert lines[1].startswith(
+            "1,"
+        ), f"First row should start with '1,', got '{lines[1][:5]}'"
+        assert lines[2].startswith(
+            "2,"
+        ), f"Second row should start with '2,', got '{lines[2][:5]}'"
+        assert lines[3].startswith(
+            "3,"
+        ), f"Third row should start with '3,', got '{lines[3][:5]}'"
+
+    @pytest.mark.asyncio
+    async def test_bible_readers_export_contains_line_numbers(self):
+        """Test that Bible Readers exports contain line numbers as first column."""
+        update = MagicMock(spec=Update)
+        update.effective_user = User(id=123, first_name="Admin", is_bot=False)
+        update.callback_query = AsyncMock(spec=CallbackQuery)
+        update.callback_query.data = ExportCallbackData.EXPORT_BIBLE_READERS
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.bot_data = {"settings": MagicMock()}
+
+        # Mock Bible Readers export with line numbers
+        csv_data_with_line_numbers = (
+            "#,Where,Participants,When,Bible\n"
+            "1,Утренняя служба,Иванов Иван; Петрова Мария,2025-01-26,Псалом 23:1-6\n"
+            "2,Вечерняя служба,Сидоров Петр,2025-01-27,Иоанн 3:16"
+        )
+
+        mock_bible_service = AsyncMock()
+        mock_bible_service.export_to_csv_async = AsyncMock(
+            return_value=csv_data_with_line_numbers
+        )
+
+        captured_csv_data = None
+
+        async def capture_send_file(csv_data, filename_prefix, query, user_id):
+            nonlocal captured_csv_data
+            captured_csv_data = csv_data
+
+        with patch(
+            "src.services.service_factory.get_bible_readers_export_service",
+            return_value=mock_bible_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file",
+                side_effect=capture_send_file,
+            ):
+                await handle_export_type_selection(update, context)
+
+        # Verify Bible Readers CSV has line numbers
+        assert captured_csv_data is not None
+        lines = captured_csv_data.strip().split("\n")
+
+        headers = lines[0].split(",")
+        assert (
+            headers[0] == "#"
+        ), "Bible Readers export should start with line number column"
+        assert lines[1].startswith("1,"), "First Bible reader should have line number 1"
+        assert lines[2].startswith(
+            "2,"
+        ), "Second Bible reader should have line number 2"
+
+    @pytest.mark.asyncio
+    async def test_roe_export_contains_line_numbers(self):
+        """Test that ROE exports contain line numbers as first column."""
+        update = MagicMock(spec=Update)
+        update.effective_user = User(id=123, first_name="Admin", is_bot=False)
+        update.callback_query = AsyncMock(spec=CallbackQuery)
+        update.callback_query.data = ExportCallbackData.EXPORT_ROE
+        update.callback_query.answer = AsyncMock()
+        update.callback_query.edit_message_text = AsyncMock()
+
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.bot_data = {"settings": MagicMock()}
+
+        # Mock ROE export with line numbers
+        csv_data_with_line_numbers = (
+            "#,RoeTopic,Roista,RoeDate,RoeTiming,RoeDuration,Assistant,Prayer\n"
+            "1,Божья любовь,Иванов Иван,2025-01-25,Morning,15,Петрова Мария,Сидоров Петр\n"
+            "2,Прощение,Васильев Алексей,2025-01-26,Evening,20,,Николаев Сергей"
+        )
+
+        mock_roe_service = AsyncMock()
+        mock_roe_service.export_to_csv_async = AsyncMock(
+            return_value=csv_data_with_line_numbers
+        )
+
+        captured_csv_data = None
+
+        async def capture_send_file(csv_data, filename_prefix, query, user_id):
+            nonlocal captured_csv_data
+            captured_csv_data = csv_data
+
+        with patch(
+            "src.services.service_factory.get_roe_export_service",
+            return_value=mock_roe_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file",
+                side_effect=capture_send_file,
+            ):
+                await handle_export_type_selection(update, context)
+
+        # Verify ROE CSV has line numbers
+        assert captured_csv_data is not None
+        lines = captured_csv_data.strip().split("\n")
+
+        headers = lines[0].split(",")
+        assert headers[0] == "#", "ROE export should start with line number column"
+        assert lines[1].startswith("1,"), "First ROE session should have line number 1"
+        assert lines[2].startswith("2,"), "Second ROE session should have line number 2"
+
+    @pytest.mark.asyncio
+    async def test_department_filtered_export_contains_line_numbers(self):
+        """Test that department-filtered exports contain line numbers."""
+        # Simulate department selection workflow
+        dept_update = MagicMock(spec=Update)
+        dept_update.effective_user = User(id=123, first_name="Admin", is_bot=False)
+        dept_update.callback_query = AsyncMock(spec=CallbackQuery)
+        dept_update.callback_query.data = ExportCallbackData.department_callback(
+            "Kitchen"
+        )
+        dept_update.callback_query.answer = AsyncMock()
+        dept_update.callback_query.edit_message_text = AsyncMock()
+
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.bot_data = {"settings": MagicMock()}
+
+        # Mock department export with line numbers
+        csv_data_with_line_numbers = (
+            "#,Name,Role,Department\n"
+            "1,Иванов Иван,TEAM,Kitchen\n"
+            "2,Петрова Мария,CANDIDATE,Kitchen\n"
+            "3,Сидоров Петр,TEAM,Kitchen"
+        )
+
+        mock_export_service = AsyncMock()
+        mock_export_service.get_participants_by_department_as_csv = AsyncMock(
+            return_value=csv_data_with_line_numbers
+        )
+
+        captured_csv_data = None
+
+        async def capture_send_file(csv_data, filename_prefix, query, user_id):
+            nonlocal captured_csv_data
+            captured_csv_data = csv_data
+
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file",
+                side_effect=capture_send_file,
+            ):
+                await handle_department_selection(dept_update, context)
+
+        # Verify department-filtered CSV has line numbers
+        assert captured_csv_data is not None
+        lines = captured_csv_data.strip().split("\n")
+
+        headers = lines[0].split(",")
+        assert (
+            headers[0] == "#"
+        ), "Department export should start with line number column"
+        assert lines[1].startswith(
+            "1,"
+        ), "First department participant should have line number 1"
+        assert lines[2].startswith(
+            "2,"
+        ), "Second department participant should have line number 2"
+        assert lines[3].startswith(
+            "3,"
+        ), "Third department participant should have line number 3"
+
+    @pytest.mark.asyncio
+    async def test_role_filtered_export_contains_line_numbers(self):
+        """Test that role-filtered exports (TEAM/CANDIDATE) contain line numbers."""
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.bot_data = {"settings": MagicMock()}
+
+        # Mock export service with line numbers for role filtering
+        csv_data_with_line_numbers = (
+            "#,Name,Role,Department\n"
+            "1,Иванов Иван,TEAM,Kitchen\n"
+            "2,Сидоров Петр,TEAM,Worship\n"
+            "3,Васильев Алексей,TEAM,Media"
+        )
+
+        mock_export_service = AsyncMock()
+        mock_export_service.get_participants_by_role_as_csv = AsyncMock(
+            return_value=csv_data_with_line_numbers
+        )
+
+        # Test TEAM export
+        team_update = MagicMock(spec=Update)
+        team_update.effective_user = User(id=123, first_name="Admin", is_bot=False)
+        team_update.callback_query = AsyncMock(spec=CallbackQuery)
+        team_update.callback_query.data = ExportCallbackData.EXPORT_TEAM
+        team_update.callback_query.answer = AsyncMock()
+        team_update.callback_query.edit_message_text = AsyncMock()
+
+        captured_csv_data = None
+
+        async def capture_send_file(csv_data, filename_prefix, query, user_id):
+            nonlocal captured_csv_data
+            captured_csv_data = csv_data
+
+        with patch(
+            "src.services.service_factory.get_export_service",
+            return_value=mock_export_service,
+        ):
+            with patch(
+                "src.bot.handlers.export_conversation_handlers._send_export_file",
+                side_effect=capture_send_file,
+            ):
+                await handle_export_type_selection(team_update, context)
+
+        # Verify role-filtered CSV has line numbers
+        assert captured_csv_data is not None
+        lines = captured_csv_data.strip().split("\n")
+
+        headers = lines[0].split(",")
+        assert headers[0] == "#", "Role export should start with line number column"
+        assert lines[1].startswith("1,"), "First team member should have line number 1"
+        assert lines[2].startswith("2,"), "Second team member should have line number 2"
+        assert lines[3].startswith("3,"), "Third team member should have line number 3"

@@ -166,6 +166,7 @@ class TestGetAllROEAsCSV:
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
         assert reader.fieldnames == [
+            "#",
             "RoeTopic",
             "Roista",
             "RoeDate",
@@ -493,3 +494,191 @@ class TestCSVFormattingAndFileOperations:
         # Assert
         assert estimated_size > 0
         assert isinstance(estimated_size, int)
+
+
+class TestLineNumberIntegration:
+    """Test line number integration in ROE CSV exports."""
+
+    @pytest.mark.asyncio
+    async def test_csv_headers_include_line_number_column(
+        self, export_service, mock_roe_repository
+    ):
+        """Test that CSV headers include line number column as first column."""
+        # Arrange
+        mock_roe_repository.list_all.return_value = []
+
+        # Act
+        csv_data = await export_service.get_all_roe_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        headers = reader.fieldnames
+
+        # Line number column should be first
+        assert headers[0] == "#"
+        assert headers == [
+            "#",
+            "RoeTopic",
+            "Roista",
+            "RoeDate",
+            "RoeTiming",
+            "RoeDuration",
+            "Assistant",
+            "Prayer",
+        ]
+
+    @pytest.mark.asyncio
+    async def test_csv_rows_include_sequential_line_numbers(
+        self,
+        export_service,
+        mock_roe_repository,
+        mock_participant_repository,
+        sample_roe_sessions,
+    ):
+        """Test that CSV rows include sequential line numbers starting from 1."""
+        # Arrange
+        mock_roe_repository.list_all.return_value = sample_roe_sessions
+        mock_participant_repository.get_by_id.return_value = None
+
+        # Act
+        csv_data = await export_service.get_all_roe_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        assert len(rows) == 2
+        assert rows[0]["#"] == "1"
+        assert rows[1]["#"] == "2"
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_with_empty_list(
+        self, export_service, mock_roe_repository
+    ):
+        """Test line numbers with empty ROE list."""
+        # Arrange
+        mock_roe_repository.list_all.return_value = []
+
+        # Act
+        csv_data = await export_service.get_all_roe_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+        headers = reader.fieldnames
+
+        # Should have headers with line number column but no data rows
+        assert headers[0] == "#"
+        assert len(rows) == 0
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_with_large_list(
+        self, export_service, mock_roe_repository, mock_participant_repository
+    ):
+        """Test line numbers with large ROE list (3+ digit numbers)."""
+        # Arrange
+        large_roe_list = []
+        for i in range(120):
+            large_roe_list.append(
+                ROE(
+                    record_id=f"rec{i:03d}",
+                    roe_topic=f"Topic {i}",
+                    roista=[],
+                    assistant=[],
+                    prayer=[],
+                    roe_date=date(2025, 1, 25),
+                    roe_timing="Morning",
+                    roe_duration=15,
+                )
+            )
+
+        mock_roe_repository.list_all.return_value = large_roe_list
+        mock_participant_repository.get_by_id.return_value = None
+
+        # Act
+        csv_data = await export_service.get_all_roe_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        assert len(rows) == 120
+        # With 120 rows, line numbers should be right-aligned to width 3
+        assert rows[0]["#"] == "  1"  # First row (padded to 3 chars)
+        assert rows[99]["#"] == "100"  # 3-digit number
+        assert rows[119]["#"] == "120"  # 3-digit number
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_preserve_data_integrity(
+        self,
+        export_service,
+        mock_roe_repository,
+        mock_participant_repository,
+        sample_roe_sessions,
+        sample_participants,
+    ):
+        """Test that adding line numbers doesn't affect other data columns."""
+        # Arrange
+        mock_roe_repository.list_all.return_value = sample_roe_sessions
+        mock_participant_repository.get_by_id.side_effect = lambda id: next(
+            (p for p in sample_participants if p.record_id == id), None
+        )
+
+        # Act
+        csv_data = await export_service.get_all_roe_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Verify first row data integrity with line numbers
+        first_row = rows[0]
+        assert first_row["#"] == "1"
+        assert first_row["RoeTopic"] == "Божья любовь"
+        assert first_row["RoeDate"] == "2025-01-25"
+        assert first_row["RoeTiming"] == "Morning"
+        assert first_row["RoeDuration"] == "15"
+        assert "Иванов Иван Иванович" in first_row["Roista"]
+        assert "Петрова Мария Сергеевна" in first_row["Assistant"]
+        assert "Сидоров Петр Александрович" in first_row["Prayer"]
+
+        # Verify second row data integrity with line numbers
+        second_row = rows[1]
+        assert second_row["#"] == "2"
+        assert second_row["RoeTopic"] == "Прощение"
+        assert second_row["RoeDate"] == "2025-01-26"
+        assert second_row["RoeTiming"] == "Evening"
+        assert second_row["RoeDuration"] == "20"
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_in_saved_file(
+        self,
+        export_service,
+        mock_roe_repository,
+        mock_participant_repository,
+        sample_roe_sessions,
+    ):
+        """Test that line numbers appear in saved CSV files."""
+        # Arrange
+        mock_roe_repository.list_all.return_value = sample_roe_sessions
+        mock_participant_repository.get_by_id.return_value = None
+
+        # Act
+        file_path = await export_service.save_to_file()
+
+        # Assert
+        assert Path(file_path).exists()
+
+        # Verify file content includes line numbers
+        with open(file_path, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+            # Check that line numbers are present in headers and data
+            assert (
+                "#,RoeTopic,Roista,RoeDate,RoeTiming,RoeDuration,Assistant,Prayer"
+                in content
+            )
+            assert "1,Божья любовь" in content
+            assert "2,Прощение" in content
+
+        # Cleanup
+        Path(file_path).unlink()
