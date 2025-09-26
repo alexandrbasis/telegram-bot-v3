@@ -630,27 +630,37 @@ class ParticipantExportService:
         ] = None,
     ) -> str:
         """
-        Fallback method to export candidates using list_all() with filtering.
+        Fallback method to export participants using list_all() with filtering.
 
         Args:
-            filter_func: Optional filter function to apply (should filter for
-                candidates)
+            filter_func: Optional filter function to apply to participants
 
         Returns:
-            CSV formatted string with candidate data
+            CSV formatted string with filtered participant data
         """
-        logger.info("Using fallback export via list_all() with candidate filtering")
+        logger.info("Using fallback export via list_all() with provided filtering")
 
-        # Get all participants and filter for candidates
+        # Get all participants
         all_participants = await self.repository.list_all()
-        candidate_participants = [
-            p
-            for p in all_participants
-            if p.role is not None and p.role == Role.CANDIDATE
-        ]
 
-        total_count = len(candidate_participants)
-        logger.info(f"Found {total_count} candidates via fallback method")
+        # Apply provided filter function if available, otherwise use all participants
+        if filter_func:
+            filtered_participants = []
+            for participant in all_participants:
+                # Pass empty dict as record since filter functions only use participant
+                record: Dict[str, Any] = {}
+                if filter_func(record, participant):
+                    filtered_participants.append(participant)
+        else:
+            # If no filter provided, fall back to candidate filtering for compatibility
+            filtered_participants = [
+                p
+                for p in all_participants
+                if p.role is not None and p.role == Role.CANDIDATE
+            ]
+
+        total_count = len(filtered_participants)
+        logger.info(f"Found {total_count} participants via fallback method")
 
         # Report initial progress
         if self.progress_callback:
@@ -665,8 +675,8 @@ class ParticipantExportService:
         # Calculate width for line numbers based on total count
         width = len(str(total_count)) if total_count > 0 else 1
 
-        # Process candidates
-        for index, participant in enumerate(candidate_participants):
+        # Process filtered participants
+        for index, participant in enumerate(filtered_participants):
             row = self._participant_to_csv_row(participant)
             # Add line number as first column with consistent width
             row["#"] = format_line_number(index + 1, width)
@@ -680,5 +690,5 @@ class ParticipantExportService:
         csv_string = output.getvalue()
         output.close()
 
-        logger.info(f"Fallback candidate export completed with {total_count} records")
+        logger.info(f"Fallback export completed with {total_count} records")
         return csv_string
