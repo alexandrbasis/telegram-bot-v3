@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Line Numbers in Export Tables** – Complete implementation of sequential line numbering feature for all exported participant tables with comprehensive testing and documentation updates (AGB-72, completed 2025-01-26, branch `feature/agb-72-line-numbers-export`)
+- **Line Numbers in Export Tables** – Complete implementation of sequential line numbering feature for all exported participant tables with comprehensive testing and documentation updates (AGB-72, completed 2025-01-26, branch `feature/agb-72-line-numbers-export`, SHA `63b8fe4`, merged 2025-09-26T22:45:40Z, PR [#67](https://github.com/alexandrbasis/telegram-bot-v3/pull/67))
   - Line number utility functions with comprehensive formatting and validation (`src/utils/export_utils.py:1-106`)
     - format_line_number(), add_line_numbers_to_csv(), and add_line_numbers_to_rows() functions with TDD implementation
     - extract_participant_count_from_csv() and format_export_success_message() for enhanced user feedback
