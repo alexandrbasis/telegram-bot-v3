@@ -1144,8 +1144,8 @@ class TestLineNumberIntegration:
         # Check total count
         assert len(rows) == 150
 
-        # Check specific line numbers
-        assert rows[0]["#"] == "1"        # First row
+        # Check specific line numbers with width consistency (150 rows = 3-digit width)
+        assert rows[0]["#"] == "  1"      # First row (padded to 3 chars)
         assert rows[99]["#"] == "100"     # 3-digit line number
         assert rows[149]["#"] == "150"    # Last row
 

@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from src.config.field_mappings import AirtableFieldMapping
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.participant import Department, Participant, Role
+from src.utils.export_utils import format_line_number
 
 logger = logging.getLogger(__name__)
 
@@ -120,12 +121,15 @@ class ParticipantExportService:
         # Write headers
         writer.writeheader()
 
+        # Calculate width for line numbers based on total participant count
+        width = len(str(total_count)) if total_count > 0 else 1
+
         # Process participants
         for index, participant in enumerate(participants):
             # Convert participant to CSV row
             row = self._participant_to_csv_row(participant)
-            # Add line number as first column
-            row["#"] = str(index + 1)
+            # Add line number as first column with consistent width
+            row["#"] = format_line_number(index + 1, width)
             writer.writerow(row)
 
             # Report progress at intervals (every 10 records or at end)
@@ -326,10 +330,13 @@ class ParticipantExportService:
         writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
         writer.writeheader()
 
+        # Calculate width for line numbers based on total filtered count
+        width = len(str(total_count)) if total_count > 0 else 1
+
         for index, participant in enumerate(filtered_participants):
             row = self._participant_to_csv_row(participant)
-            # Add line number as first column
-            row["#"] = str(index + 1)
+            # Add line number as first column with consistent width
+            row["#"] = format_line_number(index + 1, width)
             writer.writerow(row)
 
             if self.progress_callback:
@@ -471,6 +478,9 @@ class ParticipantExportService:
             # Notify initial progress; guard division in callback implementation
             self.progress_callback(0, total_count)
 
+        # Calculate width for line numbers based on total row count
+        width = len(str(total_count)) if total_count > 0 else 1
+
         for index, (record, participant) in enumerate(rows):
             row_data = self._participant_to_csv_row(participant)
             airtable_fields = record.get("fields", {})
@@ -478,8 +488,8 @@ class ParticipantExportService:
             formatted_row: Dict[str, Any] = {}
             for header in headers:
                 if header == "#":
-                    # Add line number for the "#" column
-                    formatted_row[header] = str(index + 1)
+                    # Add line number for the "#" column with consistent width
+                    formatted_row[header] = format_line_number(index + 1, width)
                 else:
                     value = row_data.get(header)
                     if value is None:

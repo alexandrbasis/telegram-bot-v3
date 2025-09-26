@@ -48,6 +48,50 @@ class TestLineNumberFormatting:
         with pytest.raises(ValueError):
             format_line_number(-1)
 
+    def test_format_line_number_with_width(self):
+        """Test line number formatting with width parameter."""
+        # Test right-alignment with width
+        assert format_line_number(1, 3) == "  1"
+        assert format_line_number(10, 3) == " 10"
+        assert format_line_number(100, 3) == "100"
+
+        # Test with different widths
+        assert format_line_number(5, 1) == "5"
+        assert format_line_number(5, 2) == " 5"
+        assert format_line_number(5, 4) == "   5"
+
+    def test_format_line_number_width_edge_cases(self):
+        """Test edge cases for width parameter."""
+        # Width exactly matching number length
+        assert format_line_number(1, 1) == "1"
+        assert format_line_number(99, 2) == "99"
+        assert format_line_number(1000, 4) == "1000"
+
+        # Width smaller than number length (should not truncate)
+        assert format_line_number(100, 2) == "100"
+        assert format_line_number(1000, 1) == "1000"
+
+    def test_format_line_number_width_validation(self):
+        """Test validation for width parameter."""
+        # Invalid width values
+        with pytest.raises(ValueError):
+            format_line_number(1, 0)
+
+        with pytest.raises(ValueError):
+            format_line_number(1, -1)
+
+        with pytest.raises(TypeError):
+            format_line_number(1, "3")
+
+        with pytest.raises(TypeError):
+            format_line_number(1, 3.5)
+
+    def test_format_line_number_width_none(self):
+        """Test that width=None behaves like original function."""
+        assert format_line_number(1, None) == "1"
+        assert format_line_number(100, None) == "100"
+        assert format_line_number(999, None) == "999"
+
         with pytest.raises(TypeError):
             format_line_number("1")
 
@@ -99,7 +143,7 @@ class TestAddLineNumbersToCSV:
         assert result == expected
 
     def test_add_line_numbers_large_dataset(self):
-        """Test line numbers with large dataset (3-digit numbers)."""
+        """Test line numbers with large dataset (3-digit numbers) and consistent width."""
         # Create CSV with 150 rows to test 3-digit line numbers
         header = "Name,Value\n"
         rows = "\n".join([f"Person{i},{i * 10}" for i in range(1, 151)])
@@ -107,11 +151,14 @@ class TestAddLineNumbersToCSV:
 
         result = add_line_numbers_to_csv(csv_input)
 
-        # Verify line numbers are present
+        # Verify line numbers are present with consistent width
         lines = result.strip().split('\n')
         assert lines[0] == "#,Name,Value"  # Header
-        assert lines[1] == "1,Person1,10"  # First row
-        assert lines[100] == "100,Person100,1000"  # 3-digit line number
+
+        # With 150 rows, all line numbers should be right-aligned to width 3
+        assert lines[1] == "  1,Person1,10"  # First row (padded to 3 chars)
+        assert lines[10] == " 10,Person10,100"  # Two-digit line number (padded to 3 chars)
+        assert lines[100] == "100,Person100,1000"  # Three-digit line number
         assert lines[150] == "150,Person150,1500"  # Last row
         assert len(lines) == 151  # Header + 150 data rows
 
@@ -178,6 +225,27 @@ class TestAddLineNumbersToRows:
         assert result_rows[0]["Name"] == "John"
         assert result_rows[1]["Name"] == "Jane"
         assert result_rows[2]["Name"] == "Bob"
+
+    def test_add_line_numbers_to_rows_with_width_consistency(self):
+        """Test that line numbers in rows have consistent width formatting."""
+        headers = ["Name", "Value"]
+        # Create 150 rows to test 3-digit width consistency
+        rows = [{"Name": f"Person{i}", "Value": str(i * 10)} for i in range(1, 151)]
+
+        result_headers, result_rows = add_line_numbers_to_rows(headers, rows)
+
+        assert result_headers == ["#", "Name", "Value"]
+        assert len(result_rows) == 150
+
+        # With 150 rows, all line numbers should be right-aligned to width 3
+        assert result_rows[0]["#"] == "  1"  # First row (padded to 3 chars)
+        assert result_rows[9]["#"] == " 10"  # Two-digit line number (padded to 3 chars)
+        assert result_rows[99]["#"] == "100"  # Three-digit line number
+        assert result_rows[149]["#"] == "150"  # Last row
+
+        # Verify original data is preserved
+        assert result_rows[0]["Name"] == "Person1"
+        assert result_rows[149]["Name"] == "Person150"
 
     def test_add_line_numbers_with_russian_headers(self):
         """Test line numbers with Russian header names."""

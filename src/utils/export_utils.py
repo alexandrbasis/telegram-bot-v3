@@ -11,18 +11,20 @@ import io
 from typing import Dict, List, Tuple, Any, Optional
 
 
-def format_line_number(line_num: int) -> str:
+def format_line_number(line_num: int, width: Optional[int] = None) -> str:
     """
-    Format a line number for display in CSV exports.
+    Format a line number for display in CSV exports with right-alignment.
 
     Args:
         line_num: The line number to format (must be >= 0)
+        width: Optional width for right-alignment. If provided, number is
+               right-aligned and padded with spaces to this width.
 
     Returns:
-        Formatted line number as string
+        Formatted line number as string, right-aligned if width specified
 
     Raises:
-        ValueError: If line_num is negative
+        ValueError: If line_num is negative or width is <= 0
         TypeError: If line_num is not an integer
     """
     if not isinstance(line_num, int):
@@ -33,15 +35,26 @@ def format_line_number(line_num: int) -> str:
     if line_num < 0:
         raise ValueError(f"Line number must be non-negative, got {line_num}")
 
+    if width is not None:
+        if not isinstance(width, int):
+            raise TypeError(
+                f"Width must be an integer, got {type(width).__name__}"
+            )
+        if width <= 0:
+            raise ValueError(f"Width must be positive, got {width}")
+
+        return f"{line_num:>{width}}"
+
     return str(line_num)
 
 
 def add_line_numbers_to_csv(csv_string: str) -> str:
     """
-    Add line numbers as the first column to a CSV string.
+    Add line numbers as the first column to a CSV string with consistent width.
 
     Parses the CSV, adds a '#' header column, and prepends sequential
-    line numbers (starting from 1) to each data row.
+    line numbers (starting from 1) to each data row. Line numbers are
+    right-aligned with consistent width based on the total row count.
 
     Args:
         csv_string: CSV formatted string with headers and data rows
@@ -66,6 +79,13 @@ def add_line_numbers_to_csv(csv_string: str) -> str:
     if not rows:
         return csv_string
 
+    # Calculate width for line numbers based on total data rows
+    data_row_count = len(rows) - 1  # Exclude header row
+    if data_row_count <= 0:
+        width = 1
+    else:
+        width = len(str(data_row_count))
+
     # Create output stream
     output_stream = io.StringIO()
 
@@ -76,9 +96,9 @@ def add_line_numbers_to_csv(csv_string: str) -> str:
     writer = csv.writer(output_stream, lineterminator='\n')
     writer.writerow(new_headers)
 
-    # Process data rows (add line numbers)
+    # Process data rows (add line numbers with consistent width)
     for line_num, row in enumerate(rows[1:], start=1):
-        new_row = [format_line_number(line_num)] + row
+        new_row = [format_line_number(line_num, width)] + row
         writer.writerow(new_row)
 
     result = output_stream.getvalue()
@@ -92,7 +112,7 @@ def add_line_numbers_to_rows(
     rows: List[Dict[str, Any]]
 ) -> Tuple[List[str], List[Dict[str, Any]]]:
     """
-    Add line numbers to row data structures (headers and row dictionaries).
+    Add line numbers to row data structures with consistent width formatting.
 
     Args:
         headers: List of column header names
@@ -104,11 +124,18 @@ def add_line_numbers_to_rows(
     # Add line number header
     new_headers = ["#"] + headers
 
-    # Add line numbers to each row
+    # Calculate width for line numbers based on total row count
+    row_count = len(rows)
+    if row_count <= 0:
+        width = 1
+    else:
+        width = len(str(row_count))
+
+    # Add line numbers to each row with consistent width
     new_rows = []
     for line_num, row in enumerate(rows, start=1):
         new_row = row.copy()  # Preserve all original fields
-        new_row["#"] = format_line_number(line_num)
+        new_row["#"] = format_line_number(line_num, width)
         new_rows.append(new_row)
 
     return new_headers, new_rows

@@ -17,6 +17,7 @@ from src.config.field_mappings.bible_readers import BibleReadersFieldMapping
 from src.data.repositories.bible_readers_repository import BibleReadersRepository
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.bible_readers import BibleReader
+from src.utils.export_utils import format_line_number
 
 logger = logging.getLogger(__name__)
 
@@ -96,12 +97,15 @@ class BibleReadersExportService:
         # Write headers
         writer.writeheader()
 
+        # Calculate width for line numbers based on total count
+        width = len(str(total_count)) if total_count > 0 else 1
+
         # Process Bible readers
         for index, bible_reader in enumerate(bible_readers):
             # Convert Bible reader to CSV row with participant hydration
             row = await self._bible_reader_to_csv_row(bible_reader)
-            # Add line number as first column
-            row["#"] = str(index + 1)
+            # Add line number as first column with consistent width
+            row["#"] = format_line_number(index + 1, width)
             writer.writerow(row)
 
             # Report progress at intervals (every 10 records or at end)
