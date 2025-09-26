@@ -326,6 +326,50 @@ test_export_success_messages_show_counts()
 - Memory efficiency confirmation
 - Large export handling (100+ participants)
 
+## Export Reliability Hotfix Testing (2025-09-26)
+
+### Test Coverage Summary
+**Total Tests**: 84 export service tests (40 participant + 21 bible_readers + 23 roe) with 88% coverage for new services
+**Pass Rate**: 100% (1501 tests passed, 9 skipped)
+**Coverage**: BibleReaders (88%), ROE (88%), ParticipantExport (76% with focused fallback coverage)
+
+#### Export Reliability Testing Implementation
+**Fallback Logic Testing**: `TestRoleBasedFiltering::test_candidate_export_fallback_on_missing_view`
+- **Coverage**: Complete flow from RepositoryError(AirtableAPIError(422)) to successful CSV generation
+- **Validation**: 422 error detection, fallback trigger, line number preservation
+- **Integration**: Role.CANDIDATE filtering maintains all existing field mappings
+
+**Async Interface Testing**: `TestAsyncExportInterface` classes for BibleReaders and ROE services
+- **Coverage**: Both export_to_csv_async() and export_to_csv() methods with event loop detection
+- **Validation**: Sync wrapper behavior, async delegation, progress callback integration
+- **Integration**: Handler compatibility verified with existing export conversation flows
+
+**Test-Driven Development Approach**:
+- **RED Phase**: Failing tests for missing async interfaces and fallback logic
+- **GREEN Phase**: Minimal implementation to achieve test passage
+- **REFACTOR Phase**: Code cleanup while maintaining comprehensive test coverage
+
+### Enhanced Test Scenarios
+```python
+# Fallback logic testing
+test_candidate_export_fallback_on_missing_view()
+  # Simulates 422 VIEW_NAME_NOT_FOUND error
+  # Validates seamless fallback to repository filtering
+  # Confirms line numbers and CSV format preservation
+
+# Async interface testing
+test_export_to_csv_async_method_exists()
+  # Validates async method availability on BibleReaders/ROE services
+  # Confirms proper delegation to core export methods
+  # Verifies line number inclusion and data integrity
+
+# Event loop detection testing
+test_export_to_csv_sync_wrapper()
+  # Tests event loop detection in sync wrappers
+  # Validates proper async delegation when loop detected
+  # Confirms error handling for sync-in-loop scenarios
+```
+
 ## CSV Export Service Testing (2025-01-15)
 
 ### Test Coverage Summary
@@ -1261,6 +1305,7 @@ class TestHandlerAuthorization:
 ## Testing Roadmap
 
 ### Current Status
+- [x] ✅ **Export Reliability Hotfix Testing (2025-09-26)**: 84 export service tests with 88% coverage for BibleReaders and ROE services, comprehensive fallback logic testing, async interface validation, and TDD methodology with Red-Green-Refactor cycles
 - [x] ✅ **Handler Security Implementation Testing (2025-09-25)**: 35+ authorization tests across all handler modules with TDD methodology, zero unauthorized access paths, complete role hierarchy enforcement, and integration compatibility
 - [x] ✅ Comprehensive unit testing (29 unit tests with regression coverage, 100% pass)
 - [x] ✅ Handler conversation flow testing with save/cancel workflow

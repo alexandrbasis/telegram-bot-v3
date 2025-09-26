@@ -730,9 +730,16 @@ Bot: 📁 Файл успешно отправлен!
 - **Error Recovery**: Comprehensive retry logic for transient failures
 - **Audit Logging**: Complete user interaction logging for administrative monitoring
 
+**Enhanced Export Reliability (2025-09-26)**:
+- **View Fallback Logic**: Candidate exports automatically fallback to repository filtering when Airtable view "Кандидаты" is unavailable
+- **Error Detection**: 422 VIEW_NAME_NOT_FOUND errors gracefully handled with seamless user experience
+- **Async Export Interfaces**: BibleReaders and ROE exports now support both async and sync interfaces for optimal performance
+- **Line Number Preservation**: All export flows maintain sequential line numbering regardless of export method
+
 **Error Scenarios with File Delivery**:
 - **Unauthorized Access**: "Доступ запрещён. Эта команда доступна только администраторам."
 - **Export Failure**: "Произошла ошибка при экспорте данных. Попробуйте позже."
+- **View Not Found**: Automatic fallback to full participant filtering (transparent to user)
 - **File Size Exceeded**: "Файл слишком большой для отправки через Telegram (максимум 50MB)."
 - **Network Issues**: "Ошибка сети. Попробуйте позже."
 - **File Upload Failures**: Comprehensive error handling for Telegram API failures:

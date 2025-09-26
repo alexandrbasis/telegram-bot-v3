@@ -325,16 +325,21 @@ Display: Fixed participant reconstruction to include age field in all contexts
 - **Department-Based Filtering**: `get_participants_by_department_as_csv(department: Department)` - Export participants from specific departments
 - **Complete Export**: `get_all_participants_as_csv()` - Full participant database export (existing functionality)
 
-**New Export Services**:
+**New Export Services with Enhanced Reliability (2025-09-26)**:
 - **BibleReaders Export**: `BibleReadersExportService.get_bible_readers_as_csv()` - Exports Bible reading assignments with participant details
 - **ROE Export**: `ROEExportService.get_roe_sessions_as_csv()` - Exports ROE session data with presenter information
 
-**Export Service Features**:
+**Enhanced Export Service Features (2025-09-26)**:
+- **Async Export Interfaces**: All export services now provide both `export_to_csv_async()` and `export_to_csv()` methods
+- **Event Loop Detection**: Sync wrappers automatically detect running event loops and delegate appropriately
+- **Fallback Logic**: Candidate exports implement automatic fallback when Airtable views are unavailable
+- **Error Recovery**: 422 VIEW_NAME_NOT_FOUND errors trigger seamless fallback to repository filtering
 - **Participant Hydration**: BibleReaders and ROE exports include hydrated participant names from linked participant IDs
 - **Multi-Relationship Handling**: ROE service handles complex relationships (presenters, assistants, prayer partners)
 - **Consistent CSV Format**: All export services maintain uniform CSV formatting with proper field headers
 - **Progress Tracking**: All services integrate with ExportProgressTracker for real-time progress updates
-- **Error Handling**: Comprehensive error handling and graceful empty result set handling
+- **Line Number Consistency**: Sequential line numbering preserved across all export flows
+- **Comprehensive Error Handling**: Graceful handling of view availability and empty result scenarios
 
 **Authorization**:
 - **Admin Validation**: Uses `auth_utils.is_admin_user()` for access control
@@ -413,18 +418,24 @@ Display: Fixed participant reconstruction to include age field in all contexts
 }
 ```
 
-**Enhanced CSV Export Service API with View Alignment (2025-09-23)**:
+**Enhanced CSV Export Service API with Reliability Features (2025-09-26)**:
 - **Participant Service Methods**:
   - `get_all_participants_as_csv(progress_callback)` - Complete database export
-  - `get_participants_by_role_as_csv(role: Role, progress_callback)` - View-aligned export for TEAM/CANDIDATE roles
+  - `get_participants_by_role_as_csv(role: Role, progress_callback)` - View-aligned export with fallback for TEAM/CANDIDATE roles
   - `get_participants_by_department_as_csv(department: Department, progress_callback)` - Department-filtered export using view structure
-- **View-Based Export Architecture**:
-  - `_export_view_to_csv(view_name, filter_func)` - Core view-driven export method
+- **View-Based Export Architecture with Fallback**:
+  - `_export_view_to_csv(view_name, filter_func)` - Core view-driven export method with error handling
+  - `_is_view_not_found_error(error)` - Detects 422 VIEW_NAME_NOT_FOUND errors for fallback logic
+  - `_fallback_candidates_from_all_participants()` - Repository filtering fallback maintaining line numbers
   - `_determine_view_headers(view_name, records)` - Header reconstruction from view data
   - `_records_to_csv(rows, headers)` - Convert records maintaining view column order
-- **BibleReaders Service Methods**:
+- **BibleReaders Service Methods with Async Interface**:
+  - `export_to_csv_async()` - Async interface for handler integration
+  - `export_to_csv()` - Sync wrapper with event loop detection
   - `get_bible_readers_as_csv(progress_callback)` - Bible reading assignments with participant names
-- **ROE Service Methods**:
+- **ROE Service Methods with Async Interface**:
+  - `export_to_csv_async()` - Async interface for handler integration
+  - `export_to_csv()` - Sync wrapper with event loop detection
   - `get_roe_sessions_as_csv(progress_callback)` - ROE sessions with presenter/assistant/prayer partner details
 - **Repository Interface Extensions**:
   - `list_view_records(view: str) -> List[Dict[str, Any]]` - Fetch raw Airtable view records preserving structure
