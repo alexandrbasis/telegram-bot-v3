@@ -17,6 +17,7 @@ from src.config.field_mappings.bible_readers import BibleReadersFieldMapping
 from src.data.repositories.bible_readers_repository import BibleReadersRepository
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.bible_readers import BibleReader
+from src.utils.export_utils import add_line_numbers_to_csv
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,8 @@ class BibleReadersExportService:
         for index, bible_reader in enumerate(bible_readers):
             # Convert Bible reader to CSV row with participant hydration
             row = await self._bible_reader_to_csv_row(bible_reader)
+            # Add line number as first column
+            row["#"] = str(index + 1)
             writer.writerow(row)
 
             # Report progress at intervals (every 10 records or at end)
@@ -238,7 +241,7 @@ class BibleReadersExportService:
         Returns:
             List of Airtable field names for CSV headers plus hydrated fields
         """
-        return ["Where", "Participants", "When", "Bible"]
+        return ["#", "Where", "Participants", "When", "Bible"]
 
     async def _bible_reader_to_csv_row(
         self, bible_reader: BibleReader

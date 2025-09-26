@@ -144,7 +144,7 @@ class TestGetAllBibleReadersAsCSV:
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
-        assert reader.fieldnames == ["Where", "Participants", "When", "Bible"]
+        assert reader.fieldnames == ["#", "Where", "Participants", "When", "Bible"]
         rows = list(reader)
 
         assert len(rows) == 2
@@ -380,3 +380,172 @@ class TestCSVFormattingAndFileOperations:
         # Assert
         assert estimated_size > 0
         assert isinstance(estimated_size, int)
+
+
+class TestLineNumberIntegration:
+    """Test line number integration in BibleReaders CSV exports."""
+
+    @pytest.mark.asyncio
+    async def test_csv_headers_include_line_number_column(
+        self, export_service, mock_bible_readers_repository
+    ):
+        """Test that CSV headers include line number column as first column."""
+        # Arrange
+        mock_bible_readers_repository.list_all.return_value = []
+
+        # Act
+        csv_data = await export_service.get_all_bible_readers_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        headers = reader.fieldnames
+
+        # Line number column should be first
+        assert headers[0] == "#"
+        assert headers == ["#", "Where", "Participants", "When", "Bible"]
+
+    @pytest.mark.asyncio
+    async def test_csv_rows_include_sequential_line_numbers(
+        self,
+        export_service,
+        mock_bible_readers_repository,
+        mock_participant_repository,
+        sample_bible_readers,
+    ):
+        """Test that CSV rows include sequential line numbers starting from 1."""
+        # Arrange
+        mock_bible_readers_repository.list_all.return_value = sample_bible_readers
+        mock_participant_repository.get_by_id.return_value = None
+
+        # Act
+        csv_data = await export_service.get_all_bible_readers_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        assert len(rows) == 2
+        assert rows[0]["#"] == "1"
+        assert rows[1]["#"] == "2"
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_with_empty_list(
+        self, export_service, mock_bible_readers_repository
+    ):
+        """Test line numbers with empty Bible readers list."""
+        # Arrange
+        mock_bible_readers_repository.list_all.return_value = []
+
+        # Act
+        csv_data = await export_service.get_all_bible_readers_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+        headers = reader.fieldnames
+
+        # Should have headers with line number column but no data rows
+        assert headers[0] == "#"
+        assert len(rows) == 0
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_with_large_list(
+        self, export_service, mock_bible_readers_repository, mock_participant_repository
+    ):
+        """Test line numbers with large Bible readers list (3+ digit numbers)."""
+        # Arrange
+        large_bible_readers_list = []
+        for i in range(150):
+            large_bible_readers_list.append(
+                BibleReader(
+                    record_id=f"rec{i:03d}",
+                    where=f"Service {i}",
+                    participants=[],
+                    when=date(2025, 1, 25),
+                    bible=f"Psalm {i}:1",
+                )
+            )
+
+        mock_bible_readers_repository.list_all.return_value = large_bible_readers_list
+        mock_participant_repository.get_by_id.return_value = None
+
+        # Act
+        csv_data = await export_service.get_all_bible_readers_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        assert len(rows) == 150
+        assert rows[0]["#"] == "1"
+        assert rows[99]["#"] == "100"  # 3-digit number
+        assert rows[149]["#"] == "150"  # 3-digit number
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_preserve_data_integrity(
+        self,
+        export_service,
+        mock_bible_readers_repository,
+        mock_participant_repository,
+        sample_bible_readers,
+        sample_participants,
+    ):
+        """Test that adding line numbers doesn't affect other data columns."""
+        # Arrange
+        mock_bible_readers_repository.list_all.return_value = sample_bible_readers
+        mock_participant_repository.get_by_id.side_effect = lambda id: next(
+            (p for p in sample_participants if p.record_id == id), None
+        )
+
+        # Act
+        csv_data = await export_service.get_all_bible_readers_as_csv()
+
+        # Assert
+        reader = csv.DictReader(io.StringIO(csv_data))
+        rows = list(reader)
+
+        # Verify first row data integrity with line numbers
+        first_row = rows[0]
+        assert first_row["#"] == "1"
+        assert first_row["Where"] == "Утренняя служба"
+        assert first_row["When"] == "2025-01-25"
+        assert first_row["Bible"] == "Псалом 23:1-6"
+        assert "Иванов Иван Иванович" in first_row["Participants"]
+        assert "Петрова Мария Сергеевна" in first_row["Participants"]
+
+        # Verify second row data integrity with line numbers
+        second_row = rows[1]
+        assert second_row["#"] == "2"
+        assert second_row["Where"] == "Вечерняя служба"
+        assert second_row["When"] == "2025-01-26"
+        assert second_row["Bible"] == "Иоанн 3:16"
+
+    @pytest.mark.asyncio
+    async def test_line_numbers_in_saved_file(
+        self,
+        export_service,
+        mock_bible_readers_repository,
+        mock_participant_repository,
+        sample_bible_readers,
+    ):
+        """Test that line numbers appear in saved CSV files."""
+        # Arrange
+        mock_bible_readers_repository.list_all.return_value = sample_bible_readers
+        mock_participant_repository.get_by_id.return_value = None
+
+        # Act
+        file_path = await export_service.save_to_file()
+
+        # Assert
+        assert Path(file_path).exists()
+
+        # Verify file content includes line numbers
+        with open(file_path, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+            # Check that line numbers are present in headers and data
+            assert "#,Where,Participants,When,Bible" in content
+            assert "1,Утренняя служба" in content
+            assert "2,Вечерняя служба" in content
+
+        # Cleanup
+        Path(file_path).unlink()
