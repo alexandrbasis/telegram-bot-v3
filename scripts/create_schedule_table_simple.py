@@ -364,7 +364,7 @@ def save_documentation_template():
     """
     mappings = generate_field_mappings()
 
-    output_file = "/Users/alexandrbasis/Desktop/Coding Projects/telegram-bot-v3/scripts/schedule_field_mappings_template.json"
+    output_file = "./scripts/schedule_field_mappings_template.json"
     with open(output_file, 'w') as f:
         json.dump(mappings, f, indent=2)
 
