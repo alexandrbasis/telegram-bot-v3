@@ -49,17 +49,23 @@ class AirtableScheduleRepository:
     def _convert(self, record: Mapping[str, Any]) -> ScheduleEntry:
         return ScheduleEntry.from_airtable_record(record)
 
-    async def fetch_schedule(self, date_from: dt.date, date_to: dt.date) -> List[ScheduleEntry]:
+    async def fetch_schedule(
+        self, date_from: dt.date, date_to: dt.date
+    ) -> List[ScheduleEntry]:
         """Fetch active schedule entries within the inclusive date range."""
         try:
             formula = self._build_formula(date_from, date_to)
-            records = await self.client.list_records(formula=formula, sort=self._sort_params())
+            records = await self.client.list_records(
+                formula=formula, sort=self._sort_params()
+            )
             entries: List[ScheduleEntry] = []
             for rec in records:
                 try:
                     entries.append(self._convert(rec))
                 except Exception as e:
-                    logger.warning("Skipping invalid schedule record %s: %s", rec.get("id"), e)
+                    logger.warning(
+                        "Skipping invalid schedule record %s: %s", rec.get("id"), e
+                    )
             return entries
         except AirtableAPIError as e:
             raise RepositoryError(f"Failed to fetch schedule: {e}", e)

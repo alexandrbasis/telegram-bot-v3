@@ -18,7 +18,8 @@ def format_schedule_day(date_value: dt.date, entries: Iterable[ScheduleEntry]) -
     """Return markdown string for a day's schedule entries in RU format."""
     items: List[str] = []
     for e in sorted(
-        list(entries), key=lambda x: (x.order if x.order is not None else 9999, x.start_time)
+        list(entries),
+        key=lambda x: (x.order if x.order is not None else 9999, x.start_time),
     ):
         time_part = format_time(e.start_time)
         if e.end_time:

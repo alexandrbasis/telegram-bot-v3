@@ -40,12 +40,15 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
     data = query.data or ""
     if data == "schedule:back":
         await query.edit_message_text(
-            "Выберите день расписания:", reply_markup=schedule_days_keyboard(SCHEDULE_DAYS)
+            "Выберите день расписания:",
+            reply_markup=schedule_days_keyboard(SCHEDULE_DAYS),
         )
         return
     if data == "schedule:refresh":
         # No-op: just re-render keyboard
-        await query.edit_message_reply_markup(reply_markup=schedule_days_keyboard(SCHEDULE_DAYS))
+        await query.edit_message_reply_markup(
+            reply_markup=schedule_days_keyboard(SCHEDULE_DAYS)
+        )
         return
 
     if not data.startswith("schedule:"):
@@ -62,13 +65,17 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
         entries = await service.get_schedule_for_date(day)
     except Exception as e:
         logger.error("Schedule fetch failed: %s", e)
-        await query.edit_message_text("❌ Не удалось загрузить расписание. Попробуйте позже.")
+        await query.edit_message_text(
+            "❌ Не удалось загрузить расписание. Попробуйте позже."
+        )
         return
 
     # Filter by date to be safe
     entries = [e for e in entries if e.date == day and e.is_active]
     text = format_schedule_day(day, entries)
-    await query.edit_message_text(text, reply_markup=schedule_days_keyboard(SCHEDULE_DAYS))
+    await query.edit_message_text(
+        text, reply_markup=schedule_days_keyboard(SCHEDULE_DAYS)
+    )
 
 
 def get_schedule_handlers() -> List:
