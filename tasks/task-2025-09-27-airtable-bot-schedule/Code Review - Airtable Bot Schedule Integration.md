@@ -1,21 +1,21 @@
 # Code Review - Airtable Bot Schedule Integration
 
 **Date**: 2025-09-27 | **Reviewer**: AI Code Reviewer  
-**Task**: `tasks/task-2025-09-27-airtable-bot-schedule/Airtable Bot Schedule Integration.md` | **PR**: https://github.com/alexandrbasis/telegram-bot-v3/pull/71 | **Status**: ❌ NEEDS FIXES
+**Task**: `tasks/task-2025-09-27-airtable-bot-schedule/Airtable Bot Schedule Integration.md` | **PR**: https://github.com/alexandrbasis/telegram-bot-v3/pull/71 | **Status**: 🔄 READY FOR RE-REVIEW
 
 ## Summary
-Implementation adds schedule models, repository, service with caching, Telegram handlers, formatting utilities, and extensive Airtable scripting assets. Core functionality meets high-level requirements, but several critical issues block safe go-live: incorrect Airtable formula filtering causes missing events; schedule feature always disabled in production due to missing env flag docs; service instantiation in handler breaks DI/testing strategy; missing keyboard export/registration prevents handler wiring. Documentation claims full completion without covering enablement steps.
+Implementation adds schedule models, repository, service with caching, Telegram handlers, formatting utilities, and Airtable scripting assets. Following fixes were applied: inclusive Airtable date filtering, documented feature flag with deterministic enablement in `main.py`, DI via service factory for handlers, and keyboard export. CI is green.
 
 ## Requirements Compliance
 ### ✅ Completed
 - [x] Airtable schedule field mappings documented and scripted — good metadata coverage.
 - [x] Schedule model and formatter validated by unit tests.
 
-### ❌ Missing/Incomplete
-- [ ] `/schedule` command reachable in production; feature flag absent in docs/env templates.
-- [ ] Airtable query must include boundary dates; current formula excludes same-day events.
-- [ ] Service layer should honor existing dependency injection/testing patterns.
-- [ ] Task/test plan coverage claims (state transitions, error handling, integration) not backed by tests.
+### 🔄 Addressed / Remaining
+- [x] `/schedule` command reachable in production; feature flag documented in `.env.example` and `docs/technical/configuration.md`; gating via `settings.application.enable_schedule_feature` in `main.py`.
+- [x] Airtable query includes boundary dates; formula fixed and covered by tests.
+- [x] Service layer honors dependency injection/caching via `service_factory.get_schedule_service()`.
+- [~] Test plan coverage: repository unit tests added; service/handler/integration tests remain TODO.
 
 ## Quality Assessment
 **Overall**: ❌ Needs Improvement  
@@ -24,22 +24,22 @@ Implementation adds schedule models, repository, service with caching, Telegram 
 **Security**: Auth utils change OK; no new security findings, but feature enablement relies on undocumented env var
 
 ## Testing & Documentation
-**Testing**: ❌ Insufficient — only model tests added; missing service, repo, handler, formatter behavior tests promised in plan.  
-**Test Execution Results**: `./venv/bin/pytest tests -v` → 1564 passed, 9 skipped (existing suite). No schedule-specific tests observed.  
-**Documentation**: 🔄 Partial — Airtable setup docs added, but enabling instructions (`ENABLE_SCHEDULE_FEATURE`) missing from `.env.example`, setup guides, and PR description; task changelog marks steps done despite gaps.
+**Testing**: 🔄 Improved — added repository tests for inclusive date boundaries and sorting; service/handler/integration tests pending.  
+**Test Execution Results**: `./venv/bin/pytest tests -v` → 1566 passed, 9 skipped.  
+**Documentation**: ✅ Updated — Feature flag `ENABLE_SCHEDULE_FEATURE` added to `.env.example` and documented; task doc updated; PR description to reflect changes.
 
 ## Issues Checklist
 
 ### 🚨 Critical (Must Fix Before Merge)
-- [ ] **Airtable formula excludes boundary dates** → Events on `date_from`/`date_to` dropped; users miss same-day slots → Use `IS_AFTER({Date}, '2025-11-13')` formula is incorrect; replace with `IS_AFTER({Date}, DATEADD('2025-11-13', -1, 'days'))` or use `IS_SAME` / `AND({Date} >= ...)` style to include boundaries → `src/data/airtable/airtable_schedule_repo.py` → Add regression test in `tests/unit/test_data/test_airtable/test_airtable_schedule_repo.py`.
-- [ ] **Schedule feature never enabled in production** → `main.py` guards handlers behind `ENABLE_SCHEDULE_FEATURE`, but `.env.example`, docs, task instructions omit flag → Adds requirement violation: command unreachable → Document and default behavior (consider enabling by default) → `.env.example`, `docs/development/setup_guide.md`, task doc.
-- [ ] **Handlers bypass DI & caching** → `handle_schedule_callback` constructs `ScheduleService()` per call; bypasses shared factory, complicates testing and caching TTL guarantee → Inject via application context or use existing service factory (e.g., `get_service_factory().get_schedule_service()`) → `src/bot/handlers/schedule_handlers.py`.
-- [ ] **Handlers not registered / keyboard export missing** → New handler module not added to routers; keyboard not exported → `/schedule` unusable even if flag set → Update `src/bot/handlers/__init__.py`, integrate with conversation/router, ensure tests cover registration → same for `src/bot/keyboards/__init__.py`.
+- [x] **Airtable formula excludes boundary dates** → Fixed with inclusive `OR(IS_AFTER, IS_SAME)` / `OR(IS_BEFORE, IS_SAME)` logic; added regression tests → `src/data/airtable/airtable_schedule_repo.py`, `tests/unit/test_data/test_airtable/test_airtable_schedule_repo.py`.
+- [x] **Schedule feature never enabled in production** → Documented flag; `.env.example` updated; deterministic gating via `settings.application.enable_schedule_feature` in `src/main.py`.
+- [x] **Handlers bypass DI & caching** → Refactored to use `service_factory.get_schedule_service()`; respects caching/testing strategy → `src/bot/handlers/schedule_handlers.py`, `src/services/service_factory.py`.
+- [x] **Handlers not registered / keyboard export missing** → Keyboard exported; handlers registered behind feature flag in `main.py` → `src/bot/keyboards/__init__.py`, `src/main.py`.
 
 ### ⚠️ Major (Should Fix)
-- [ ] **Formula string malformed** → Current formula uses `IS_AFTER` with addition `+ 1`; Airtable formula will error → Replace with valid AND clause using `DATETIME_PARSE` or direct comparison → `src/data/airtable/airtable_schedule_repo.py`.
-- [ ] **Missing negative-path tests** → Test plan promised coverage for empty schedules, Airtable errors, handler states; absent tests reduce confidence → Add tests in `tests/unit/test_services/test_schedule_service.py`, `tests/unit/test_bot_handlers/test_schedule_handlers.py`, etc.
-- [ ] **Caching TTL upper bound** → Service enforces TTL ≤1h; requirement states ≤10m; consider default 600 but allow config? Document rationale/test for TTL behavior.
+- [x] **Formula string malformed** → Corrected per inclusive boundary logic in repo; validated by tests.
+- [ ] **Missing negative-path tests** → Add tests for empty schedules, Airtable errors, handler states → `tests/unit/test_services/test_schedule_service.py`, `tests/unit/test_bot_handlers/test_schedule_handlers.py`.
+- [ ] **Caching TTL upper bound** → Document/verify TTL adherence to ≤10m; add tests if applicable.
 
 ### 💡 Minor (Nice to Fix)
 - [ ] **Schedule formatter sorting** → When `order` missing, fallback 9999 but still sorts by start_time only; consider sorting by start_time first to avoid inter-day mixing; add docstring.
@@ -47,20 +47,18 @@ Implementation adds schedule models, repository, service with caching, Telegram 
 
 ## Recommendations
 ### Immediate Actions
-1. Fix Airtable formula to include inclusive range; add unit tests covering boundary dates and invalid formula detection.  
-2. Register schedule handlers/keyboards with bot factory and ensure feature flag documented/enabled.  
-3. Refactor handler to use injected service (similar to other handlers).  
-4. Add missing tests per plan (service caching, handler states, error messages).  
-5. Update docs/env templates/task checklist to reflect enablement.
+1. Add remaining tests per plan (service caching, handler states, error messages).  
+2. Document/verify cache TTL (≤10m) behavior and add tests.  
+3. Optional: formatter/unit tests and integration flow tests.
 
 ### Future Improvements
 1. Consider background refresh job instead of per-request fetch to meet freshness SLA.  
 2. Evaluate central config for schedule date range to avoid magic constants.
 
 ## Final Decision
-**Status**: ❌ NEEDS FIXES
+**Status**: 🔄 READY FOR RE-REVIEW
 
-**Criteria**: Critical functionality gaps (unreachable command, incorrect Airtable filtering) and missing test coverage prevent approval. Resolve Critical/Major issues and resubmit.
+**Criteria**: All Critical issues addressed; CI green; repository-level tests added. Major items remaining are test coverage for negative paths and TTL documentation.
 
 ## Developer Instructions
 ### Fix Issues:
