@@ -18,6 +18,7 @@ from src.utils.export_utils import (
     extract_participant_count_from_csv,
     format_export_success_message,
     format_line_number,
+    generate_readable_export_filename,
     order_rows_by_view_headers,
 )
 
@@ -967,3 +968,119 @@ class TestSparseRecordScenarios:
         assert result[2]["Name"] == "Bob"
         assert result[2]["Email"] == ""
         assert result[2]["Phone"] == "555-0123"
+
+
+class TestReadableFilenameGeneration:
+    """Test human-readable filename generation for exports."""
+
+    def test_generate_filename_basic_format(self):
+        """Test basic filename generation with DD_MM_YYYY format."""
+        from datetime import datetime
+
+        # Mock datetime for consistent testing
+        test_date = datetime(2025, 9, 27, 15, 30, 45)
+
+        result = generate_readable_export_filename("candidates", test_date)
+
+        # Should follow pattern: candidates_27_09_2025_<suffix>.csv
+        assert result.startswith("candidates_27_09_2025_")
+        assert result.endswith(".csv")
+        assert len(result.split("_")) == 5  # type_dd_mm_yyyy_suffix
+
+    def test_generate_filename_all_export_types(self):
+        """Test filename generation for all supported export types."""
+        from datetime import datetime
+
+        test_date = datetime(2025, 12, 31, 23, 59, 59)
+        export_types = ["candidates", "team", "departments", "roe", "bible_readers"]
+
+        for export_type in export_types:
+            result = generate_readable_export_filename(export_type, test_date)
+
+            assert result.startswith(f"{export_type}_31_12_2025_")
+            assert result.endswith(".csv")
+
+    def test_generate_filename_ascii_normalization(self):
+        """Test filename normalization for non-ASCII export types."""
+        from datetime import datetime
+
+        test_date = datetime(2025, 1, 15)
+
+        # Test with export type that might contain non-ASCII characters
+        result = generate_readable_export_filename("роэ", test_date)
+
+        # Should normalize to ASCII-safe format
+        assert result.startswith("roe_15_01_2025_")
+        assert result.endswith(".csv")
+
+    def test_generate_filename_unknown_type_handling(self):
+        """Test filename generation with unknown export types."""
+        from datetime import datetime
+
+        test_date = datetime(2025, 6, 10)
+
+        result = generate_readable_export_filename("unknown_type", test_date)
+
+        assert result.startswith("unknown_type_10_06_2025_")
+        assert result.endswith(".csv")
+
+    def test_generate_filename_uniqueness_suffix(self):
+        """Test that filename includes uniqueness suffix."""
+        from datetime import datetime
+
+        test_date = datetime(2025, 3, 5)
+
+        result1 = generate_readable_export_filename("candidates", test_date)
+        result2 = generate_readable_export_filename("candidates", test_date)
+
+        # Both should have same date part but different suffixes
+        assert result1.startswith("candidates_05_03_2025_")
+        assert result2.startswith("candidates_05_03_2025_")
+        assert result1 != result2  # Should be unique due to suffix
+
+    def test_generate_filename_edge_date_cases(self):
+        """Test filename generation with edge date cases."""
+        from datetime import datetime
+
+        # Test single-digit day and month
+        test_date1 = datetime(2025, 1, 1)
+        result1 = generate_readable_export_filename("team", test_date1)
+        assert result1.startswith("team_01_01_2025_")
+
+        # Test leap year
+        test_date2 = datetime(2024, 2, 29)  # Leap year
+        result2 = generate_readable_export_filename("roe", test_date2)
+        assert result2.startswith("roe_29_02_2024_")
+
+    def test_generate_filename_without_datetime_parameter(self):
+        """Test filename generation using current datetime when not provided."""
+        # This test verifies the function can be called without datetime
+        result = generate_readable_export_filename("candidates")
+
+        # Should still follow the pattern with current date
+        parts = result.replace(".csv", "").split("_")
+        assert len(parts) == 5
+        assert parts[0] == "candidates"
+        # Parts 1, 2, 3 should be DD, MM, YYYY (current date)
+        assert parts[1].isdigit() and len(parts[1]) == 2  # DD
+        assert parts[2].isdigit() and len(parts[2]) == 2  # MM
+        assert parts[3].isdigit() and len(parts[3]) == 4  # YYYY
+
+    def test_generate_filename_special_characters_normalization(self):
+        """Test filename handles special characters in export types."""
+        from datetime import datetime
+
+        test_date = datetime(2025, 7, 20)
+
+        # Test with various special characters that might appear
+        test_cases = [
+            ("bible readers", "bible_readers_20_07_2025_"),
+            ("test-type", "test_type_20_07_2025_"),
+            ("type/with/slashes", "type_with_slashes_20_07_2025_"),
+            ("type with spaces", "type_with_spaces_20_07_2025_"),
+        ]
+
+        for input_type, expected_prefix in test_cases:
+            result = generate_readable_export_filename(input_type, test_date)
+            assert result.startswith(expected_prefix)
+            assert result.endswith(".csv")
