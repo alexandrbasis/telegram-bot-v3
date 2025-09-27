@@ -664,10 +664,7 @@ class TestSparseRecordScenarios:
         records = [
             {
                 # First record missing "Email" and "Phone" fields
-                "fields": {
-                    "Name": "John Doe",
-                    "Department": "IT"
-                }
+                "fields": {"Name": "John Doe", "Department": "IT"}
             },
             {
                 # Second record has all fields including those missing from first
@@ -675,7 +672,7 @@ class TestSparseRecordScenarios:
                     "Name": "Jane Smith",
                     "Department": "HR",
                     "Email": "jane@example.com",  # Missing from first record
-                    "Phone": "555-0123"  # Missing from first record
+                    "Phone": "555-0123",  # Missing from first record
                 }
             },
             {
@@ -683,9 +680,9 @@ class TestSparseRecordScenarios:
                 "fields": {
                     "Name": "Bob Wilson",
                     "Email": "bob@example.com",  # Has email but missing department & phone
-                    "Position": "Manager"  # New field not in first records
+                    "Position": "Manager",  # New field not in first records
                 }
-            }
+            },
         ]
 
         headers = extract_headers_from_view_records(records)
@@ -702,9 +699,19 @@ class TestSparseRecordScenarios:
         # Simulate real-world sparse data where different records have different fields
         rows = [
             {"Name": "John Doe", "Department": "IT"},  # Missing Email, Phone, Position
-            {"Name": "Jane Smith", "Email": "jane@example.com", "Phone": "555-0123"},  # Missing Department, Position
-            {"Name": "Bob Wilson", "Position": "Manager"},  # Missing Department, Email, Phone
-            {"Department": "Finance", "Email": "finance@example.com"}  # Missing Name, Phone, Position
+            {
+                "Name": "Jane Smith",
+                "Email": "jane@example.com",
+                "Phone": "555-0123",
+            },  # Missing Department, Position
+            {
+                "Name": "Bob Wilson",
+                "Position": "Manager",
+            },  # Missing Department, Email, Phone
+            {
+                "Department": "Finance",
+                "Email": "finance@example.com",
+            },  # Missing Name, Phone, Position
         ]
 
         result = order_rows_by_view_headers(view_headers, original_headers, rows)
@@ -741,18 +748,18 @@ class TestSparseRecordScenarios:
                 "id": "rec1",
                 "fields": {
                     "FullNameRU": "Иванов Иван",
-                    "Status": "Candidate"
+                    "Status": "Candidate",
                     # Missing Email, Phone, Notes - these fields exist in view but not populated
-                }
+                },
             },
             {
                 "id": "rec2",
                 "fields": {
                     "FullNameRU": "Петров Петр",
                     "Email": "petrov@example.com",
-                    "Phone": "+7-123-456-7890"
+                    "Phone": "+7-123-456-7890",
                     # Missing Status, Notes
-                }
+                },
             },
             {
                 "id": "rec3",
@@ -760,10 +767,10 @@ class TestSparseRecordScenarios:
                     "FullNameRU": "Сидоров Сидор",
                     "Status": "Active",
                     "Email": "sidorov@example.com",
-                    "Notes": "Special instructions"
+                    "Notes": "Special instructions",
                     # Missing Phone
-                }
-            }
+                },
+            },
         ]
 
         # Step 1: Extract headers from view records (should get ALL fields)
@@ -807,11 +814,7 @@ class TestSparseRecordScenarios:
     def test_extract_headers_extremely_sparse_first_record(self):
         """Test header extraction when first record has minimal fields."""
         records = [
-            {
-                "fields": {
-                    "Name": "John"  # Only one field in first record
-                }
-            },
+            {"fields": {"Name": "John"}},  # Only one field in first record
             {
                 "fields": {
                     "Name": "Jane",
@@ -819,15 +822,22 @@ class TestSparseRecordScenarios:
                     "Department": "HR",
                     "Phone": "555-0123",
                     "Manager": "Bob Smith",
-                    "StartDate": "2025-01-01"
+                    "StartDate": "2025-01-01",
                 }
-            }
+            },
         ]
 
         headers = extract_headers_from_view_records(records)
 
         # Should capture all fields, not just the one from first record
-        expected_headers = ["Name", "Email", "Department", "Phone", "Manager", "StartDate"]
+        expected_headers = [
+            "Name",
+            "Email",
+            "Department",
+            "Phone",
+            "Manager",
+            "StartDate",
+        ]
         assert headers == expected_headers
 
     def test_order_rows_with_line_numbers_and_sparse_data(self):
@@ -838,7 +848,7 @@ class TestSparseRecordScenarios:
         rows = [
             {"#": "1", "Name": "John"},  # Missing Email, Phone
             {"#": "2", "Email": "jane@example.com"},  # Missing Name, Phone
-            {"#": "3", "Name": "Bob", "Phone": "555-0123"}  # Missing Email
+            {"#": "3", "Name": "Bob", "Phone": "555-0123"},  # Missing Email
         ]
 
         result = order_rows_by_view_headers(view_headers, original_headers, rows)
