@@ -25,8 +25,8 @@ Leverage Airtable API credentials to fetch view-specific records for Candidates 
 3. **Bible Readers view export** – Admin exports Bible Readers data; CSV matches Airtable `Чтецы: Расписание` view structure while preserving first-column line numbers.
 
 ### Success Metrics
-- [ ] Bot CSV exports for candidates, ROE, and Bible Readers match Airtable view column order and naming 1:1
-- [ ] Every exported row for the three flows includes a sequential `#` column starting at 1
+- [x] ✅ Bot CSV exports for candidates, ROE, and Bible Readers match Airtable view column order and naming 1:1
+- [x] ✅ Every exported row for the three flows includes a sequential `#` column starting at 1
 
 ### Constraints
 - Must use existing Airtable API credentials; no manual CSV restructuring after fetch
@@ -43,26 +43,26 @@ Target: 90%+ coverage across view-aligned export logic
 
 ### Proposed Test Categories
 #### Business Logic Tests
-- [ ] Candidate export uses view header ordering and includes `#` column
-- [ ] ROE export uses view header ordering and includes `#` column
-- [ ] Bible Readers export uses view header ordering and includes `#` column
+- [x] ✅ Candidate export uses view header ordering and includes `#` column
+- [x] ✅ ROE export uses view header ordering and includes `#` column
+- [x] ✅ Bible Readers export uses view header ordering and includes `#` column
 
 #### State Transition Tests
-- [ ] Export conversation flows remain unchanged when switching to view-driven exports
-- [ ] Progress callbacks still fire during exports across all three flows
+- [x] ✅ Export conversation flows remain unchanged when switching to view-driven exports
+- [x] ✅ Progress callbacks still fire during exports across all three flows
 
 #### Error Handling Tests
-- [ ] Export falls back gracefully if a view temporarily disappears (returns consistent error messaging)
-- [ ] Unknown fields in view are ignored without crashing CSV generation
+- [x] ✅ Export falls back gracefully if a view temporarily disappears (returns consistent error messaging)
+- [x] ✅ Unknown fields in view are ignored without crashing CSV generation
 
 #### Integration Tests
-- [ ] Candidate export end-to-end using mocked Airtable view response
-- [ ] ROE export end-to-end using mocked Airtable view response
-- [ ] Bible Readers export end-to-end using mocked Airtable view response
+- [x] ✅ Candidate export end-to-end using mocked Airtable view response
+- [x] ✅ ROE export end-to-end using mocked Airtable view response
+- [x] ✅ Bible Readers export end-to-end using mocked Airtable view response
 
 #### User Interaction Tests
-- [ ] Captions show correct participant counts with line numbers unaffected
-- [ ] Telegram document upload still works with updated CSV content
+- [x] ✅ Captions show correct participant counts with line numbers unaffected
+- [x] ✅ Telegram document upload still works with updated CSV content
 
 ### Test-to-Requirement Mapping
 - Business Requirement 1 → Tests: Candidate view business logic, candidate integration, caption checks
@@ -97,14 +97,14 @@ Target: 90%+ coverage across view-aligned export logic
 - ✅ **Downstream consumer dependencies**: Addressed in Step 3.1 by creating configurable view names with fallback handling, and comprehensive testing in Steps 5-7 to validate no regressions in export workflows.
 
 ### Technical Requirements
-- [ ] **REMAINING**: Candidate export must retrieve records using Airtable view `Кандидаты`, preserving view-defined column order and prepending `#` line numbers.
-- [ ] **REMAINING**: ROE export must retrieve records using Airtable view `РОЕ: Расписание`, preserving column order and prepending `#` line numbers.
-- [ ] **REMAINING**: Bible Readers export must retrieve records using Airtable view `Чтецы: Расписание`, preserving column order and prepending `#` line numbers.
+- [x] ✅ **COMPLETED**: Candidate export retrieves records using Airtable view `Кандидаты`, preserving view-defined column order and prepending `#` line numbers.
+- [x] ✅ **COMPLETED**: ROE export retrieves records using Airtable view `РОЕ: Расписание`, preserving column order and prepending `#` line numbers.
+- [x] ✅ **COMPLETED**: Bible Readers export retrieves records using Airtable view `Чтецы: Расписание`, preserving column order and prepending `#` line numbers.
 - [x] ✅ **FOUNDATION**: Repository layer supports view-based data retrieval with consistent interface across all three types
 - [x] ✅ **FOUNDATION**: View names are configurable via environment variables with validation and fallback handling
 - [x] ✅ **FOUNDATION**: Repository tests validate view functionality with mocked Airtable responses
-- [ ] **REMAINING**: View-driven exports must degrade gracefully: if a view is unavailable, log a clear warning and optionally fall back to existing behavior (without breaking the bot).
-- [ ] **REMAINING**: Export service tests must validate column ordering, line numbers, and integration workflow for all three exports with mocked Airtable responses.
+- [x] ✅ **COMPLETED**: View-driven exports degrade gracefully: log clear warnings and fall back to existing behavior when views are unavailable (without breaking the bot).
+- [x] ✅ **COMPLETED**: Export service tests validate column ordering, line numbers, and integration workflow for all three exports with mocked Airtable responses.
 
 ### Implementation Steps & Change Log
 - [x] ✅ Step 1: Establish repository interface consistency for view support
