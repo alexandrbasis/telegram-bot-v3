@@ -61,13 +61,7 @@ class TestExportTypeMapping:
 
     def test_all_defined_export_types_have_translations(self):
         """Test that all expected export types have Russian translations."""
-        expected_types = [
-            "candidates",
-            "team",
-            "departments",
-            "roe",
-            "bible_readers"
-        ]
+        expected_types = ["candidates", "team", "departments", "roe", "bible_readers"]
 
         for export_type in expected_types:
             result = get_russian_export_description(export_type)

@@ -337,8 +337,12 @@ class TestExportFileDeliveryWithRussianDescriptions:
         csv_data = "#,Name,Age\n1,John Doe,25\n2,Jane Smith,30"
 
         # Mock format_export_success_message to capture the call
-        with patch("src.bot.handlers.export_conversation_handlers.format_export_success_message") as mock_format:
-            mock_format.return_value = "✅ Экспорт завершен успешно!\nВыгружены: Кандидаты"
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
+            mock_format.return_value = (
+                "✅ Экспорт завершен успешно!\nВыгружены: Кандидаты"
+            )
 
             await _send_export_file(csv_data, "participants_candidates", query, 123)
 
@@ -361,8 +365,12 @@ class TestExportFileDeliveryWithRussianDescriptions:
 
         csv_data = "#,Name,Role\n1,John Doe,TEAM\n2,Jane Smith,TEAM"
 
-        with patch("src.bot.handlers.export_conversation_handlers.format_export_success_message") as mock_format:
-            mock_format.return_value = "✅ Экспорт завершен успешно!\nВыгружены: Тим Мемберы"
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
+            mock_format.return_value = (
+                "✅ Экспорт завершен успешно!\nВыгружены: Тим Мемберы"
+            )
 
             await _send_export_file(csv_data, "participants_team", query, 123)
 
@@ -383,7 +391,9 @@ class TestExportFileDeliveryWithRussianDescriptions:
 
         csv_data = "#,Session,Date\n1,Session 1,2025-01-01\n2,Session 2,2025-01-02"
 
-        with patch("src.bot.handlers.export_conversation_handlers.format_export_success_message") as mock_format:
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
             mock_format.return_value = "✅ Экспорт завершен успешно!\nВыгружены: РОЭ"
 
             await _send_export_file(csv_data, "roe_sessions", query, 123)
@@ -396,7 +406,9 @@ class TestExportFileDeliveryWithRussianDescriptions:
             assert call_kwargs["export_type"] == "roe"
 
     @pytest.mark.asyncio
-    async def test_send_export_file_includes_russian_description_for_bible_readers(self):
+    async def test_send_export_file_includes_russian_description_for_bible_readers(
+        self,
+    ):
         """Test that Bible readers export includes Russian description in success message."""
         query = AsyncMock(spec=CallbackQuery)
         query.message = AsyncMock(spec=Message)
@@ -405,7 +417,9 @@ class TestExportFileDeliveryWithRussianDescriptions:
 
         csv_data = "#,Name,Passage\n1,John Doe,Psalm 23\n2,Jane Smith,Matthew 5"
 
-        with patch("src.bot.handlers.export_conversation_handlers.format_export_success_message") as mock_format:
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
             mock_format.return_value = "✅ Экспорт завершен успешно!\nВыгружены: Чтецы"
 
             await _send_export_file(csv_data, "bible_readers", query, 123)
@@ -427,8 +441,12 @@ class TestExportFileDeliveryWithRussianDescriptions:
 
         csv_data = "#,Name,Department\n1,John Doe,IT\n2,Jane Smith,HR"
 
-        with patch("src.bot.handlers.export_conversation_handlers.format_export_success_message") as mock_format:
-            mock_format.return_value = "✅ Экспорт завершен успешно!\nВыгружены: Департаменты"
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
+            mock_format.return_value = (
+                "✅ Экспорт завершен успешно!\nВыгружены: Департаменты"
+            )
 
             await _send_export_file(csv_data, "participants_admin", query, 123)
 

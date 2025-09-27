@@ -274,7 +274,8 @@ async def handle_export_command(
                             file_size_mb=file_size_mb,
                             timestamp=f"{ts_utc} UTC",
                             csv_data=csv_data,
-                            export_type=None,  # Legacy all-participants export - no specific type
+                            # Legacy all-participants export - no specific type
+                            export_type=None,
                         )
 
                         await update.message.reply_document(

@@ -30,7 +30,10 @@ from src.models.participant import Department, Role
 from src.services import service_factory
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
-from src.utils.export_utils import format_export_success_message, generate_readable_export_filename
+from src.utils.export_utils import (
+    format_export_success_message,
+    generate_readable_export_filename,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -423,7 +426,10 @@ def _get_export_type_from_filename_prefix(filename_prefix: str) -> Optional[str]
     }
 
     # Handle department exports (e.g., "participants_admin", "participants_roe")
-    if filename_prefix.startswith("participants_") and filename_prefix not in prefix_to_type:
+    if (
+        filename_prefix.startswith("participants_")
+        and filename_prefix not in prefix_to_type
+    ):
         return "departments"
 
     return prefix_to_type.get(filename_prefix)
@@ -482,7 +488,9 @@ async def _send_export_file(
             )
 
             # Generate human-readable filename
-            readable_filename = generate_readable_export_filename(export_type or "export")
+            readable_filename = generate_readable_export_filename(
+                export_type or "export"
+            )
 
             await query.message.reply_document(
                 document=file,

@@ -732,7 +732,9 @@ class ParticipantExportService:
         logger.info(f"Fallback export completed with {total_count} records")
         return csv_string
 
-    def _get_export_type_from_prefix(self, filename_prefix: Optional[str]) -> Optional[str]:
+    def _get_export_type_from_prefix(
+        self, filename_prefix: Optional[str]
+    ) -> Optional[str]:
         """
         Map filename prefix to export type for readable filename generation.
 
@@ -752,14 +754,19 @@ class ParticipantExportService:
         }
 
         # Check for department exports (e.g., "participants_admin")
-        if filename_prefix.startswith("participants_") and filename_prefix not in prefix_mappings:
+        if (
+            filename_prefix.startswith("participants_")
+            and filename_prefix not in prefix_mappings
+        ):
             return "departments"
 
         return prefix_mappings.get(filename_prefix, "participants")
 
     def _is_predefined_prefix(self, filename_prefix: Optional[str]) -> bool:
         """
-        Check if filename prefix is a predefined semantic prefix that should be mapped to export types.
+        Check if filename prefix is a predefined semantic prefix.
+
+        Should be mapped to export types.
 
         Args:
             filename_prefix: Optional filename prefix from export methods
@@ -781,7 +788,10 @@ class ParticipantExportService:
             return True
 
         # Check for department exports (e.g., "participants_admin")
-        if filename_prefix.startswith("participants_") and filename_prefix not in predefined_prefixes:
+        if (
+            filename_prefix.startswith("participants_")
+            and filename_prefix not in predefined_prefixes
+        ):
             return True
 
         return False
@@ -796,8 +806,8 @@ class ParticipantExportService:
         Returns:
             Filename with custom prefix, readable date, and unique suffix
         """
-        from datetime import datetime
         import uuid
+        from datetime import datetime
 
         # Use default prefix if none provided
         if not filename_prefix:

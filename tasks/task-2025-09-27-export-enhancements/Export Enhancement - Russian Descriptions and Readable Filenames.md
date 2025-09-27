@@ -193,6 +193,24 @@ Target: 90%+ coverage across all implementation areas including message formatti
   - **Test Results**: All 138 tests passing, including previously failing `test_save_with_custom_filename`
   - **Backward Compatibility**: ✅ Fully preserved - custom prefixes honored while maintaining readable date format
 
+### Code Review Fixes
+
+- [x] ✅ Fix: Missing Russian Descriptions for Main Participants Export - Completed 2025-09-27 19:48
+  - **Issue**: Main participants export (`participants_all`) showed no Russian description in success messages and used fallback filename prefix (`export_` instead of `participants_`)
+  - **Root Cause**: `_get_export_type_from_filename_prefix()` mapped `'participants_all'` to `None`, breaking both localization and filename generation
+  - **Solution**: Added proper mapping and Russian translation for general participants export
+  - **Changes**:
+    - Added `"participants": "Участники"` to `EXPORT_TYPE_RUSSIAN` dictionary
+    - Changed mapping from `"participants_all": None` to `"participants_all": "participants"`
+  - **Files Modified**:
+    - `src/utils/export_type_mapping.py:12` - Added Russian translation
+    - `src/bot/handlers/export_conversation_handlers.py:418` - Fixed mapping
+  - **Test Results**: All 1557 tests passing, manual verification confirms correct behavior
+  - **Impact**:
+    - Success messages now include "Выгружены: Участники" for participants_all export
+    - Filenames now generate as `participants_DD_MM_YYYY_<suffix>.csv` instead of `export_DD_MM_YYYY_<suffix>.csv`
+  - **Acceptance Criteria**: ✅ Both critical acceptance criteria now fully met
+
 ### Task Splitting Evaluation
 **Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-09-27
 **Decision**: No Split Needed
