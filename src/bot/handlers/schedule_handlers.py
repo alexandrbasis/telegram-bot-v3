@@ -54,10 +54,16 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
     if not data.startswith("schedule:"):
         return
     _, iso = data.split(":", 1)
+    iso = data.replace("schedule_date_", "")
     try:
         day = dt.date.fromisoformat(iso)
-    except Exception:
+        # Validate date is within expected range
+        if day not in SCHEDULE_DAYS:
+            raise ValueError("Date outside schedule range")
+    except (ValueError, TypeError) as e:
+        logger.warning("Invalid date in callback: %s - %s", iso, e)
         await query.edit_message_text("❌ Некорректная дата.")
+        return
         return
 
     service = ScheduleService()
