@@ -265,13 +265,22 @@ class TestGetAllBibleReadersAsCSV:
         def progress_callback(current: int, total: int):
             progress_calls.append((current, total))
 
+        # Reset mocks to ensure clean state
+        mock_bible_readers_repository.reset_mock()
+        mock_participant_repository.reset_mock()
+
         service = BibleReadersExportService(
             bible_readers_repository=mock_bible_readers_repository,
             participant_repository=mock_participant_repository,
             progress_callback=progress_callback,
         )
 
+        # Mock both legacy and view-based methods since service auto-selects
         mock_bible_readers_repository.list_all.return_value = sample_bible_readers
+        mock_bible_readers_repository.list_view_records.return_value = [
+            {"id": br.record_id, "fields": br.to_airtable_fields()}
+            for br in sample_bible_readers
+        ]
         mock_participant_repository.get_by_id.return_value = None
 
         # Act
@@ -279,8 +288,8 @@ class TestGetAllBibleReadersAsCSV:
 
         # Assert
         assert len(progress_calls) > 0
-        assert progress_calls[0] == (0, 2)  # Initial progress
-        assert progress_calls[-1][0] == 2  # Final progress
+        assert progress_calls[0] == (0, len(sample_bible_readers))  # Initial progress
+        assert progress_calls[-1][0] == len(sample_bible_readers)  # Final progress
 
 
 class TestParticipantHydration:
@@ -577,6 +586,11 @@ class TestAsyncExportInterface:
         """Test that export_to_csv_async method exists and works like get_all_bible_readers_as_csv."""
         # Arrange
         mock_bible_readers_repository.list_all.return_value = sample_bible_readers
+        # Also mock view-based method since service auto-selects
+        mock_bible_readers_repository.list_view_records.return_value = [
+            {"id": br.record_id, "fields": br.to_airtable_fields()}
+            for br in sample_bible_readers
+        ]
 
         # Mock participant hydration
         async def mock_get_by_id(participant_id):
@@ -614,6 +628,11 @@ class TestAsyncExportInterface:
         """Test synchronous export_to_csv wrapper when no event loop is running."""
         # Arrange
         mock_bible_readers_repository.list_all.return_value = sample_bible_readers
+        # Also mock view-based method since service auto-selects
+        mock_bible_readers_repository.list_view_records.return_value = [
+            {"id": br.record_id, "fields": br.to_airtable_fields()}
+            for br in sample_bible_readers
+        ]
 
         # Mock participant hydration
         async def mock_get_by_id(participant_id):

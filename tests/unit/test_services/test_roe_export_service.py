@@ -167,6 +167,11 @@ class TestGetAllROEAsCSV:
         """Test CSV export with participant data hydration."""
         # Arrange
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
         mock_participant_repository.get_by_id.side_effect = lambda id: next(
             (p for p in sample_participants if p.record_id == id), None
         )
@@ -319,7 +324,17 @@ class TestGetAllROEAsCSV:
             progress_callback=progress_callback,
         )
 
+        # Mock both legacy and view-based methods since service auto-selects
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
         mock_participant_repository.get_by_id.return_value = None
 
         # Act
@@ -472,6 +487,11 @@ class TestCSVFormattingAndFileOperations:
         """Test saving CSV export to file."""
         # Arrange
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
         mock_participant_repository.get_by_id.return_value = None
 
         # Act
@@ -498,6 +518,11 @@ class TestCSVFormattingAndFileOperations:
             ROE(record_id=f"rec{i}", roe_topic=f"Topic {i}") for i in range(50)
         ]
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
 
         # Act
         estimated_size = await export_service.estimate_file_size()
@@ -549,6 +574,11 @@ class TestLineNumberIntegration:
         """Test that CSV rows include sequential line numbers starting from 1."""
         # Arrange
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
         mock_participant_repository.get_by_id.return_value = None
 
         # Act
@@ -631,6 +661,11 @@ class TestLineNumberIntegration:
         """Test that adding line numbers doesn't affect other data columns."""
         # Arrange
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
         mock_participant_repository.get_by_id.side_effect = lambda id: next(
             (p for p in sample_participants if p.record_id == id), None
         )
@@ -672,6 +707,11 @@ class TestLineNumberIntegration:
         """Test that line numbers appear in saved CSV files."""
         # Arrange
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
         mock_participant_repository.get_by_id.return_value = None
 
         # Act
@@ -709,6 +749,11 @@ class TestAsyncExportInterface:
         """Test that export_to_csv_async method exists and works like get_all_roe_as_csv."""
         # Arrange
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
 
         # Mock participant hydration
         async def mock_get_by_id(participant_id):
@@ -746,6 +791,11 @@ class TestAsyncExportInterface:
         """Test synchronous export_to_csv wrapper when no event loop is running."""
         # Arrange
         mock_roe_repository.list_all.return_value = sample_roe_sessions
+        # Also mock view-based method since service auto-selects
+        mock_roe_repository.list_view_records.return_value = [
+            {"id": roe.record_id, "fields": roe.to_airtable_fields()}
+            for roe in sample_roe_sessions
+        ]
 
         # Mock participant hydration
         async def mock_get_by_id(participant_id):
