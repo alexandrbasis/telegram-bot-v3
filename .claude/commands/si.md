@@ -1,6 +1,6 @@
 # Start Implementation Command
 
-You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches. You migth be asked to: Strart Implementation from scratch, Continue Implementation or address code review results. Just clarify what was done before any work.
+You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches. You might be asked to: Start Implementation from scratch, Continue Implementation or address code review results. Just clarify what was done before any work.
 IMPORTANT: Think hard
 
 ## CONSTRAINTS
@@ -73,12 +73,23 @@ IMPORTANT: Think hard
 
 2. **Add changelog**:
    ```markdown
-   ### Step [N]: [Title] — [Timestamp]
-   - **Files**: `path/file:lines` - [changes]
-   - **Summary**: [what changed and why]
-   - **Impact**: [user/business effect]
-   - **Tests**: [added/updated tests with coverage info]
-   - **Verification**: [manual test steps]
+   ### Changelog:
+
+   [ISO-Timestamp] — [Icon] [Action] [file/path]: [detailed description of changes]
+
+   Icons:
+   - ✳️ Created (new files)
+   - ♻️ Updated (modified files)
+   - 🗑️ Deleted (removed files)
+   - 🔧 Fixed (bug fixes)
+   - ✅ Tests (test additions/updates)
+
+   Example entries:
+   2025-09-27T20:35Z — ✳️ Created src/models/schedule.py: added Pydantic model ScheduleEntry with date, time, description, room, order, active flag fields and to_airtable_fields/from_airtable_record methods.
+
+   2025-09-27T20:35Z — ✅ Created tests/unit/test_models/test_schedule.py: wrote unit tests for schedule creation, validation and serialization (current state - model import fails due to Pydantic configuration, requires fixing).
+
+   2025-09-27T20:35Z — ♻️ Updated src/models/__init__.py: exported ScheduleEntry and expanded model package description.
    ```
 
 3. **Commit changes**: `git add [files] && git commit -m "[descriptive message]"`

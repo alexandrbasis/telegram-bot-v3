@@ -22,6 +22,7 @@ from src.bot.handlers.export_conversation_handlers import (
     get_export_conversation_handler,
 )
 from src.bot.handlers.export_handlers import handle_export_command
+from src.bot.handlers.schedule_handlers import get_schedule_handlers
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
 from src.services.file_logging_service import FileLoggingService
@@ -131,6 +132,18 @@ def create_application() -> Application:
     logger.info("Adding export conversation handler")
     export_conversation_handler = get_export_conversation_handler()
     app.add_handler(export_conversation_handler)
+
+    # Add schedule command and callbacks (feature-flagged)
+    enable_schedule = False
+    app_settings = getattr(settings, "application", None)
+    if app_settings is not None:
+        flag = getattr(app_settings, "enable_schedule_feature", False)
+        if isinstance(flag, bool):
+            enable_schedule = flag
+    if enable_schedule:
+        logger.info("Adding schedule handlers")
+        for h in get_schedule_handlers():
+            app.add_handler(h)
 
     # Keep legacy export command handler for backward compatibility
     logger.info("Adding legacy export command handler")

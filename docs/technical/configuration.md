@@ -38,6 +38,14 @@
 
 ### Optional Variables
 
+### Feature Flags
+
+| Variable | Description | Example | Default |
+|----------|-------------|---------|---------|
+| `ENABLE_SCHEDULE_FEATURE` | Enables `/schedule` command and handlers | `true` | `false` |
+
+Set `ENABLE_SCHEDULE_FEATURE=true` to register the schedule command and callbacks. When disabled, the schedule feature is not available in production.
+
 ## Telegram Settings
 
 ### Conversation Timeout

@@ -1,0 +1,136 @@
+{
+  "table_name": "Schedule",
+  "table_id": "tbl[TO_BE_FILLED]",
+  "primary_field": "EventTitle",
+  "fields": {
+    "EventTitle": {
+      "type": "singleLineText",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Title of the event (primary field)"
+    },
+    "EventDate": {
+      "type": "date",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Date of the event",
+      "format": "D/M/YYYY"
+    },
+    "StartTime": {
+      "type": "singleLineText",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Start time in 24-hour format (HH:MM)"
+    },
+    "EndTime": {
+      "type": "singleLineText",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "End time in 24-hour format (HH:MM)"
+    },
+    "Description": {
+      "type": "multilineText",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Detailed description of the event"
+    },
+    "Location": {
+      "type": "singleLineText",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Location or room where the event takes place"
+    },
+    "Audience": {
+      "type": "singleSelect",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Target audience for the event",
+      "options": [
+        "All",
+        "Candidates",
+        "Team",
+        "Clergy",
+        "Leadership"
+      ]
+    },
+    "EventType": {
+      "type": "singleSelect",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Type of event",
+      "options": [
+        "Talk",
+        "Meal",
+        "Chapel",
+        "ROE",
+        "Activity",
+        "Break",
+        "Prayer",
+        "Celebration"
+      ]
+    },
+    "DayTag": {
+      "type": "singleSelect",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Day identifier for the retreat",
+      "options": [
+        "Day 0 - Thursday",
+        "Day 1 - Friday",
+        "Day 2 - Saturday",
+        "Day 3 - Sunday"
+      ]
+    },
+    "Order": {
+      "type": "number",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Order of events within the day (for sorting)"
+    },
+    "Duration": {
+      "type": "duration",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Duration of the event"
+    },
+    "IsActive": {
+      "type": "checkbox",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Whether this event is active and should be displayed"
+    },
+    "IsMandatory": {
+      "type": "checkbox",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Whether this event is mandatory for participants"
+    },
+    "ResponsibleDepartment": {
+      "type": "singleSelect",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Department responsible for the event",
+      "options": [
+        "ROE",
+        "Chapel",
+        "Setup",
+        "Palanka",
+        "Administration",
+        "Kitchen",
+        "Decoration",
+        "Bell",
+        "Refreshment",
+        "Worship",
+        "Media",
+        "Clergy",
+        "Rectorate"
+      ]
+    },
+    "ResponsiblePerson": {
+      "type": "multipleRecordLinks",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Person(s) responsible for this event",
+      "linkedTableId": "tbl8ivwOdAUvMi3Jy"
+    },
+    "Notes": {
+      "type": "multilineText",
+      "id": "fld[TO_BE_FILLED]",
+      "description": "Additional notes or special instructions"
+    }
+  },
+  "views": {
+    "All Events": "viw[TO_BE_FILLED]",
+    "Active Events": "viw[TO_BE_FILLED]",
+    "By Day": "viw[TO_BE_FILLED]",
+    "November 13": "viw[TO_BE_FILLED]",
+    "November 14": "viw[TO_BE_FILLED]",
+    "November 15": "viw[TO_BE_FILLED]",
+    "November 16": "viw[TO_BE_FILLED]"
+  }
+}

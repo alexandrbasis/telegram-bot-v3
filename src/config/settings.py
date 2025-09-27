@@ -109,6 +109,16 @@ class DatabaseSettings:
         default_factory=lambda: os.getenv("AIRTABLE_ROE_TABLE_ID", "tbl0j8bcgkV3lVAdc")
     )
 
+    # Schedule table configuration
+    schedule_table_name: str = field(
+        default_factory=lambda: os.getenv("AIRTABLE_SCHEDULE_TABLE_NAME", "Schedule")
+    )
+    schedule_table_id: str = field(
+        default_factory=lambda: os.getenv(
+            "AIRTABLE_SCHEDULE_TABLE_ID", "tblsxihPaZebzyBS2"
+        )
+    )
+
     # Rate limiting and performance
     rate_limit_per_second: int = field(
         default_factory=lambda: int(os.getenv("AIRTABLE_RATE_LIMIT", "5"))
@@ -179,6 +189,13 @@ class DatabaseSettings:
         if not self.roe_table_name:
             raise ValueError("AIRTABLE_ROE_TABLE_NAME must be specified")
 
+        # Validate Schedule table configuration
+        if not self.schedule_table_id:
+            raise ValueError("AIRTABLE_SCHEDULE_TABLE_ID must be specified")
+
+        if not self.schedule_table_name:
+            raise ValueError("AIRTABLE_SCHEDULE_TABLE_NAME must be specified")
+
         if self.rate_limit_per_second <= 0 or self.rate_limit_per_second > 100:
             raise ValueError("Rate limit must be between 1 and 100 requests per second")
 
@@ -203,7 +220,8 @@ class DatabaseSettings:
         Get configuration for a specific table type.
 
         Args:
-            table_type: The type of table ('participants', 'bible_readers', 'roe')
+            table_type: The type of table
+                ('participants', 'bible_readers', 'roe', 'schedule')
 
         Returns:
             Dictionary with table_id and table_name for the specified table
@@ -223,6 +241,10 @@ class DatabaseSettings:
             "roe": {
                 "table_id": self.roe_table_id,
                 "table_name": self.roe_table_name,
+            },
+            "schedule": {
+                "table_id": self.schedule_table_id,
+                "table_name": self.schedule_table_name,
             },
         }
 
@@ -493,6 +515,10 @@ class ApplicationSettings:
     )
     enable_health_checks: bool = field(
         default_factory=lambda: os.getenv("ENABLE_HEALTH_CHECKS", "true").lower()
+        == "true"
+    )
+    enable_schedule_feature: bool = field(
+        default_factory=lambda: os.getenv("ENABLE_SCHEDULE_FEATURE", "false").lower()
         == "true"
     )
 
