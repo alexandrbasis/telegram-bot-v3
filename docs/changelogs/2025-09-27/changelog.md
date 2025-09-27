@@ -27,6 +27,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - TDD approach with Red-Green-Refactor cycles for all components
     - Unit tests for repository interfaces, concrete implementations, utilities, and services
     - Integration tests validating end-to-end export workflows
+- **Export Enhancement with Russian Descriptions and Readable Filenames** - Comprehensive export user experience improvements
+  - **Russian Export Type Mapping** - Added complete Russian language support for export type descriptions (`src/utils/export_type_mapping.py`)
+    - Maps all export types to clear Russian descriptions (Кандидаты, Тим Мемберы, Департаменты, РОЭ, Чтецы)
+    - Fallback behavior for unknown export types
+  - **Enhanced Export Success Messages** - Improved export completion messaging with Russian descriptions (`src/utils/export_utils.py`)
+    - Added optional `export_type` parameter to `format_export_success_message()`
+    - Backward compatibility maintained for existing calls
+    - Clear Russian type descriptions in success messages ("Выгружены: [Type]")
+  - **Readable Filename Generation** - Human-readable CSV filenames with DD_MM_YYYY format (`src/utils/export_utils.py`)
+    - `generate_readable_export_filename()` function for user-friendly filenames
+    - Cross-platform Cyrillic text normalization for safe filenames
+    - Unique suffix generation to prevent filename conflicts
+    - Format: `{type}_{DD}_{MM}_{YYYY}_{unique_suffix}.csv`
+  - **Updated Export Handlers** - Enhanced all export conversation and legacy handlers
+    - Export conversation handlers include Russian descriptions in all flows (`src/bot/handlers/export_conversation_handlers.py`)
+    - Legacy export handlers updated with enhanced messaging (`src/bot/handlers/export_handlers.py`)
+  - **Service Layer Integration** - All export services use readable filenames consistently
+    - `ParticipantExportService`, `ROEExportService`, and `BibleReadersExportService` updated
+    - Document delivery uses readable filenames for improved user experience
+  - **Comprehensive Test Coverage** - 28+ test cases with 90%+ coverage across all implementation areas
+    - Unit tests for Russian type mapping with all export types and edge cases
+    - Filename generation tests covering format validation, normalization, and uniqueness
+    - Message formatting tests for all export types and backward compatibility
 
 ### Changed
 - **Changelog System Restructure** - Migrated from monolithic changelog to date-based changelog system

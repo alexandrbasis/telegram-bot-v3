@@ -545,7 +545,6 @@ class TestExportSuccessMessageFormatting:
             expected_line = f"Выгружены: {expected_description}"
             assert expected_line in result
 
-
 class TestExtractHeadersFromViewRecords:
     """Test extracting headers from Airtable view records."""
 
@@ -968,7 +967,6 @@ class TestSparseRecordScenarios:
         assert result[2]["Name"] == "Bob"
         assert result[2]["Email"] == ""
         assert result[2]["Phone"] == "555-0123"
-
 
 class TestReadableFilenameGeneration:
     """Test human-readable filename generation for exports."""
