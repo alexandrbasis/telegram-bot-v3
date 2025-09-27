@@ -330,10 +330,15 @@ class AirtableBibleReadersRepository(BibleReadersRepository):
         try:
             logger.debug(f"Listing BibleReader records using view '{view}'")
             records = await self.client.list_records(view=view)
-            logger.debug("Retrieved %s BibleReader records from view '%s'", len(records), view)
+            logger.debug(
+                "Retrieved %s BibleReader records from view '%s'", len(records), view
+            )
             return records  # type: ignore
         except AirtableAPIError as e:
-            logger.error(f"Airtable API error listing BibleReader records for view '{view}': {e}")
+            logger.error(
+                f"Airtable API error listing BibleReader records for view '{view}': {e}"
+            )
             raise RepositoryError(
-                f"Failed to list BibleReader records for view '{view}': {e}", e.original_error
+                f"Failed to list BibleReader records for view '{view}': {e}",
+                e.original_error,
             )

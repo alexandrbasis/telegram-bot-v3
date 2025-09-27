@@ -365,7 +365,9 @@ class AirtableROERepository(ROERepository):
             logger.debug("Retrieved %s ROE records from view '%s'", len(records), view)
             return records  # type: ignore
         except AirtableAPIError as e:
-            logger.error(f"Airtable API error listing ROE records for view '{view}': {e}")
+            logger.error(
+                f"Airtable API error listing ROE records for view '{view}': {e}"
+            )
             raise RepositoryError(
                 f"Failed to list ROE records for view '{view}': {e}", e.original_error
             )

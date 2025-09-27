@@ -14,13 +14,13 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.config.field_mappings import AirtableFieldMapping
+from src.config.settings import Settings
 from src.data.airtable.airtable_client import AirtableAPIError
 from src.data.repositories.participant_repository import (
     ParticipantRepository,
     RepositoryError,
 )
 from src.models.participant import Department, Participant, Role
-from src.config.settings import Settings
 from src.utils.export_utils import (
     extract_headers_from_view_records,
     format_line_number,
@@ -320,9 +320,7 @@ class ParticipantExportService:
                 view_name,
                 filter_func=lambda record, participant: participant.role == Role.TEAM,
             )
-            logger.info(
-                "Team export completed using Airtable view '%s'", view_name
-            )
+            logger.info("Team export completed using Airtable view '%s'", view_name)
             return csv_string
 
         if role == Role.CANDIDATE:
@@ -545,7 +543,7 @@ class ParticipantExportService:
             reordered_rows = order_rows_by_view_headers(
                 view_headers,
                 list(prepared_rows[0].keys()) if prepared_rows else [],
-                prepared_rows
+                prepared_rows,
             )
         else:
             reordered_rows = prepared_rows

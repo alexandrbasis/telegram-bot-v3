@@ -215,7 +215,7 @@ def format_export_success_message(
 
 
 def extract_headers_from_view_records(
-    records: Optional[List[Dict[str, Any]]]
+    records: Optional[List[Dict[str, Any]]],
 ) -> List[str]:
     """
     Extract column headers from Airtable view records.
@@ -241,9 +241,7 @@ def extract_headers_from_view_records(
 
 
 def order_rows_by_view_headers(
-    view_headers: List[str],
-    original_headers: List[str],
-    rows: List[Dict[str, Any]]
+    view_headers: List[str], original_headers: List[str], rows: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
     """
     Reorder row dictionaries to match view header order.

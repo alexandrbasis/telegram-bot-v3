@@ -133,13 +133,17 @@ class DatabaseSettings:
 
     # Export view configuration
     participant_export_view: str = field(
-        default_factory=lambda: os.getenv("AIRTABLE_PARTICIPANT_EXPORT_VIEW", "Кандидаты")
+        default_factory=lambda: os.getenv(
+            "AIRTABLE_PARTICIPANT_EXPORT_VIEW", "Кандидаты"
+        )
     )
     roe_export_view: str = field(
         default_factory=lambda: os.getenv("AIRTABLE_ROE_EXPORT_VIEW", "РОЕ: Расписание")
     )
     bible_readers_export_view: str = field(
-        default_factory=lambda: os.getenv("AIRTABLE_BIBLE_READERS_EXPORT_VIEW", "Чтецы: Расписание")
+        default_factory=lambda: os.getenv(
+            "AIRTABLE_BIBLE_READERS_EXPORT_VIEW", "Чтецы: Расписание"
+        )
     )
 
     def validate(self) -> None:

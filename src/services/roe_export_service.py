@@ -16,7 +16,10 @@ from typing import Callable, Dict, List, Optional
 
 from src.config.field_mappings.roe import ROEFieldMapping
 from src.config.settings import Settings
-from src.data.repositories.participant_repository import ParticipantRepository, RepositoryError
+from src.data.repositories.participant_repository import (
+    ParticipantRepository,
+    RepositoryError,
+)
 from src.data.repositories.roe_repository import ROERepository
 from src.models.roe import ROE
 from src.utils.export_utils import (
@@ -182,7 +185,8 @@ class ROEExportService:
                 roe = ROE.from_airtable_record(record)
             except Exception as exc:
                 logger.warning(
-                    f"Skipping invalid ROE record {record.get('id', 'unknown')} from view '{view_name}': {exc}"
+                    f"Skipping invalid ROE record "
+                    f"{record.get('id', 'unknown')} from view '{view_name}': {exc}"
                 )
                 continue
 
@@ -221,7 +225,7 @@ class ROEExportService:
             reordered_rows = order_rows_by_view_headers(
                 view_headers,
                 list(prepared_rows[0].keys()) if prepared_rows else [],
-                prepared_rows
+                prepared_rows,
             )
         else:
             reordered_rows = prepared_rows

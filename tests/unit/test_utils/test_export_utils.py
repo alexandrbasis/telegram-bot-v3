@@ -492,7 +492,7 @@ class TestExtractHeadersFromViewRecords:
                     "Department": "HR",
                     "ExtraField": "Value",  # Extra field in second record
                 }
-            }
+            },
         ]
 
         # Should use first record's field order
@@ -615,9 +615,7 @@ class TestOrderRowsByViewHeaders:
         """Test ordering handles rows with extra fields not in view."""
         view_headers = ["Name", "Age"]
         original_headers = ["Name", "Age", "Department", "City"]
-        rows = [
-            {"Name": "John", "Age": "25", "Department": "IT", "City": "NYC"}
-        ]
+        rows = [{"Name": "John", "Age": "25", "Department": "IT", "City": "NYC"}]
 
         result = order_rows_by_view_headers(view_headers, original_headers, rows)
 

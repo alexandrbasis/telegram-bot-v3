@@ -349,5 +349,7 @@ class TestAirtableBibleReadersRepository:
         """Test view records retrieval with API error."""
         mock_client.list_records.side_effect = AirtableAPIError("API error")
 
-        with pytest.raises(RepositoryError, match="Failed to list BibleReader records for view"):
+        with pytest.raises(
+            RepositoryError, match="Failed to list BibleReader records for view"
+        ):
             await repository.list_view_records("Чтецы: Расписание")

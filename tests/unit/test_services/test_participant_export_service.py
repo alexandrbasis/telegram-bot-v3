@@ -890,7 +890,7 @@ class TestRoleBasedFiltering:
                     "FullNameRU": "Иванов Иван",
                     "Gender": "Male",
                     "CountryAndCity": "Russia, Moscow",
-                }
+                },
             }
         ]
         mock_repository.list_view_records.return_value = view_records

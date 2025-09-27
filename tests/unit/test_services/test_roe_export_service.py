@@ -117,13 +117,16 @@ def export_service(mock_roe_repository, mock_participant_repository):
     """Create a ROEExportService instance with mock repositories."""
     # Create mock settings to avoid environment variable requirements
     from unittest.mock import Mock
+
     from src.data.repositories.participant_repository import RepositoryError
 
     mock_settings = Mock()
     mock_settings.database.roe_export_view = "Test ROE View"
 
     # Configure mock repository to raise RepositoryError for view lookup, forcing fallback to legacy method
-    mock_roe_repository.list_view_records.side_effect = RepositoryError("View not found")
+    mock_roe_repository.list_view_records.side_effect = RepositoryError(
+        "View not found"
+    )
 
     return ROEExportService(
         roe_repository=mock_roe_repository,
@@ -867,7 +870,7 @@ class TestViewBasedExport:
                     "RoeTopic": "Божья любовь",
                     "Roista": ["rec_p1"],
                     "RoeTiming": "09:00-10:30",
-                }
+                },
             }
         ]
         mock_roe_repository.list_view_records.return_value = view_records
@@ -877,14 +880,14 @@ class TestViewBasedExport:
             record_id="rec_p1",
             full_name_ru="Иванов Иван",
             role=Role.TEAM,
-            department=Department.WORSHIP
+            department=Department.WORSHIP,
         )
         mock_participant_repository.get_by_id.return_value = test_participant
 
         service = ROEExportService(
             roe_repository=mock_roe_repository,
             participant_repository=mock_participant_repository,
-            settings=test_settings
+            settings=test_settings,
         )
 
         # Act
@@ -892,9 +895,7 @@ class TestViewBasedExport:
 
         # Assert
         # Verify the correct view name was used
-        mock_roe_repository.list_view_records.assert_called_once_with(
-            "Custom ROE View"
-        )
+        mock_roe_repository.list_view_records.assert_called_once_with("Custom ROE View")
 
         # Verify headers are in view order
         reader = csv.DictReader(io.StringIO(csv_data))

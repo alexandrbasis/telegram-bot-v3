@@ -859,5 +859,7 @@ class TestViewConfiguration:
         with patch.dict(os.environ, env_vars, clear=True):
             settings = DatabaseSettings()
 
-            with pytest.raises(ValueError, match="Participant export view name cannot be empty"):
+            with pytest.raises(
+                ValueError, match="Participant export view name cannot be empty"
+            ):
                 settings.validate()

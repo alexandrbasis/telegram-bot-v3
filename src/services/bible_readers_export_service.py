@@ -16,7 +16,10 @@ from typing import Callable, Dict, List, Optional
 from src.config.field_mappings.bible_readers import BibleReadersFieldMapping
 from src.config.settings import Settings
 from src.data.repositories.bible_readers_repository import BibleReadersRepository
-from src.data.repositories.participant_repository import ParticipantRepository, RepositoryError
+from src.data.repositories.participant_repository import (
+    ParticipantRepository,
+    RepositoryError,
+)
 from src.models.bible_readers import BibleReader
 from src.utils.export_utils import (
     extract_headers_from_view_records,
@@ -158,7 +161,9 @@ class BibleReadersExportService:
         """
         # Get records from view
         raw_records = await self.bible_readers_repository.list_view_records(view_name)
-        logger.info(f"Retrieved {len(raw_records)} records from BibleReaders view '{view_name}'")
+        logger.info(
+            f"Retrieved {len(raw_records)} records from BibleReaders view '{view_name}'"
+        )
 
         # Extract headers from view
         view_headers = extract_headers_from_view_records(raw_records)
@@ -182,7 +187,8 @@ class BibleReadersExportService:
                 bible_reader = BibleReader.from_airtable_record(record)
             except Exception as exc:
                 logger.warning(
-                    f"Skipping invalid BibleReader record {record.get('id', 'unknown')} from view '{view_name}': {exc}"
+                    f"Skipping invalid BibleReader record "
+                    f"{record.get('id', 'unknown')} from view '{view_name}': {exc}"
                 )
                 continue
 
@@ -195,7 +201,9 @@ class BibleReadersExportService:
                 row[field_name] = self._format_raw_value(field_value)
 
             # Hydrate participant names for Participants field
-            participant_names = await self._hydrate_participant_names(bible_reader.participants)
+            participant_names = await self._hydrate_participant_names(
+                bible_reader.participants
+            )
 
             # Override with hydrated names
             if participant_names:
@@ -215,7 +223,7 @@ class BibleReadersExportService:
             reordered_rows = order_rows_by_view_headers(
                 view_headers,
                 list(prepared_rows[0].keys()) if prepared_rows else [],
-                prepared_rows
+                prepared_rows,
             )
         else:
             reordered_rows = prepared_rows
@@ -231,7 +239,9 @@ class BibleReadersExportService:
         csv_string = output.getvalue()
         output.close()
 
-        logger.info(f"BibleReaders view export completed with {len(reordered_rows)} records")
+        logger.info(
+            f"BibleReaders view export completed with {len(reordered_rows)} records"
+        )
         return csv_string
 
     @staticmethod

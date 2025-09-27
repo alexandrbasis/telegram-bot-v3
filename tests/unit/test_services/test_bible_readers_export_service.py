@@ -96,13 +96,16 @@ def export_service(mock_bible_readers_repository, mock_participant_repository):
     """Create a BibleReadersExportService instance with mock repositories."""
     # Create mock settings to avoid environment variable requirements
     from unittest.mock import Mock
+
     from src.data.repositories.participant_repository import RepositoryError
 
     mock_settings = Mock()
     mock_settings.database.bible_readers_export_view = "Test View"
 
     # Configure mock repository to raise RepositoryError for view lookup, forcing fallback to legacy method
-    mock_bible_readers_repository.list_view_records.side_effect = RepositoryError("View not found")
+    mock_bible_readers_repository.list_view_records.side_effect = RepositoryError(
+        "View not found"
+    )
 
     return BibleReadersExportService(
         bible_readers_repository=mock_bible_readers_repository,
@@ -690,7 +693,9 @@ class TestViewBasedExport:
         # Set required environment variables for test
         monkeypatch.setenv("AIRTABLE_API_KEY", "test_key")
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
-        monkeypatch.setenv("AIRTABLE_BIBLE_READERS_EXPORT_VIEW", "Custom Bible Readers View")
+        monkeypatch.setenv(
+            "AIRTABLE_BIBLE_READERS_EXPORT_VIEW", "Custom Bible Readers View"
+        )
 
         # Create settings with custom view name from environment
         test_settings = Settings()
@@ -704,25 +709,26 @@ class TestViewBasedExport:
                     "Where": "Зал 1",
                     "Participants": ["rec_p1"],
                     "Bible": "Библия РБО",
-                }
+                },
             }
         ]
         mock_bible_readers_repository.list_view_records.return_value = view_records
 
         # Mock participant hydration
         from src.models.participant import Department, Participant, Role
+
         test_participant = Participant(
             record_id="rec_p1",
             full_name_ru="Петров Петр",
             role=Role.TEAM,
-            department=Department.WORSHIP
+            department=Department.WORSHIP,
         )
         mock_participant_repository.get_by_id.return_value = test_participant
 
         service = BibleReadersExportService(
             bible_readers_repository=mock_bible_readers_repository,
             participant_repository=mock_participant_repository,
-            settings=test_settings
+            settings=test_settings,
         )
 
         # Act
