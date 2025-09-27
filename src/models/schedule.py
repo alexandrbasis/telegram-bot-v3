@@ -7,6 +7,18 @@ from typing import Any, Mapping, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+# Airtable field names for the Schedule table
+FIELD_EVENT_DATE = "EventDate"
+FIELD_START_TIME = "StartTime"
+FIELD_END_TIME = "EndTime"
+FIELD_TITLE = "EventTitle"
+FIELD_DESCRIPTION = "Description"
+FIELD_AUDIENCE = "Audience"
+FIELD_DAY_TAG = "DayTag"
+FIELD_ORDER = "Order"
+FIELD_IS_ACTIVE = "IsActive"
+FIELD_LOCATION = "Location"
+
 
 class ScheduleEntry(BaseModel):
     """Represents a single schedule item pulled from Airtable."""
@@ -64,24 +76,24 @@ class ScheduleEntry(BaseModel):
     def to_airtable_fields(self) -> dict[str, Any]:
         """Convert schedule entry into Airtable field representation."""
         fields: dict[str, Any] = {
-            "Date": self.date.isoformat(),
-            "StartTime": self.start_time.strftime("%H:%M"),
-            "Title": self.title,
-            "IsActive": self.is_active,
+            FIELD_EVENT_DATE: self.date.isoformat(),
+            FIELD_START_TIME: self.start_time.strftime("%H:%M"),
+            FIELD_TITLE: self.title,
+            FIELD_IS_ACTIVE: self.is_active,
         }
 
         if self.end_time is not None:
-            fields["EndTime"] = self.end_time.strftime("%H:%M")
+            fields[FIELD_END_TIME] = self.end_time.strftime("%H:%M")
         if self.description:
-            fields["Description"] = self.description
+            fields[FIELD_DESCRIPTION] = self.description
         if self.audience:
-            fields["Audience"] = self.audience
+            fields[FIELD_AUDIENCE] = self.audience
         if self.day_label:
-            fields["DayLabel"] = self.day_label
+            fields[FIELD_DAY_TAG] = self.day_label
         if self.order is not None:
-            fields["Order"] = self.order
+            fields[FIELD_ORDER] = self.order
         if self.location:
-            fields["Location"] = self.location
+            fields[FIELD_LOCATION] = self.location
 
         return fields
 
@@ -91,9 +103,9 @@ class ScheduleEntry(BaseModel):
         fields = record.get("fields", {})
 
         try:
-            raw_date = fields["Date"]
-            raw_start = fields["StartTime"]
-            title = fields["Title"]
+            raw_date = fields[FIELD_EVENT_DATE]
+            raw_start = fields[FIELD_START_TIME]
+            title = fields[FIELD_TITLE]
         except KeyError as error:
             raise ValueError(
                 f"Schedule record is missing required field: {error.args[0]}"
@@ -103,14 +115,14 @@ class ScheduleEntry(BaseModel):
             record_id=record.get("id"),
             date=dt.date.fromisoformat(raw_date),
             start_time=cls._parse_time(raw_start),
-            end_time=cls._parse_optional_time(fields.get("EndTime")),
+            end_time=cls._parse_optional_time(fields.get(FIELD_END_TIME)),
             title=title,
-            description=fields.get("Description"),
-            audience=fields.get("Audience"),
-            day_label=fields.get("DayLabel"),
-            order=fields.get("Order"),
-            is_active=fields.get("IsActive", True),
-            location=fields.get("Location"),
+            description=cls._normalize_optional_str(fields.get(FIELD_DESCRIPTION)),
+            audience=cls._normalize_optional_str(fields.get(FIELD_AUDIENCE)),
+            day_label=cls._normalize_optional_str(fields.get(FIELD_DAY_TAG)),
+            order=cls._parse_optional_int(fields.get(FIELD_ORDER)),
+            is_active=bool(fields.get(FIELD_IS_ACTIVE, True)),
+            location=cls._normalize_optional_str(fields.get(FIELD_LOCATION)),
         )
 
         return entry
@@ -123,4 +135,24 @@ class ScheduleEntry(BaseModel):
     def _parse_optional_time(cls, raw_value: Optional[str]) -> Optional[dt.time]:
         if raw_value is None:
             return None
+        if isinstance(raw_value, str) and not raw_value.strip():
+            return None
         return cls._parse_time(raw_value)
+
+    @staticmethod
+    def _normalize_optional_str(value: Optional[Any]) -> Optional[str]:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            return str(value)
+        stripped = value.strip()
+        return stripped or None
+
+    @staticmethod
+    def _parse_optional_int(value: Optional[Any]) -> Optional[int]:
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None

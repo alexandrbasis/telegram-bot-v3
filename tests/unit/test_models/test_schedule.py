@@ -82,13 +82,13 @@ class TestScheduleEntryModel:
         fields = entry.to_airtable_fields()
 
         assert fields == {
-            "Date": "2025-11-14",
+            "EventDate": "2025-11-14",
             "StartTime": "14:15",
             "EndTime": "15:00",
-            "Title": "Обед",
+            "EventTitle": "Обед",
             "Description": "Шведский стол",
             "Audience": "Команда",
-            "DayLabel": "Пятница",
+            "DayTag": "Пятница",
             "Order": 5,
             "IsActive": False,
             "Location": "Столовая",
@@ -106,10 +106,10 @@ class TestScheduleEntryModel:
         fields = entry.to_airtable_fields()
 
         assert fields == {
-            "Date": "2025-11-15",
+            "EventDate": "2025-11-15",
             "StartTime": "08:30",
-            "Title": "Утренняя зарядка",
-            "DayLabel": "Суббота",
+            "EventTitle": "Утренняя зарядка",
+            "DayTag": "Суббота",
             "IsActive": True,
         }
 
@@ -118,13 +118,13 @@ class TestScheduleEntryModel:
         record = {
             "id": "recSchedule999",
             "fields": {
-                "Date": "2025-11-16",
+                "EventDate": "2025-11-16",
                 "StartTime": "19:45",
                 "EndTime": "21:00",
-                "Title": "Вечер прославления",
+                "EventTitle": "Вечер прославления",
                 "Description": "Заключительное служение",
                 "Audience": "Все",
-                "DayLabel": "Воскресенье",
+                "DayTag": "Воскресенье",
                 "Order": 12,
                 "IsActive": True,
                 "Location": "Главный зал",
@@ -150,16 +150,43 @@ class TestScheduleEntryModel:
         record_missing_title = {
             "id": "recMissingTitle",
             "fields": {
-                "Date": "2025-11-13",
+                "EventDate": "2025-11-13",
                 "StartTime": "10:00",
-                "DayLabel": "Четверг",
+                "DayTag": "Четверг",
             },
         }
 
         with pytest.raises(ValueError) as exc_info:
             ScheduleEntry.from_airtable_record(record_missing_title)
 
-        assert "Title" in str(exc_info.value)
+        assert "EventTitle" in str(exc_info.value)
+
+    def test_schedule_entry_from_airtable_allows_blank_optional_fields(self) -> None:
+        """Blank optional strings from Airtable become None in the model."""
+        record = {
+            "id": "recScheduleBlank",
+            "fields": {
+                "EventDate": "2025-11-13",
+                "StartTime": "09:00",
+                "EndTime": "",
+                "EventTitle": "Утреннее собрание",
+                "Description": " ",
+                "Audience": "",
+                "DayTag": "",
+                "Order": "3",
+                "IsActive": True,
+                "Location": " ",
+            },
+        }
+
+        entry = ScheduleEntry.from_airtable_record(record)
+
+        assert entry.end_time is None
+        assert entry.description is None
+        assert entry.audience is None
+        assert entry.day_label is None
+        assert entry.order == 3
+        assert entry.location is None
 
     def test_schedule_entry_time_validation(self) -> None:
         """Start time must be before end time when both provided."""

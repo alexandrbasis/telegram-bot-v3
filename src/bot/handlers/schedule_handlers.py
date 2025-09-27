@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
-from typing import List
+from typing import List, Optional
 
 from telegram import Update
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
@@ -23,9 +23,12 @@ SCHEDULE_DAYS: List[dt.date] = [
     dt.date(2025, 11, 16),
 ]
 
+USER_DATA_LAST_DAY_KEY = "schedule:last_day"
+
 
 async def handle_schedule_command(update: Update, context: CallbackContext) -> None:
     keyboard = schedule_days_keyboard(SCHEDULE_DAYS)
+    context.user_data.pop(USER_DATA_LAST_DAY_KEY, None)
     await update.effective_message.reply_text(
         "Выберите день расписания:", reply_markup=keyboard
     )
@@ -39,15 +42,46 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
 
     data = query.data or ""
     if data == "schedule:back":
+        context.user_data.pop(USER_DATA_LAST_DAY_KEY, None)
         await query.edit_message_text(
             "Выберите день расписания:",
             reply_markup=schedule_days_keyboard(SCHEDULE_DAYS),
         )
         return
     if data == "schedule:refresh":
-        # No-op: just re-render keyboard
-        await query.edit_message_reply_markup(
-            reply_markup=schedule_days_keyboard(SCHEDULE_DAYS)
+        last_day_iso: Optional[str] = context.user_data.get(USER_DATA_LAST_DAY_KEY)
+        if not last_day_iso:
+            await query.edit_message_text(
+                "Выберите день расписания:",
+                reply_markup=schedule_days_keyboard(SCHEDULE_DAYS),
+            )
+            return
+        try:
+            day = dt.date.fromisoformat(last_day_iso)
+        except ValueError as e:
+            logger.warning("Invalid cached date in refresh: %s", last_day_iso)
+            context.user_data.pop(USER_DATA_LAST_DAY_KEY, None)
+            await query.edit_message_text(
+                "❌ Некорректная дата.",
+                reply_markup=schedule_days_keyboard(SCHEDULE_DAYS),
+            )
+            return
+
+        service = get_schedule_service()
+        try:
+            entries = await service.refresh_schedule_for_date(day)
+        except Exception as e:
+            logger.error("Schedule refresh failed: %s", e)
+            await query.edit_message_text(
+                "❌ Не удалось обновить расписание. Попробуйте позже.",
+                reply_markup=schedule_days_keyboard(SCHEDULE_DAYS),
+            )
+            return
+
+        entries = [e for e in entries if e.date == day and e.is_active]
+        text = format_schedule_day(day, entries)
+        await query.edit_message_text(
+            text, reply_markup=schedule_days_keyboard(SCHEDULE_DAYS)
         )
         return
 
@@ -61,7 +95,10 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
             raise ValueError("Date outside schedule range")
     except (ValueError, TypeError) as e:
         logger.warning("Invalid date in callback: %s - %s", iso, e)
-        await query.edit_message_text("❌ Некорректная дата.")
+        await query.edit_message_text(
+            "❌ Некорректная дата.",
+            reply_markup=schedule_days_keyboard(SCHEDULE_DAYS),
+        )
         return
 
     service = get_schedule_service()
@@ -70,9 +107,12 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
     except Exception as e:
         logger.error("Schedule fetch failed: %s", e)
         await query.edit_message_text(
-            "❌ Не удалось загрузить расписание. Попробуйте позже."
+            "❌ Не удалось загрузить расписание. Попробуйте позже.",
+            reply_markup=schedule_days_keyboard(SCHEDULE_DAYS),
         )
         return
+
+    context.user_data[USER_DATA_LAST_DAY_KEY] = day.isoformat()
 
     # Filter by date to be safe
     entries = [e for e in entries if e.date == day and e.is_active]

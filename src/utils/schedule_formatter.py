@@ -19,7 +19,10 @@ def format_schedule_day(date_value: dt.date, entries: Iterable[ScheduleEntry]) -
     items: List[str] = []
     for e in sorted(
         list(entries),
-        key=lambda x: (x.order if x.order is not None else 9999, x.start_time),
+        key=lambda x: (
+            x.start_time,
+            x.order if x.order is not None else 9999,
+        ),
     ):
         time_part = format_time(e.start_time)
         if e.end_time:

@@ -208,3 +208,4 @@ Target: 90%+ coverage across сервис, хендлер и форматиро�
 - 2025-09-28T00:38:00Z — ♻️ DI: добавлен `get_schedule_service()` и переход хендлеров на фабрику; экспорт клавиатуры
 - 2025-09-28T00:42:00Z — 📝 Документация/конфиг: добавлен флаг `ENABLE_SCHEDULE_FEATURE` и раздел Feature Flags; `main.py` использует `settings.application.enable_schedule_feature`
 - 2025-09-28T00:50:00Z — ✅ CI Green: flake8, mypy, black, isort, tests (1566 passed, 9 skipped); docker smoke passed
+- 2025-09-27T22:45:47Z — ✅ Code review fixes landed: schema alignment, refresh UX, and expanded test suites; full test run green

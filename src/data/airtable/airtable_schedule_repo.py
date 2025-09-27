@@ -13,7 +13,13 @@ from typing import Any, List, Mapping
 
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
 from src.data.repositories.participant_repository import RepositoryError
-from src.models.schedule import ScheduleEntry
+from src.models.schedule import (
+    FIELD_EVENT_DATE,
+    FIELD_IS_ACTIVE,
+    FIELD_ORDER,
+    FIELD_START_TIME,
+    ScheduleEntry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +35,7 @@ class AirtableScheduleRepository:
         """Build Airtable formula to filter by active flag and inclusive date range.
 
         Uses IS_AFTER/IS_BEFORE combined with IS_SAME to include boundary dates.
-        Result: {Date} in [date_from, date_to] and {IsActive} = TRUE().
+        Result: {EventDate} in [date_from, date_to] and {IsActive} = TRUE().
         """
         start_iso = date_from.isoformat()
         end_iso = date_to.isoformat()
@@ -37,21 +43,21 @@ class AirtableScheduleRepository:
         # Inclusive lower bound: {Date} >= start
         lower_inclusive = (
             "OR("
-            f"IS_AFTER({{Date}}, '{start_iso}'), "
-            f"IS_SAME({{Date}}, '{start_iso}', 'day')"
+            f"IS_AFTER({{{FIELD_EVENT_DATE}}}, '{start_iso}'), "
+            f"IS_SAME({{{FIELD_EVENT_DATE}}}, '{start_iso}', 'day')"
             ")"
         )
         # Inclusive upper bound: {Date} <= end
         upper_inclusive = (
             "OR("
-            f"IS_BEFORE({{Date}}, '{end_iso}'), "
-            f"IS_SAME({{Date}}, '{end_iso}', 'day')"
+            f"IS_BEFORE({{{FIELD_EVENT_DATE}}}, '{end_iso}'), "
+            f"IS_SAME({{{FIELD_EVENT_DATE}}}, '{end_iso}', 'day')"
             ")"
         )
 
         return (
             "AND("  # active flag
-            "{IsActive} = TRUE(),"
+            f"{{{FIELD_IS_ACTIVE}}} = TRUE(),"
             f"{lower_inclusive},"
             f"{upper_inclusive}"
             ")"
@@ -61,7 +67,7 @@ class AirtableScheduleRepository:
     def _sort_params() -> List[str]:
         """Return Airtable sort parameters by Date, Order, StartTime."""
         # Ascending for all fields; '-' prefix would indicate descending
-        return ["Date", "Order", "StartTime"]
+        return [FIELD_EVENT_DATE, FIELD_ORDER, FIELD_START_TIME]
 
     def _convert(self, record: Mapping[str, Any]) -> ScheduleEntry:
         return ScheduleEntry.from_airtable_record(record)

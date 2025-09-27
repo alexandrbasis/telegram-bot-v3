@@ -69,3 +69,18 @@ class ScheduleService:
 
     async def get_schedule_for_date(self, date_value: dt.date) -> List[ScheduleEntry]:
         return await self.get_schedule_range(date_value, date_value)
+
+    async def refresh_schedule_range(
+        self, date_from: dt.date, date_to: dt.date
+    ) -> List[ScheduleEntry]:
+        """Force refresh schedule entries for range by invalidating cache."""
+        if date_to < date_from:
+            date_from, date_to = date_to, date_from
+        self.clear_cache()
+        return await self.get_schedule_range(date_from, date_to)
+
+    async def refresh_schedule_for_date(
+        self, date_value: dt.date
+    ) -> List[ScheduleEntry]:
+        """Force refresh schedule entries for a single day."""
+        return await self.refresh_schedule_range(date_value, date_value)
