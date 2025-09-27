@@ -19,15 +19,11 @@ logger = logging.getLogger(__name__)
 class ScheduleService:
     """High-level API for retrieving schedule data with TTL cache."""
 
-    def __init__(self, cache_ttl_seconds: int = 600) -> None:  # 10 minutes
-        self.cache_ttl_seconds = max(1, int(cache_ttl_seconds))
-        self._cache: Dict[str, Tuple[float, List[ScheduleEntry]]] = {}
-
-        # Lazily initialized repository (so tests can inject easily)
+    # Lazily initialized repository (so tests can inject easily)
     def __init__(
-        self, 
+        self,
         repository: Optional[AirtableScheduleRepository] = None,
-        cache_ttl_seconds: int = 600
+        cache_ttl_seconds: int = 600,
     ) -> None:
         """Initialize service with optional repository injection."""
         # Validate TTL bounds (1 second to 1 hour)
@@ -36,13 +32,17 @@ class ScheduleService:
         self.cache_ttl_seconds = cache_ttl_seconds
         self._cache: Dict[str, Tuple[float, List[ScheduleEntry]]] = {}
         self._repo = repository or self._create_default_repository()
-    
+
     @staticmethod
     def _create_default_repository() -> AirtableScheduleRepository:
         """Create default Airtable repository."""
         factory = AirtableClientFactory()
         client = factory.create_client("schedule")
         return AirtableScheduleRepository(client)
+
+    def _get_repo(self) -> AirtableScheduleRepository:
+        """Accessor for the underlying repository (allows late injection)."""
+        return self._repo
 
     def _cache_key(self, date_from: dt.date, date_to: dt.date) -> str:
         return f"{date_from.isoformat()}_{date_to.isoformat()}"

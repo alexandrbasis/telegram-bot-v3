@@ -7,18 +7,26 @@ from typing import List
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-
-def _date_label(d: date) -> str:
 # Russian month abbreviations
-RUSSIAN_MONTHS = (
-    "янв", "фев", "мар", "апр", "май", "июн",
-    "июл", "авг", "сен", "окт", "ноя", "дек"
+RUSSIAN_MONTHS: tuple[str, ...] = (
+    "янв",
+    "фев",
+    "мар",
+    "апр",
+    "май",
+    "июн",
+    "июл",
+    "авг",
+    "сен",
+    "окт",
+    "ноя",
+    "дек",
 )
+
 
 def _date_label(d: date) -> str:
     """Format date as 'DD mon' in Russian."""
-    return f"{d.day:02d} {RUSSIAN_MONTHS[d.month-1]}"
-    return f"{d.day:02d} {months[d.month-1]}"
+    return f"{d.day:02d} {RUSSIAN_MONTHS[d.month - 1]}"
 
 
 def schedule_days_keyboard(days: List[date]) -> InlineKeyboardMarkup:
