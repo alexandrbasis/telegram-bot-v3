@@ -24,14 +24,25 @@ class ScheduleService:
         self._cache: Dict[str, Tuple[float, List[ScheduleEntry]]] = {}
 
         # Lazily initialized repository (so tests can inject easily)
-        self._repo: Optional[AirtableScheduleRepository] = None
-
-    def _get_repo(self) -> AirtableScheduleRepository:
-        if self._repo is None:
-            factory = AirtableClientFactory()
-            client = factory.create_client("schedule")
-            self._repo = AirtableScheduleRepository(client)
-        return self._repo
+    def __init__(
+        self, 
+        repository: Optional[AirtableScheduleRepository] = None,
+        cache_ttl_seconds: int = 600
+    ) -> None:
+        """Initialize service with optional repository injection."""
+        # Validate TTL bounds (1 second to 1 hour)
+        if not 1 <= cache_ttl_seconds <= 3600:
+            raise ValueError("Cache TTL must be between 1 and 3600 seconds")
+        self.cache_ttl_seconds = cache_ttl_seconds
+        self._cache: Dict[str, Tuple[float, List[ScheduleEntry]]] = {}
+        self._repo = repository or self._create_default_repository()
+    
+    @staticmethod
+    def _create_default_repository() -> AirtableScheduleRepository:
+        """Create default Airtable repository."""
+        factory = AirtableClientFactory()
+        client = factory.create_client("schedule")
+        return AirtableScheduleRepository(client)
 
     def _cache_key(self, date_from: dt.date, date_to: dt.date) -> str:
         return f"{date_from.isoformat()}_{date_to.isoformat()}"
