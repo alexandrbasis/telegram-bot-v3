@@ -12,6 +12,7 @@ from telegram import CallbackQuery, Message, Update, User
 from telegram.ext import ContextTypes, ConversationHandler
 
 from src.bot.handlers.export_conversation_handlers import (
+    _send_export_file,
     cancel_export,
     get_export_conversation_handler,
     handle_department_selection,
@@ -319,3 +320,139 @@ class TestConversationHandlerSetup:
             # Should have at least one CallbackQueryHandler
             has_callback_handler = any(hasattr(h, "pattern") for h in state_handlers)
             assert has_callback_handler
+
+
+class TestExportFileDeliveryWithRussianDescriptions:
+    """Test export file delivery includes Russian export type descriptions."""
+
+    @pytest.mark.asyncio
+    async def test_send_export_file_includes_russian_description_for_candidates(self):
+        """Test that candidates export includes Russian description in success message."""
+        # Create mock query with message
+        query = AsyncMock(spec=CallbackQuery)
+        query.message = AsyncMock(spec=Message)
+        query.message.reply_document = AsyncMock()
+        query.edit_message_text = AsyncMock()
+
+        csv_data = "#,Name,Age\n1,John Doe,25\n2,Jane Smith,30"
+
+        # Mock format_export_success_message to capture the call
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
+            mock_format.return_value = (
+                "✅ Экспорт завершен успешно!\nВыгружены: Кандидаты"
+            )
+
+            await _send_export_file(csv_data, "participants_candidates", query, 123)
+
+            # Verify format_export_success_message was called with export_type
+            mock_format.assert_called_once()
+            call_args = mock_format.call_args
+            call_kwargs = call_args[1] if len(call_args) > 1 else call_args.kwargs
+
+            # Should include export_type parameter
+            assert "export_type" in call_kwargs
+            assert call_kwargs["export_type"] == "candidates"
+
+    @pytest.mark.asyncio
+    async def test_send_export_file_includes_russian_description_for_team(self):
+        """Test that team export includes Russian description in success message."""
+        query = AsyncMock(spec=CallbackQuery)
+        query.message = AsyncMock(spec=Message)
+        query.message.reply_document = AsyncMock()
+        query.edit_message_text = AsyncMock()
+
+        csv_data = "#,Name,Role\n1,John Doe,TEAM\n2,Jane Smith,TEAM"
+
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
+            mock_format.return_value = (
+                "✅ Экспорт завершен успешно!\nВыгружены: Тим Мемберы"
+            )
+
+            await _send_export_file(csv_data, "participants_team", query, 123)
+
+            mock_format.assert_called_once()
+            call_args = mock_format.call_args
+            call_kwargs = call_args[1] if len(call_args) > 1 else call_args.kwargs
+
+            assert "export_type" in call_kwargs
+            assert call_kwargs["export_type"] == "team"
+
+    @pytest.mark.asyncio
+    async def test_send_export_file_includes_russian_description_for_roe(self):
+        """Test that ROE export includes Russian description in success message."""
+        query = AsyncMock(spec=CallbackQuery)
+        query.message = AsyncMock(spec=Message)
+        query.message.reply_document = AsyncMock()
+        query.edit_message_text = AsyncMock()
+
+        csv_data = "#,Session,Date\n1,Session 1,2025-01-01\n2,Session 2,2025-01-02"
+
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
+            mock_format.return_value = "✅ Экспорт завершен успешно!\nВыгружены: РОЭ"
+
+            await _send_export_file(csv_data, "roe_sessions", query, 123)
+
+            mock_format.assert_called_once()
+            call_args = mock_format.call_args
+            call_kwargs = call_args[1] if len(call_args) > 1 else call_args.kwargs
+
+            assert "export_type" in call_kwargs
+            assert call_kwargs["export_type"] == "roe"
+
+    @pytest.mark.asyncio
+    async def test_send_export_file_includes_russian_description_for_bible_readers(
+        self,
+    ):
+        """Test that Bible readers export includes Russian description in success message."""
+        query = AsyncMock(spec=CallbackQuery)
+        query.message = AsyncMock(spec=Message)
+        query.message.reply_document = AsyncMock()
+        query.edit_message_text = AsyncMock()
+
+        csv_data = "#,Name,Passage\n1,John Doe,Psalm 23\n2,Jane Smith,Matthew 5"
+
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
+            mock_format.return_value = "✅ Экспорт завершен успешно!\nВыгружены: Чтецы"
+
+            await _send_export_file(csv_data, "bible_readers", query, 123)
+
+            mock_format.assert_called_once()
+            call_args = mock_format.call_args
+            call_kwargs = call_args[1] if len(call_args) > 1 else call_args.kwargs
+
+            assert "export_type" in call_kwargs
+            assert call_kwargs["export_type"] == "bible_readers"
+
+    @pytest.mark.asyncio
+    async def test_send_export_file_includes_russian_description_for_departments(self):
+        """Test that department export includes Russian description in success message."""
+        query = AsyncMock(spec=CallbackQuery)
+        query.message = AsyncMock(spec=Message)
+        query.message.reply_document = AsyncMock()
+        query.edit_message_text = AsyncMock()
+
+        csv_data = "#,Name,Department\n1,John Doe,IT\n2,Jane Smith,HR"
+
+        with patch(
+            "src.bot.handlers.export_conversation_handlers.format_export_success_message"
+        ) as mock_format:
+            mock_format.return_value = (
+                "✅ Экспорт завершен успешно!\nВыгружены: Департаменты"
+            )
+
+            await _send_export_file(csv_data, "participants_admin", query, 123)
+
+            mock_format.assert_called_once()
+            call_args = mock_format.call_args
+            call_kwargs = call_args[1] if len(call_args) > 1 else call_args.kwargs
+
+            assert "export_type" in call_kwargs
+            assert call_kwargs["export_type"] == "departments"

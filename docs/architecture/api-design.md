@@ -696,8 +696,26 @@ async def list_view_records(self, view: str) -> List[Dict[str, Any]]:
 - **Purpose**: Enables view-driven exports that maintain Airtable column ordering
 - **Raw Data Access**: Returns unprocessed Airtable record dictionaries
 - **Field Order Preservation**: Maintains exact view column structure for export alignment
-- **View Support**: Works with any Airtable view (Тимы, Кандидаты, etc.)
+- **View Support**: Works with any Airtable view (Кандидаты, РОЕ: Расписание, Чтецы: Расписание, etc.)
 - **Error Handling**: Follows established repository error patterns
+- **Multi-Table Support**: Available across all repository types (Participants, ROE, Bible Readers)
+
+#### View-Aligned Export Architecture (Updated 2025-09-27)
+```python
+# Export utility functions for view-based ordering
+def extract_headers_from_view_records(records: List[Dict[str, Any]]) -> List[str]:
+    """Extract column headers from view records preserving field order."""
+
+def order_rows_by_view_headers(rows: List[Dict[str, Any]], headers: List[str]) -> List[List[str]]:
+    """Reorder data rows to match view header sequence with line numbers."""
+```
+
+**View-Based Export Features**:
+- **Column Order Preservation**: Exact Airtable view column ordering maintained
+- **Header Reconstruction**: Headers derived from actual view data including linked fields
+- **Line Number Integration**: Sequential numbering preserved as first column
+- **Graceful Fallback**: Automatic repository filtering when views unavailable
+- **Multi-Table Coverage**: Supports Participants, ROE, and Bible Readers exports
 
 ### Participant Model (Internal)
 ```python

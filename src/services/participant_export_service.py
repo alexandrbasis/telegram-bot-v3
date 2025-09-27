@@ -24,6 +24,7 @@ from src.models.participant import Department, Participant, Role
 from src.utils.export_utils import (
     extract_headers_from_view_records,
     format_line_number,
+    generate_readable_export_filename,
     order_rows_by_view_headers,
 )
 
@@ -226,10 +227,14 @@ class ParticipantExportService:
         else:
             dir_path = Path(tempfile.gettempdir())
 
-        # Generate filename
-        prefix = filename_prefix or "participants_export"
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{prefix}_{timestamp}.csv"
+        # Generate human-readable filename
+        if self._is_predefined_prefix(filename_prefix):
+            # For predefined semantic prefixes, use export type mapping
+            export_type = self._get_export_type_from_prefix(filename_prefix)
+            filename = generate_readable_export_filename(export_type or "participants")
+        else:
+            # For custom prefixes, preserve the prefix with readable date format
+            filename = self._generate_custom_prefix_filename(filename_prefix)
         file_path = dir_path / filename
 
         try:
@@ -726,3 +731,92 @@ class ParticipantExportService:
 
         logger.info(f"Fallback export completed with {total_count} records")
         return csv_string
+
+    def _get_export_type_from_prefix(
+        self, filename_prefix: Optional[str]
+    ) -> Optional[str]:
+        """
+        Map filename prefix to export type for readable filename generation.
+
+        Args:
+            filename_prefix: Optional filename prefix from export methods
+
+        Returns:
+            Export type string for filename generation
+        """
+        if not filename_prefix:
+            return "participants"
+
+        prefix_mappings = {
+            "participants_team": "team",
+            "participants_candidates": "candidates",
+            "participants_all": "participants",
+        }
+
+        # Check for department exports (e.g., "participants_admin")
+        if (
+            filename_prefix.startswith("participants_")
+            and filename_prefix not in prefix_mappings
+        ):
+            return "departments"
+
+        return prefix_mappings.get(filename_prefix, "participants")
+
+    def _is_predefined_prefix(self, filename_prefix: Optional[str]) -> bool:
+        """
+        Check if filename prefix is a predefined semantic prefix.
+
+        Should be mapped to export types.
+
+        Args:
+            filename_prefix: Optional filename prefix from export methods
+
+        Returns:
+            True if prefix is predefined, False if custom or None
+        """
+        if not filename_prefix:
+            return True  # None/empty prefix uses default behavior
+
+        predefined_prefixes = {
+            "participants_team",
+            "participants_candidates",
+            "participants_all",
+        }
+
+        # Check for exact matches
+        if filename_prefix in predefined_prefixes:
+            return True
+
+        # Check for department exports (e.g., "participants_admin")
+        if (
+            filename_prefix.startswith("participants_")
+            and filename_prefix not in predefined_prefixes
+        ):
+            return True
+
+        return False
+
+    def _generate_custom_prefix_filename(self, filename_prefix: Optional[str]) -> str:
+        """
+        Generate filename using custom prefix with readable date format.
+
+        Args:
+            filename_prefix: Custom filename prefix to preserve
+
+        Returns:
+            Filename with custom prefix, readable date, and unique suffix
+        """
+        import uuid
+        from datetime import datetime
+
+        # Use default prefix if none provided
+        if not filename_prefix:
+            return generate_readable_export_filename("participants")
+
+        # Format date as DD_MM_YYYY
+        date_str = datetime.now().strftime("%d_%m_%Y")
+
+        # Generate unique suffix to prevent filename conflicts
+        unique_suffix = str(uuid.uuid4()).replace("-", "")[:8]
+
+        return f"{filename_prefix}_{date_str}_{unique_suffix}.csv"

@@ -44,6 +44,11 @@ AIRTABLE_BIBLE_READERS_TABLE_ID=tblGEnSfpPOuPLXcm
 # ROE table (new)
 AIRTABLE_ROE_TABLE_NAME=ROE
 AIRTABLE_ROE_TABLE_ID=tbl0j8bcgkV3lVAdc
+
+# View-aligned export configuration (Added 2025-09-27)
+AIRTABLE_PARTICIPANT_EXPORT_VIEW=Кандидаты
+AIRTABLE_ROE_EXPORT_VIEW=РОЕ: Расписание
+AIRTABLE_BIBLE_READERS_EXPORT_VIEW=Чтецы: Расписание
 ```
 
 ### Client Factory Integration
@@ -85,3 +90,73 @@ client = factory.create_client("bible_readers")  # or "roe" or "participants"
 - **Timeouts**: 10-second timeout with graceful fallback to empty list
 - **Rate Limiting**: Built into Airtable client (5 requests/second)
 - **Cache Persistence**: Cache persists across service factory calls for efficiency
+
+## View-Aligned Export Configuration (Added 2025-09-27)
+
+### Overview
+The bot now supports view-aligned exports that leverage specific Airtable views to maintain exact column ordering and field structure. This ensures exported CSV files match operational dashboards and prevents schema drift.
+
+### Configured Views
+The following Airtable views are used for exports:
+
+#### Participants View (Кандидаты)
+- **Environment Variable**: `AIRTABLE_PARTICIPANT_EXPORT_VIEW`
+- **Default Value**: `Кандидаты`
+- **Purpose**: Candidate participant exports with view-defined column ordering
+- **Features**:
+  - Maintains exact Airtable view column order
+  - Includes sequential line numbers as first column
+  - Supports graceful fallback when view unavailable
+
+#### ROE View (РОЕ: Расписание)
+- **Environment Variable**: `AIRTABLE_ROE_EXPORT_VIEW`
+- **Default Value**: `РОЕ: Расписание`
+- **Purpose**: ROE session data exports with presenter information
+- **Features**:
+  - View-aligned column structure with participant hydration
+  - Linked participant names resolved from IDs
+  - Sequential line numbering for easy reference
+
+#### Bible Readers View (Чтецы: Расписание)
+- **Environment Variable**: `AIRTABLE_BIBLE_READERS_EXPORT_VIEW`
+- **Default Value**: `Чтецы: Расписание`
+- **Purpose**: Bible reading assignment exports with participant details
+- **Features**:
+  - View-defined field ordering preserved
+  - Participant name hydration for linked records
+  - Line numbers maintained for counting and reference
+
+### Implementation Features
+
+#### Repository Layer Support
+All repository implementations include `list_view_records(view_name: str)` method:
+- Returns raw Airtable view records preserving field order
+- Supports all three data types (Participants, ROE, Bible Readers)
+- Maintains exact view structure for export alignment
+
+#### Export Service Integration
+Export services leverage view-based data retrieval:
+- **Header Extraction**: Column headers derived from actual view data
+- **Column Order Preservation**: Maintains exact Airtable view ordering
+- **Participant Hydration**: Linked participant IDs resolved to names
+- **Fallback Logic**: Graceful degradation when views unavailable
+
+#### Configuration Management
+View names are configurable via environment variables:
+- **Cyrillic Support**: Russian view names properly handled
+- **Validation**: View names validated at startup
+- **Fallback Handling**: Automatic fallback to repository filtering when views not found
+
+### Error Handling and Resilience
+
+#### View Unavailability
+- **Detection**: 422 VIEW_NAME_NOT_FOUND errors automatically detected
+- **Fallback**: Seamless transition to repository-based filtering
+- **User Experience**: Transparent fallback maintains export functionality
+- **Logging**: Clear warnings logged for operational awareness
+
+#### Export Reliability
+- **Error Recovery**: Comprehensive retry logic for transient failures
+- **Resource Management**: Automatic cleanup prevents file accumulation
+- **Progress Tracking**: Real-time progress updates during exports
+- **Line Number Consistency**: Sequential numbering preserved across all export methods

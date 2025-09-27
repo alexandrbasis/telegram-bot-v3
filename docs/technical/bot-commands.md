@@ -663,7 +663,7 @@ Interactive export conversation flow for administrative data export. Available t
 - **Secure Processing**: Temporary file creation with automatic cleanup
 - **Error Handling**: User-friendly error messages for various failure scenarios
 
-**Interactive Export Selection Example with View Alignment (2025-09-23)**:
+**Interactive Export Selection Example with View Alignment (Updated 2025-09-27)**:
 ```
 Admin: /export
 Bot: Выберите тип экспорта:
@@ -671,11 +671,11 @@ Bot: Выберите тип экспорта:
 
 Admin clicks: "Экспорт команды"
 Bot: 🔄 Начинается экспорт данных команды...
-📊 Используется представление Airtable: "Тимы"
+📊 Используется представление Airtable: "Кандидаты"
 Bot: 📈 Экспорт: 50% завершено (25/50 участников)
 Bot: ✅ Экспорт завершён! Отправляю файл...
 Bot: 📁 Файл успешно отправлен!
-[CSV file attachment: team_export_YYYY-MM-DD_HH-MM.csv with Тимы view column ordering]
+[CSV file attachment: team_export_YYYY-MM-DD_HH-MM.csv with Кандидаты view column ordering]
 
 Admin clicks: "Экспорт кандидатов"
 Bot: 🔄 Начинается экспорт данных кандидатов...
@@ -685,17 +685,33 @@ Bot: ✅ Экспорт завершён! Отправляю файл...
 Bot: 📁 Файл успешно отправлен!
 [CSV file attachment: candidates_export_YYYY-MM-DD_HH-MM.csv with Кандидаты view column ordering]
 
+Admin clicks: "Экспорт ROE"
+Bot: 🔄 Начинается экспорт данных ROE...
+📊 Используется представление Airtable: "РОЕ: Расписание"
+Bot: 📈 Экспорт: 100% завершено (45/45 сессий)
+Bot: ✅ Экспорт завершён! Отправляю файл...
+Bot: 📁 Файл успешно отправлен!
+[CSV file attachment: roe_export_YYYY-MM-DD_HH-MM.csv with РОЕ: Расписание view column ordering]
+
+Admin clicks: "Экспорт Bible Readers"
+Bot: 🔄 Начинается экспорт данных Bible Readers...
+📊 Используется представление Airtable: "Чтецы: Расписание"
+Bot: 📈 Экспорт: 100% завершено (30/30 заданий)
+Bot: ✅ Экспорт завершён! Отправляю файл...
+Bot: 📁 Файл успешно отправлен!
+[CSV file attachment: bible_readers_export_YYYY-MM-DD_HH-MM.csv with Чтецы: Расписание view column ordering]
+
 Admin clicks: "Экспорт по департаменту"
 Bot: Выберите департамент:
 [13 department buttons displayed: ROE, Chapel, Setup, Palanka, Administration, Kitchen, Decoration, Bell, Refreshment, Worship, Media, Clergy, Rectorate]
 
 Admin clicks: "Setup"
 Bot: 🔄 Начинается экспорт данных департамента Setup...
-📊 Используется представление Airtable: "Тимы" с фильтром по департаменту
+📊 Используется представление Airtable: "Кандидаты" с фильтром по департаменту
 Bot: 📈 Экспорт: 50% завершено (25/50 участников)
 Bot: ✅ Экспорт завершён! Отправляю файл...
 Bot: 📁 Файл успешно отправлен!
-[CSV file attachment: setup_export_YYYY-MM-DD_HH-MM.csv with Тимы view column ordering]
+[CSV file attachment: setup_export_YYYY-MM-DD_HH-MM.csv with Кандидаты view column ordering]
 
 # Alternative workflow - Export All:
 Admin: /export
@@ -730,11 +746,15 @@ Bot: 📁 Файл успешно отправлен!
 - **Error Recovery**: Comprehensive retry logic for transient failures
 - **Audit Logging**: Complete user interaction logging for administrative monitoring
 
-**Enhanced Export Reliability (2025-09-26)**:
-- **View Fallback Logic**: Candidate exports automatically fallback to repository filtering when Airtable view "Кандидаты" is unavailable
-- **Error Detection**: 422 VIEW_NAME_NOT_FOUND errors gracefully handled with seamless user experience
-- **Async Export Interfaces**: BibleReaders and ROE exports now support both async and sync interfaces for optimal performance
-- **Line Number Preservation**: All export flows maintain sequential line numbering regardless of export method
+**Enhanced Export Reliability with View-Aligned Architecture (Updated 2025-09-27)**:
+- **View-Based Column Ordering**: All exports (Participants, ROE, Bible Readers) leverage configured Airtable views to maintain exact column ordering
+- **View Configuration**: Supports configurable view names via environment variables (AIRTABLE_PARTICIPANT_EXPORT_VIEW, AIRTABLE_ROE_EXPORT_VIEW, AIRTABLE_BIBLE_READERS_EXPORT_VIEW)
+- **View Fallback Logic**: All exports automatically fallback to repository filtering when configured Airtable views are unavailable
+- **Error Detection**: 422 VIEW_NAME_NOT_FOUND errors gracefully handled with seamless user experience and transparent fallback
+- **Column Order Preservation**: Export utilities maintain exact Airtable view column ordering while preserving line numbers as first column
+- **Participant Hydration**: ROE and Bible Readers exports include hydrated participant names from linked participant IDs
+- **Async Export Interfaces**: All export services support both async and sync interfaces for optimal performance
+- **Line Number Preservation**: All export flows maintain sequential line numbering regardless of export method (view-based or fallback)
 
 **Error Scenarios with File Delivery**:
 - **Unauthorized Access**: "Доступ запрещён. Эта команда доступна только администраторам."

@@ -30,7 +30,10 @@ from src.models.participant import Department, Role
 from src.services import service_factory
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
-from src.utils.export_utils import format_export_success_message
+from src.utils.export_utils import (
+    format_export_success_message,
+    generate_readable_export_filename,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -404,6 +407,34 @@ async def _process_department_export(
         )
 
 
+def _get_export_type_from_filename_prefix(filename_prefix: str) -> Optional[str]:
+    """
+    Map filename prefix to export type for Russian descriptions.
+
+    Args:
+        filename_prefix: Filename prefix from export service
+
+    Returns:
+        Export type string for Russian description mapping
+    """
+    prefix_to_type = {
+        "participants_all": "participants",  # General participants export
+        "participants_team": "team",
+        "participants_candidates": "candidates",
+        "bible_readers": "bible_readers",
+        "roe_sessions": "roe",
+    }
+
+    # Handle department exports (e.g., "participants_admin", "participants_roe")
+    if (
+        filename_prefix.startswith("participants_")
+        and filename_prefix not in prefix_to_type
+    ):
+        return "departments"
+
+    return prefix_to_type.get(filename_prefix)
+
+
 async def _send_export_file(
     csv_data: str, filename_prefix: str, query, user_id: Optional[int]
 ) -> None:
@@ -444,20 +475,26 @@ async def _send_export_file(
         with open(temp_file_path, "rb") as file:
             ts_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-            # Format success message with participant count
+            # Get export type for Russian description
+            export_type = _get_export_type_from_filename_prefix(filename_prefix)
+
+            # Format success message with participant count and Russian description
             caption = format_export_success_message(
                 base_message="✅ Экспорт завершен успешно!",
                 file_size_mb=file_size_mb,
                 timestamp=f"{ts_utc} UTC",
                 csv_data=csv_data,
+                export_type=export_type,
+            )
+
+            # Generate human-readable filename
+            readable_filename = generate_readable_export_filename(
+                export_type or "export"
             )
 
             await query.message.reply_document(
                 document=file,
-                filename=(
-                    f"{filename_prefix}_"
-                    f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-                ),
+                filename=readable_filename,
                 caption=caption,
             )
 

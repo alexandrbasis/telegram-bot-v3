@@ -8,7 +8,12 @@ and reference capabilities.
 
 import csv
 import io
+import re
+import uuid
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+
+from src.utils.export_type_mapping import get_russian_export_description
 
 
 def format_line_number(line_num: int, width: Optional[int] = None) -> str:
@@ -177,24 +182,33 @@ def format_export_success_message(
     file_size_mb: float,
     timestamp: str,
     csv_data: Optional[str] = None,
+    export_type: Optional[str] = None,
 ) -> str:
     """
-    Format export success message with optional participant count.
+    Format export success message with optional participant count and Russian type.
 
     Creates a standardized success message format for CSV exports
-    that includes file size, timestamp, and optionally participant count
-    extracted from the CSV data.
+    that includes file size, timestamp, optionally participant count
+    extracted from the CSV data, and Russian export type description.
 
     Args:
         base_message: Base success message (e.g., "✅ Экспорт завершен успешно!")
         file_size_mb: File size in megabytes
         timestamp: Export timestamp string
         csv_data: Optional CSV data to extract participant count from
+        export_type: Optional export type for Russian description (e.g., "candidates")
 
     Returns:
-        Formatted success message string
+        Formatted success message string with optional Russian export type description
     """
-    message_parts = [base_message, ""]
+    message_parts = [base_message]
+
+    # Add Russian export type description if provided
+    if export_type:
+        russian_description = get_russian_export_description(export_type)
+        message_parts.append(f"Выгружены: {russian_description}")
+
+    message_parts.append("")
 
     # Add participant count if available
     if csv_data:
@@ -284,3 +298,83 @@ def order_rows_by_view_headers(
         reordered_rows.append(new_row)
 
     return reordered_rows
+
+
+def generate_readable_export_filename(
+    export_type: str, export_datetime: Optional[datetime] = None
+) -> str:
+    """
+    Generate human-readable filename for CSV exports with DD_MM_YYYY format.
+
+    Creates filenames following the pattern: [normalized_type]_DD_MM_YYYY_[suffix].csv
+    where the suffix ensures uniqueness to prevent file conflicts.
+
+    Args:
+        export_type: Type of export (e.g., "candidates", "team", "roe")
+        export_datetime: Optional datetime for filename. Uses current time if None.
+
+    Returns:
+        Human-readable filename string with normalized type and date format
+
+    Examples:
+        >>> generate_readable_export_filename("candidates", datetime(2025, 9, 27))
+        'candidates_27_09_2025_a1b2c3d4.csv'
+        >>> generate_readable_export_filename("bible readers")
+        'bible_readers_27_09_2025_e5f6g7h8.csv'
+    """
+    if export_datetime is None:
+        export_datetime = datetime.now()
+
+    # Normalize export type to ASCII-safe filename
+    normalized_type = _normalize_export_type_for_filename(export_type)
+
+    # Format date as DD_MM_YYYY
+    date_str = export_datetime.strftime("%d_%m_%Y")
+
+    # Generate unique suffix to prevent filename conflicts
+    unique_suffix = str(uuid.uuid4()).replace("-", "")[:8]
+
+    return f"{normalized_type}_{date_str}_{unique_suffix}.csv"
+
+
+def _normalize_export_type_for_filename(export_type: str) -> str:
+    """
+    Normalize export type string for safe filename usage.
+
+    Converts export types to ASCII-safe format by:
+    - Converting known Cyrillic types to their ASCII equivalents
+    - Replacing spaces and special characters with underscores
+    - Ensuring compatibility across different operating systems
+
+    Args:
+        export_type: Export type string to normalize
+
+    Returns:
+        Normalized ASCII-safe string suitable for filenames
+    """
+    # Handle known Cyrillic mappings
+    cyrillic_mappings = {
+        "роэ": "roe",
+        "кандидаты": "candidates",
+        "тим мемберы": "team",
+        "департаменты": "departments",
+        "чтецы": "bible_readers",
+    }
+
+    normalized = export_type.lower()
+
+    # Apply Cyrillic mappings if available
+    if normalized in cyrillic_mappings:
+        normalized = cyrillic_mappings[normalized]
+
+    # Replace special characters and spaces with underscores
+    # Keep only alphanumeric characters and underscores
+    normalized = re.sub(r"[^a-zA-Z0-9_]", "_", normalized)
+
+    # Remove multiple consecutive underscores
+    normalized = re.sub(r"_+", "_", normalized)
+
+    # Remove leading/trailing underscores
+    normalized = normalized.strip("_")
+
+    return normalized if normalized else "export"
