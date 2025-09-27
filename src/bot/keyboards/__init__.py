@@ -6,6 +6,7 @@ including search, editing, and navigation interfaces.
 """
 
 from .edit_keyboards import create_participant_edit_keyboard, get_field_icon
+from .schedule import schedule_days_keyboard
 from .search_keyboards import (
     NAV_BACK_TO_SEARCH_MODES,
     NAV_CANCEL,
@@ -20,4 +21,3 @@ from .search_keyboards import (
     get_waiting_for_name_keyboard,
     get_waiting_for_room_keyboard,
 )
-from .schedule import schedule_days_keyboard

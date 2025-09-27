@@ -7,7 +7,6 @@ proper error handling, and logging configuration including persistent file loggi
 
 import asyncio
 import logging
-import os
 import tempfile
 from contextlib import suppress
 from pathlib import Path
@@ -135,7 +134,12 @@ def create_application() -> Application:
     app.add_handler(export_conversation_handler)
 
     # Add schedule command and callbacks (feature-flagged)
-    enable_schedule = os.getenv("ENABLE_SCHEDULE_FEATURE", "false").lower() == "true"
+    enable_schedule = False
+    app_settings = getattr(settings, "application", None)
+    if app_settings is not None:
+        flag = getattr(app_settings, "enable_schedule_feature", False)
+        if isinstance(flag, bool):
+            enable_schedule = flag
     if enable_schedule:
         logger.info("Adding schedule handlers")
         for h in get_schedule_handlers():

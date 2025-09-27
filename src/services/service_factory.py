@@ -12,8 +12,8 @@ from src.services.bible_readers_export_service import BibleReadersExportService
 from src.services.participant_export_service import ParticipantExportService
 from src.services.participant_list_service import ParticipantListService
 from src.services.roe_export_service import ROEExportService
-from src.services.search_service import SearchService
 from src.services.schedule_service import ScheduleService
+from src.services.search_service import SearchService
 
 # Cache for table-specific clients
 _AIRTABLE_CLIENTS: Dict[str, AirtableClient] = {}
