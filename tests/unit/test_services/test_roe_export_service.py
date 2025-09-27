@@ -115,9 +115,20 @@ def sample_roe_sessions():
 @pytest.fixture
 def export_service(mock_roe_repository, mock_participant_repository):
     """Create a ROEExportService instance with mock repositories."""
+    # Create mock settings to avoid environment variable requirements
+    from unittest.mock import Mock
+    from src.data.repositories.participant_repository import RepositoryError
+
+    mock_settings = Mock()
+    mock_settings.database.roe_export_view = "Test ROE View"
+
+    # Configure mock repository to raise RepositoryError for view lookup, forcing fallback to legacy method
+    mock_roe_repository.list_view_records.side_effect = RepositoryError("View not found")
+
     return ROEExportService(
         roe_repository=mock_roe_repository,
         participant_repository=mock_participant_repository,
+        settings=mock_settings,
     )
 
 

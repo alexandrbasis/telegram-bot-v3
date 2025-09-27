@@ -94,9 +94,20 @@ def sample_bible_readers():
 @pytest.fixture
 def export_service(mock_bible_readers_repository, mock_participant_repository):
     """Create a BibleReadersExportService instance with mock repositories."""
+    # Create mock settings to avoid environment variable requirements
+    from unittest.mock import Mock
+    from src.data.repositories.participant_repository import RepositoryError
+
+    mock_settings = Mock()
+    mock_settings.database.bible_readers_export_view = "Test View"
+
+    # Configure mock repository to raise RepositoryError for view lookup, forcing fallback to legacy method
+    mock_bible_readers_repository.list_view_records.side_effect = RepositoryError("View not found")
+
     return BibleReadersExportService(
         bible_readers_repository=mock_bible_readers_repository,
         participant_repository=mock_participant_repository,
+        settings=mock_settings,
     )
 
 
