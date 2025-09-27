@@ -241,10 +241,12 @@ All bot handlers now implement mandatory authorization checks using decorator-ba
 - **Service factory pattern** for centralized dependency injection (2025-09-04)
 - **Multi-Table Configuration**: Extended DatabaseSettings with BibleReaders and ROE table support
 - **Airtable Client Factory**: Table-specific client creation with dependency injection support
-- **View-Based Data Access** (2025-09-23):
+- **View-Based Data Access** (Updated 2025-09-27):
   - `list_view_records(view: str)` - Raw Airtable view record retrieval preserving field order
   - View-driven export architecture maintaining exact Airtable column ordering
   - Header reconstruction from actual view data including linked relationship fields
+  - Configurable view names for Participants (Кандидаты), ROE (РОЕ: Расписание), and Bible Readers (Чтецы: Расписание) exports
+  - Graceful fallback to repository filtering when views unavailable
 
 ### Service Layer Architecture
 
@@ -254,21 +256,26 @@ All bot handlers now implement mandatory authorization checks using decorator-ba
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
 
-**Enhanced Export Services with View Alignment** (Updated 2025-09-23):
+**Enhanced Export Services with View Alignment** (Updated 2025-09-27):
 - **Participant Export Service**: Extended with view-driven architecture for Airtable alignment
-  - **View-Aligned Role Filtering**: TEAM exports use "Тимы" view, CANDIDATES use "Кандидаты" view
+  - **View-Aligned Exports**: All participant exports use configurable "Кандидаты" view for consistent column ordering
   - **Column Order Preservation**: Exports maintain exact Airtable view ordering for direct comparison
-  - **Department-based filtering**: Export participants from specific departments using "Тимы" view structure
+  - **Department-based filtering**: Export participants from specific departments using view structure with participant hydration
   - **Header Reconstruction**: Headers built from actual view data including linked relationship fields
   - **View-Driven Methods**: `_export_view_to_csv()`, `_determine_view_headers()`, `_records_to_csv()`
+  - **Graceful Fallback**: Automatic repository filtering when view unavailable with 422 error detection
   - Complete export: Full participant database export (existing functionality maintained)
 - **BibleReaders Export Service**: Dedicated export service for Bible reading assignments
+  - **View-Aligned Architecture**: Uses configurable "Чтецы: Расписание" view for column ordering
   - Participant name hydration from linked participant IDs
   - CSV generation with view-aligned column order and participant names embedded in the `Participants` column
+  - **Graceful Fallback**: Repository filtering when view unavailable
   - Progress tracking and file management integration
 - **ROE Export Service**: Dedicated export service for ROE session data
+  - **View-Aligned Architecture**: Uses configurable "РОЕ: Расписание" view for column ordering
   - Multi-relationship hydration (presenters, assistants, prayer partners)
   - Scheduling metadata inclusion (date/time/duration)
+  - **Graceful Fallback**: Repository filtering when view unavailable
   - Complex presenter information handling
 - **Repository Interface Extensions**:
   - `list_view_records(view: str)` method for raw Airtable view data access

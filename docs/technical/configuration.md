@@ -20,6 +20,15 @@
 | `AIRTABLE_BIBLE_READERS_TABLE_ID` | BibleReaders table identifier | `tblGEnSfpPOuPLXcm` | `tblGEnSfpPOuPLXcm` |
 | `AIRTABLE_ROE_TABLE_NAME` | ROE table name | `ROE` | `ROE` |
 | `AIRTABLE_ROE_TABLE_ID` | ROE table identifier | `tbl0j8bcgkV3lVAdc` | `tbl0j8bcgkV3lVAdc` |
+
+### View-Aligned Export Configuration Variables (Added 2025-09-27)
+
+| Variable | Description | Example | Default |
+|----------|-------------|---------|---------|
+| `AIRTABLE_PARTICIPANT_EXPORT_VIEW` | Airtable view name for participant exports | `Кандидаты` | `Кандидаты` |
+| `AIRTABLE_ROE_EXPORT_VIEW` | Airtable view name for ROE exports | `РОЕ: Расписание` | `РОЕ: Расписание` |
+| `AIRTABLE_BIBLE_READERS_EXPORT_VIEW` | Airtable view name for Bible Readers exports | `Чтецы: Расписание` | `Чтецы: Расписание` |
+
 | `LOG_LEVEL` | Logging level | `INFO`, `DEBUG`, `WARNING` | `INFO` |
 | `ENVIRONMENT` | Runtime environment | `development`, `production` | `development` |
 | `TELEGRAM_CONVERSATION_TIMEOUT_MINUTES` | Conversation timeout in minutes | `30`, `60` | `30` |
@@ -226,6 +235,9 @@ roe_sessions = await roe_repo.get_by_roista_id("rec456...")
 - **Table Type Validation**: Factory validates supported table types (participants, bible_readers, roe)
 - **Field Mapping Validation**: Each table has dedicated field mapping helpers with comprehensive field ID validation
 - **Repository Pattern**: All repositories follow consistent interface patterns with async operations and proper error handling
+- **View Name Validation**: Export view names must be valid Airtable view identifiers for view-aligned exports
+- **Export View Configuration**: View names support Cyrillic characters for Russian Airtable interface alignment
+- **View-Based Export Fallback**: System gracefully handles view unavailability with automatic fallback to repository filtering
 
 ## Configuration Loading
 
@@ -248,6 +260,11 @@ print(f"Tables: {db_settings.table_name}, {db_settings.bible_readers_table_name}
 participants_config = db_settings.to_airtable_config("participants")
 bible_readers_config = db_settings.to_airtable_config("bible_readers")
 roe_config = db_settings.to_airtable_config("roe")
+
+# Access view-aligned export configuration (2025-09-27)
+participant_export_view = settings.database.participant_export_view  # "Кандидаты"
+roe_export_view = settings.database.roe_export_view                  # "РОЕ: Расписание"
+bible_readers_export_view = settings.database.bible_readers_export_view  # "Чтецы: Расписание"
 ```
 
 ### Error Handling
