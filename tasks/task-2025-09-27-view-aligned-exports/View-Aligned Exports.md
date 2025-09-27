@@ -84,6 +84,13 @@ Target: 90%+ coverage across view-aligned export logic
 **Key Files**: `src/utils/export_utils.py`, `src/services/*_export_service.py`
 **Critical**: Preserve `#` line numbers while respecting view column order
 
+**For Next Developer**:
+1. **Step 4**: Extend `src/utils/export_utils.py` to handle view-based column ordering
+2. **Steps 5-7**: Update export services to use `list_view_records(settings.{type}_export_view)`
+3. **Step 8**: Add enhanced logging and documentation
+4. **Pattern**: Follow TDD approach established in foundation - see existing tests for examples
+5. **Repository Access**: Use `settings.database.{type}_export_view` for configured view names
+
 ### Knowledge Gaps - Addressed in Implementation
 - ✅ **Field ordering from Airtable views**: Addressed in Steps 2.1-2.2 by implementing concrete view support in ROE and Bible Readers repositories with proper field mapping and ordering.
 - ✅ **Repository view-specific helpers**: Addressed in Steps 1.1 by standardizing `list_view_records()` interface across all repositories, and Steps 2.1-2.2 by implementing concrete view support.
