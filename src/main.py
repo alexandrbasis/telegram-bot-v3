@@ -7,8 +7,8 @@ proper error handling, and logging configuration including persistent file loggi
 
 import asyncio
 import logging
-import tempfile
 import os
+import tempfile
 from contextlib import suppress
 from pathlib import Path
 from typing import Optional
@@ -23,8 +23,8 @@ from src.bot.handlers.export_conversation_handlers import (
     get_export_conversation_handler,
 )
 from src.bot.handlers.export_handlers import handle_export_command
-from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.bot.handlers.schedule_handlers import get_schedule_handlers
+from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
 from src.services.file_logging_service import FileLoggingService
 from src.utils.single_instance import InstanceLock

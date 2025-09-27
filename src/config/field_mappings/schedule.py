@@ -39,8 +39,12 @@ class ScheduleFieldMapping:
     IS_MANDATORY: str = "fld3A4pa7OOpJ3Ydc"  # IsMandatory - checkbox
 
     # Responsibility fields (not created yet)
-    RESPONSIBLE_DEPARTMENT: str = "fld[NOT_CREATED]"  # ResponsibleDepartment - singleSelect
-    RESPONSIBLE_PERSON: str = "fld[NOT_CREATED]"  # ResponsiblePerson - multipleRecordLinks
+    RESPONSIBLE_DEPARTMENT: str = (
+        "fld[NOT_CREATED]"  # ResponsibleDepartment - singleSelect
+    )
+    RESPONSIBLE_PERSON: str = (
+        "fld[NOT_CREATED]"  # ResponsiblePerson - multipleRecordLinks
+    )
 
     @property
     def field_name_to_id(self) -> Dict[str, str]:
@@ -112,6 +116,7 @@ SCHEDULE_VIEWS = {
 
 # Create singleton instance
 schedule_field_mapping = ScheduleFieldMapping()
+
 
 # Export convenience functions
 def get_field_id(field_name: str) -> Optional[str]:

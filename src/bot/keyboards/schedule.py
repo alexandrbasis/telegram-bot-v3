@@ -31,7 +31,9 @@ def schedule_days_keyboard(days: List[date]) -> InlineKeyboardMarkup:
     row: List[InlineKeyboardButton] = []
     for d in days:
         row.append(
-            InlineKeyboardButton(_date_label(d), callback_data=f"schedule:{d.isoformat()}")
+            InlineKeyboardButton(
+                _date_label(d), callback_data=f"schedule:{d.isoformat()}"
+            )
         )
         if len(row) == 2:
             buttons.append(row)

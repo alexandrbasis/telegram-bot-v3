@@ -114,7 +114,9 @@ class DatabaseSettings:
         default_factory=lambda: os.getenv("AIRTABLE_SCHEDULE_TABLE_NAME", "Schedule")
     )
     schedule_table_id: str = field(
-        default_factory=lambda: os.getenv("AIRTABLE_SCHEDULE_TABLE_ID", "tblsxihPaZebzyBS2")
+        default_factory=lambda: os.getenv(
+            "AIRTABLE_SCHEDULE_TABLE_ID", "tblsxihPaZebzyBS2"
+        )
     )
 
     # Rate limiting and performance
@@ -218,7 +220,8 @@ class DatabaseSettings:
         Get configuration for a specific table type.
 
         Args:
-            table_type: The type of table ('participants', 'bible_readers', 'roe', 'schedule')
+            table_type: The type of table
+                ('participants', 'bible_readers', 'roe', 'schedule')
 
         Returns:
             Dictionary with table_id and table_name for the specified table

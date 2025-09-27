@@ -39,7 +39,9 @@ class ScheduleService:
     def clear_cache(self) -> None:
         self._cache.clear()
 
-    async def get_schedule_range(self, date_from: dt.date, date_to: dt.date) -> List[ScheduleEntry]:
+    async def get_schedule_range(
+        self, date_from: dt.date, date_to: dt.date
+    ) -> List[ScheduleEntry]:
         """Get schedule entries for an inclusive date range with caching."""
         if date_to < date_from:
             date_from, date_to = date_to, date_from
