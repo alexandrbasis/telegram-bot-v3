@@ -59,7 +59,9 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
         try:
             day = dt.date.fromisoformat(last_day_iso)
         except ValueError as e:
-            logger.warning("Invalid cached date in refresh: %s", last_day_iso)
+            logger.warning(
+                "Invalid cached date in refresh: %s - %s", last_day_iso, e
+            )
             context.user_data.pop(USER_DATA_LAST_DAY_KEY, None)
             await query.edit_message_text(
                 "❌ Некорректная дата.",
