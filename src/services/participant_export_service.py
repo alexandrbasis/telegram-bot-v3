@@ -24,6 +24,7 @@ from src.models.participant import Department, Participant, Role
 from src.utils.export_utils import (
     extract_headers_from_view_records,
     format_line_number,
+    generate_readable_export_filename,
     order_rows_by_view_headers,
 )
 
@@ -226,10 +227,9 @@ class ParticipantExportService:
         else:
             dir_path = Path(tempfile.gettempdir())
 
-        # Generate filename
-        prefix = filename_prefix or "participants_export"
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{prefix}_{timestamp}.csv"
+        # Generate human-readable filename
+        export_type = self._get_export_type_from_prefix(filename_prefix)
+        filename = generate_readable_export_filename(export_type or "participants")
         file_path = dir_path / filename
 
         try:
@@ -726,3 +726,28 @@ class ParticipantExportService:
 
         logger.info(f"Fallback export completed with {total_count} records")
         return csv_string
+
+    def _get_export_type_from_prefix(self, filename_prefix: Optional[str]) -> Optional[str]:
+        """
+        Map filename prefix to export type for readable filename generation.
+
+        Args:
+            filename_prefix: Optional filename prefix from export methods
+
+        Returns:
+            Export type string for filename generation
+        """
+        if not filename_prefix:
+            return "participants"
+
+        prefix_mappings = {
+            "participants_team": "team",
+            "participants_candidates": "candidates",
+            "participants_all": "participants",
+        }
+
+        # Check for department exports (e.g., "participants_admin")
+        if filename_prefix.startswith("participants_") and filename_prefix not in prefix_mappings:
+            return "departments"
+
+        return prefix_mappings.get(filename_prefix, "participants")

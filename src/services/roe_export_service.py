@@ -25,6 +25,7 @@ from src.models.roe import ROE
 from src.utils.export_utils import (
     extract_headers_from_view_records,
     format_line_number,
+    generate_readable_export_filename,
     order_rows_by_view_headers,
 )
 
@@ -317,10 +318,8 @@ class ROEExportService:
         else:
             dir_path = Path(tempfile.gettempdir())
 
-        # Generate filename
-        prefix = filename_prefix or "roe_export"
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{prefix}_{timestamp}.csv"
+        # Generate human-readable filename
+        filename = generate_readable_export_filename("roe")
         file_path = dir_path / filename
 
         try:

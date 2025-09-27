@@ -30,7 +30,7 @@ from src.models.participant import Department, Role
 from src.services import service_factory
 from src.services.user_interaction_logger import UserInteractionLogger
 from src.utils.auth_utils import is_admin_user
-from src.utils.export_utils import format_export_success_message
+from src.utils.export_utils import format_export_success_message, generate_readable_export_filename
 
 logger = logging.getLogger(__name__)
 
@@ -481,12 +481,12 @@ async def _send_export_file(
                 export_type=export_type,
             )
 
+            # Generate human-readable filename
+            readable_filename = generate_readable_export_filename(export_type or "export")
+
             await query.message.reply_document(
                 document=file,
-                filename=(
-                    f"{filename_prefix}_"
-                    f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-                ),
+                filename=readable_filename,
                 caption=caption,
             )
 
