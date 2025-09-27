@@ -699,17 +699,23 @@ class TestRoleBasedFiltering:
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
+        # Headers now come from the actual view record field order
+        # The first record in candidate_view_records determines the order
         expected_headers = [
-            "#",
+            "#",  # Line numbers always first
             "FullNameRU",
-            "Gender",
-            "DateOfBirth",
-            "Size",
-            "CountryAndCity",
-            "Church",
-            "SubmittedBy",
             "FullNameEN",
-            "ContactInformation",
+            "Gender",
+            "Size",
+            "Church",
+            "Role",
+            "CountryAndCity",
+            "SubmittedBy",
+            "PaymentStatus",
+            "Floor",
+            "RoomNumber",
+            "DateOfBirth",
+            "ChurchLeader",
         ]
         assert reader.fieldnames == expected_headers
         rows = list(reader)
@@ -799,18 +805,22 @@ class TestRoleBasedFiltering:
         reader = csv.DictReader(io.StringIO(csv_data))
         actual_headers = reader.fieldnames
 
+        # Headers now come from the actual view record field order
         expected_headers = [
-            "#",
+            "#",  # Line numbers always first
             "FullNameRU",
+            "FullNameEN",
             "Gender",
-            "DateOfBirth",
             "Size",
+            "Church",
+            "Role",
             "Department",
             "CountryAndCity",
-            "Church",
-            "SubmittedBy",
-            "FullNameEN",
-            "ContactInformation",
+            "PaymentStatus",
+            "Floor",
+            "DateOfBirth",
+            "ChurchLeader",
+            "IsDepartmentChief",
         ]
         assert actual_headers == expected_headers
 
@@ -854,6 +864,63 @@ class TestRoleBasedFiltering:
         # Verify fallback was triggered - list_view_records called, then list_all
         mock_repository.list_view_records.assert_called_once_with("Кандидаты")
         mock_repository.list_all.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_candidate_export_uses_configured_view_name(
+        self, mock_repository, monkeypatch
+    ):
+        """Test that candidate export uses view name from settings."""
+        # Arrange
+        from src.config.settings import Settings
+
+        # Set required environment variables for test
+        monkeypatch.setenv("AIRTABLE_API_KEY", "test_key")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
+        monkeypatch.setenv("AIRTABLE_PARTICIPANT_EXPORT_VIEW", "Custom Candidates View")
+
+        # Create settings with custom view name from environment
+        test_settings = Settings()
+
+        # Mock repository to return view records with specific field order
+        view_records = [
+            {
+                "id": "rec1",
+                "fields": {
+                    "DateOfBirth": "1990-01-15",
+                    "FullNameRU": "Иванов Иван",
+                    "Gender": "Male",
+                    "CountryAndCity": "Russia, Moscow",
+                }
+            }
+        ]
+        mock_repository.list_view_records.return_value = view_records
+
+        service = ParticipantExportService(
+            repository=mock_repository, settings=test_settings
+        )
+
+        # Act
+        csv_data = await service.get_participants_by_role_as_csv(Role.CANDIDATE)
+
+        # Assert
+        # Verify the correct view name was used
+        mock_repository.list_view_records.assert_called_once_with(
+            "Custom Candidates View"
+        )
+
+        # Verify headers are in view order
+        reader = csv.DictReader(io.StringIO(csv_data))
+        actual_headers = reader.fieldnames
+
+        # Headers should be in the order from the view (with # first)
+        expected_headers = [
+            "#",
+            "DateOfBirth",
+            "FullNameRU",
+            "Gender",
+            "CountryAndCity",
+        ]
+        assert actual_headers == expected_headers
 
 
 class TestDepartmentBasedFiltering:
@@ -911,18 +978,12 @@ class TestDepartmentBasedFiltering:
 
         # Assert
         reader = csv.DictReader(io.StringIO(csv_data))
+        # Headers now come from the actual view record field order
         expected_headers = [
-            "#",
+            "#",  # Line numbers always first
             "FullNameRU",
-            "Gender",
-            "DateOfBirth",
-            "Size",
+            "Role",
             "Department",
-            "CountryAndCity",
-            "Church",
-            "SubmittedBy",
-            "FullNameEN",
-            "ContactInformation",
         ]
         assert reader.fieldnames == expected_headers
         rows = list(reader)

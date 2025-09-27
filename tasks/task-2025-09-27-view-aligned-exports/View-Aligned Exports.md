@@ -145,14 +145,15 @@ Target: 90%+ coverage across view-aligned export logic
     - **Changelog**: Document view configuration management.
     - **Notes**: Added 3 configurable view fields with environment variable support, validation, and TDD tests (49/49 settings tests passing)
 
-- [ ] Step 4: Enhance export utilities for view-based ordering (clarify existing vs new functionality)
-  - [ ] Sub-step 4.1: Extend existing export utilities for view header ordering
+- [x] ✅ Step 4: Enhance export utilities for view-based ordering (clarify existing vs new functionality) - Completed 2025-09-27
+  - [x] ✅ Sub-step 4.1: Extend existing export utilities for view header ordering - Completed 2025-09-27
     - **Directory**: `src/utils/`
     - **Files to create/modify**: `src/utils/export_utils.py`
     - **Accept**: Existing utilities extended to derive column order from Airtable view records while preserving `#` line numbers as first column.
     - **Tests**: `tests/unit/test_utils/test_export_utils.py` (new test cases for view-based ordering using existing function signatures).
     - **Done**: Unit tests pass with view-based header extraction using standardized mock data structure.
     - **Changelog**: Document utility enhancement for view ordering.
+    - **Notes**: Implemented extract_headers_from_view_records() and order_rows_by_view_headers() with TDD approach, all 48 export utility tests passing including 13 new view-ordering tests
 
 - [ ] Step 5: Update participant export to use view `Кандидаты`
   - [ ] Sub-step 5.1: Modify candidate export path
@@ -222,6 +223,14 @@ Target: 90%+ coverage across view-aligned export logic
 - **Impact**: View names now configurable via environment variables with sensible defaults aligned to business requirements
 - **Tests**: Added view configuration test class with 3 test cases (49/49 settings tests passing)
 - **Verification**: Environment variables AIRTABLE_PARTICIPANT_EXPORT_VIEW, AIRTABLE_ROE_EXPORT_VIEW, AIRTABLE_BIBLE_READERS_EXPORT_VIEW properly supported
+
+#### Step 4: Export Utilities Enhancement — 2025-09-27
+- **Files**: `src/utils/export_utils.py:217-281` - Added view-based ordering functions
+- **Files**: `tests/unit/test_utils/test_export_utils.py:453-652` - Added comprehensive TDD tests
+- **Summary**: Implemented utility functions to extract headers from view records and reorder rows to match view column order
+- **Impact**: Export services can now preserve Airtable view column ordering while maintaining line numbers
+- **Tests**: Added 13 new test cases covering header extraction and row reordering (48/48 total tests passing)
+- **Verification**: TDD Red-Green cycle completed; functions handle edge cases including missing fields and line number preservation
 
 ### Task Splitting Evaluation
 **Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-09-26
