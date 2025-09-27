@@ -9,6 +9,7 @@ from typing import Optional
 
 # Russian translations for export types
 EXPORT_TYPE_RUSSIAN = {
+    "participants": "Участники",
     "candidates": "Кандидаты",
     "team": "Тим Мемберы",
     "departments": "Департаменты",

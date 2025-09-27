@@ -415,7 +415,7 @@ def _get_export_type_from_filename_prefix(filename_prefix: str) -> Optional[str]
         Export type string for Russian description mapping
     """
     prefix_to_type = {
-        "participants_all": None,  # General participants export
+        "participants_all": "participants",  # General participants export
         "participants_team": "team",
         "participants_candidates": "candidates",
         "bible_readers": "bible_readers",
