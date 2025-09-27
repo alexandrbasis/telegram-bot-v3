@@ -7,8 +7,8 @@
 
 ### PR Details
 - **Branch**: feature/agb-74-view-aligned-exports
-- **PR URL**: [Will be added during implementation]
-- **Status**: [Draft/Review/Merged]
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/69
+- **Status**: In Review
 
 ## Business Requirements
 **Status**: ✅ Approved | **Approved by**: Alexandr Basis | **Date**: 2025-09-27
@@ -277,3 +277,72 @@ Target: 90%+ coverage across view-aligned export logic
 - Maintain compatibility with existing line-number utilities.
 - Ensure Airtable API usage respects rate limits; consider caching view headers when appropriate.
 - Keep fallback behavior documented in case views are renamed or deleted.
+
+---
+
+## PR Traceability & Code Review Preparation
+- **PR Created**: 2025-09-27
+- **PR URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/69
+- **Branch**: feature/agb-74-view-aligned-exports
+- **Status**: In Review
+- **Linear Issue**: AGB-74 - Updated to "In Review"
+
+### Implementation Summary for Code Review
+- **Total Steps Completed**: 8 of 8 implementation steps
+- **Test Coverage**: 1524 tests passing (100% pass rate, 0 failures)
+- **Key Files Modified**:
+  - `src/config/settings.py:134-143,187-195` - Added configurable view names with environment variable support
+  - `src/data/repositories/roe_repository.py:151-165` - Added list_view_records() abstract method
+  - `src/data/repositories/bible_readers_repository.py:137-151` - Added list_view_records() abstract method
+  - `src/data/airtable/airtable_roe_repo.py:349-371` - Implemented view-based record retrieval
+  - `src/data/airtable/airtable_bible_readers_repo.py:317-339` - Implemented view-based record retrieval
+  - `src/utils/export_utils.py:217-281` - Added view-based ordering functions
+  - `src/services/participant_export_service.py` - Updated to use configured view and utilities
+  - `src/services/roe_export_service.py` - Added view-based export with participant hydration
+  - `src/services/bible_readers_export_service.py` - Added view-based export with participant hydration
+  - `CHANGELOG.md` - Added comprehensive view-aligned exports entry
+- **Breaking Changes**: None - maintains backward compatibility
+- **Dependencies Added**: None - leverages existing Airtable integration
+- **Environment Variables Added**:
+  - `AIRTABLE_PARTICIPANT_EXPORT_VIEW` (default: "Кандидаты")
+  - `AIRTABLE_ROE_EXPORT_VIEW` (default: "РОЕ: Расписание")
+  - `AIRTABLE_BIBLE_READERS_EXPORT_VIEW` (default: "Чтецы: Расписание")
+
+### Step-by-Step Completion Status
+- [x] ✅ Step 1: Repository interface consistency - Completed 2025-09-27
+- [x] ✅ Step 2.1: ROE repository view support - Completed 2025-09-27
+- [x] ✅ Step 2.2: Bible Readers repository view support - Completed 2025-09-27
+- [x] ✅ Step 3: View configuration management - Completed 2025-09-27
+- [x] ✅ Step 4: Export utilities enhancement - Completed 2025-09-27
+- [x] ✅ Step 5: Participant export service update - Completed 2025-09-27
+- [x] ✅ Step 6: ROE export service update - Completed 2025-09-27
+- [x] ✅ Step 7: Bible Readers export service update - Completed 2025-09-27
+- [x] ✅ Step 8: Documentation and logging enhancement - Completed 2025-09-27
+
+### Code Review Checklist
+- [x] **Functionality**: All acceptance criteria met - 3 success metrics verified with evidence
+- [x] **Testing**: Test coverage excellent - 1524 tests passing, includes unit/integration/TDD coverage
+- [x] **Code Quality**: Follows project conventions - TDD approach, proper logging, error handling
+- [x] **Documentation**: Code comments and docs updated - comprehensive CHANGELOG entry added
+- [x] **Security**: No sensitive data exposed - uses existing Airtable API credentials securely
+- [x] **Performance**: No performance issues - leverages existing rate limiting and caching
+- [x] **Integration**: Works with existing codebase - maintains compatibility with all export workflows
+- [x] **Environment Configuration**: Three new environment variables with sensible defaults
+- [x] **Graceful Degradation**: Falls back to legacy export when views unavailable
+
+### Implementation Notes for Reviewer
+**Architecture Approach**: Implementation follows established 3-layer architecture (Repository → Service → Handler) with comprehensive TDD validation at each layer.
+
+**View-Driven Design**: Services auto-select view-based exports when configuration available, falling back gracefully to legacy `list_all()` method. This ensures zero downtime deployment and operational resilience.
+
+**Column Ordering Preservation**: New utility functions `extract_headers_from_view_records()` and `order_rows_by_view_headers()` maintain exact Airtable view column ordering while preserving line numbers as first column.
+
+**Participant Hydration**: ROE and Bible Readers exports continue to hydrate participant names from record IDs, ensuring consistent user experience while respecting view-defined ordering.
+
+**Test Strategy**: Each step followed Red-Green-Refactor TDD cycles. Repository interfaces tested with abstract method validation, concrete implementations tested with mocked Airtable responses, export services tested with view-based ordering validation.
+
+**Configuration Management**: Environment variables provide operational flexibility while maintaining sensible defaults aligned to business requirements. Settings validation occurs at startup with clear error messages.
+
+**Error Handling**: Comprehensive logging provides structured context for troubleshooting. Services handle view unavailability gracefully without breaking bot functionality.
+
+**Future Considerations**: Implementation is resilient to minor view field additions (ignores unknown fields) and supports easy addition of new export types following established patterns.
