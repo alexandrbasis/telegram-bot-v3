@@ -1,0 +1,177 @@
+{
+  "table_id": "tblsxihPaZebzyBS2",
+  "table_name": "Schedule",
+  "primary_field_id": "fldwJzYx5l5NMnBET",
+  "fields": {
+    "EventTitle": {
+      "id": "fldwJzYx5l5NMnBET",
+      "type": "singleLineText",
+      "options": {}
+    },
+    "EventDate": {
+      "id": "fldywzhY2xGarPBjx",
+      "type": "date",
+      "options": {
+        "dateFormat": {
+          "name": "european",
+          "format": "D/M/YYYY"
+        }
+      }
+    },
+    "StartTime": {
+      "id": "fldy8llzYObPwtLAS",
+      "type": "singleLineText",
+      "options": {}
+    },
+    "EndTime": {
+      "id": "fldSVERRPEGrt01P1",
+      "type": "singleLineText",
+      "options": {}
+    },
+    "Description": {
+      "id": "fldJC039MoBABhjDB",
+      "type": "multilineText",
+      "options": {}
+    },
+    "Location": {
+      "id": "fldJv61i8wBKm85mV",
+      "type": "singleLineText",
+      "options": {}
+    },
+    "Audience": {
+      "id": "fldJ2qrRz5eeJsvUQ",
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selw4mMpFAAX3MMHn",
+            "name": "All",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selHrokUYNB1LJq4k",
+            "name": "Candidates",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selhyWR3HzMvJ0Eo8",
+            "name": "Team",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selC2xn33KAlmPmrh",
+            "name": "Clergy",
+            "color": "greenLight2"
+          },
+          {
+            "id": "selIcB1agLkQK9XAI",
+            "name": "Leadership",
+            "color": "yellowLight2"
+          }
+        ]
+      }
+    },
+    "EventType": {
+      "id": "fld2FkrFTM3ArtdhC",
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selaJbEmuyyHNfbeh",
+            "name": "Talk",
+            "color": "blueLight2"
+          },
+          {
+            "id": "selzQiWxhxNN2f70N",
+            "name": "Meal",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selBqnB3s1b4AJFNC",
+            "name": "Chapel",
+            "color": "tealLight2"
+          },
+          {
+            "id": "seltW5k8u0ydSoZUQ",
+            "name": "ROE",
+            "color": "greenLight2"
+          },
+          {
+            "id": "seleRnLrfLo6gjl7s",
+            "name": "Activity",
+            "color": "yellowLight2"
+          },
+          {
+            "id": "selGsfBHKnhrYl2Jm",
+            "name": "Break",
+            "color": "orangeLight2"
+          },
+          {
+            "id": "selz3IpA3qFmdSV9g",
+            "name": "Prayer",
+            "color": "redLight2"
+          },
+          {
+            "id": "seloBgHtrWI3oVh64",
+            "name": "Celebration",
+            "color": "pinkLight2"
+          }
+        ]
+      }
+    },
+    "DayTag": {
+      "id": "fldaT1FRDW7p9zpvN",
+      "type": "singleSelect",
+      "options": {
+        "choices": [
+          {
+            "id": "selVWqI7RSfGRObKh",
+            "name": "Day 0",
+            "color": "blueLight2"
+          },
+          {
+            "id": "seltyw13cDQHB7DBA",
+            "name": "Day 1",
+            "color": "cyanLight2"
+          },
+          {
+            "id": "selxCdMA3cGKiWyOc",
+            "name": "Day 2",
+            "color": "tealLight2"
+          },
+          {
+            "id": "selarmFzvKP0Yjktm",
+            "name": "Day 3",
+            "color": "greenLight2"
+          }
+        ]
+      }
+    },
+    "Order": {
+      "id": "fldfehkMFGrZ8qV4Q",
+      "type": "number",
+      "options": {
+        "precision": 0
+      }
+    },
+    "IsActive": {
+      "id": "fldS24f13v1STUFQ8",
+      "type": "checkbox",
+      "options": {
+        "icon": "check",
+        "color": "greenBright"
+      }
+    },
+    "IsMandatory": {
+      "id": "fld3A4pa7OOpJ3Ydc",
+      "type": "checkbox",
+      "options": {
+        "icon": "check",
+        "color": "greenBright"
+      }
+    }
+  },
+  "views": {
+    "Active Events": "viwVk6sDqiF4qQyHM"
+  }
+}

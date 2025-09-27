@@ -8,6 +8,7 @@ proper error handling, and logging configuration including persistent file loggi
 import asyncio
 import logging
 import tempfile
+import os
 from contextlib import suppress
 from pathlib import Path
 from typing import Optional
@@ -23,6 +24,7 @@ from src.bot.handlers.export_conversation_handlers import (
 )
 from src.bot.handlers.export_handlers import handle_export_command
 from src.bot.handlers.search_conversation import get_search_conversation_handler
+from src.bot.handlers.schedule_handlers import get_schedule_handlers
 from src.config.settings import Settings, get_settings
 from src.services.file_logging_service import FileLoggingService
 from src.utils.single_instance import InstanceLock
@@ -131,6 +133,13 @@ def create_application() -> Application:
     logger.info("Adding export conversation handler")
     export_conversation_handler = get_export_conversation_handler()
     app.add_handler(export_conversation_handler)
+
+    # Add schedule command and callbacks (feature-flagged)
+    enable_schedule = os.getenv("ENABLE_SCHEDULE_FEATURE", "false").lower() == "true"
+    if enable_schedule:
+        logger.info("Adding schedule handlers")
+        for h in get_schedule_handlers():
+            app.add_handler(h)
 
     # Keep legacy export command handler for backward compatibility
     logger.info("Adding legacy export command handler")

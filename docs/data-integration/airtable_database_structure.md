@@ -1,9 +1,9 @@
 # Airtable Database Structure Documentation
 
 ## Last Updated
-- **Date**: September 23, 2025
-- **Version**: 3.1.0
-- **Changes**: Added BotAccessRequests schema details including field IDs, env configuration, and view references
+- **Date**: September 27, 2025
+- **Version**: 3.2.0
+- **Changes**: Added Schedule table schema for retreat event management (November 13-16, 2025)
 
 ## Database Information
 - **Base ID**: `appRp7Vby2JMzN0mC`
@@ -37,6 +37,10 @@ AIRTABLE_ACCESS_REQUESTS_TABLE_ID=tblQWWEcHx9sfhsgN
 # AuthorizedUsers table
 AIRTABLE_AUTHORIZED_USERS_TABLE_NAME=AuthorizedUsers
 AIRTABLE_AUTHORIZED_USERS_TABLE_ID=tblQ5i7EwSZrVYwT6A
+
+# Schedule table
+AIRTABLE_SCHEDULE_TABLE_NAME=Schedule
+AIRTABLE_SCHEDULE_TABLE_ID=tblsxihPaZebzyBS2
 ```
 
 ## Tables Overview
@@ -60,6 +64,10 @@ AIRTABLE_AUTHORIZED_USERS_TABLE_ID=tblQ5i7EwSZrVYwT6A
 ### 5. AuthorizedUsers Table
 **Table ID**: `tblQ5i7EwSZrVYwT6A`
 **Primary Field**: `TelegramUserId` (fldMwpp0K6deDnZwQ)
+
+### 6. Schedule Table
+**Table ID**: `tblsxihPaZebzyBS2`
+**Primary Field**: `EventTitle` (fldwJzYx5l5NMnBET)
 
 #### Purpose
 - Serves as the source of truth for Telegram bot authorization assignments
@@ -604,3 +612,207 @@ The following views have been precisely documented to support view-driven export
 - **Primary View**: `Active Users` (viwL5vrKDM6C8CRJf)
 - **Key Fields**: TelegramUserId, AccessLevel, Status, UpdatedAt, UpdatedBy
 - **Usage Notes**: Bot downloads this view on a schedule to refresh the in-memory authorization cache. Only records with `Status = Active` are treated as authorized; suspended or revoked users are excluded but retained for auditing. UpdatedAt/UpdatedBy fields support audit log correlation.
+
+---
+
+## Schedule Table Structure
+
+### Table Information
+- **Table ID**: `tblsxihPaZebzyBS2`
+- **Primary Field**: `EventTitle` (fldwJzYx5l5NMnBET)
+- **Purpose**: Manages retreat schedule for November 13-16, 2025 (Thursday-Sunday)
+- **Created**: September 27, 2025
+
+### Key Features
+- Supports Russian and English event titles and descriptions
+- 24-hour time format for precise scheduling
+- Day-based grouping for easy navigation
+- Active/inactive filtering for event management
+- Links to responsible departments and persons
+- Mandatory/optional event flagging
+
+### Schedule Table Fields
+
+#### EventTitle
+- **Field ID**: `fldwJzYx5l5NMnBET`
+- **Type**: `singleLineText`
+- **Purpose**: Primary field - Title of the event
+- **Required**: Yes (Primary field)
+- **Example**: "Регистрация участников", "Talk 1: Ideal", "De Colores"
+
+#### EventDate
+- **Field ID**: `fldywzhY2xGarPBjx`
+- **Type**: `date`
+- **Purpose**: Date of the event
+- **Required**: Yes
+- **Format**: European format (`D/M/YYYY`)
+- **Valid Range**: 13/11/2025 - 16/11/2025
+
+#### StartTime
+- **Field ID**: `fldy8llzYObPwtLAS`
+- **Type**: `singleLineText`
+- **Purpose**: Start time in 24-hour format
+- **Required**: Yes
+- **Format**: `HH:MM` (e.g., "09:00", "14:30")
+
+#### EndTime
+- **Field ID**: `fldSVERRPEGrt01P1`
+- **Type**: `singleLineText`
+- **Purpose**: End time in 24-hour format
+- **Required**: No
+- **Format**: `HH:MM` (e.g., "10:00", "15:30")
+
+#### Description
+- **Field ID**: `fldJC039MoBABhjDB`
+- **Type**: `multilineText`
+- **Purpose**: Detailed description of the event
+- **Required**: No
+- **Example**: "Регистрация и размещение кандидатов в комнатах"
+
+#### Location
+- **Field ID**: `fldJv61i8wBKm85mV`
+- **Type**: `singleLineText`
+- **Purpose**: Location or room where the event takes place
+- **Required**: No
+- **Example**: "Главный холл", "Часовня", "Конференц-зал"
+
+#### Audience
+- **Field ID**: `fldJ2qrRz5eeJsvUQ`
+- **Type**: `singleSelect`
+- **Purpose**: Target audience for the event
+- **Required**: Yes
+- **Options**:
+  - `All` - ID: `selw4mMpFAAX3MMHn`
+  - `Candidates` - ID: `selHrokUYNB1LJq4k`
+  - `Team` - ID: `selhyWR3HzMvJ0Eo8`
+  - `Clergy` - ID: `selC2xn33KAlmPmrh`
+  - `Leadership` - ID: `selIcB1agLkQK9XAI`
+
+#### EventType
+- **Field ID**: `fld2FkrFTM3ArtdhC`
+- **Type**: `singleSelect`
+- **Purpose**: Type of event
+- **Required**: Yes
+- **Options**:
+  - `Talk` - ID: `selaJbEmuyyHNfbeh`
+  - `Meal` - ID: `selzQiWxhxNN2f70N`
+  - `Chapel` - ID: `selBqnB3s1b4AJFNC`
+  - `ROE` - ID: `seltW5k8u0ydSoZUQ`
+  - `Activity` - ID: `seleRnLrfLo6gjl7s`
+  - `Break` - ID: `selGsfBHKnhrYl2Jm`
+  - `Prayer` - ID: `selz3IpA3qFmdSV9g`
+  - `Celebration` - ID: `seloBgHtrWI3oVh64`
+
+#### DayTag
+- **Field ID**: `fldaT1FRDW7p9zpvN`
+- **Type**: `singleSelect`
+- **Purpose**: Day identifier for the retreat
+- **Required**: Yes
+- **Options**:
+  - `Day 0` - ID: `selVWqI7RSfGRObKh`
+  - `Day 1` - ID: `seltyw13cDQHB7DBA`
+  - `Day 2` - ID: `selxCdMA3cGKiWyOc`
+  - `Day 3` - ID: `selarmFzvKP0Yjktm`
+
+#### Order
+- **Field ID**: `fldfehkMFGrZ8qV4Q`
+- **Type**: `number`
+- **Purpose**: Order of events within the day (for sorting)
+- **Required**: Yes
+- **Precision**: 0 (integers only)
+- **Example**: 1, 2, 3 (determines display order within each day)
+
+#### Duration
+- **Field ID**: `fld[TO_BE_FILLED]`
+- **Type**: `duration`
+- **Purpose**: Duration of the event
+- **Required**: No
+- **Format**: Airtable duration format (`h:mm`)
+
+#### IsActive
+- **Field ID**: `fldS24f13v1STUFQ8`
+- **Type**: `checkbox`
+- **Purpose**: Whether this event is active and should be displayed
+- **Required**: No
+- **Default**: `true`
+- **Usage**: Filter inactive events from bot display
+
+#### IsMandatory
+- **Field ID**: `fld3A4pa7OOpJ3Ydc`
+- **Type**: `checkbox`
+- **Purpose**: Whether this event is mandatory for participants
+- **Required**: No
+- **Default**: `false`
+- **Usage**: Highlight important events in bot display
+
+#### ResponsibleDepartment
+- **Field ID**: `fld[TO_BE_FILLED]`
+- **Type**: `singleSelect`
+- **Purpose**: Department responsible for the event
+- **Required**: No
+- **Options**: Same as Department field in Participants table
+
+#### ResponsiblePerson
+- **Field ID**: `fld[TO_BE_FILLED]`
+- **Type**: `multipleRecordLinks`
+- **Purpose**: Person(s) responsible for this event
+- **Required**: No
+- **Links To**: Participants table (tbl8ivwOdAUvMi3Jy)
+
+#### Notes
+- **Field ID**: `fld[TO_BE_FILLED]`
+- **Type**: `multilineText`
+- **Purpose**: Additional notes or special instructions
+- **Required**: No
+- **Example**: "Bring your Bible", "Dress code: formal"
+
+### Views Available (To Be Created)
+
+#### Schedule Table Views
+
+1. **All Events** (`viw[TO_BE_CREATED]`) - Grid view showing all schedule records (to be created)
+2. **Active Events** (`viwVk6sDqiF4qQyHM`) - Grid view filtered for IsActive = true
+3. **By Day** (`viw[TO_BE_FILLED]`) - Grid view grouped by DayTag, sorted by Order
+4. **November 13** (`viw[TO_BE_FILLED]`) - Filtered for EventDate = 13/11/2025
+5. **November 14** (`viw[TO_BE_FILLED]`) - Filtered for EventDate = 14/11/2025
+6. **November 15** (`viw[TO_BE_FILLED]`) - Filtered for EventDate = 15/11/2025
+7. **November 16** (`viw[TO_BE_FILLED]`) - Filtered for EventDate = 16/11/2025
+8. **Mandatory Events** (`viw[TO_BE_FILLED]`) - Filtered for IsMandatory = true
+
+### Sample Schedule Record Structure
+
+```json
+{
+  "fields": {
+    "EventTitle": "Регистрация участников",
+    "EventDate": "2025-11-13",
+    "StartTime": "17:00",
+    "EndTime": "19:00",
+    "Description": "Регистрация и размещение кандидатов",
+    "Location": "Главный холл",
+    "Audience": "Candidates",
+    "EventType": "Activity",
+    "DayTag": "Day 0 - Thursday",
+    "Order": 1,
+    "Duration": "2:00",
+    "IsActive": true,
+    "IsMandatory": true,
+    "ResponsibleDepartment": "Administration",
+    "ResponsiblePerson": ["recParticipantID"],
+    "Notes": "Подготовить регистрационные формы"
+  }
+}
+```
+
+### Implementation Considerations for Schedule
+
+1. **Caching Strategy**: Implement 10-minute cache TTL to meet business requirements
+2. **Date Filtering**: Always filter for November 13-16, 2025 date range
+3. **Time Format**: Maintain 24-hour format throughout the application
+4. **Sorting**: Primary sort by EventDate, secondary by Order field
+5. **Active Filter**: Default to showing only IsActive = true events
+6. **Localization**: Support both Russian and English content
+7. **Special Characters**: Handle special characters like «De Colores» properly
+8. **Relationship Expansion**: Fetch participant names when displaying ResponsiblePerson
+9. **Rate Limiting**: Respect Airtable's 5 requests/second limit
+10. **Error Handling**: Graceful fallback for empty schedule days

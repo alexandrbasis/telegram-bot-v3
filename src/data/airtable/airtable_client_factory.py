@@ -42,7 +42,7 @@ class AirtableClientFactory:
         Raises:
             ValueError: If table_type is not supported
         """
-        supported_types = ["participants", "bible_readers", "roe"]
+        supported_types = ["participants", "bible_readers", "roe", "schedule"]
         if table_type not in supported_types:
             raise ValueError(
                 f"Unsupported table type: {table_type}. "
