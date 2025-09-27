@@ -10,6 +10,8 @@ import csv
 import io
 from typing import Any, Dict, List, Optional, Tuple
 
+from src.utils.export_type_mapping import get_russian_export_description
+
 
 def format_line_number(line_num: int, width: Optional[int] = None) -> str:
     """
@@ -177,24 +179,33 @@ def format_export_success_message(
     file_size_mb: float,
     timestamp: str,
     csv_data: Optional[str] = None,
+    export_type: Optional[str] = None,
 ) -> str:
     """
-    Format export success message with optional participant count.
+    Format export success message with optional participant count and Russian export type.
 
     Creates a standardized success message format for CSV exports
-    that includes file size, timestamp, and optionally participant count
-    extracted from the CSV data.
+    that includes file size, timestamp, optionally participant count
+    extracted from the CSV data, and Russian export type description.
 
     Args:
         base_message: Base success message (e.g., "✅ Экспорт завершен успешно!")
         file_size_mb: File size in megabytes
         timestamp: Export timestamp string
         csv_data: Optional CSV data to extract participant count from
+        export_type: Optional export type for Russian description (e.g., "candidates")
 
     Returns:
-        Formatted success message string
+        Formatted success message string with optional Russian export type description
     """
-    message_parts = [base_message, ""]
+    message_parts = [base_message]
+
+    # Add Russian export type description if provided
+    if export_type:
+        russian_description = get_russian_export_description(export_type)
+        message_parts.append(f"Выгружены: {russian_description}")
+
+    message_parts.append("")
 
     # Add participant count if available
     if csv_data:

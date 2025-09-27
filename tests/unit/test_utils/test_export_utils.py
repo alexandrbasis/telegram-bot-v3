@@ -348,7 +348,7 @@ class TestParticipantCountExtraction:
 
 
 class TestExportSuccessMessageFormatting:
-    """Test export success message formatting with participant count."""
+    """Test export success message formatting with participant count and Russian descriptions."""
 
     def test_format_message_with_participant_count(self):
         """Test formatting message with participant count extracted from CSV."""
@@ -448,6 +448,101 @@ class TestExportSuccessMessageFormatting:
             "📅 Дата экспорта: 2025-01-26 15:30:00 UTC"
         )
         assert result == expected
+
+    def test_format_message_with_export_type_description(self):
+        """Test formatting message with Russian export type description."""
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=1.0,
+            timestamp="2025-09-27 15:30:00 UTC",
+            export_type="candidates",
+        )
+
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "Выгружены: Кандидаты\n"
+            "\n"
+            "📁 Размер файла: 1.00MB\n"
+            "📅 Дата экспорта: 2025-09-27 15:30:00 UTC"
+        )
+        assert result == expected
+
+    def test_format_message_with_export_type_and_participant_count(self):
+        """Test formatting message with both export type and participant count."""
+        csv_data = "#,Name,Age\n" "1,John Doe,25\n" "2,Jane Smith,30"
+
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=2.5,
+            timestamp="2025-09-27 15:30:00 UTC",
+            csv_data=csv_data,
+            export_type="team",
+        )
+
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "Выгружены: Тим Мемберы\n"
+            "\n"
+            "👥 Участников: 2\n"
+            "📁 Размер файла: 2.50MB\n"
+            "📅 Дата экспорта: 2025-09-27 15:30:00 UTC"
+        )
+        assert result == expected
+
+    def test_format_message_backward_compatibility(self):
+        """Test that function maintains backward compatibility without export_type."""
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=1.0,
+            timestamp="2025-09-27 15:30:00 UTC",
+        )
+
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "\n"
+            "📁 Размер файла: 1.00MB\n"
+            "📅 Дата экспорта: 2025-09-27 15:30:00 UTC"
+        )
+        assert result == expected
+
+    def test_format_message_with_unknown_export_type(self):
+        """Test formatting message with unknown export type (fallback behavior)."""
+        result = format_export_success_message(
+            base_message="✅ Экспорт завершен успешно!",
+            file_size_mb=1.0,
+            timestamp="2025-09-27 15:30:00 UTC",
+            export_type="unknown_type",
+        )
+
+        expected = (
+            "✅ Экспорт завершен успешно!\n"
+            "Выгружены: unknown_type\n"
+            "\n"
+            "📁 Размер файла: 1.00MB\n"
+            "📅 Дата экспорта: 2025-09-27 15:30:00 UTC"
+        )
+        assert result == expected
+
+    def test_format_message_all_export_types(self):
+        """Test formatting message with all supported export types."""
+        export_types_and_descriptions = [
+            ("candidates", "Кандидаты"),
+            ("team", "Тим Мемберы"),
+            ("departments", "Департаменты"),
+            ("roe", "РОЭ"),
+            ("bible_readers", "Чтецы"),
+        ]
+
+        for export_type, expected_description in export_types_and_descriptions:
+            result = format_export_success_message(
+                base_message="✅ Экспорт завершен успешно!",
+                file_size_mb=1.0,
+                timestamp="2025-09-27 15:30:00 UTC",
+                export_type=export_type,
+            )
+
+            expected_line = f"Выгружены: {expected_description}"
+            assert expected_line in result
 
 
 class TestExtractHeadersFromViewRecords:
