@@ -179,6 +179,20 @@ Target: 90%+ coverage across all implementation areas including message formatti
     - **Changelog**:
       - `src/bot/handlers/export_conversation_handlers.py:33,484-491`: Added generate_readable_export_filename import and updated document delivery to use readable filenames
 
+### Post-Implementation Fixes
+
+- [x] ✅ Fix: Filename Prefix Regression - Completed 2025-09-27 18:54
+  - **Issue**: `ParticipantExportService.save_to_file()` method ignored custom filename prefixes, breaking backward compatibility and causing unit test failure
+  - **Root Cause**: Implementation only mapped prefixes to export types without preserving custom prefixes
+  - **Solution**: Enhanced logic to distinguish between predefined semantic prefixes (e.g., "participants_team") and custom prefixes (e.g., "test_export_2025")
+  - **Changes**:
+    - Added `_is_predefined_prefix()` method to detect semantic vs custom prefixes
+    - Added `_generate_custom_prefix_filename()` method to preserve custom prefixes with readable date format
+    - Modified `save_to_file()` method to use appropriate filename generation strategy
+  - **Files Modified**: `src/services/participant_export_service.py:231-238,760-812`
+  - **Test Results**: All 138 tests passing, including previously failing `test_save_with_custom_filename`
+  - **Backward Compatibility**: ✅ Fully preserved - custom prefixes honored while maintaining readable date format
+
 ### Task Splitting Evaluation
 **Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-09-27
 **Decision**: No Split Needed
