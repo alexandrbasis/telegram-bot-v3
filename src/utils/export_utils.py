@@ -212,3 +212,75 @@ def format_export_success_message(
     )
 
     return "\n".join(message_parts)
+
+
+def extract_headers_from_view_records(
+    records: Optional[List[Dict[str, Any]]],
+) -> List[str]:
+    """
+    Extract column headers from Airtable view records.
+
+    Accumulates field names from all records to ensure complete coverage
+    of view columns, even when early records have missing field values.
+    Preserves the view's column ordering by maintaining field insertion order.
+
+    Args:
+        records: List of Airtable record dictionaries with 'fields' key
+
+    Returns:
+        List of field names in view order, or empty list if no records
+    """
+    if not records:
+        return []
+
+    # Accumulate all field names while preserving order
+    # Using dict to maintain insertion order (Python 3.7+) and avoid duplicates
+    all_fields = {}
+
+    for record in records:
+        fields = record.get("fields", {})
+        # Add each field name in the order it appears
+        for field_name in fields.keys():
+            if field_name not in all_fields:
+                all_fields[field_name] = True
+
+    return list(all_fields.keys())
+
+
+def order_rows_by_view_headers(
+    view_headers: List[str], original_headers: List[str], rows: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Reorder row dictionaries to match view header order.
+
+    Creates new row dictionaries with fields ordered according to
+    view headers, preserving line numbers if present.
+
+    Args:
+        view_headers: Desired column order from view
+        original_headers: Current column headers (may include '#')
+        rows: List of row dictionaries to reorder
+
+    Returns:
+        List of reordered row dictionaries
+    """
+    if not rows:
+        return []
+
+    reordered_rows = []
+
+    for row in rows:
+        new_row = {}
+
+        # Always preserve line number column first if present
+        if "#" in row:
+            new_row["#"] = row["#"]
+
+        # Add fields in view header order, including empty fields to maintain structure
+        for header in view_headers:
+            # Include all view headers, using empty string for missing values
+            new_row[header] = row.get(header, "")
+
+        reordered_rows.append(new_row)
+
+    return reordered_rows

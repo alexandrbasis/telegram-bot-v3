@@ -14,13 +14,18 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.config.field_mappings import AirtableFieldMapping
+from src.config.settings import Settings
 from src.data.airtable.airtable_client import AirtableAPIError
 from src.data.repositories.participant_repository import (
     ParticipantRepository,
     RepositoryError,
 )
 from src.models.participant import Department, Participant, Role
-from src.utils.export_utils import format_line_number
+from src.utils.export_utils import (
+    extract_headers_from_view_records,
+    format_line_number,
+    order_rows_by_view_headers,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +48,16 @@ class ParticipantExportService:
     # Average bytes per participant record (estimated)
     BYTES_PER_RECORD_ESTIMATE = 500  # Conservative estimate
 
+    # View names are now configured via settings
+    # These constants are kept for backward compatibility but deprecated
     TEAM_VIEW_NAME = "Тимы"
     CANDIDATE_VIEW_NAME = "Кандидаты"
 
     # Fallback view field ordering to ensure consistent headers even when
     # Airtable returns sparse data (fields with no values are omitted).
+    # This is now deprecated as we use view-based ordering from Airtable
     VIEW_HEADER_ORDER: Dict[str, List[str]] = {
-        TEAM_VIEW_NAME: [
+        "Тимы": [
             "FullNameRU",
             "Gender",
             "DateOfBirth",
@@ -61,7 +69,7 @@ class ParticipantExportService:
             "FullNameEN",
             "ContactInformation",
         ],
-        CANDIDATE_VIEW_NAME: [
+        "Кандидаты": [
             "FullNameRU",
             "Gender",
             "DateOfBirth",
@@ -78,6 +86,7 @@ class ParticipantExportService:
         self,
         repository: ParticipantRepository,
         progress_callback: Optional[Callable[[int, int], None]] = None,
+        settings: Optional[Settings] = None,
     ):
         """
         Initialize the export service.
@@ -85,9 +94,18 @@ class ParticipantExportService:
         Args:
             repository: Participant repository for data access
             progress_callback: Optional callback for progress updates (current, total)
+            settings: Optional settings object for view configuration
         """
         self.repository = repository
         self.progress_callback = progress_callback
+        self._settings = settings
+
+    @property
+    def settings(self) -> Settings:
+        """Get settings, lazily initializing if needed."""
+        if self._settings is None:
+            self._settings = Settings()
+        return self._settings
 
     async def get_all_participants_as_csv(self) -> str:
         """
@@ -296,24 +314,31 @@ class ParticipantExportService:
         logger.info(f"Starting participant CSV export filtered by role: {role.value}")
 
         if role == Role.TEAM:
+            # Use configured view name from settings for team exports
+            view_name = "Тимы"  # Hardcoded for now as team view not yet configurable
             csv_string = await self._export_view_to_csv(
-                self.TEAM_VIEW_NAME,
+                view_name,
                 filter_func=lambda record, participant: participant.role == Role.TEAM,
             )
-            logger.info(
-                "Team export completed using Airtable view '%s'", self.TEAM_VIEW_NAME
-            )
+            logger.info("Team export completed using Airtable view '%s'", view_name)
             return csv_string
 
         if role == Role.CANDIDATE:
+            # Use configured view name from settings for candidate exports
+            # Fallback to constant for backward compatibility in tests
+            try:
+                view_name = self.settings.database.participant_export_view
+            except (ValueError, AttributeError):
+                # If settings can't be initialized (e.g., in tests), use the constant
+                view_name = self.CANDIDATE_VIEW_NAME
             csv_string = await self._export_view_to_csv(
-                self.CANDIDATE_VIEW_NAME,
+                view_name,
                 filter_func=lambda record, participant: participant.role
                 == Role.CANDIDATE,
             )
             logger.info(
                 "Candidate export completed using Airtable view '%s'",
-                self.CANDIDATE_VIEW_NAME,
+                view_name,
             )
             return csv_string
 
@@ -382,14 +407,16 @@ class ParticipantExportService:
                 and participant.department == department
             )
 
+        # Use team view for department filtering (hardcoded for now)
+        view_name = "Тимы"  # Hardcoded as team view not yet configurable
         csv_string = await self._export_view_to_csv(
-            self.TEAM_VIEW_NAME, filter_func=department_filter
+            view_name, filter_func=department_filter
         )
 
         logger.info(
             "Department-filtered CSV export completed for %s using view '%s'",
             department.value,
-            self.TEAM_VIEW_NAME,
+            view_name,
         )
         return csv_string
 
@@ -456,27 +483,18 @@ class ParticipantExportService:
         Determine CSV headers matching the Airtable view ordering with line
         numbers as first column.
         """
-        if view_name in self.VIEW_HEADER_ORDER:
-            headers = list(self.VIEW_HEADER_ORDER[view_name])
-        else:
+        # Use the new utility to extract headers from view records
+        headers = extract_headers_from_view_records(records)
+
+        # If no headers found, fall back to default field mapping
+        if not headers:
             headers = []
-            seen = set()
-
-            for record in records:
-                for field_name in record.get("fields", {}).keys():
-                    if field_name not in seen:
-                        headers.append(field_name)
-                        seen.add(field_name)
-
-            if not headers:
-                # Get base headers without line number (will be added below)
-                headers = []
-                for (
-                    python_field,
-                    airtable_field,
-                ) in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
-                    if python_field != "record_id":
-                        headers.append(airtable_field)
+            for (
+                python_field,
+                airtable_field,
+            ) in AirtableFieldMapping.PYTHON_TO_AIRTABLE.items():
+                if python_field != "record_id":
+                    headers.append(airtable_field)
 
         # Add line number column as first header
         return ["#"] + headers
@@ -499,22 +517,40 @@ class ParticipantExportService:
         # Calculate width for line numbers based on total row count
         width = len(str(total_count)) if total_count > 0 else 1
 
+        # Prepare all rows with data
+        prepared_rows = []
         for index, (record, participant) in enumerate(rows):
             row_data = self._participant_to_csv_row(participant)
             airtable_fields = record.get("fields", {})
 
-            formatted_row: Dict[str, Any] = {}
-            for header in headers:
-                if header == "#":
-                    # Add line number for the "#" column with consistent width
-                    formatted_row[header] = format_line_number(index + 1, width)
-                else:
-                    value = row_data.get(header)
-                    if value is None:
-                        value = self._format_raw_value(airtable_fields.get(header))
-                    formatted_row[header] = value
+            # Merge mapped data with raw Airtable fields for completeness
+            merged_row = {}
+            for field_name, field_value in airtable_fields.items():
+                merged_row[field_name] = self._format_raw_value(field_value)
 
-            writer.writerow(formatted_row)
+            # Override with mapped values where available
+            merged_row.update(row_data)
+
+            # Add line number with consistent width
+            merged_row["#"] = format_line_number(index + 1, width)
+            prepared_rows.append(merged_row)
+
+        # Extract view headers (without #) for reordering
+        view_headers = [h for h in headers if h != "#"]
+
+        # Use utility to reorder rows based on view headers
+        if view_headers:
+            reordered_rows = order_rows_by_view_headers(
+                view_headers,
+                list(prepared_rows[0].keys()) if prepared_rows else [],
+                prepared_rows,
+            )
+        else:
+            reordered_rows = prepared_rows
+
+        # Write reordered rows to CSV
+        for index, row in enumerate(reordered_rows):
+            writer.writerow(row)
 
             if (
                 self.progress_callback

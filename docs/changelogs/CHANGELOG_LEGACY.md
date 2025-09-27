@@ -8,6 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **View-Aligned Exports with Configurable Airtable Views** – Complete implementation of view-based export functionality ensuring bot CSV exports match Airtable view column ordering for operational consistency (AGB-74, completed 2025-09-27, branch `feature/agb-74-view-aligned-exports`)
+  - Export utilities for view-based ordering (`src/utils/export_utils.py:217-281`)
+    - `extract_headers_from_view_records()` function extracts column order directly from Airtable view records
+    - `order_rows_by_view_headers()` function reorders CSV data to match view column order while preserving line numbers
+    - Comprehensive TDD test coverage with 13 new test cases (48/48 export utility tests passing)
+  - Participant export service view integration (`src/services/participant_export_service.py`)
+    - Service uses configured view name from `AIRTABLE_PARTICIPANT_EXPORT_VIEW` environment variable
+    - Headers extracted directly from view records, data reordered to match view column order
+    - Graceful fallback to existing behavior when view configuration unavailable
+    - All 41 participant export service tests updated and passing
+  - ROE export service view integration (`src/services/roe_export_service.py`)
+    - Service uses configured view name from `AIRTABLE_ROE_EXPORT_VIEW` environment variable
+    - View-based export with participant hydration for Roista, Assistant, Prayer fields
+    - Graceful fallback to legacy method if view not available
+    - All 24 ROE export service tests passing with new view functionality test
+  - Bible Readers export service view integration (`src/services/bible_readers_export_service.py`)
+    - Service uses configured view name from `AIRTABLE_BIBLE_READERS_EXPORT_VIEW` environment variable
+    - View-based export with participant hydration for Participants field
+    - Graceful fallback to legacy method if view not available
+    - All 22 Bible Readers export service tests passing with new view functionality test
+  - Configuration management for view names (`src/config/settings.py:134-143,187-195`)
+    - Three configurable view fields with environment variable support and validation
+    - Default values align with business requirements: "Кандидаты", "РОЕ: Расписание", "Чтецы: Расписание"
+    - Comprehensive test coverage for view configuration validation (49/49 settings tests passing)
+
 - **Export Reliability Hotfix with Async Interfaces and Fallback Logic** – Complete implementation of export reliability improvements ensuring all Telegram bot export flows (candidates, Bible readers, ROE) function reliably without manual Airtable configuration (AGB-73, completed 2025-09-26, branch `basisalexandr/agb-73-export-reliability-hotfix`, PR [#68](https://github.com/alexandrbasis/telegram-bot-v3/pull/68))
   - Candidate export fallback system with automatic view recovery (`src/services/participant_export_service.py:118-256`)
     - Automatic detection of 422 VIEW_NAME_NOT_FOUND errors with `_is_view_not_found_error()` helper function

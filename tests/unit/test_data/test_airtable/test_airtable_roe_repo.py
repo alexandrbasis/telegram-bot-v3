@@ -339,3 +339,24 @@ class TestAirtableROERepository:
         mock_client.list_records.assert_called_once_with(
             formula="FIND('recASSISTANT1', ARRAYJOIN({Assistant})) > 0"
         )
+
+    async def test_list_view_records_success(
+        self, repository, mock_client, sample_airtable_record
+    ):
+        """Test successful view records retrieval."""
+        mock_client.list_records.return_value = [sample_airtable_record]
+
+        result = await repository.list_view_records("РОЕ: Расписание")
+
+        assert len(result) == 1
+        assert result[0] == sample_airtable_record
+        mock_client.list_records.assert_called_once_with(view="РОЕ: Расписание")
+
+    async def test_list_view_records_api_error(self, repository, mock_client):
+        """Test view records retrieval with API error."""
+        mock_client.list_records.side_effect = AirtableAPIError("API error")
+
+        with pytest.raises(
+            RepositoryError, match="Failed to list ROE records for view"
+        ):
+            await repository.list_view_records("РОЕ: Расписание")

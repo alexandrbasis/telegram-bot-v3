@@ -6,7 +6,7 @@ on ROE data, mapping between ROE domain objects and Airtable record format.
 """
 
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.config.field_mappings.roe import ROEFieldMapping
 from src.data.airtable.airtable_client import AirtableAPIError, AirtableClient
@@ -345,3 +345,29 @@ class AirtableROERepository(ROERepository):
             raise RepositoryError(
                 f"Failed to search ROEs by assistant {assistant_id}: {e}"
             ) from e
+
+    async def list_view_records(self, view: str) -> List[Dict[str, Any]]:
+        """
+        Retrieve raw Airtable records for a specific view.
+
+        Args:
+            view: Airtable view name to pull records from
+
+        Returns:
+            List of Airtable record dictionaries returned by the view
+
+        Raises:
+            RepositoryError: If retrieval fails
+        """
+        try:
+            logger.debug(f"Listing ROE records using view '{view}'")
+            records = await self.client.list_records(view=view)
+            logger.debug("Retrieved %s ROE records from view '%s'", len(records), view)
+            return records  # type: ignore
+        except AirtableAPIError as e:
+            logger.error(
+                f"Airtable API error listing ROE records for view '{view}': {e}"
+            )
+            raise RepositoryError(
+                f"Failed to list ROE records for view '{view}': {e}", e.original_error
+            )

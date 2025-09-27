@@ -7,7 +7,7 @@ without changing business logic.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.models.bible_readers import BibleReader
 
@@ -128,6 +128,22 @@ class BibleReadersRepository(ABC):
 
         Returns:
             List of BibleReader instances
+
+        Raises:
+            RepositoryError: If retrieval fails
+        """
+        pass
+
+    @abstractmethod
+    async def list_view_records(self, view: str) -> List[Dict[str, Any]]:
+        """
+        Retrieve raw Airtable records for a specific view.
+
+        Args:
+            view: Airtable view name to pull records from
+
+        Returns:
+            List of Airtable record dictionaries returned by the view
 
         Raises:
             RepositoryError: If retrieval fails
