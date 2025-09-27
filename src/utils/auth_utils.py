@@ -18,6 +18,30 @@ logger = logging.getLogger(__name__)
 _ROLE_CACHE: Dict[int, Tuple[Union[str, None], float]] = {}
 _ROLE_CACHE_TTL_SECONDS = 300  # 5 minutes cache for role lookups
 
+# Constant-time mitigation: ensure auth checks take at least a small, consistent time
+_ADMIN_CHECK_MIN_MS = 2.0
+_ROLE_RESOLUTION_MIN_MS = 2.0
+
+
+def _ensure_min_duration(start_perf: float, min_ms: float) -> None:
+    """Busy-wait/sleep to ensure a minimum wall-clock duration in milliseconds.
+
+    Uses time.perf_counter() for precision and time.sleep for efficiency.
+    """
+    target = start_perf + (min_ms / 1000.0)
+    # Sleep in coarse grain if there's noticeable time left
+    while True:
+        now = time.perf_counter()
+        remaining = target - now
+        if remaining <= 0:
+            break
+        # For larger remaining, sleep; for very fine remaining, spin briefly
+        if remaining > 0.001:
+            time.sleep(min(remaining, 0.001))
+        else:
+            # Busy-wait for sub-millisecond precision
+            pass
+
 
 def _convert_user_id(user_id: Union[int, str, None]) -> Union[int, None]:
     """
@@ -62,6 +86,7 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool:
         False
     """
     start_time = time.time()
+    start_perf = time.perf_counter()
     audit_service = get_security_audit_service()
 
     # Convert and validate user ID
@@ -114,6 +139,8 @@ def is_admin_user(user_id: Union[int, str, None], settings: Settings) -> bool:
     else:
         logger.debug(f"Admin access denied for user ID: {converted_user_id}")
 
+    # Constant-time mitigation to reduce timing variance between allowed/denied
+    _ensure_min_duration(start_perf, _ADMIN_CHECK_MIN_MS)
     return is_admin
 
 
@@ -233,10 +260,14 @@ def get_user_role(
         The highest role name ("admin", "coordinator", "viewer") or None if no role
     """
     start_time = time.time()
+    start_perf = time.perf_counter()
     audit_service = get_security_audit_service()
 
     # Convert and validate user ID
     converted_user_id = _convert_user_id(user_id)
+    role: Union[str, None]
+    cache_state = "invalid_user_id"
+    cache_hit = False
     if converted_user_id is None:
         # Log authorization event for invalid user ID
         auth_event = audit_service.create_authorization_event(
@@ -248,30 +279,26 @@ def get_user_role(
             error_details="Invalid or None user ID provided",
         )
         audit_service.log_authorization_event(auth_event)
-
-        return None
-
-    # Check cache first
-    current_time = time.time()
-    cache_hit = False
-    cache_state = "miss"
-
-    if converted_user_id in _ROLE_CACHE:
-        cached_role, timestamp = _ROLE_CACHE[converted_user_id]
-        if current_time - timestamp <= _ROLE_CACHE_TTL_SECONDS:
-            cache_hit = True
-            cache_state = "hit"
-            role = cached_role
+        role = None
+    else:
+        # Check cache first
+        current_time = time.time()
+        if converted_user_id in _ROLE_CACHE:
+            cached_role, timestamp = _ROLE_CACHE[converted_user_id]
+            if current_time - timestamp <= _ROLE_CACHE_TTL_SECONDS:
+                cache_hit = True
+                cache_state = "hit"
+                role = cached_role
+            else:
+                cache_state = "expired"
+                role = _resolve_user_role_uncached(converted_user_id, settings)
+                # Cache the result
+                _ROLE_CACHE[converted_user_id] = (role, current_time)
         else:
-            cache_state = "expired"
+            cache_state = "miss"
             role = _resolve_user_role_uncached(converted_user_id, settings)
             # Cache the result
             _ROLE_CACHE[converted_user_id] = (role, current_time)
-    else:
-        cache_state = "miss"
-        role = _resolve_user_role_uncached(converted_user_id, settings)
-        # Cache the result
-        _ROLE_CACHE[converted_user_id] = (role, current_time)
 
     # Calculate performance metrics
     duration_ms = int((time.time() - start_time) * 1000)
@@ -300,6 +327,8 @@ def get_user_role(
     )
     audit_service.log_performance_metrics(perf_metrics)
 
+    # Constant-time mitigation to reduce timing variance
+    _ensure_min_duration(start_perf, _ROLE_RESOLUTION_MIN_MS)
     return role
 
 
