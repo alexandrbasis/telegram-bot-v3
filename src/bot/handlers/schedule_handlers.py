@@ -66,7 +66,7 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
         return
         return
 
-    service = ScheduleService()
+    service = get_schedule_service()  # Use singleton instance
     try:
         entries = await service.get_schedule_for_date(day)
     except Exception as e:
