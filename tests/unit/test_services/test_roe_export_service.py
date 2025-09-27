@@ -776,3 +776,80 @@ class TestAsyncExportInterface:
             RuntimeError, match="cannot be called while an event loop is running"
         ):
             service.export_to_csv()
+
+
+class TestViewBasedExport:
+    """Test view-based export functionality."""
+
+    @pytest.mark.asyncio
+    async def test_roe_export_uses_configured_view_name(
+        self, mock_roe_repository, mock_participant_repository, monkeypatch
+    ):
+        """Test that ROE export uses view name from settings."""
+        # Arrange
+        from src.config.settings import Settings
+
+        # Set required environment variables for test
+        monkeypatch.setenv("AIRTABLE_API_KEY", "test_key")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
+        monkeypatch.setenv("AIRTABLE_ROE_EXPORT_VIEW", "Custom ROE View")
+
+        # Create settings with custom view name from environment
+        test_settings = Settings()
+
+        # Mock repository to return view records with specific field order
+        view_records = [
+            {
+                "id": "rec1",
+                "fields": {
+                    "RoeDate": "2025-01-15",
+                    "RoeTopic": "Божья любовь",
+                    "Roista": ["rec_p1"],
+                    "RoeTiming": "09:00-10:30",
+                }
+            }
+        ]
+        mock_roe_repository.list_view_records.return_value = view_records
+
+        # Mock participant hydration
+        test_participant = Participant(
+            record_id="rec_p1",
+            full_name_ru="Иванов Иван",
+            role=Role.TEAM,
+            department=Department.WORSHIP
+        )
+        mock_participant_repository.get_by_id.return_value = test_participant
+
+        service = ROEExportService(
+            roe_repository=mock_roe_repository,
+            participant_repository=mock_participant_repository,
+            settings=test_settings
+        )
+
+        # Act
+        csv_data = await service.get_all_roe_as_csv()
+
+        # Assert
+        # Verify the correct view name was used
+        mock_roe_repository.list_view_records.assert_called_once_with(
+            "Custom ROE View"
+        )
+
+        # Verify headers are in view order
+        reader = csv.DictReader(io.StringIO(csv_data))
+        actual_headers = reader.fieldnames
+
+        # Headers should be in the order from the view (with # first)
+        expected_headers = [
+            "#",
+            "RoeDate",
+            "RoeTopic",
+            "Roista",
+            "RoeTiming",
+        ]
+        assert actual_headers == expected_headers
+
+        # Verify participant hydration worked
+        rows = list(reader)
+        assert len(rows) == 1
+        assert rows[0]["Roista"] == "Иванов Иван"
