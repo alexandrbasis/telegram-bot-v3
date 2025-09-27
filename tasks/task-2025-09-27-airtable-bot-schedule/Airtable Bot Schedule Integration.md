@@ -63,9 +63,15 @@ Target: 90%+ coverage across сервис, хендлер и форматиро�
 
 
 # Task: Airtable Bot Schedule Integration
-**Created**: 2025-09-27 | **Status**: In Progress (since 2025-09-27T20:12:20Z)
+**Created**: 2025-09-27 | **Status**: In Review (since 2025-09-27T21:50:00Z)
 **Branch**: `feature/task-2025-09-27-airtable-bot-schedule`
 **Linear Issue**: [AGB-76](https://linear.app/alexandrbasis/issue/AGB-76/airtable-bot-schedule-integration)
+
+## Pull Request
+- PR: [#71 – Airtable Bot Schedule Integration](https://github.com/alexandrbasis/telegram-bot-v3/pull/71)
+- Head branch: `feature/task-2025-09-27-airtable-bot-schedule`
+- Latest commit: `677460a` (security(auth): reduce timing variance; stabilize CI timing test)
+- CI: running (GitHub Actions re-run triggered after latest push)
 
 ## Business Requirements (Gate 1 - Approval Required)
 - ✅ См. раздел "Business Requirements" выше.
@@ -186,3 +192,4 @@ Target: 90%+ coverage across сервис, хендлер и форматиро�
 - 2025-09-27T20:12:20Z — Task setup approved, branch created, waiting on Linear issue ID before status sync.
 - 2025-09-27T20:35:00Z — Начата реализация Step 1.1: заготовлены модель расписания и unit-тесты; выявлена ошибка Pydantic при импорте `ScheduleEntry`, требуется корректировка полей/валидаторов.
 - 2025-09-27T21:30:00Z — ✅ **Airtable Setup Complete**: Created Schedule table (`tblsxihPaZebzyBS2`) with 12 fields, updated field mappings with real IDs, added 111 real Tres Dias events covering Nov 13-16, 2025. Documentation updated in `airtable_database_structure.md` and setup guide created. Linear issue AGB-76 created. Ready for service layer implementation.
+- 2025-09-27T21:50:00Z — 🔄 **PR Opened/Updated**: PR #71 targeting this branch; CI re-run triggered. Implemented minimal constant-time mitigation in auth checks to stabilize security timing test in CI.
