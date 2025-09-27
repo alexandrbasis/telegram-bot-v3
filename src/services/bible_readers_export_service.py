@@ -14,10 +14,15 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 from src.config.field_mappings.bible_readers import BibleReadersFieldMapping
+from src.config.settings import Settings
 from src.data.repositories.bible_readers_repository import BibleReadersRepository
-from src.data.repositories.participant_repository import ParticipantRepository
+from src.data.repositories.participant_repository import ParticipantRepository, RepositoryError
 from src.models.bible_readers import BibleReader
-from src.utils.export_utils import format_line_number
+from src.utils.export_utils import (
+    extract_headers_from_view_records,
+    format_line_number,
+    order_rows_by_view_headers,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +53,7 @@ class BibleReadersExportService:
         bible_readers_repository: BibleReadersRepository,
         participant_repository: ParticipantRepository,
         progress_callback: Optional[Callable[[int, int], None]] = None,
+        settings: Optional[Settings] = None,
     ):
         """
         Initialize the export service.
@@ -56,10 +62,19 @@ class BibleReadersExportService:
             bible_readers_repository: BibleReaders repository for data access
             participant_repository: Participant repository for name hydration
             progress_callback: Optional callback for progress updates (current, total)
+            settings: Optional settings object for view configuration
         """
         self.bible_readers_repository = bible_readers_repository
         self.participant_repository = participant_repository
         self.progress_callback = progress_callback
+        self._settings = settings
+
+    @property
+    def settings(self) -> Settings:
+        """Get settings, lazily initializing if needed."""
+        if self._settings is None:
+            self._settings = Settings()
+        return self._settings
 
     async def get_all_bible_readers_as_csv(self) -> str:
         """
@@ -76,6 +91,23 @@ class BibleReadersExportService:
         """
         logger.info("Starting BibleReaders CSV export")
 
+        # Try to use view-based export first
+        try:
+            view_name = self.settings.database.bible_readers_export_view
+            logger.info(f"Using configured BibleReaders export view: {view_name}")
+            return await self._export_view_to_csv(view_name)
+        except (ValueError, AttributeError):
+            # If settings can't be initialized, fall back to legacy method
+            logger.info("Settings not available, using legacy export method")
+            return await self._legacy_export()
+        except RepositoryError as e:
+            logger.warning(f"View export failed: {e}, falling back to legacy method")
+            return await self._legacy_export()
+
+    async def _legacy_export(self) -> str:
+        """
+        Legacy export method using list_all().
+        """
         # Retrieve all Bible readers
         bible_readers = await self.bible_readers_repository.list_all()
         total_count = len(bible_readers)
@@ -119,6 +151,101 @@ class BibleReadersExportService:
 
         logger.info(f"BibleReaders CSV export completed with {total_count} records")
         return csv_string
+
+    async def _export_view_to_csv(self, view_name: str) -> str:
+        """
+        Export Bible Readers records from Airtable view to CSV with view-based ordering.
+        """
+        # Get records from view
+        raw_records = await self.bible_readers_repository.list_view_records(view_name)
+        logger.info(f"Retrieved {len(raw_records)} records from BibleReaders view '{view_name}'")
+
+        # Extract headers from view
+        view_headers = extract_headers_from_view_records(raw_records)
+        if not view_headers:
+            # Fall back to default headers
+            view_headers = [h for h in self._get_csv_headers() if h != "#"]
+        headers = ["#"] + view_headers
+
+        # Report initial progress
+        total_count = len(raw_records)
+        if self.progress_callback:
+            self.progress_callback(0, total_count)
+
+        # Calculate width for line numbers
+        width = len(str(total_count)) if total_count > 0 else 1
+
+        # Prepare rows with view data and hydrated names
+        prepared_rows = []
+        for index, record in enumerate(raw_records):
+            try:
+                bible_reader = BibleReader.from_airtable_record(record)
+            except Exception as exc:
+                logger.warning(
+                    f"Skipping invalid BibleReader record {record.get('id', 'unknown')} from view '{view_name}': {exc}"
+                )
+                continue
+
+            # Get view field data
+            view_data = record.get("fields", {})
+
+            # Create row with view data and hydrated participant names
+            row = {}
+            for field_name, field_value in view_data.items():
+                row[field_name] = self._format_raw_value(field_value)
+
+            # Hydrate participant names for Participants field
+            participant_names = await self._hydrate_participant_names(bible_reader.participants)
+
+            # Override with hydrated names
+            if participant_names:
+                row["Participants"] = "; ".join(participant_names)
+
+            # Add line number
+            row["#"] = format_line_number(index + 1, width)
+            prepared_rows.append(row)
+
+            # Report progress
+            if self.progress_callback:
+                if (index + 1) % 10 == 0 or (index + 1) == len(raw_records):
+                    self.progress_callback(index + 1, len(raw_records))
+
+        # Reorder rows based on view headers
+        if view_headers:
+            reordered_rows = order_rows_by_view_headers(
+                view_headers,
+                list(prepared_rows[0].keys()) if prepared_rows else [],
+                prepared_rows
+            )
+        else:
+            reordered_rows = prepared_rows
+
+        # Write to CSV
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
+        writer.writeheader()
+
+        for row in reordered_rows:
+            writer.writerow(row)
+
+        csv_string = output.getvalue()
+        output.close()
+
+        logger.info(f"BibleReaders view export completed with {len(reordered_rows)} records")
+        return csv_string
+
+    @staticmethod
+    def _format_raw_value(value) -> str:
+        """Format raw Airtable values for CSV output."""
+        if value is None:
+            return ""
+        if isinstance(value, (date, datetime)):
+            return value.isoformat()[:10]
+        if isinstance(value, list):
+            return "; ".join(str(item) for item in value)
+        if isinstance(value, bool):
+            return "TRUE" if value else "FALSE"
+        return str(value)
 
     async def export_to_csv_async(self) -> str:
         """Async wrapper matching the export interface pattern."""

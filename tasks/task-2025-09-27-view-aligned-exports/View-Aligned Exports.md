@@ -165,14 +165,15 @@ Target: 90%+ coverage across view-aligned export logic
     - **Changelog**: Record participant view alignment.
     - **Notes**: Modified service to use settings.database.participant_export_view, integrated view-based ordering utilities, updated 4 test files with all 41 tests passing
 
-- [ ] Step 6: Update ROE export to use view `РОЕ: Расписание`
-  - [ ] Sub-step 6.1: Modify ROE export service
+- [x] ✅ Step 6: Update ROE export to use view `РОЕ: Расписание` - Completed 2025-09-27
+  - [x] ✅ Sub-step 6.1: Modify ROE export service - Completed 2025-09-27
     - **Directory**: `src/services/`
     - **Files to create/modify**: `src/services/roe_export_service.py`
     - **Accept**: `export_to_csv_async()` fetches via `list_view_records()` using configured view name, respects view column order, ensures `#` column.
     - **Tests**: `tests/unit/test_services/test_roe_export_service.py` (view-order test with standardized mocks), `tests/integration/test_export_selection_workflow.py` (ROE path).
     - **Done**: Tests pass with consistent mock data structure, manual verification confirms column ordering and numbering.
     - **Changelog**: Record ROE view alignment.
+    - **Notes**: Added view-based export with participant hydration, graceful fallback, 1 new test added (24/24 tests passing)
 
 - [ ] Step 7: Update Bible Readers export to use view `Чтецы: Расписание`
   - [ ] Sub-step 7.1: Modify Bible Readers export service
@@ -240,6 +241,14 @@ Target: 90%+ coverage across view-aligned export logic
 - **Impact**: Candidate exports now use configurable view name and preserve Airtable view column ordering
 - **Tests**: Updated test expectations for view-based header ordering (41/41 tests passing)
 - **Verification**: Service successfully uses configured view name, headers extracted from view records, data reordered to match
+
+#### Step 6: ROE Export Service Update — 2025-09-27
+- **Files**: `src/services/roe_export_service.py` - Added view-based export functionality
+- **Files**: `tests/unit/test_services/test_roe_export_service.py` - Added test for view-based export
+- **Summary**: Integrated view-based ordering into ROE export service with configured view names and participant hydration
+- **Impact**: ROE exports now use configurable view name and preserve Airtable view column ordering while maintaining participant name hydration
+- **Tests**: Added comprehensive test for view functionality (24/24 tests passing)
+- **Verification**: Service uses configured view, headers extracted from view records, participant names properly hydrated
 
 ### Task Splitting Evaluation
 **Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: 2025-09-26

@@ -644,3 +644,81 @@ class TestAsyncExportInterface:
             RuntimeError, match="cannot be called while an event loop is running"
         ):
             service.export_to_csv()
+
+
+class TestViewBasedExport:
+    """Test view-based export functionality."""
+
+    @pytest.mark.asyncio
+    async def test_bible_readers_export_uses_configured_view_name(
+        self, mock_bible_readers_repository, mock_participant_repository, monkeypatch
+    ):
+        """Test that Bible Readers export uses view name from settings."""
+        # Arrange
+        from src.config.settings import Settings
+
+        # Set required environment variables for test
+        monkeypatch.setenv("AIRTABLE_API_KEY", "test_key")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
+        monkeypatch.setenv("AIRTABLE_BIBLE_READERS_EXPORT_VIEW", "Custom Bible Readers View")
+
+        # Create settings with custom view name from environment
+        test_settings = Settings()
+
+        # Mock repository to return view records with specific field order
+        view_records = [
+            {
+                "id": "rec1",
+                "fields": {
+                    "When": "2025-01-15",
+                    "Where": "Зал 1",
+                    "Participants": ["rec_p1"],
+                    "Bible": "Библия РБО",
+                }
+            }
+        ]
+        mock_bible_readers_repository.list_view_records.return_value = view_records
+
+        # Mock participant hydration
+        from src.models.participant import Department, Participant, Role
+        test_participant = Participant(
+            record_id="rec_p1",
+            full_name_ru="Петров Петр",
+            role=Role.TEAM,
+            department=Department.WORSHIP
+        )
+        mock_participant_repository.get_by_id.return_value = test_participant
+
+        service = BibleReadersExportService(
+            bible_readers_repository=mock_bible_readers_repository,
+            participant_repository=mock_participant_repository,
+            settings=test_settings
+        )
+
+        # Act
+        csv_data = await service.get_all_bible_readers_as_csv()
+
+        # Assert
+        # Verify the correct view name was used
+        mock_bible_readers_repository.list_view_records.assert_called_once_with(
+            "Custom Bible Readers View"
+        )
+
+        # Verify headers are in view order
+        reader = csv.DictReader(io.StringIO(csv_data))
+        actual_headers = reader.fieldnames
+
+        # Headers should be in the order from the view (with # first)
+        expected_headers = [
+            "#",
+            "When",
+            "Where",
+            "Participants",
+            "Bible",
+        ]
+        assert actual_headers == expected_headers
+
+        # Verify participant hydration worked
+        rows = list(reader)
+        assert len(rows) == 1
+        assert rows[0]["Participants"] == "Петров Петр"
