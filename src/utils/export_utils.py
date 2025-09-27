@@ -185,7 +185,7 @@ def format_export_success_message(
     export_type: Optional[str] = None,
 ) -> str:
     """
-    Format export success message with optional participant count and Russian export type.
+    Format export success message with optional participant count and Russian type.
 
     Creates a standardized success message format for CSV exports
     that includes file size, timestamp, optionally participant count
@@ -311,7 +311,7 @@ def generate_readable_export_filename(
 
     Args:
         export_type: Type of export (e.g., "candidates", "team", "roe")
-        export_datetime: Optional datetime for filename. Uses current time if not provided.
+        export_datetime: Optional datetime for filename. Uses current time if None.
 
     Returns:
         Human-readable filename string with normalized type and date format
