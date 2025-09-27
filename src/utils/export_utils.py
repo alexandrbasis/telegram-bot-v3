@@ -212,3 +212,70 @@ def format_export_success_message(
     )
 
     return "\n".join(message_parts)
+
+
+def extract_headers_from_view_records(
+    records: Optional[List[Dict[str, Any]]]
+) -> List[str]:
+    """
+    Extract column headers from Airtable view records.
+
+    Uses the first record's field order as returned by the view,
+    which preserves the view's column ordering.
+
+    Args:
+        records: List of Airtable record dictionaries with 'fields' key
+
+    Returns:
+        List of field names in view order, or empty list if no records
+    """
+    if not records:
+        return []
+
+    # Get first record's fields
+    if not records[0].get("fields"):
+        return []
+
+    # Python 3.7+ preserves dict insertion order, matching Airtable view order
+    return list(records[0]["fields"].keys())
+
+
+def order_rows_by_view_headers(
+    view_headers: List[str],
+    original_headers: List[str],
+    rows: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Reorder row dictionaries to match view header order.
+
+    Creates new row dictionaries with fields ordered according to
+    view headers, preserving line numbers if present.
+
+    Args:
+        view_headers: Desired column order from view
+        original_headers: Current column headers (may include '#')
+        rows: List of row dictionaries to reorder
+
+    Returns:
+        List of reordered row dictionaries
+    """
+    if not rows:
+        return []
+
+    reordered_rows = []
+
+    for row in rows:
+        new_row = {}
+
+        # Always preserve line number column first if present
+        if "#" in row:
+            new_row["#"] = row["#"]
+
+        # Add fields in view header order
+        for header in view_headers:
+            if header in row:
+                new_row[header] = row[header]
+
+        reordered_rows.append(new_row)
+
+    return reordered_rows

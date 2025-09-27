@@ -163,7 +163,7 @@ Based on comprehensive unit testing and integration testing, the following produ
 ---
 
 ## Technical Task
-**Created**: 2025-09-26 | **Status**: Ready for Review | **Started**: 2025-09-26 | **Completed**: 2025-09-26
+**Created**: 2025-09-26 | **Status**: ✅ COMPLETED AND MERGED | **Started**: 2025-09-26 | **Completed**: 2025-09-27
 
 ### Knowledge Gaps Addressed
 - **Airtable Error Mapping**: 422 `VIEW_NAME_NOT_FOUND` errors surface through `AirtableAPIError` (wrapped by `RepositoryError`) with string payload `"View [name] not found"`; fallback will guard on the error's text / status code rather than relying on nested JSON fields.
@@ -302,3 +302,35 @@ Based on comprehensive unit testing and integration testing, the following produ
 - **Production Safety**: Changes are purely additive (new methods) or defensive (fallback logic), ensuring zero-downtime deployment with comprehensive rollback capability
 - **Error Handling**: Service-layer logging provides operations teams with visibility into fallback triggers while maintaining user-friendly export experiences
 - **Test Coverage**: Focused coverage on new functionality while maintaining existing test integrity - 1501 total tests passing demonstrates comprehensive regression protection
+
+---
+
+## Task Completion
+**Date**: 2025-09-27 | **Status**: ✅ COMPLETED AND MERGED
+
+### Overview
+Successfully restored all Telegram bot export flows (candidates, Bible readers, ROE) with comprehensive fallback logic for missing Airtable views. Implemented async export interfaces across all services for consistency and added robust error handling while maintaining line number formatting.
+
+### Final PR Traceability
+- **PR ID/URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/68
+- **Branch**: basisalexandr/agb-73-export-reliability-hotfix
+- **Status**: ✅ APPROVED → ✅ MERGED
+- **SHA**: 935fc81
+- **Date**: 2025-09-27
+
+### Quality Assurance
+- **Code Review**: ✅ APPROVED FOR MERGE - All critical and major issues resolved
+- **Tests**: ✅ 84 export service tests passing (88% coverage for BibleReaders/ROE services)
+- **CI**: ✅ All quality gates passed (format, lint, type check, security, tests)
+- **Documentation**: ✅ Updated with comprehensive API and troubleshooting guides
+
+### Business Impact
+- **Production Ready**: Administrators can now reliably export candidate, BibleReaders, and ROE data without manual Airtable configuration
+- **Zero Downtime**: All changes are additive or defensive, ensuring seamless deployment
+- **Enhanced Reliability**: Graceful fallback logic prevents export failures when Airtable views are unavailable
+- **Developer Experience**: Consistent async interfaces across all export services with comprehensive error handling
+
+### Archive Location
+- **Archived**: `tasks/completed/task-2025-09-26-export-hotfix/`
+- **Linear Issue**: AGB-73 - ✅ Done
+- **Task Lifecycle**: ✅ COMPLETE

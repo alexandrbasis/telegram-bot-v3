@@ -14,9 +14,11 @@ import pytest
 from src.utils.export_utils import (
     add_line_numbers_to_csv,
     add_line_numbers_to_rows,
+    extract_headers_from_view_records,
     extract_participant_count_from_csv,
     format_export_success_message,
     format_line_number,
+    order_rows_by_view_headers,
 )
 
 
@@ -446,3 +448,205 @@ class TestExportSuccessMessageFormatting:
             "📅 Дата экспорта: 2025-01-26 15:30:00 UTC"
         )
         assert result == expected
+
+
+class TestExtractHeadersFromViewRecords:
+    """Test extracting headers from Airtable view records."""
+
+    def test_extract_headers_from_empty_records(self):
+        """Test extracting headers from empty record list."""
+        records = []
+        headers = extract_headers_from_view_records(records)
+        assert headers == []
+
+    def test_extract_headers_from_single_record(self):
+        """Test extracting headers from single record preserves field order."""
+        records = [
+            {
+                "fields": {
+                    "Name": "John Doe",
+                    "Age": 25,
+                    "Department": "IT",
+                }
+            }
+        ]
+
+        # Should extract keys in the order they appear in the first record
+        headers = extract_headers_from_view_records(records)
+        assert headers == ["Name", "Age", "Department"]
+
+    def test_extract_headers_from_multiple_records(self):
+        """Test extracting headers uses first record's field order."""
+        records = [
+            {
+                "fields": {
+                    "FullNameRU": "Иванов Иван",
+                    "Department": "IT",
+                    "Status": "Active",
+                }
+            },
+            {
+                "fields": {
+                    "Status": "Inactive",  # Different order
+                    "FullNameRU": "Петров Петр",
+                    "Department": "HR",
+                    "ExtraField": "Value",  # Extra field in second record
+                }
+            }
+        ]
+
+        # Should use first record's field order
+        headers = extract_headers_from_view_records(records)
+        assert headers == ["FullNameRU", "Department", "Status"]
+
+    def test_extract_headers_preserves_view_order(self):
+        """Test that headers preserve Airtable view's column order."""
+        # Simulate Airtable view response with specific field order
+        records = [
+            {
+                "fields": {
+                    "Дата": "2025-01-15",
+                    "Время": "10:00",
+                    "ФИО": "Иванов Иван",
+                    "Роль": "Чтец",
+                    "Текст": "Псалом 23",
+                }
+            }
+        ]
+
+        headers = extract_headers_from_view_records(records)
+        # Order should match exactly as returned by view
+        assert headers == ["Дата", "Время", "ФИО", "Роль", "Текст"]
+
+    def test_extract_headers_handles_missing_fields(self):
+        """Test extracting headers from record with no fields."""
+        records = [{"fields": {}}]
+        headers = extract_headers_from_view_records(records)
+        assert headers == []
+
+    def test_extract_headers_handles_none_records(self):
+        """Test extracting headers from None returns empty list."""
+        headers = extract_headers_from_view_records(None)
+        assert headers == []
+
+
+class TestOrderRowsByViewHeaders:
+    """Test reordering rows to match view header order."""
+
+    def test_order_rows_empty_inputs(self):
+        """Test ordering with empty inputs."""
+        result = order_rows_by_view_headers([], [], [])
+        assert result == []
+
+        result = order_rows_by_view_headers(["Name", "Age"], [], [])
+        assert result == []
+
+    def test_order_rows_single_row(self):
+        """Test ordering single row to match view headers."""
+        view_headers = ["Age", "Name", "Department"]
+        original_headers = ["Name", "Age", "Department"]
+        rows = [{"Name": "John", "Age": "25", "Department": "IT"}]
+
+        result = order_rows_by_view_headers(view_headers, original_headers, rows)
+
+        # Row should be reordered to match view header order
+        assert len(result) == 1
+        assert list(result[0].keys()) == ["Age", "Name", "Department"]
+        assert result[0]["Age"] == "25"
+        assert result[0]["Name"] == "John"
+        assert result[0]["Department"] == "IT"
+
+    def test_order_rows_multiple_rows(self):
+        """Test ordering multiple rows to match view headers."""
+        view_headers = ["Department", "FullNameRU", "Status"]
+        original_headers = ["FullNameRU", "Status", "Department"]
+        rows = [
+            {"FullNameRU": "Иванов Иван", "Status": "Active", "Department": "IT"},
+            {"FullNameRU": "Петров Петр", "Status": "Inactive", "Department": "HR"},
+        ]
+
+        result = order_rows_by_view_headers(view_headers, original_headers, rows)
+
+        assert len(result) == 2
+        # Check first row ordering
+        assert list(result[0].keys()) == ["Department", "FullNameRU", "Status"]
+        assert result[0]["Department"] == "IT"
+        assert result[0]["FullNameRU"] == "Иванов Иван"
+
+        # Check second row ordering
+        assert list(result[1].keys()) == ["Department", "FullNameRU", "Status"]
+        assert result[1]["Department"] == "HR"
+        assert result[1]["FullNameRU"] == "Петров Петр"
+
+    def test_order_rows_preserves_line_numbers(self):
+        """Test that line number column is preserved during reordering."""
+        view_headers = ["Name", "Age"]
+        original_headers = ["#", "Age", "Name"]  # Line number included
+        rows = [
+            {"#": "1", "Age": "25", "Name": "John"},
+            {"#": "2", "Age": "30", "Name": "Jane"},
+        ]
+
+        result = order_rows_by_view_headers(view_headers, original_headers, rows)
+
+        # Line numbers should be preserved even if not in view headers
+        assert len(result) == 2
+        assert "#" in result[0]
+        assert result[0]["#"] == "1"
+        assert result[1]["#"] == "2"
+        # Other fields should be reordered
+        assert list(result[0].keys()) == ["#", "Name", "Age"]
+
+    def test_order_rows_handles_missing_fields(self):
+        """Test ordering handles rows with missing fields gracefully."""
+        view_headers = ["Name", "Age", "City"]
+        original_headers = ["Name", "Age"]
+        rows = [{"Name": "John", "Age": "25"}]  # Missing City
+
+        result = order_rows_by_view_headers(view_headers, original_headers, rows)
+
+        assert len(result) == 1
+        # Should include fields that exist, skip missing ones
+        assert "Name" in result[0]
+        assert "Age" in result[0]
+        assert "City" not in result[0]  # Missing field not added
+
+    def test_order_rows_handles_extra_fields(self):
+        """Test ordering handles rows with extra fields not in view."""
+        view_headers = ["Name", "Age"]
+        original_headers = ["Name", "Age", "Department", "City"]
+        rows = [
+            {"Name": "John", "Age": "25", "Department": "IT", "City": "NYC"}
+        ]
+
+        result = order_rows_by_view_headers(view_headers, original_headers, rows)
+
+        assert len(result) == 1
+        # Should only include fields from view headers
+        assert list(result[0].keys()) == ["Name", "Age"]
+        assert result[0]["Name"] == "John"
+        assert result[0]["Age"] == "25"
+        assert "Department" not in result[0]
+        assert "City" not in result[0]
+
+    def test_order_rows_complex_reordering(self):
+        """Test complex reordering with Russian field names."""
+        view_headers = ["Дата", "Время", "ФИО", "Роль", "Текст"]
+        original_headers = ["ФИО", "Текст", "Роль", "Время", "Дата"]
+        rows = [
+            {
+                "ФИО": "Иванов Иван",
+                "Текст": "Псалом 23",
+                "Роль": "Чтец",
+                "Время": "10:00",
+                "Дата": "2025-01-15",
+            }
+        ]
+
+        result = order_rows_by_view_headers(view_headers, original_headers, rows)
+
+        assert len(result) == 1
+        assert list(result[0].keys()) == view_headers
+        assert result[0]["Дата"] == "2025-01-15"
+        assert result[0]["Время"] == "10:00"
+        assert result[0]["ФИО"] == "Иванов Иван"
