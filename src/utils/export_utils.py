@@ -220,8 +220,9 @@ def extract_headers_from_view_records(
     """
     Extract column headers from Airtable view records.
 
-    Uses the first record's field order as returned by the view,
-    which preserves the view's column ordering.
+    Accumulates field names from all records to ensure complete coverage
+    of view columns, even when early records have missing field values.
+    Preserves the view's column ordering by maintaining field insertion order.
 
     Args:
         records: List of Airtable record dictionaries with 'fields' key
@@ -232,12 +233,18 @@ def extract_headers_from_view_records(
     if not records:
         return []
 
-    # Get first record's fields
-    if not records[0].get("fields"):
-        return []
+    # Accumulate all field names while preserving order
+    # Using dict to maintain insertion order (Python 3.7+) and avoid duplicates
+    all_fields = {}
 
-    # Python 3.7+ preserves dict insertion order, matching Airtable view order
-    return list(records[0]["fields"].keys())
+    for record in records:
+        fields = record.get("fields", {})
+        # Add each field name in the order it appears
+        for field_name in fields.keys():
+            if field_name not in all_fields:
+                all_fields[field_name] = True
+
+    return list(all_fields.keys())
 
 
 def order_rows_by_view_headers(
@@ -269,10 +276,10 @@ def order_rows_by_view_headers(
         if "#" in row:
             new_row["#"] = row["#"]
 
-        # Add fields in view header order
+        # Add fields in view header order, including empty fields to maintain structure
         for header in view_headers:
-            if header in row:
-                new_row[header] = row[header]
+            # Include all view headers, using empty string for missing values
+            new_row[header] = row.get(header, "")
 
         reordered_rows.append(new_row)
 
