@@ -20,3 +20,4 @@ from .search_keyboards import (
     get_waiting_for_name_keyboard,
     get_waiting_for_room_keyboard,
 )
+from .schedule import schedule_days_keyboard

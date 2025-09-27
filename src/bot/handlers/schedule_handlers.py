@@ -10,7 +10,7 @@ from telegram import Update
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 
 from src.bot.keyboards.schedule import schedule_days_keyboard
-from src.services.schedule_service import ScheduleService
+from src.services.service_factory import get_schedule_service
 from src.utils.schedule_formatter import format_schedule_day
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ async def handle_schedule_callback(update: Update, context: CallbackContext) -> 
         await query.edit_message_text("❌ Некорректная дата.")
         return
 
-    service = ScheduleService()
+    service = get_schedule_service()
     try:
         entries = await service.get_schedule_for_date(day)
     except Exception as e:
