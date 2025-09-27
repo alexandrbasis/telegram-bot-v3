@@ -72,7 +72,17 @@ Target: 90%+ coverage across view-aligned export logic
 ---
 
 ## Technical Task
-**Created**: 2025-09-27 | **Status**: In Progress | **Started**: 2025-09-27 | **Plan Reviewed by**: Plan Reviewer Agent | **Task Evaluated by**: Task Splitter Agent | **Date**: 2025-09-26
+**Created**: 2025-09-27 | **Status**: Partially Complete (Foundation Done) | **Started**: 2025-09-27 | **Foundation Complete**: 2025-09-27 | **Plan Reviewed by**: Plan Reviewer Agent | **Task Evaluated by**: Task Splitter Agent | **Date**: 2025-09-26
+
+### ✅ COMPLETED: Foundation Infrastructure (Steps 1-3)
+**Repository Layer**: All three repositories (Participant, ROE, Bible Readers) now have consistent `list_view_records()` support
+**Configuration Layer**: View names configurable via environment variables with proper validation
+**Test Coverage**: 111/111 tests passing across all modified components (9 repository + 53 airtable + 49 settings tests)
+
+### ⚠️ REMAINING: Export Service Integration (Steps 4-8)
+**Next Steps**: Update export utilities and services to use view-based data retrieval with configured view names
+**Key Files**: `src/utils/export_utils.py`, `src/services/*_export_service.py`
+**Critical**: Preserve `#` line numbers while respecting view column order
 
 ### Knowledge Gaps - Addressed in Implementation
 - ✅ **Field ordering from Airtable views**: Addressed in Steps 2.1-2.2 by implementing concrete view support in ROE and Bible Readers repositories with proper field mapping and ordering.
@@ -80,11 +90,14 @@ Target: 90%+ coverage across view-aligned export logic
 - ✅ **Downstream consumer dependencies**: Addressed in Step 3.1 by creating configurable view names with fallback handling, and comprehensive testing in Steps 5-7 to validate no regressions in export workflows.
 
 ### Technical Requirements
-- [ ] Candidate export must retrieve records using Airtable view `Кандидаты`, preserving view-defined column order and prepending `#` line numbers.
-- [ ] ROE export must retrieve records using Airtable view `РОЕ: Расписание`, preserving column order and prepending `#` line numbers.
-- [ ] Bible Readers export must retrieve records using Airtable view `Чтецы: Расписание`, preserving column order and prepending `#` line numbers.
-- [ ] View-driven exports must degrade gracefully: if a view is unavailable, log a clear warning and optionally fall back to existing behavior (without breaking the bot).
-- [ ] Tests must validate column ordering, line numbers, and integration workflow for all three exports with mocked Airtable responses.
+- [ ] **REMAINING**: Candidate export must retrieve records using Airtable view `Кандидаты`, preserving view-defined column order and prepending `#` line numbers.
+- [ ] **REMAINING**: ROE export must retrieve records using Airtable view `РОЕ: Расписание`, preserving column order and prepending `#` line numbers.
+- [ ] **REMAINING**: Bible Readers export must retrieve records using Airtable view `Чтецы: Расписание`, preserving column order and prepending `#` line numbers.
+- [x] ✅ **FOUNDATION**: Repository layer supports view-based data retrieval with consistent interface across all three types
+- [x] ✅ **FOUNDATION**: View names are configurable via environment variables with validation and fallback handling
+- [x] ✅ **FOUNDATION**: Repository tests validate view functionality with mocked Airtable responses
+- [ ] **REMAINING**: View-driven exports must degrade gracefully: if a view is unavailable, log a clear warning and optionally fall back to existing behavior (without breaking the bot).
+- [ ] **REMAINING**: Export service tests must validate column ordering, line numbers, and integration workflow for all three exports with mocked Airtable responses.
 
 ### Implementation Steps & Change Log
 - [x] ✅ Step 1: Establish repository interface consistency for view support
