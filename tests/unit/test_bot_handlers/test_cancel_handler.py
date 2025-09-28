@@ -42,7 +42,9 @@ class TestCancelSearchHandler:
 
         # Verify unified welcome message is used
         expected_message = (
-            "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+            "Добро пожаловать в бот Tres Dias! 🙏\n\n"
+            "Выберите тип поиска участников.\n"
+            "ℹ️ Для подсказок используйте команду /help."
         )
         mock_update.message.reply_text.assert_called_once()
         call_args = mock_update.message.reply_text.call_args
@@ -74,7 +76,9 @@ class TestCancelSearchHandler:
 
         # Verify unified welcome message is used
         expected_message = (
-            "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+            "Добро пожаловать в бот Tres Dias! 🙏\n\n"
+            "Выберите тип поиска участников.\n"
+            "ℹ️ Для подсказок используйте команду /help."
         )
         mock_update.message.reply_text.assert_called_once()
         call_args = mock_update.message.reply_text.call_args
