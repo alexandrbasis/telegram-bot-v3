@@ -75,7 +75,7 @@ async def test_schedule_flow_with_airtable_stub(monkeypatch, context):
     assert context.user_data[USER_DATA_LAST_DAY_KEY] == day.isoformat()
     day_query.edit_message_text.assert_called_once()
     header_text = day_query.edit_message_text.call_args.args[0].splitlines()[0]
-    assert "13.11.2025" in header_text
+    assert "2025-11-13" in header_text
 
     # Refresh should fetch new data and update output text
     refresh_update, refresh_query = _callback_update("schedule:refresh")
