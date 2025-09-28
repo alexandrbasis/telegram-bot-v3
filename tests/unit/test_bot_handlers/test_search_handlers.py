@@ -508,7 +508,9 @@ class TestMainMenuButtonHandler:
         """Test that main_menu_button shows equivalent welcome message as start_command."""
         # Setup mock to return the unified message
         unified_message = (
-            "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+            "Добро пожаловать в бот Tres Dias! 🙏\n\n"
+            "Выберите тип поиска участников.\n"
+            "ℹ️ Для подсказок используйте команду /help."
         )
         mock_get_welcome_message.return_value = unified_message
 
@@ -1433,6 +1435,7 @@ class TestSharedInitializationHelpers:
         assert "Tres Dias" in message
         assert "🙏" in message
         assert "участников" in message
+        assert "/help" in message
 
         # Should be a string
         assert isinstance(message, str)

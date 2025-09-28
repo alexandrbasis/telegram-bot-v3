@@ -1086,6 +1086,112 @@ Enhanced CSV export functionality that adds sequential line numbers as the first
 3. **Data Analysis**: Import numbered CSV files into spreadsheet applications for analysis
 4. **Progress Tracking**: Monitor participant registration progress using exported count information
 
+## Help Command Implementation
+
+### Overview
+Comprehensive help system providing users with complete bot guidance and command discovery through a dedicated /help command with Russian localization and dynamic content based on feature flags.
+
+**Status**: ✅ Implemented (2025-09-28)
+**Implementation**: Standalone command handler with dynamic message generation and global accessibility
+**Test Coverage**: 48 tests passing (100% success rate)
+
+### Core Features
+
+#### 1. Comprehensive Bot Guidance
+- **Complete Command Catalog**: Displays all 8 bot commands organized in 5 functional categories
+- **Category Organization**: Commands grouped by function (Core, Search, Export, Schedule, Admin)
+- **Russian Interface**: Full Russian localization with consistent terminology and clear descriptions
+- **Usage Examples**: Each command includes brief description and usage guidance
+- **Feature Coverage**: Explains all major bot capabilities for complete user understanding
+
+#### 2. New User Onboarding Integration
+- **Welcome Message Enhancement**: Updated welcome message includes direct reference to /help command
+- **Discovery Path**: New users immediately guided to comprehensive help resources
+- **Onboarding Flow**: Seamless integration with existing welcome flow without disruption
+- **First-Time User Experience**: Clear guidance from initial bot interaction to full feature understanding
+
+#### 3. Command Discovery for Existing Users
+- **Feature Exploration**: Helps existing users discover additional bot functionality beyond basic search
+- **Complete Reference**: Single command provides access to all bot capabilities
+- **Quick Access**: Available from any conversation state without navigation complexity
+- **Administrative Commands**: Introduces users to available admin and export functionality
+
+#### 4. Dynamic Content Generation
+- **Feature Flag Integration**: Help content automatically adjusts based on schedule feature flag
+- **Context-Aware Display**: Shows only available commands based on current bot configuration
+- **Settings Integration**: Reads feature flags from bot settings for accurate content
+- **Maintainable Structure**: Designed for easy updates as new bot features are added
+
+#### 5. Global Accessibility
+- **State Independence**: Accessible from any conversation state without disrupting flows
+- **Standalone Handler**: Implemented as global command handler (like /logging)
+- **Universal Access**: No authorization required - available to all bot users
+- **Conversation Recovery**: Provides help access even during conversation errors or timeouts
+
+### Technical Implementation
+
+#### Message Generation System
+- **Dynamic Generation**: `get_help_message()` function with feature flag parameter
+- **Category Structure**: Commands organized in logical groups for user navigation
+- **Russian Localization**: Complete translation with established bot terminology
+- **Markdown Formatting**: Professional formatting with emojis and clear structure
+
+#### Handler Architecture
+- **File**: `src/bot/handlers/help_handlers.py`
+- **Registration**: Global CommandHandler registration in main application
+- **Settings Integration**: Accesses bot settings for feature flag configuration
+- **Error Handling**: Comprehensive error handling with graceful degradation
+
+#### Welcome Message Integration
+- **Enhanced Welcome**: Modified `get_welcome_message()` to include help reference
+- **Consistent Messaging**: Maintains existing welcome flow with added guidance
+- **User Flow**: Natural progression from welcome to help discovery
+- **Integration Testing**: Complete testing of welcome-to-help user journey
+
+### Business Impact
+
+#### User Experience Improvements
+- **Reduced Support Requests**: Users can self-discover bot capabilities through help system
+- **Improved Onboarding**: New users understand full bot potential from first interaction
+- **Feature Adoption**: Existing users discover and adopt additional bot functionality
+- **User Satisfaction**: Clear guidance reduces confusion and improves user confidence
+
+#### Administrative Benefits
+- **Self-Service Help**: Reduces need for manual user guidance and support
+- **Feature Awareness**: Promotes adoption of advanced features like export and schedule
+- **Consistent Information**: Standardized help content ensures accurate user guidance
+- **Maintenance Efficiency**: Dynamic content generation simplifies help maintenance
+
+### Acceptance Criteria
+
+- [x] ✅ Help command displays complete catalog of 8 bot commands in Russian
+- [x] ✅ Commands organized in 5 logical categories for easy navigation
+- [x] ✅ Welcome message includes clear reference to /help command
+- [x] ✅ Help content adjusts dynamically based on schedule feature flag
+- [x] ✅ Command accessible from any bot state without conversation disruption
+- [x] ✅ New user onboarding includes help discovery path
+- [x] ✅ Existing users can explore additional functionality through help
+- [x] ✅ Complete Russian localization with consistent bot terminology
+- [x] ✅ Professional formatting with clear structure and examples
+- [x] ✅ Global command registration for universal accessibility
+- [x] ✅ Comprehensive test coverage with 48 passing tests
+- [x] ✅ Integration with existing conversation flows without breaking changes
+
+### Future Enhancement Opportunities
+
+**Potential Improvements**:
+- Interactive help with command examples and demos
+- Context-sensitive help based on current user actions
+- Help categories with expandable sections for detailed guidance
+- Multi-language help support for international users
+- Help analytics to understand user guidance needs
+
+**Integration Opportunities**:
+- Tutorial system with step-by-step feature walkthroughs
+- Command suggestion system based on user behavior
+- Integration with error messages to provide contextual help
+- Help desk integration for escalation beyond self-service guidance
+
 ## Telegram Bot CSV Export Integration
 
 ### Overview

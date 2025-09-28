@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes Made
 
 ### Added
+- **Help Command System with Comprehensive Bot Guidance** - New `/help` command providing complete Russian-language bot documentation and command discovery
+  - **Global Help Command Handler** - Implemented standalone `/help` command accessible from any bot state (`src/bot/handlers/help_handlers.py`)
+    - Independent command registration following pattern established by `/logging` command
+    - State-agnostic functionality ensuring help access regardless of current conversation flow
+    - Comprehensive Russian guidance covering all 8 bot commands organized in 5 functional categories
+  - **Dynamic Help Content Generation** - Smart help message generation adapting to bot configuration (`src/bot/messages.py:225-289`)
+    - Feature flag-aware content that includes/excludes schedule commands based on `enable_schedule_feature` setting
+    - Structured organization: Core Commands, Search, Export, Schedule (conditional), and Admin categories
+    - Consistent Russian terminology and emoji usage following existing bot conventions
+  - **Enhanced User Onboarding** - Updated welcome message to include help command reference (`src/bot/handlers/search_handlers.py:77`)
+    - Seamless integration with existing welcome flow without disrupting current functionality
+    - Clear guidance for new users to discover bot capabilities through `/help` command
+    - Maintained existing welcome message structure and formatting conventions
+  - **Global Command Registration** - Help command registered in main application for universal accessibility (`src/main.py:159`)
+    - Direct registration via `CommandHandler("help", handle_help_command)` in bot application setup
+    - No conversation handler dependencies ensuring consistent behavior across all bot states
+    - Priority handling to ensure help availability even during active conversations
+  - **Comprehensive Test Coverage** - Complete test suite covering all help functionality aspects
+    - Unit tests for help message generation and content validation (`tests/unit/test_bot_handlers/test_help_handlers.py`)
+    - Integration tests for command registration and global accessibility (`tests/integration/test_bot_handlers/test_help_integration.py`)
+    - Feature flag testing ensuring dynamic content adapts correctly to configuration changes
+    - Russian language consistency validation and message formatting verification
 
 ### Changed
 - **Schedule Formatting Enhancement with Russian Localization** - Comprehensive improvements to schedule display formatting and user experience

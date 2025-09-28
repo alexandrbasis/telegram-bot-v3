@@ -19,6 +19,38 @@ All bot commands now implement mandatory authorization checks using decorator-ba
 **Admin Commands**:
 - **/auth_refresh**: Admin-only command to clear authorization caches and refresh user roles without bot restart
 
+## Core Commands
+
+### /help - Comprehensive Bot Guidance
+**Authorization Required**: No authorization needed (global access)
+
+Provides complete Russian-language guidance covering all bot capabilities and available commands. Accessible from any bot state without disrupting conversation flows.
+
+**Features (2025-09-28)**:
+- **Complete Command Catalog**: Shows all 8 bot commands organized in 5 functional categories
+  - Core Commands: /start, /help
+  - Participant Search: /search_room, /search_floor, interactive search
+  - Data Export: /export, /export_direct
+  - Schedule: /schedule (feature flagged)
+  - Administrative: /logging, /auth_refresh
+- **Dynamic Content**: Help content automatically adjusts based on schedule feature flag configuration
+- **Russian Interface**: Complete Russian localization with consistent terminology and formatting
+- **Global Accessibility**: Available from any conversation state as standalone command handler
+- **User Onboarding**: Referenced in welcome message for new user discovery
+- **Command Discovery**: Helps existing users explore additional bot functionality
+
+**Implementation Details**:
+- **Handler**: Standalone command handler registered globally (like /logging)
+- **Message Generation**: Dynamic help message generation with feature flag integration
+- **State Independence**: Works without conversation dependencies for universal access
+- **Welcome Integration**: Updated welcome message includes help reference for user guidance
+
+**Usage Example**:
+```
+User: /help
+Bot: [Comprehensive Russian help message with all commands organized by category]
+```
+
 ## Search Commands
 
 ### /search [query] and Search Button
@@ -34,7 +66,8 @@ Search for participants by name (Russian or English), nickname, or other details
 **Main Menu Button Equivalence** (Enhanced 2025-09-09):
 - Main Menu button provides identical functionality to `/start` command
 - **Shared Initialization**: Both use `initialize_main_menu_session()` and `get_welcome_message()` helpers
-- **Consistent Welcome**: Same Russian message: "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+- **Consistent Welcome**: Same Russian message: "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников.\nℹ️ Для подсказок используйте команду /help."
+**Help Command Integration**: Welcome message includes direct reference to /help command for comprehensive bot guidance
 - **Entry Point Recovery**: Text button handlers enable conversation re-entry after timeout without manual `/start`
 
 ### /search_room [room_number]
