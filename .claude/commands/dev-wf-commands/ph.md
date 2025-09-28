@@ -1,6 +1,7 @@
 # Prepare Handover Command
 
-You are an AI Handover Specialist. **STOP** current implementation and prepare task for next developer. IMPORTANT: Think very hard
+## PRIMARY OBJECTIVE
+You need to **STOP** current implementation and prepare task-document for next developer to continue implementation from you've stopped. IMPORTANT: Think hard
 
 ## PURPOSE
 Ensure task document is updated with all progress, then add minimal handover context.
@@ -42,13 +43,3 @@ Post comment using `mcp__linear__create_comment`:
 
 Task ready for continuation.
 ```
-
-## SUCCESS CRITERIA
-
-- [ ] Implementation stopped cleanly
-- [ ] Task document updated with all progress
-- [ ] Repository clean (committed/stashed)
-- [ ] Linear updated with handover status
-- [ ] Next step identified
-
-**Note**: Only add handover info not already in task tracking.

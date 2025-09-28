@@ -1,5 +1,6 @@
 # Start Implementation Command
 
+## PRIMARY OBJECTIVE
 You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches. You might be asked to: Start Implementation from scratch, Continue Implementation or address code review results. Just clarify what was done before any work.
 IMPORTANT: Think hard
 
@@ -26,6 +27,7 @@ IMPORTANT: Think hard
 3. **Confirm scope**: Review requirements, verify dependencies and success criteria, ask "Proceed as defined?"
 
 ### **STEP 2: Setup**
+Note: Skip this step when continuing implementation or addressing Code Review Results
 
 #### **Status Updates**
 1. **Update task status** to "In Progress" with timestamp
@@ -53,12 +55,12 @@ IMPORTANT: Think hard
    - **GREEN**: Write minimal code to make tests pass
    - **REFACTOR**: Clean up code while keeping tests green
 3. **Implement tests by approved categories**:
-   - **Business Logic Tests**: As defined in approved test plan
-   - **State Transition Tests**: As defined in approved test plan
-   - **Error Handling Tests**: As defined in approved test plan  
-   - **Integration Tests**: As defined in approved test plan
-   - **User Interaction Tests**: As defined in approved test plan
-4. **Testing tools**:
+   - **Business Logic Tests**: As\If defined in approved test plan
+   - **State Transition Tests**: As\If defined in approved test plan
+   - **Error Handling Tests**: As\If defined in approved test plan  
+   - **Integration Tests**: As\If defined in approved test plan
+   - **User Interaction Tests**: As\If defined in approved test plan
+1. **Testing tools**:
    - `pytest-asyncio` for async handlers
    - `pytest-mock` for mocking Telegram API
    - `coverage.py` for coverage control
@@ -67,7 +69,7 @@ IMPORTANT: Think hard
 #### **After Each Step:**
 1. **Update progress**:
    ```markdown
-   - [x] ✅ Step [N]: [Description] - Completed [Timestamp]
+   - [x] ✅ Step [N]: [Description] - Completed
      - **Notes**: [Key decisions, challenges]
    ```
 
@@ -112,7 +114,7 @@ IMPORTANT: Think hard
 2. **Complete changelog** and verify all checkboxes
 3. **Add implementation summary**
 
-#### **Prepare for Code Review**
+### **Step 5: Prepare for Code Review**
 1. **Update Linear to "Ready for Review"** using `mcp__linear__update_issue`:
    - **id**: Linear issue ID  
    - **state**: "Ready for Review"
@@ -121,15 +123,16 @@ IMPORTANT: Think hard
    - **body**: Implementation completed summary with key changes and test coverage
 3. **Prepare the task document for the Code review and clean it up**
 4. **Push feature branch**: `git push origin feature/[branch-name]`
-5. **Call task-pm-validator to validate task documentation**:
+#### **Call task-pm-validator to validate task documentation**:
    - Use Task tool with subagent_type: "task-pm-validator"
-   - **IMPORTANT**: Provide the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
+   - Provide task-pm-validator the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
    - Agent will validate documentation completeness and accuracy before code review
-6. **Call create-pr-agent to create a PR**:
+#### **Call create-pr-agent to create a PR**:
    - Use Task tool with subagent_type: "create-pr-agent"
    - **IMPORTANT**: Provide the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
-   - Agent will create PR, update task document with PR links, and sync with Linear
-7. **Present completion**: "Implementation complete. All tests passing with [X]% coverage. Task documentation validated. PR created and ready for code review."
+   - Agent will create PR, update task document with PR links, and sync with Linea
+#### **Present completion**
+"Implementation complete. All tests passing with [X]% coverage. Task documentation validated. PR created and ready for code review."
 
 ## ERROR HANDLING
 
@@ -151,6 +154,4 @@ IMPORTANT: Think hard
 ## IMPLEMENTATION GUIDANCE
 
 **Code Quality**: Follow project conventions, write clean code with error handling  
-**Testing**: Strict TDD approach - tests first, then implementation, comprehensive block-by-block coverage  
-**Documentation**: Update code docs, configs, and APIs as needed
-**Version Control**: Commit each TDD cycle with descriptive messages (Red, Green, Refactor)
+**Testing**: Strict TDD approach - tests first, then implementation, comprehensive block-by-block coverage 

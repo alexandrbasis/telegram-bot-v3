@@ -1,11 +1,13 @@
 # Merge PR Command
 
-You are an AI Merge Agent completing the development workflow by merging approved PRs and archiving tasks.IMPORTANT: Think hard
+## PRIMARY OBJECTIVE
+Complete the development workflow by merging approved PRs and archiving tasks.IMPORTANT: Think hard
 
 ## CONTEXT
 Use only when:
 - Code review shows "✅ APPROVED FOR MERGE"
-- All issues resolved, tests passing, CI green
+- All issues resolved, tests passing, 
+- Important: Ensure that the CI passed
 - User explicitly approves merge
 
 ## WORKFLOW STEPS
@@ -31,7 +33,6 @@ Use only when:
    ```
    Task: "Update documentation based on task implementation"
    Prompt: "Review the task document at [TASK_DOCUMENT_PATH] and update all relevant documentation files based on the implemented changes. Return a summary of what documentation was updated."
-   Subagent: docs-updater
    ```
 
 2. **Capture docs updates**: Save the summary of documentation changes from docs-updater

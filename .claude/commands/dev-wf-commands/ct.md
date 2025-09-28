@@ -1,7 +1,8 @@
 # Create Task Command
 
 ## PRIMARY OBJECTIVE
-Create comprehensive task documents with mandatory business approval gate, technical decomposition, and Linear integration. NO time estimations for any work items. IMPORTANT: Think hard
+Create comprehensive task documents with mandatory business approval gate, technical decomposition, and Linear integration. NO time estimations for any work items. 
+IMPORTANT: Think hard
 
 ## CRITICAL CONTROL GATES
 
@@ -9,22 +10,15 @@ Create comprehensive task documents with mandatory business approval gate, techn
 **Must complete BEFORE technical decomposition:**
 
 ```markdown
-# Business Requirements: [Task Name]
-**Status**: Awaiting Business Approval | **Created**: [Date]
-
-## Business Context
-[One-line user value statement after approval]
+# Task: [Name]
+**Status**: Business Review
 
 ## Primary Objective
-[Single clear statement of business need]
+[One-line user value statement after approval and Single clear statement of business need]
 
 ## Use Cases
 1. [Specific scenario with acceptance criteria]
 2. [Specific scenario with acceptance criteria]
-
-## Success Metrics
-- [ ] [Measurable business outcome]
-- [ ] [User satisfaction indicator]
 
 ## Constraints
 - [Dependencies, timelines, resources]
@@ -37,34 +31,33 @@ Create comprehensive task documents with mandatory business approval gate, techn
 **Must complete AFTER business approval and BEFORE technical decomposition:**
 
 ```markdown
-# Test Plan: [Task Name]
-**Status**: Awaiting Test Plan Approval | **Created**: [Date]
+Update **Status**: Awaiting Test Plan Approval
 
 ## Test Coverage Strategy
 Target: 90%+ coverage across all implementation areas
 
 ## Proposed Test Categories
-### Business Logic Tests
+### Business Logic Tests (If needed)
 - [ ] [Core functionality test covering requirement 1]
 - [ ] [Validation test for acceptance criteria A]
 - [ ] [Calculation/formatting test for scenario B]
 
-### State Transition Tests  
+### State Transition Tests (If needed)
 - [ ] [Dialog flow test from state X to Y]
 - [ ] [Command processing state changes]
 - [ ] [Error recovery state transitions]
 
-### Error Handling Tests
+### Error Handling Tests (If needed)
 - [ ] [API failure scenario test]
 - [ ] [Invalid input handling test]
 - [ ] [Edge case boundary test]
 
-### Integration Tests
+### Integration Tests (If needed)
 - [ ] [External API interaction test]
 - [ ] [Database operation test]
 - [ ] [Third-party service integration test]
 
-### User Interaction Tests
+### User Interaction Tests (If needed)
 - [ ] [Command processing test]
 - [ ] [Response formatting test]
 - [ ] [User journey end-to-end test]
@@ -74,19 +67,17 @@ Target: 90%+ coverage across all implementation areas
 - Business Requirement 2 → Tests: [list test names]
 ```
 
-**ACTION:** Present test plan to user with: "Do these tests adequately cover the business requirements before technical implementation begins? Type 'approve' to proceed or provide feedback."
+**ACTION:** Present test plan to user with: "Approve testing strategy requirements? [Yes/No]"
 **BLOCKING:** Cannot proceed to technical decomposition without explicit test plan approval
 
-### GATE 3: Technical Decomposition Approval
-After business and test plan approval, create technical task document and get approval before Plan Review.
+### GATE 3: Technical Decomposition Approval (MANDATORY)
+After business and test plan approval, add implementation details to the task document according to "Technical Task Example"
 
-## TECHNICAL TASK TEMPLATE
+## TECHNICAL TASK EXAMPLE
 
 ```markdown
 # Task: [Name]
-**Created**: [Date] | **Status**: Business Review
-
-## Business Requirements (Gate 1 - Approval Required)
+**Status**: Technical Review
 
 ## Technical Requirements
 - [ ] [Specific, measurable requirements]
@@ -112,7 +103,7 @@ After business and test plan approval, create technical task document and get ap
 
 ### Constraints
 - [Dependencies, timelines, resources]
-
+```
 
 ### GATE 4: Technical Plan Review (MANDATORY)
 **Must complete AFTER technical decomposition and BEFORE task splitting evaluation:**
@@ -125,19 +116,15 @@ After business and test plan approval, create technical task document and get ap
 5. Provide implementation readiness assessment
 
 **ITERATIVE FEEDBACK LOOP:** When Plan Reviewer provides feedback requiring revisions:
-1. **Address Feedback**: Make necessary updates to the task document based on feedback
+1. **Address Feedback**: Make necessary updates to the task document based on feedback OR ask user to clarify if the clarification requires business decision.
 2. **Re-submit for Review**: Automatically invoke Plan Reviewer agent again with:
-   - Updated task document (full content with changes highlighted)
-   - Path to the task document
-   - Path to the previous plan review document for context
-   - Clear summary of what was updated since last review
-3. **Context Provision**: Provide comprehensive information to plan reviewer including:
-   - Complete updated task content
-   - Reference to original plan review feedback
-   - Specific changes made to address each point
-4. **Repeat Until Approved**: Continue this cycle until Plan Reviewer confirms approval.
-**After approval, update Status to: Ready for Implementation**
+   - Comprehensively updated task document according to Plan Reviewer's feedback
+   - File Path to the task document
+   - File Path to the previous plan review document for context
+   - Clear summary of what was updated since last review with a reference to original plan review feedback and specific changes made to address each point
+1. **Repeat Until Approved**: Continue this cycle until Plan Reviewer confirms approval.
 
+**After approval, update Status to: Ready for Implementation**
 
 **BLOCKING:** Cannot proceed to task splitting evaluation without Plan Reviewer final approval
 **DECISION OUTCOMES:**
@@ -169,13 +156,14 @@ After business and test plan approval, create technical task document and get ap
 ```javascript
 mcp__linear__create_issue({
   title: "[Task Name from document]",
-  team: "ABasis",
+  team: "AGB",
   description: "[Business context + technical requirements]",
   priority: 0-4  // 0=None, 1=Urgent, 2=High, 3=Normal, 4=Low
 })
-```
 
 **Note**: If task was split into sub-tasks, create separate Linear issues for each sub-task following the same format.
+
+```
 
 ## FINAL TASK DOCUMENT STRUCTURE
 
@@ -183,7 +171,7 @@ IMPORTANT: After all gates are completed, the final task document should follow 
 
 ```markdown
 # Task: [Name]
-**Created**: [Date] | **Status**: Ready for Implementation
+**Status**: Ready for Implementation
 
 ## Tracking & Progress
 ### Linear Issue
@@ -196,58 +184,54 @@ IMPORTANT: After all gates are completed, the final task document should follow 
 - **Status**: [Draft/Review/Merged]
 
 ## Business Requirements
-**Status**: ✅ Approved | **Approved by**: [User] | **Date**: [Date]
 
-### Business Context
-[One-line user value statement]
+## Primary Objective
+[One-line user value statement after approval and Single clear statement of business need]
 
-### Primary Objective
-[Single clear statement of business need]
-
-### Use Cases
+## Use Cases
 1. [Specific scenario with acceptance criteria]
 2. [Specific scenario with acceptance criteria]
 
-### Success Metrics
-- [ ] [Measurable business outcome]
-- [ ] [User satisfaction indicator]
-
-### Constraints
+## Constraints
 - [Dependencies, timelines, resources]
 
 ## Test Plan
 **Status**: ✅ Approved | **Approved by**: [User] | **Date**: [Date]
 
-### Test Coverage Strategy
+## Test Coverage Strategy
 Target: 90%+ coverage across all implementation areas
 
-### Test Categories
-#### Business Logic Tests
+## Proposed Test Categories
+### Business Logic Tests (If needed)
 - [ ] [Core functionality test covering requirement 1]
 - [ ] [Validation test for acceptance criteria A]
+- [ ] [Calculation/formatting test for scenario B]
 
-#### State Transition Tests
+### State Transition Tests (If needed)
 - [ ] [Dialog flow test from state X to Y]
 - [ ] [Command processing state changes]
+- [ ] [Error recovery state transitions]
 
-#### Error Handling Tests
+### Error Handling Tests (If needed)
 - [ ] [API failure scenario test]
 - [ ] [Invalid input handling test]
+- [ ] [Edge case boundary test]
 
-#### Integration Tests
+### Integration Tests (If needed)
 - [ ] [External API interaction test]
 - [ ] [Database operation test]
+- [ ] [Third-party service integration test]
 
-#### User Interaction Tests
+### User Interaction Tests (If needed)
 - [ ] [Command processing test]
 - [ ] [Response formatting test]
+- [ ] [User journey end-to-end test]
 
-### Test-to-Requirement Mapping
+## Test-to-Requirement Mapping
 - Business Requirement 1 → Tests: [list test names]
 - Business Requirement 2 → Tests: [list test names]
 
 ## TECHNICAL TASK
-**Status**: ✅ Plan Reviewed | **Reviewed by**: Plan Reviewer Agent | **Date**: [Date]
 
 ### Technical Requirements
 - [ ] [Specific, measurable technical requirements]
@@ -272,6 +256,7 @@ Target: 90%+ coverage across all implementation areas
     - **Done**: [Completion proof]
     - **Changelog**: [Record changes made with file paths and line ranges]
 
+
 ### Task Splitting Evaluation
 **Status**: ✅ Evaluated | **Evaluated by**: Task Splitter Agent | **Date**: [Date]
 **Decision**: [No Split Needed / Split into X sub-tasks]
@@ -281,12 +266,13 @@ Target: 90%+ coverage across all implementation areas
 - [Implementation gotchas or important considerations]
 - [Dependencies or prerequisites to be aware of]
 - [Links to relevant documentation or discussions]
+
 ```
 
 ## DOCUMENT SPECIFICATIONS
 
 ### Directory Structure
-```
+
 tasks/
 ├── task-YYYY-MM-DD-[kebab-case]/
 │   └── [Task Title].md           (Single document with both gates)
@@ -303,32 +289,3 @@ tasks/
 - **ID**: [Created after technical approval]
 - **URL**: [Link]
 - **Status Flow**: Business Review → Ready for Implementation → In Progress → Ready for Review → In Review → Testing → Done
-  - **Business Review**: Business requirements under review
-  - **Ready for Implementation**: Business approved, technical plan reviewed by Plan Reviewer agent, Linear issue created, ready for development
-
-### PR Details
-- **Branch**: [Name]
-- **PR URL**: [Link]
-- **Status**: [Draft/Review/Merged]
-
-## VALIDATION REQUIREMENTS
-
-### Before Business Approval
-- [ ] User need clearly articulated
-- [ ] Success metrics are measurable
-- [ ] Use cases have acceptance criteria
-
-### Before Technical Approval
-- [ ] Every step has specific file paths
-- [ ] All actions have verification commands
-- [ ] Test locations specified with exact paths
-
-
-## ERROR PREVENTION
-
-### Common Failures & Solutions
-| Issue | Prevention | Recovery |
-|-------|------------|----------|
-| PR creation fails | Always: `git push -u origin branch` first | Check branch exists remotely |
-| Linear not updating | Verify webhook configured | Manual status update via API |
-| Tests not found | Use absolute paths in test commands | Run `find tests/ -name "*.test.ts"` |

@@ -1,3 +1,5 @@
+# Fix CI Issues Command
+
 ## PRIMARY OBJECTIVE
 Fix all CI pipeline failures blocking the PR merge while maintaining code quality and test integrity.
 
