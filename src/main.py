@@ -22,6 +22,7 @@ from src.bot.handlers.export_conversation_handlers import (
     get_export_conversation_handler,
 )
 from src.bot.handlers.export_handlers import handle_export_command
+from src.bot.handlers.help_handlers import handle_help_command
 from src.bot.handlers.schedule_handlers import get_schedule_handlers
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
@@ -154,6 +155,11 @@ def create_application() -> Application:
     logger.info("Adding logging toggle command handler")
     logging_handler = CommandHandler("logging", handle_logging_toggle_command)
     app.add_handler(logging_handler)
+
+    # Add help command handler for quick reference
+    logger.info("Adding help command handler")
+    help_handler = CommandHandler("help", handle_help_command)
+    app.add_handler(help_handler)
 
     # Store settings in bot_data for handlers to access
     app.bot_data["settings"] = settings
