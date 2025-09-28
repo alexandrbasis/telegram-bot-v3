@@ -20,5 +20,13 @@ async def handle_help_command(
         logger.warning("Received /help command without effective message")
         return
 
-    help_text = get_help_message()
+    # Check if schedule feature is enabled from bot settings
+    include_schedule = False
+    if "settings" in context.bot_data:
+        settings = context.bot_data["settings"]
+        app_settings = getattr(settings, "application", None)
+        if app_settings:
+            include_schedule = getattr(app_settings, "enable_schedule_feature", False)
+
+    help_text = get_help_message(include_schedule=include_schedule)
     await message.reply_text(help_text, disable_web_page_preview=True)

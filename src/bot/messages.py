@@ -222,45 +222,57 @@ class SearchResultLabels:
         return "лет"
 
 
-_HELP_SECTIONS: list[tuple[str, list[tuple[str, str]]]] = [
-    (
-        "📌 Основные команды",
-        [
-            ("/start", "Возврат к главному меню и приветствие"),
-            ("/help", "Справка по всем командам бота"),
-        ],
-    ),
-    (
-        "🔍 Поиск участников",
-        [
-            ("/search_room", "Поиск участников по номеру комнаты"),
-            ("/search_floor", "Поиск участников по этажу"),
-            ("Меню поиска", "Интерактивный поиск через главное меню"),
-        ],
-    ),
-    (
-        "📤 Экспорт данных",
-        [
-            ("/export", "Экспорт списков участников в различных форматах"),
-            ("/export_direct", "Прямой экспорт (устаревшая команда)"),
-        ],
-    ),
-    (
-        "🗓 Расписание",
-        [("/schedule", "Просмотр расписания мероприятий")],
-    ),
-    (
-        "🛠 Администрирование",
-        [
-            ("/logging", "Переключение уровня логирования (админ)"),
-            ("/auth_refresh", "Обновление авторизации (админ)"),
-        ],
-    ),
-]
+def get_help_message(include_schedule: bool = True) -> str:
+    """Build consolidated help message grouped by functional categories.
 
+    Args:
+        include_schedule: Whether to include schedule section (based on feature flag)
+    """
+    # Build dynamic sections list based on feature flags
+    help_sections: list[tuple[str, list[tuple[str, str]]]] = [
+        (
+            "📌 Основные команды",
+            [
+                ("/start", "Возврат к главному меню и приветствие"),
+                ("/help", "Справка по всем командам бота"),
+            ],
+        ),
+        (
+            "🔍 Поиск участников",
+            [
+                ("/search_room", "Поиск участников по номеру комнаты"),
+                ("/search_floor", "Поиск участников по этажу"),
+                ("Меню поиска", "Интерактивный поиск через главное меню"),
+            ],
+        ),
+        (
+            "📤 Экспорт данных",
+            [
+                ("/export", "Экспорт списков участников в различных форматах"),
+                ("/export_direct", "Прямой экспорт (устаревшая команда)"),
+            ],
+        ),
+    ]
 
-def get_help_message() -> str:
-    """Build consolidated help message grouped by functional categories."""
+    # Conditionally add schedule section
+    if include_schedule:
+        help_sections.append(
+            (
+                "🗓 Расписание",
+                [("/schedule", "Просмотр расписания мероприятий")],
+            )
+        )
+
+    # Always add administration section at the end
+    help_sections.append(
+        (
+            "🛠 Администрирование",
+            [
+                ("/logging", "Переключение уровня логирования (админ)"),
+                ("/auth_refresh", "Обновление авторизации (админ)"),
+            ],
+        )
+    )
 
     lines: list[str] = [
         "ℹ️ Справка по возможностям бота",
@@ -269,11 +281,11 @@ def get_help_message() -> str:
         "",
     ]
 
-    for index, (header, commands) in enumerate(_HELP_SECTIONS):
+    for index, (header, commands) in enumerate(help_sections):
         lines.append(header)
         for command, description in commands:
             lines.append(f"• {command} — {description}")
-        if index < len(_HELP_SECTIONS) - 1:
+        if index < len(help_sections) - 1:
             lines.append("")
 
     lines.extend(

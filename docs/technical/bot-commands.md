@@ -34,7 +34,7 @@ Search for participants by name (Russian or English), nickname, or other details
 **Main Menu Button Equivalence** (Enhanced 2025-09-09):
 - Main Menu button provides identical functionality to `/start` command
 - **Shared Initialization**: Both use `initialize_main_menu_session()` and `get_welcome_message()` helpers
-- **Consistent Welcome**: Same Russian message: "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников."
+- **Consistent Welcome**: Same Russian message: "Добро пожаловать в бот Tres Dias! 🙏\n\nВыберите тип поиска участников.\nℹ️ Для подсказок используйте команду /help."
 - **Entry Point Recovery**: Text button handlers enable conversation re-entry after timeout without manual `/start`
 
 ### /search_room [room_number]
