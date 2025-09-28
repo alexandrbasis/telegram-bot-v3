@@ -12,7 +12,7 @@ from typing import Dict
 
 from src.data.repositories.participant_repository import ParticipantRepository
 from src.models.department_statistics import DepartmentStatistics
-from src.models.participant import Department, Role
+from src.models.participant import Role
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,9 @@ class StatisticsService:
         try:
             # Fetch all participants in a single batched query to minimize API calls
             all_participants = await self.repository.list_all()
-            logger.debug(f"Retrieved {len(all_participants)} participants from repository")
+            logger.debug(
+                f"Retrieved {len(all_participants)} participants from repository"
+            )
 
             # Initialize aggregation counters
             total_participants = len(all_participants)
@@ -75,7 +77,7 @@ class StatisticsService:
                     # Handle both Department enum and string values
                     department_name = (
                         participant.department.value
-                        if hasattr(participant.department, 'value')
+                        if hasattr(participant.department, "value")
                         else str(participant.department)
                     )
                     teams_by_department[department_name] += 1
@@ -87,14 +89,16 @@ class StatisticsService:
             teams_by_dept_dict = dict(teams_by_department)
 
             collection_timestamp = datetime.now()
-            collection_duration = (collection_timestamp - collection_start).total_seconds()
+            collection_duration = (
+                collection_timestamp - collection_start
+            ).total_seconds()
 
             # Create structured statistics result
             statistics = DepartmentStatistics(
                 total_participants=total_participants,
                 teams_by_department=teams_by_dept_dict,
                 total_teams=total_teams,
-                collection_timestamp=collection_timestamp
+                collection_timestamp=collection_timestamp,
             )
 
             logger.info(
