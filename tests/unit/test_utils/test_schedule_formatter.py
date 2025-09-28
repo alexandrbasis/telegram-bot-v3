@@ -117,7 +117,9 @@ def test_format_schedule_day_includes_location_details_without_sections():
     assert bullets[0].startswith("• 08:30–09:30 Служение")
     assert bullets[0].endswith("— Тимы")
 
-    detail_lines = [line.strip() for line in text.splitlines() if line.strip().startswith("◦ ")]
+    detail_lines = [
+        line.strip() for line in text.splitlines() if line.strip().startswith("◦ ")
+    ]
     assert "Главный зал" in detail_lines[0]
     assert "Прославление" in detail_lines[1]
     assert "Молитва" in detail_lines[2]

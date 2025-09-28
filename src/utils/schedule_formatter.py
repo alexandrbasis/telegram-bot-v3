@@ -160,7 +160,11 @@ def format_schedule_day(date_value: dt.date, entries: Iterable[ScheduleEntry]) -
         location_text = _normalize_text(entry.location)
         section = section_from_description
 
-        if section is None and location_text and _looks_like_section_header(location_text):
+        if (
+            section is None
+            and location_text
+            and _looks_like_section_header(location_text)
+        ):
             section = location_text
             location_text = None
 
