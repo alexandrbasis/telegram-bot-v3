@@ -73,7 +73,9 @@ class TestHelpMessageContent:
             assert section in message, f"Missing section: {section}"
 
         for section in excluded_sections:
-            assert section not in message, f"Schedule section should not be present: {section}"
+            assert (
+                section not in message
+            ), f"Schedule section should not be present: {section}"
 
     def test_help_message_default_includes_schedule(self):
         """Test help message includes schedule by default for backward compatibility."""
@@ -105,7 +107,10 @@ async def test_handle_help_command_sends_help_text(mock_get_help_message):
 
 
 @pytest.mark.asyncio
-@patch("src.bot.handlers.help_handlers.get_help_message", return_value="test help with schedule")
+@patch(
+    "src.bot.handlers.help_handlers.get_help_message",
+    return_value="test help with schedule",
+)
 async def test_handle_help_command_with_schedule_enabled(mock_get_help_message):
     """Test help command when schedule feature is enabled in settings."""
     from src.bot.handlers.help_handlers import handle_help_command
@@ -132,7 +137,10 @@ async def test_handle_help_command_with_schedule_enabled(mock_get_help_message):
 
 
 @pytest.mark.asyncio
-@patch("src.bot.handlers.help_handlers.get_help_message", return_value="test help no schedule")
+@patch(
+    "src.bot.handlers.help_handlers.get_help_message",
+    return_value="test help no schedule",
+)
 async def test_handle_help_command_with_schedule_disabled(mock_get_help_message):
     """Test help command when schedule feature is disabled in settings."""
     from src.bot.handlers.help_handlers import handle_help_command
