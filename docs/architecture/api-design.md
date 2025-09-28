@@ -773,6 +773,87 @@ class PaymentStatus(str, Enum):
     UNPAID = "Unpaid"
 ```
 
+## Schedule Formatting API (Enhanced 2025-09-28)
+
+### Enhanced Schedule Formatter
+**Purpose**: Advanced schedule formatting with Russian localization and intelligent section detection
+
+**Module**: `src/utils/schedule_formatter.py`
+
+**Core Features**:
+- **Russian Audience Translation**: Automatic translation of audience types
+  - `All` → `Все`, `Team` → `Тимы`, `Candidates` → `Кандидаты`
+- **Section Header Detection**: Smart parsing of section markers from descriptions
+- **Multi-line Description Support**: Proper formatting of detailed event descriptions
+- **Day Label Integration**: Support for human-readable day headers
+- **Hierarchical Visual Structure**: Enhanced bullet point formatting for improved readability
+
+**Audience Translation API**:
+```python
+AUDIENCE_ALIASES = {
+    "all": "Все",
+    "team": "Тимы",
+    "candidates": "Кандидаты",
+    "leadership": "Тимы",
+    "clergy": "Тимы",
+    # ... additional aliases
+}
+
+def _translate_audience(value: Optional[str]) -> Optional[str]:
+    """Translate audience type to Russian with fallback."""
+```
+
+**Section Detection API**:
+```python
+SECTION_MARKERS = (
+    "section:", "секция:", "раздел:",
+    "block:", "блок:"
+)
+
+def _match_section_header(line: str) -> Optional[str]:
+    """Extract section name from description line."""
+```
+
+**Format Output Example**:
+```
+📅 2025-11-16 — День выпускного
+
+🕔 Утро
+• 05:30 Подъём ТМ — Тимы
+  ◦ Начало дня
+• 06:00 Молитва в часовне — Тимы
+• 06:30 Первый звонок — Все
+
+📦 Сборы
+• 10:40 Сбор вещей — Все
+  ◦ Подготовка к выезду
+• 11:00 Вещи в часовню — Все
+
+🎤 Программа
+• 11:10 Восхваление — Все
+• 11:30 #11 «Христианская атмосфера» — Тимы
+```
+
+**API Methods**:
+```python
+def format_schedule_day(date_value: dt.date, entries: Iterable[ScheduleEntry]) -> str:
+    """Return formatted schedule string with RU-friendly layout."""
+
+def format_time(t: dt.time) -> str:
+    """Format time in HH:MM format."""
+
+def _format_time_range(start: dt.time, end: Optional[dt.time]) -> str:
+    """Format time range with proper separator."""
+```
+
+**Enhanced Formatting Features**:
+- **Time Range Formatting**: Proper en-dash separator (`–`) for time ranges
+- **Bullet Point Hierarchy**: Primary items use `•`, details use `◦`
+- **Section Grouping**: Events grouped under section headers automatically
+- **Empty Day Handling**: Graceful message when no events exist
+- **Multi-line Support**: Proper formatting of detailed descriptions with bullet points
+- **Sorting Logic**: Events sorted by start time, then by order field
+
 ## Error Handling and Message Templates (2025-09-05)
 
 ### Centralized Error Handling
