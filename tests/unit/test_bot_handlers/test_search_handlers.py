@@ -1433,6 +1433,7 @@ class TestSharedInitializationHelpers:
         assert "Tres Dias" in message
         assert "🙏" in message
         assert "участников" in message
+        assert "/help" in message
 
         # Should be a string
         assert isinstance(message, str)
