@@ -14,6 +14,7 @@ from src.services.participant_list_service import ParticipantListService
 from src.services.roe_export_service import ROEExportService
 from src.services.schedule_service import ScheduleService
 from src.services.search_service import SearchService
+from src.services.statistics_service import StatisticsService
 
 # Cache for table-specific clients
 _AIRTABLE_CLIENTS: Dict[str, AirtableClient] = {}
@@ -222,3 +223,16 @@ def get_schedule_service() -> ScheduleService:
     if _SCHEDULE_SERVICE is None:
         _SCHEDULE_SERVICE = ScheduleService()
     return _SCHEDULE_SERVICE
+
+
+def get_statistics_service() -> StatisticsService:
+    """
+    Get statistics service instance.
+
+    Centralized factory method for statistics service creation with repository.
+
+    Returns:
+        StatisticsService: Configured statistics service instance
+    """
+    repository = get_participant_repository()
+    return StatisticsService(repository=repository)

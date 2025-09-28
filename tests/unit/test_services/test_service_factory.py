@@ -10,6 +10,7 @@ from src.data.airtable.airtable_client import AirtableConfig
 from src.services import service_factory
 from src.services.bible_readers_export_service import BibleReadersExportService
 from src.services.roe_export_service import ROEExportService
+from src.services.statistics_service import StatisticsService
 
 
 @pytest.fixture(autouse=True)
@@ -344,3 +345,42 @@ class TestSettingsIntegration:
 
                 roe_service = service_factory.get_roe_export_service()
                 assert isinstance(roe_service, ROEExportService)
+
+
+class TestStatisticsServiceFactory:
+    """Test statistics service factory method."""
+
+    @patch("src.services.service_factory.get_participant_repository")
+    def test_get_statistics_service_returns_configured_instance(
+        self, mock_get_participant_repository
+    ):
+        """Test that get_statistics_service returns properly configured StatisticsService."""
+        # Arrange
+        mock_repository = Mock()
+        mock_get_participant_repository.return_value = mock_repository
+
+        # Act
+        statistics_service = service_factory.get_statistics_service()
+
+        # Assert
+        assert isinstance(statistics_service, StatisticsService)
+        assert statistics_service.repository is mock_repository
+        mock_get_participant_repository.assert_called_once()
+
+    @patch("src.services.service_factory.get_participant_repository")
+    def test_get_statistics_service_uses_same_repository_instance(
+        self, mock_get_participant_repository
+    ):
+        """Test that statistics service uses the same repository instance as other services."""
+        # Arrange
+        mock_repository = Mock()
+        mock_get_participant_repository.return_value = mock_repository
+
+        # Act
+        statistics_service = service_factory.get_statistics_service()
+        search_service = service_factory.get_search_service()
+
+        # Assert
+        assert statistics_service.repository is search_service.repository
+        # Should call get_participant_repository twice (once for each service)
+        assert mock_get_participant_repository.call_count == 2
