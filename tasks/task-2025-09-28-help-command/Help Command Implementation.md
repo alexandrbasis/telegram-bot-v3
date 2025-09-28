@@ -33,9 +33,9 @@ Implement a `/help` command that presents all bot capabilities and available com
      - Help message includes navigation back to main menu
 
 ### Success Metrics
-- [ ] Users can discover all bot features through the help system
-- [ ] Welcome message effectively guides users to help resources
-- [ ] Help information is accurate and up-to-date with current bot capabilities
+- [x] Users can discover all bot features through the help system
+- [x] Welcome message effectively guides users to help resources
+- [x] Help information is accurate and up-to-date with current bot capabilities
 
 ### Constraints
 - Must maintain Russian language consistency with existing bot interface
@@ -222,6 +222,9 @@ Target: 90%+ coverage across all implementation areas
 - Команда зарегистрирована в `create_application`, добавлен интеграционный тест и обновлены проверки в `test_main.py`.
 - Приветствие дополнено подсказкой про `/help`, обновлены связанные хендлеры и тесты.
 - Прогнаны юнит/интеграционные тесты и полный pytest с покрытием (~87%).
+
+### Outstanding Follow-ups
+- Репозиторий в целом не достигает `--cov-fail-under=90` (фактическое покрытие ≈87%), требуется отдельный план по повышению базового покрытия, если порог критичен.
 
 ### Constraints
 - Must follow existing bot architecture patterns established in search_handlers.py
