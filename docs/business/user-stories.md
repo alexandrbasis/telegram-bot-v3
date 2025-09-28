@@ -50,7 +50,45 @@
 ## User Experience
 
 **As a user, I want to:**
+- **Get comprehensive bot guidance through help command** ✅ *Implemented*
+  - Use `/help` command to discover all bot capabilities
+  - See complete command catalog organized by functional categories
+  - Get Russian interface with clear descriptions and usage examples
+  - Access help from any conversation state without disrupting my current workflow
+- **Discover bot features during onboarding** ✅ *Implemented*
+  - See help command reference in welcome message for immediate guidance
+  - Learn about all available functionality from first bot interaction
+  - Follow clear path from welcome to comprehensive feature understanding
+  - Get immediate access to self-service help without requiring external support
+- **Explore additional functionality beyond basic search** ✅ *Implemented*
+  - Discover export, schedule, and administrative commands through help system
+  - Learn about advanced features like participant editing and list access
+  - Understand command syntax and usage patterns for all bot capabilities
+  - Get up-to-date information that reflects current bot configuration
 - Get clear help messages when I make mistakes
 - See confirmation when actions complete successfully
 - Navigate large lists easily with pagination
 - Use intuitive commands without documentation
+
+## Help and Guidance
+
+**As a new user, I want to:**
+- **Understand what the bot can do from my first interaction** ✅ *Implemented*
+  - See welcome message that guides me to help resources
+  - Access comprehensive feature overview through single `/help` command
+  - Get Russian interface that matches my language preferences
+  - Learn about all bot capabilities without trial and error
+
+**As an existing user, I want to:**
+- **Discover features I haven't used yet** ✅ *Implemented*
+  - Access complete command reference when needed
+  - Learn about administrative and export functionality
+  - Get quick reminders about command syntax and options
+  - See current feature availability based on bot configuration
+
+**As an administrator, I want to:**
+- **Provide users with self-service help options** ✅ *Implemented*
+  - Reduce support requests through comprehensive help system
+  - Ensure users understand all available functionality
+  - Maintain consistent help information across all users
+  - Update help content easily as new features are added
