@@ -250,6 +250,26 @@ All bot handlers now implement mandatory authorization checks using decorator-ba
 
 ### Service Layer Architecture
 
+**Schedule Service** (Enhanced 2025-09-28):
+- Airtable schedule data retrieval with 10-minute TTL caching
+- Event filtering by date range and active status
+- Service factory integration for dependency injection
+- Error handling with graceful fallback for empty schedules
+
+**Schedule Formatting Service** (Enhanced 2025-09-28):
+- **Advanced Schedule Formatting**: Comprehensive Russian localization and intelligent visual hierarchy
+- **Section Detection System**: Smart parsing of section markers from event descriptions
+- **Multi-line Content Support**: Proper handling of detailed event descriptions with bullet point formatting
+- **Audience Translation Engine**: Automatic translation of audience types to Russian
+  - English/Mixed → Russian: `All` → `Все`, `Team` → `Тимы`, `Candidates` → `Кандидаты`
+  - Alias Support: `leadership`, `clergy` → `Тимы`, `candidate` → `Кандидаты`
+- **Hierarchical Visual Structure**: Enhanced bullet point system for improved readability
+  - Primary events: `•` (bullet symbol) for main schedule items
+  - Sub-details: `◦` (white bullet) for location and description details
+- **Time Range Formatting**: Proper en-dash separator (`–`) for professional time display
+- **Day Label Integration**: Support for human-readable day headers in Russian
+- **Empty Schedule Handling**: Graceful Russian messaging when no events exist for a day
+
 **Participant Update Service** (2025-08-29):
 - Centralized validation logic for all field types
 - Russian error message generation
