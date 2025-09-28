@@ -214,8 +214,8 @@ Target: 90%+ coverage across all implementation areas
 - **Files**: `tests/unit/test_bot_handlers/test_help_handlers.py:1`, `tests/unit/test_bot_handlers/test_search_handlers.py:1433`, `tests/integration/test_bot_handlers/test_help_integration.py:1`
 - **Summary**: Расширил набор тестов для генератора справки, обработчика `/help` и глобальной регистрации команды.
 - **Impact**: Покрытие гарантирует корректность содержимого справки и доступность команды во всех состояниях.
-- **Tests**: `./venv/bin/pytest tests/unit/test_bot_handlers/test_help_handlers.py -k help`, `./venv/bin/pytest tests/integration/test_bot_handlers/test_help_integration.py`
-- **Verification**: Тесты проходят и подтверждают как формат сообщений, так и точку подключения команды.
+- **Tests**: `./venv/bin/pytest tests/unit/test_bot_handlers/test_help_handlers.py -k help`, `./venv/bin/pytest tests/integration/test_bot_handlers/test_help_integration.py`, `./venv/bin/pytest tests/ --cov=src --cov-report=term-missing`
+- **Verification**: Полный прогон pytest проходит с покрытием ~87%; попытка `--cov-fail-under=90` фиксирует текущее базовое покрытие ниже порога.
 
 ### Constraints
 - Must follow existing bot architecture patterns established in search_handlers.py
