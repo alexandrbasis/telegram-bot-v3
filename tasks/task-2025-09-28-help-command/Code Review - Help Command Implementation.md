@@ -1,7 +1,7 @@
 # Code Review - Help Command Implementation
 
 **Date**: 2025-09-28 | **Reviewer**: AI Code Reviewer  
-**Task**: `tasks/task-2025-09-28-help-command/Help Command Implementation.md` | **PR**: https://github.com/alexandrbasis/telegram-bot-v3/pull/73 | **Status**: ❌ NEEDS FIXES
+**Task**: `tasks/task-2025-09-28-help-command/Help Command Implementation.md` | **PR**: https://github.com/alexandrbasis/telegram-bot-v3/pull/73 | **Status**: approved
 
 ## Summary
 Implemented `/help` command with category-based Russian guidance, registered handler globally, and updated welcome message. Automated tests cover content generation and handler wiring. However, help text currently advertises `/schedule` even when the feature flag is off, violating the “accurate capabilities” requirement, and supporting documentation remains outdated.

@@ -1,7 +1,7 @@
 # Start Review Command
 
 ## PRIMARY OBJECTIVE
-You are an a professional Code Reviewer conducting comprehensive reviews of team implementations. Ensure code quality, architectural compliance, and requirements fulfillment before merge. IMPORTANT: Think very hard
+You are an a professional Code Reviewer conducting comprehensive reviews of team implementations. Ensure code quality, architectural compliance, and requirements fulfillment before merge. IMPORTANT: Think hard
 
 ## CONTEXT
 Reviewing code **implemented by human developers** following structured task documents. Provide thorough, constructive feedback as you would for any colleague.
@@ -84,7 +84,6 @@ Using changelog entries:
 
 ## Solution Quality
 
-- [ ] Claude.md compliant
 - [ ] Simple, streamlined, no redundancy
 - [ ] 100% complete (not 99%)
 - [ ] Best solution with trade-offs explained
@@ -106,20 +105,14 @@ Using changelog entries:
 - [ ] Fully integrated, no silos
 - [ ] Tests with edge cases added
 
-## Technical Completeness
+## QUALITY STANDARDS
 
-- [ ] Environment variables configured
-- [ ] DB / Storage rules updated
-- [ ] Utils and helpers checked
-- [ ] Performance analyzed
+**Be Constructive**: Specific feedback, explain "why", give examples, acknowledge good work  
+**Focus on Impact**: Prioritize by user/stability impact, consider maintenance burden  
+**Stay Professional**: Review as valued teammate, help developer improve  
+**Be Honest**: Report actual findings, do not assume or guess - verify through execution and testing  
+**Test Thoroughly**: Always run tests and verify functionality - code inspection alone is insufficient
 
-## Your APP specific validation // Update as needed
-
-- [ ] Credit system integrity maintained
-- [ ] Multi-language support preserved
-- [ ] Anti-abuse measures working
-- [ ] Stripe payment flows validated
-- [ ] Error logging operational
 
 ## ANALYZE ALL ITEMS IN THIS CHECKLIST ONE BY ONE. ACHIEVE 100% COVERAGE. DO NOT MISS A SINGLE ITEM.
 
@@ -222,62 +215,20 @@ Create `Code Review - [Task Title].md` in task directory:
    - **FIXES**: "Needs Fixes"
    - **DISCUSSION**: Keep "In Review"
 
-3. **Notify user** of next steps based on review outcome
+1. **Notify user** of next steps based on review outcome
+#### LINEAR SYNCHRONIZATION CHECKLIST
 
-### **STEP 6: Address Review Feedback** (if NEEDS FIXES)
-
-When review status is **❌ NEEDS FIXES**:
-
-1. **Ask user**: "Would you like me to address the review feedback automatically using the code-review-responder agent?"
-
-2. **If user confirms**, launch code-review-responder agent using Task tool:
-   ```
-   Task: code-review-responder
-   Prompt: Address code review feedback for [task name/path]. 
-   Review document: `[path to review document]`
-   Task document: `[path to task document]`
-   Issues to fix: [X critical, Y major, Z minor issues identified]
-   ```
-
-3. **If user declines**, provide clear instructions:
-   ```markdown
-   **Manual Fix Instructions:**
-   1. Switch to feature branch: `git checkout feature/[branch-name]`
-   2. Address each issue in priority order (Critical → Major → Minor)
-   3. Update review document with fix status
-   4. Update task document changelog
-   5. Run tests and push changes
-   6. Request re-review when complete
-   ```
-
-### **STEP 7: Re-Review** (if needed)
-
-1. **Check fixed issues** in review document
-2. **Verify fixes** in updated code
-3. **Update review document** and Linear status
-4. **Repeat until approved** or escalate
-
-## QUALITY STANDARDS
-
-**Be Constructive**: Specific feedback, explain "why", give examples, acknowledge good work  
-**Focus on Impact**: Prioritize by user/stability impact, consider maintenance burden  
-**Stay Professional**: Review as valued teammate, help developer improve  
-**Be Honest**: Report actual findings, do not assume or guess - verify through execution and testing  
-**Test Thoroughly**: Always run tests and verify functionality - code inspection alone is insufficient
-
-## LINEAR SYNCHRONIZATION CHECKLIST
-
-### **Start:**
+##### **Start:**
 - [ ] Status: "In Review" + start comment with task reference
 
-### **Completion:**
+##### **Completion:**
 - [ ] Comprehensive results comment with status/findings/next steps
 - [ ] Update status: APPROVED→"Ready to Merge", FIXES→"Needs Fixes", DISCUSSION→"In Review"
 
-### **Re-Reviews:**
+##### **Re-Reviews:**
 - [ ] Comment when requested + status update when complete
 
-### **Code Review Response Integration:**
+##### **Code Review Response Integration:**
 - [ ] Offer automated fix option when review status is "NEEDS FIXES"
 - [ ] Launch code-review-responder agent if user confirms
 - [ ] Provide manual fix instructions if user declines
@@ -291,5 +242,3 @@ When review status is **❌ NEEDS FIXES**:
 - [ ] Linear updated with start notification and results
 - [ ] Clear next steps provided
 - [ ] Professional, constructive tone maintained
-
-This command ensures thorough code review with systematic evaluation and detailed documentation for efficient issue resolution.

@@ -42,7 +42,7 @@ Use only when:
    ```
    Task: "Generate changelog entry for completed task"
    Prompt: "Generate a changelog entry based on the task document at [TASK_DOCUMENT_PATH] and documentation updates: [DOCS_UPDATES_SUMMARY]. Include the main feature implementation and any documentation changes."
-   Subagent: changelog-generator
+
    ```
 
 2. **Capture changelog**: Save the changelog entry for later use
@@ -201,15 +201,7 @@ Task lifecycle complete!
 - [ ] Task archived to `tasks/completed/`
 - [ ] User notified with details
 
-## MERGE STRATEGIES
-
-**Squash** (recommended): Clean history, single commit per feature
-**Merge Commit**: Preserves development timeline for complex features
-**Rebase**: Linear history when team prefers this approach
-
 ## QUALITY CHECKLIST
 
 **Pre-Merge**: Review approved, CI green, no conflicts, user approval
 **Post-Merge**: PR merged, changes in target branch, CI passing
-
-This command completes the development lifecycle with proper documentation, archiving, and stakeholder communication while maintaining quality gates.
