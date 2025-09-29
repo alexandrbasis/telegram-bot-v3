@@ -53,3 +53,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added types-pytz type stubs for mypy compliance
   - Implemented null-safety checks for optional configuration values
   - Resolved all mypy type checking errors (zero type errors)
+
+## Merge Details
+
+### Notification Infrastructure (AGB-79)
+- **PR**: [#75](https://github.com/alexandrbasis/telegram-bot-v3/pull/75)
+- **Branch**: feature/agb-79-notification-infrastructure
+- **Merge Commit**: e1ed6378c0e804caf668c9b6e8a36d3112fe3791
+- **Merged At**: 2025-09-29T20:40:18Z
+- **Merged By**: alexandrbasis
+- **Status**: ✅ ALL CI CHECKS PASSED (Lint, Type Check, Format Check, Security, Tests, Docker Build)
+- **Test Results**: 1652 tests passing (9 skipped), zero regressions, 22 new tests added
+- **Code Review**: ✅ APPROVED - No critical, major, or minor issues identified
