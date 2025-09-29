@@ -1302,9 +1302,101 @@ class TestHandlerAuthorization:
 - **Consistent Messaging**: Standardized Russian denial messages across handlers
 - **Integration Compatibility**: Updated existing tests to work with authorization system
 
+## Statistics Collection Service Testing (2025-09-29)
+
+### Test Coverage Summary
+**Total Tests**: 24 comprehensive tests (11 service tests + 13 model tests) with 100% coverage
+**Pass Rate**: 100%
+**Coverage**: Complete statistics collection functionality with performance validation
+
+#### Statistics Service Testing (`test_statistics_service.py`)
+**Tests**: 11 comprehensive unit tests covering all service methods and edge cases
+**Coverage**:
+- Basic statistics aggregation with participant and team counting
+- Empty database handling with appropriate default values
+- Repository error handling and graceful degradation
+- Performance verification ensuring < 5 second execution times
+- Rate limiting compliance with single-fetch design validation
+- Various participant role scenarios (candidates, team members)
+- Service initialization with dependency injection
+- Statistical accuracy with comprehensive data validation
+- Memory efficiency through optimized processing patterns
+
+**Key Test Scenarios**:
+```python
+# Core functionality testing
+test_collect_department_statistics_basic()
+test_collect_department_statistics_empty_database()
+test_collect_department_statistics_repository_error()
+test_collect_department_statistics_performance()
+
+# Data aggregation testing
+test_aggregation_accuracy_with_sample_data()
+test_various_participant_roles_handling()
+test_department_counting_logic()
+
+# Service integration testing
+test_service_initialization_with_repository()
+test_rate_limiting_compliance_validation()
+test_memory_efficiency_validation()
+```
+
+#### DepartmentStatistics Model Testing (`test_department_statistics.py`)
+**Tests**: 13 comprehensive unit tests with 100% Pydantic model coverage
+**Coverage**:
+- Data validation with non-negative value constraints
+- Pydantic serialization using model_dump() and model_dump_json()
+- Deserialization using model_validate() and model_validate_json()
+- Field constraint validation for total_participants and total_teams
+- Collection timestamp handling with proper datetime validation
+- String representation for debugging and logging purposes
+- Edge case handling including zero values and empty departments
+- Equality comparison for test assertions
+- JSON round-trip validation preserving data integrity
+
+**Key Test Scenarios**:
+```python
+# Model validation testing
+test_department_statistics_creation_valid_data()
+test_department_statistics_negative_values_validation()
+test_department_statistics_field_constraints()
+
+# Serialization testing
+test_department_statistics_to_dict()
+test_department_statistics_to_json()
+test_department_statistics_from_dict()
+test_department_statistics_json_roundtrip()
+
+# Edge case testing
+test_department_statistics_zero_values()
+test_department_statistics_empty_departments()
+test_department_statistics_string_representation()
+```
+
+### Testing Methodology
+
+#### Test-Driven Development Approach
+- **Implementation**: All 24 tests developed alongside service implementation
+- **Coverage Goals**: 100% code coverage achieved for both service and model
+- **Performance Focus**: Execution time validation integrated into service tests
+- **Mock Strategy**: Repository mocking for isolated service testing
+
+#### Performance and Optimization Testing
+- **Single-Fetch Validation**: Tests verify single API call design
+- **Memory Efficiency**: Memory usage patterns validated through test scenarios
+- **Rate Limit Compliance**: Single-call approach tested for rate limit safety
+- **Statistical Accuracy**: Comprehensive validation of aggregation logic
+
+#### Security and Error Handling Testing
+- **StatisticsError Handling**: Custom exception testing with secure error messages
+- **Repository Error Simulation**: Comprehensive error scenario coverage
+- **Data Validation**: Pydantic model validation with constraint enforcement
+- **Edge Case Coverage**: Empty databases, zero values, and boundary conditions
+
 ## Testing Roadmap
 
 ### Current Status
+- [x] ✅ **Statistics Collection Service Testing (2025-09-29)**: 24 comprehensive tests with 100% coverage for StatisticsService and DepartmentStatistics model, performance validation ensuring < 5s execution, single-fetch optimization testing, and comprehensive error handling scenarios
 - [x] ✅ **Export Reliability Hotfix Testing (2025-09-26)**: 84 export service tests with 88% coverage for BibleReaders and ROE services, comprehensive fallback logic testing, async interface validation, and TDD methodology with Red-Green-Refactor cycles
 - [x] ✅ **Handler Security Implementation Testing (2025-09-25)**: 35+ authorization tests across all handler modules with TDD methodology, zero unauthorized access paths, complete role hierarchy enforcement, and integration compatibility
 - [x] ✅ Comprehensive unit testing (29 unit tests with regression coverage, 100% pass)

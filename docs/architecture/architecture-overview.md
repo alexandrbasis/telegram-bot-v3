@@ -256,6 +256,15 @@ All bot handlers now implement mandatory authorization checks using decorator-ba
 - Service factory integration for dependency injection
 - Error handling with graceful fallback for empty schedules
 
+**Statistics Service** (2025-09-29):
+- Efficient participant and team data aggregation from Airtable
+- Single-fetch approach with in-memory processing for optimal performance
+- DepartmentStatistics data model with Pydantic validation
+- Custom StatisticsError for secure error handling
+- Integration with service factory pattern for dependency injection
+- Rate limiting compliance using optimized single-call design
+- Performance target: data collection completes in under 5 seconds
+
 **Schedule Formatting Service** (Enhanced 2025-09-28):
 - **Advanced Schedule Formatting**: Comprehensive Russian localization and intelligent visual hierarchy
 - **Section Detection System**: Smart parsing of section markers from event descriptions
@@ -275,6 +284,14 @@ All bot handlers now implement mandatory authorization checks using decorator-ba
 - Russian error message generation
 - Enum value conversion (Gender, Size, Role, Department, Payment Status)
 - Special validation for numeric and date fields
+
+**Statistics Collection Service** (2025-09-29):
+- Efficient Airtable data aggregation for daily reporting
+- DepartmentStatistics model with validation and serialization
+- Single-fetch optimization preventing memory accumulation
+- Performance-optimized data collection completing in under 5 seconds
+- Service factory integration with proper dependency injection
+- Comprehensive error handling with StatisticsError security
 
 **Enhanced Export Services with View Alignment** (Updated 2025-09-27):
 - **Participant Export Service**: Extended with view-driven architecture for Airtable alignment

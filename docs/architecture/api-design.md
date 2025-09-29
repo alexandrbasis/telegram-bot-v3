@@ -670,6 +670,61 @@ async def get_available_floors(self) -> List[int]:
 - Error resilience: Returns empty list on API failures with warning logs
 - Cache key: `f"{base_id}:{table_identifier}"` for multi-base support
 
+## Statistics Collection API (Added 2025-09-29)
+
+### Statistics Service API
+**Purpose**: Efficient participant and team statistics aggregation from Airtable for daily reporting
+
+**Core Components**:
+- `StatisticsService`: Main service class for data collection and aggregation
+- `DepartmentStatistics`: Pydantic model for structured statistics results
+- `StatisticsError`: Custom exception for secure error handling
+
+**Service Interface**:
+```python
+class StatisticsService:
+    async def collect_department_statistics(self) -> DepartmentStatistics:
+        """Collect participant and team statistics by department."""
+```
+
+**DepartmentStatistics Model Structure**:
+```python
+@dataclass
+class DepartmentStatistics:
+    total_participants: int                    # Total number of participants
+    participants_by_department: Dict[str, int] # Department → participant count mapping
+    total_teams: int                          # Total number of teams
+    collection_timestamp: datetime           # When statistics were collected (UTC)
+```
+
+**Performance Characteristics**:
+- **Single-Fetch Design**: Uses one optimized Airtable query to collect all data
+- **In-Memory Aggregation**: Processes data locally to minimize API calls
+- **Rate Limiting Compliance**: Single-call approach eliminates rate limit concerns
+- **Performance Target**: Completes data collection in under 5 seconds
+- **Memory Efficiency**: Prevents accumulation through optimized processing
+
+**Service Factory Integration**:
+```python
+# Factory method for dependency injection
+service_factory.get_statistics_service() -> StatisticsService
+```
+
+**Error Handling**:
+- **StatisticsError**: Custom exception with security-conscious error messages
+- **Sensitive Data Protection**: Debug-level logging for sensitive error details
+- **Graceful Degradation**: Robust error recovery with meaningful user feedback
+
+**API Usage Example**:
+```python
+statistics_service = service_factory.get_statistics_service()
+stats = await statistics_service.collect_department_statistics()
+
+print(f"Total participants: {stats.total_participants}")
+print(f"Teams by department: {stats.participants_by_department}")
+print(f"Collection time: {stats.collection_timestamp}")
+```
+
 ## Data Model API
 
 ### Repository Interface Extensions (2025-09-23)
