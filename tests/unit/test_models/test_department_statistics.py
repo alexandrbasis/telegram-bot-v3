@@ -4,9 +4,10 @@ Unit tests for DepartmentStatistics model.
 Tests data validation, serialization, and field constraints.
 """
 
-import pytest
 from datetime import datetime
 from typing import Dict
+
+import pytest
 
 from src.models.department_statistics import DepartmentStatistics
 
@@ -25,7 +26,7 @@ class TestDepartmentStatistics:
             total_participants=20,
             participants_by_department=teams_by_dept,
             total_teams=10,
-            collection_timestamp=timestamp
+            collection_timestamp=timestamp,
         )
 
         # Assert
@@ -41,7 +42,7 @@ class TestDepartmentStatistics:
             total_participants=0,
             participants_by_department={},
             total_teams=0,
-            collection_timestamp=datetime.now()
+            collection_timestamp=datetime.now(),
         )
 
         # Assert
@@ -59,7 +60,7 @@ class TestDepartmentStatistics:
             total_participants=10,
             participants_by_department=teams_by_dept,
             total_teams=5,
-            collection_timestamp=datetime.now()
+            collection_timestamp=datetime.now(),
         )
 
         # Assert
@@ -74,7 +75,7 @@ class TestDepartmentStatistics:
                 total_participants=-1,
                 participants_by_department={},
                 total_teams=0,
-                collection_timestamp=datetime.now()
+                collection_timestamp=datetime.now(),
             )
 
     def test_negative_teams_validation(self):
@@ -85,7 +86,7 @@ class TestDepartmentStatistics:
                 total_participants=5,
                 participants_by_department={},
                 total_teams=-1,
-                collection_timestamp=datetime.now()
+                collection_timestamp=datetime.now(),
             )
 
     def test_negative_department_teams_validation(self):
@@ -96,7 +97,7 @@ class TestDepartmentStatistics:
                 total_participants=5,
                 participants_by_department={"ROE": -1},
                 total_teams=2,
-                collection_timestamp=datetime.now()
+                collection_timestamp=datetime.now(),
             )
 
     def test_serialization_to_dict(self):
@@ -107,7 +108,7 @@ class TestDepartmentStatistics:
             total_participants=15,
             participants_by_department={"ROE": 5, "Chapel": 2},
             total_teams=7,
-            collection_timestamp=timestamp
+            collection_timestamp=timestamp,
         )
 
         # Act
@@ -127,7 +128,7 @@ class TestDepartmentStatistics:
             total_participants=10,
             participants_by_department={"ROE": 3},
             total_teams=3,
-            collection_timestamp=datetime.now()
+            collection_timestamp=datetime.now(),
         )
 
         # Act
@@ -146,7 +147,7 @@ class TestDepartmentStatistics:
             "total_participants": 25,
             "participants_by_department": {"ROE": 8, "Kitchen": 3},
             "total_teams": 11,
-            "collection_timestamp": "2025-09-28T15:30:00"
+            "collection_timestamp": "2025-09-28T15:30:00",
         }
 
         # Act
@@ -179,13 +180,13 @@ class TestDepartmentStatistics:
             total_participants=10,
             participants_by_department={"ROE": 5},
             total_teams=5,
-            collection_timestamp=timestamp
+            collection_timestamp=timestamp,
         )
         stats2 = DepartmentStatistics(
             total_participants=10,
             participants_by_department={"ROE": 5},
             total_teams=5,
-            collection_timestamp=timestamp
+            collection_timestamp=timestamp,
         )
 
         # Act & Assert
@@ -199,13 +200,13 @@ class TestDepartmentStatistics:
             total_participants=10,
             participants_by_department={"ROE": 5},
             total_teams=5,
-            collection_timestamp=timestamp
+            collection_timestamp=timestamp,
         )
         stats2 = DepartmentStatistics(
             total_participants=15,
             participants_by_department={"ROE": 5},
             total_teams=5,
-            collection_timestamp=timestamp
+            collection_timestamp=timestamp,
         )
 
         # Act & Assert
@@ -218,7 +219,7 @@ class TestDepartmentStatistics:
             total_participants=20,
             participants_by_department={"ROE": 8, "Chapel": 4},
             total_teams=12,
-            collection_timestamp=datetime.now()
+            collection_timestamp=datetime.now(),
         )
 
         # Act

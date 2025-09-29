@@ -132,13 +132,10 @@ class StatisticsService:
 
         except RepositoryError as e:
             logger.error(
-                f"Repository error during statistics collection: "
-                f"{type(e).__name__}"
+                f"Repository error during statistics collection: " f"{type(e).__name__}"
             )
             logger.debug(f"Full error details: {e}")  # Only log details at debug level
-            raise StatisticsError(
-                "Unable to collect statistics at this time"
-            ) from e
+            raise StatisticsError("Unable to collect statistics at this time") from e
         except Exception as e:
             # Use try/except to safely access participants_processed variable
             try:

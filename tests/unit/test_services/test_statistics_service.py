@@ -5,14 +5,15 @@ Tests efficiency, aggregation accuracy, error handling, and rate limit complianc
 """
 
 import asyncio
-import pytest
-from unittest.mock import AsyncMock, Mock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
-from src.services.statistics_service import StatisticsService, StatisticsError
-from src.models.department_statistics import DepartmentStatistics
+import pytest
+
 from src.data.repositories.participant_repository import RepositoryError
-from src.models.participant import Participant, Department, Role
+from src.models.department_statistics import DepartmentStatistics
+from src.models.participant import Department, Participant, Role
+from src.services.statistics_service import StatisticsError, StatisticsService
 
 
 class TestStatisticsService:
@@ -37,29 +38,31 @@ class TestStatisticsService:
                 full_name_ru="Иван Иванов",
                 role=Role.CANDIDATE,
                 department=Department.ROE,
-                record_id="rec1"
+                record_id="rec1",
             ),
             Participant(
                 full_name_ru="Петр Петров",
                 role=Role.TEAM,
                 department=Department.ROE,
-                record_id="rec2"
+                record_id="rec2",
             ),
             Participant(
                 full_name_ru="Мария Сидорова",
                 role=Role.CANDIDATE,
                 department=Department.CHAPEL,
-                record_id="rec3"
+                record_id="rec3",
             ),
             Participant(
                 full_name_ru="Анна Козлова",
                 role=Role.TEAM,
                 department=None,
-                record_id="rec4"
+                record_id="rec4",
             ),
         ]
 
-    async def test_collect_statistics_basic_aggregation(self, service, mock_repository, sample_participants):
+    async def test_collect_statistics_basic_aggregation(
+        self, service, mock_repository, sample_participants
+    ):
         """Test basic statistics collection and aggregation."""
         # Arrange - mock single call behavior
         mock_repository.list_all.return_value = sample_participants
@@ -92,13 +95,17 @@ class TestStatisticsService:
     async def test_collect_statistics_repository_error(self, service, mock_repository):
         """Test error handling for repository failures."""
         # Arrange
-        mock_repository.list_all.side_effect = RepositoryError("Database connection failed")
+        mock_repository.list_all.side_effect = RepositoryError(
+            "Database connection failed"
+        )
 
         # Act & Assert
         with pytest.raises(StatisticsError):
             await service.collect_statistics()
 
-    async def test_collect_statistics_performance_within_limits(self, service, mock_repository):
+    async def test_collect_statistics_performance_within_limits(
+        self, service, mock_repository
+    ):
         """Test that statistics collection completes within performance targets."""
         # Arrange
         mock_repository.list_all.return_value = []
@@ -112,7 +119,9 @@ class TestStatisticsService:
         duration = (end_time - start_time).total_seconds()
         assert duration < 5.0  # Conservative test threshold
 
-    async def test_collect_statistics_rate_limiting_compliance(self, service, mock_repository):
+    async def test_collect_statistics_rate_limiting_compliance(
+        self, service, mock_repository
+    ):
         """Test that service respects Airtable rate limits."""
         # Arrange
         mock_repository.list_all.return_value = []
@@ -130,7 +139,9 @@ class TestStatisticsService:
         for result in results:
             assert isinstance(result, DepartmentStatistics)
 
-    async def test_collect_statistics_with_candidates_only(self, service, mock_repository):
+    async def test_collect_statistics_with_candidates_only(
+        self, service, mock_repository
+    ):
         """Test statistics with only candidates (no teams)."""
         # Arrange
         candidates_only = [
@@ -138,13 +149,13 @@ class TestStatisticsService:
                 full_name_ru="Кандидат 1",
                 role=Role.CANDIDATE,
                 department=Department.ROE,
-                record_id="rec1"
+                record_id="rec1",
             ),
             Participant(
                 full_name_ru="Кандидат 2",
                 role=Role.CANDIDATE,
                 department=Department.CHAPEL,
-                record_id="rec2"
+                record_id="rec2",
             ),
         ]
         mock_repository.list_all.return_value = candidates_only
@@ -159,7 +170,9 @@ class TestStatisticsService:
         assert result.participants_by_department[Department.ROE.value] == 1
         assert result.participants_by_department[Department.CHAPEL.value] == 1
 
-    async def test_collect_statistics_timestamp_accuracy(self, service, mock_repository):
+    async def test_collect_statistics_timestamp_accuracy(
+        self, service, mock_repository
+    ):
         """Test that collection timestamp is accurate."""
         # Arrange
         mock_repository.list_all.return_value = []
@@ -186,7 +199,9 @@ class TestStatisticsService:
         with pytest.raises(TypeError):
             StatisticsService()
 
-    async def test_collect_statistics_single_call_optimization(self, service, mock_repository):
+    async def test_collect_statistics_single_call_optimization(
+        self, service, mock_repository
+    ):
         """Test that statistics service uses single optimized call instead of pagination."""
         # Arrange - mock repository to return all data in single call
         all_participants = [
@@ -194,20 +209,20 @@ class TestStatisticsService:
                 full_name_ru="Participant 1",
                 role=Role.TEAM,
                 department=Department.ROE,
-                record_id="rec1"
+                record_id="rec1",
             ),
             Participant(
                 full_name_ru="Participant 2",
                 role=Role.CANDIDATE,
                 department=Department.CHAPEL,
-                record_id="rec2"
+                record_id="rec2",
             ),
             Participant(
                 full_name_ru="Participant 3",
                 role=Role.CANDIDATE,
                 department=Department.ROE,
-                record_id="rec3"
-            )
+                record_id="rec3",
+            ),
         ]
 
         # Configure mock to return all participants in single call
@@ -228,7 +243,9 @@ class TestStatisticsService:
         # Verify called without pagination parameters
         assert calls[0][1] == {} or calls[0][1] is None
 
-    async def test_collect_statistics_with_string_departments(self, service, mock_repository):
+    async def test_collect_statistics_with_string_departments(
+        self, service, mock_repository
+    ):
         """Test statistics collection handles string department values correctly."""
         # Arrange - participants with string department values (edge case)
         # Use model_construct to bypass Pydantic validation for this edge case test
@@ -237,19 +254,19 @@ class TestStatisticsService:
                 full_name_ru="String Dept Participant 1",
                 role=Role.CANDIDATE,
                 department="Engineering",  # String instead of Department enum
-                record_id="rec1"
+                record_id="rec1",
             ),
             Participant.model_construct(
                 full_name_ru="String Dept Participant 2",
                 role=Role.TEAM,
                 department="Marketing",  # String instead of Department enum
-                record_id="rec2"
+                record_id="rec2",
             ),
             Participant(
                 full_name_ru="Normal Enum Participant",
                 role=Role.CANDIDATE,
                 department=Department.ROE,  # Normal Department enum
-                record_id="rec3"
+                record_id="rec3",
             ),
         ]
         mock_repository.list_all.return_value = participants_with_string_depts
