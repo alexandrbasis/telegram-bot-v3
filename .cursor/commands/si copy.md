@@ -1,6 +1,7 @@
 # Start Implementation Command
 
-You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches. You migth be asked to: Strart Implementation from scratch, Continue Implementation or address code review results. Just clarify what was done before any work.
+## PRIMARY OBJECTIVE
+You are a Professional Full-Stack Developer executing structured implementation. Implement features systematically with comprehensive tracking on feature branches. You might be asked to: Start Implementation from scratch, Continue Implementation or address code review results. Just clarify what was done before any work.
 IMPORTANT: Think hard
 
 ## CONSTRAINTS
@@ -26,6 +27,7 @@ IMPORTANT: Think hard
 3. **Confirm scope**: Review requirements, verify dependencies and success criteria, ask "Proceed as defined?"
 
 ### **STEP 2: Setup**
+Note: Skip this step when continuing implementation or addressing Code Review Results
 
 #### **Status Updates**
 1. **Update task status** to "In Progress" with timestamp
@@ -53,12 +55,12 @@ IMPORTANT: Think hard
    - **GREEN**: Write minimal code to make tests pass
    - **REFACTOR**: Clean up code while keeping tests green
 3. **Implement tests by approved categories**:
-   - **Business Logic Tests**: As defined in approved test plan
-   - **State Transition Tests**: As defined in approved test plan
-   - **Error Handling Tests**: As defined in approved test plan  
-   - **Integration Tests**: As defined in approved test plan
-   - **User Interaction Tests**: As defined in approved test plan
-4. **Testing tools**:
+   - **Business Logic Tests**: As\If defined in approved test plan
+   - **State Transition Tests**: As\If defined in approved test plan
+   - **Error Handling Tests**: As\If defined in approved test plan  
+   - **Integration Tests**: As\If defined in approved test plan
+   - **User Interaction Tests**: As\If defined in approved test plan
+1. **Testing tools**:
    - `pytest-asyncio` for async handlers
    - `pytest-mock` for mocking Telegram API
    - `coverage.py` for coverage control
@@ -67,18 +69,29 @@ IMPORTANT: Think hard
 #### **After Each Step:**
 1. **Update progress**:
    ```markdown
-   - [x] ✅ Step [N]: [Description] - Completed [Timestamp]
+   - [x] ✅ Step [N]: [Description] - Completed
      - **Notes**: [Key decisions, challenges]
    ```
 
 2. **Add changelog**:
    ```markdown
-   ### Step [N]: [Title] — [Timestamp]
-   - **Files**: `path/file:lines` - [changes]
-   - **Summary**: [what changed and why]
-   - **Impact**: [user/business effect]
-   - **Tests**: [added/updated tests with coverage info]
-   - **Verification**: [manual test steps]
+   ### Changelog:
+
+   [ISO-Timestamp] — [Icon] [Action] [file/path]: [detailed description of changes]
+
+   Icons:
+   - ✳️ Created (new files)
+   - ♻️ Updated (modified files)
+   - 🗑️ Deleted (removed files)
+   - 🔧 Fixed (bug fixes)
+   - ✅ Tests (test additions/updates)
+
+   Example entries:
+   2025-09-27T20:35Z — ✳️ Created src/models/schedule.py: added Pydantic model ScheduleEntry with date, time, description, room, order, active flag fields and to_airtable_fields/from_airtable_record methods.
+
+   2025-09-27T20:35Z — ✅ Created tests/unit/test_models/test_schedule.py: wrote unit tests for schedule creation, validation and serialization (current state - model import fails due to Pydantic configuration, requires fixing).
+
+   2025-09-27T20:35Z — ♻️ Updated src/models/__init__.py: exported ScheduleEntry and expanded model package description.
    ```
 
 3. **Commit changes**: `git add [files] && git commit -m "[descriptive message]"`
@@ -101,7 +114,7 @@ IMPORTANT: Think hard
 2. **Complete changelog** and verify all checkboxes
 3. **Add implementation summary**
 
-#### **Prepare for Code Review**
+### **Step 5: Prepare for Code Review**
 1. **Update Linear to "Ready for Review"** using `mcp__linear__update_issue`:
    - **id**: Linear issue ID  
    - **state**: "Ready for Review"
@@ -110,11 +123,16 @@ IMPORTANT: Think hard
    - **body**: Implementation completed summary with key changes and test coverage
 3. **Prepare the task document for the Code review and clean it up**
 4. **Push feature branch**: `git push origin feature/[branch-name]`
-5. **Call create-pr-agent to create a PR**:
+#### **Call task-pm-validator to validate task documentation**:
+   - Use Task tool with subagent_type: "task-pm-validator"
+   - Provide task-pm-validator the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
+   - Agent will validate documentation completeness and accuracy before code review
+#### **Call create-pr-agent to create a PR**:
    - Use Task tool with subagent_type: "create-pr-agent"
    - **IMPORTANT**: Provide the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
-   - Agent will create PR, update task document with PR links, and sync with Linear
-6. **Present completion**: "Implementation complete. All tests passing with [X]% coverage. PR created and ready for code review."
+   - Agent will create PR, update task document with PR links, and sync with Linea
+#### **Present completion**
+"Implementation complete. All tests passing with [X]% coverage. Task documentation validated. PR created and ready for code review."
 
 ## ERROR HANDLING
 
@@ -135,7 +153,21 @@ IMPORTANT: Think hard
 
 ## IMPLEMENTATION GUIDANCE
 
-**Code Quality**: Follow project conventions, write clean code with error handling  
-**Testing**: Strict TDD approach - tests first, then implementation, comprehensive block-by-block coverage  
-**Documentation**: Update code docs, configs, and APIs as needed
-**Version Control**: Commit each TDD cycle with descriptive messages (Red, Green, Refactor)
+**Code Quality**: Follow project conventions, write clean code with error handling
+**Testing**: Strict TDD approach - tests first, then implementation, comprehensive block-by-block coverage
+
+## Workflow Feedback Collection
+
+### Step 6: Collect Workflow Feedback
+```
+After completing implementation, engage the workflow-feedback-collector agent to gather improvement insights about instruction clarity, process efficiency, and missing guidance that could benefit future developers.
+```
+
+**Agent Trigger**: Use workflow-feedback-collector agent
+**Focus Areas**:
+- Effectiveness of TDD Red-Green-Refactor cycle instructions
+- Quality of task documentation for implementation guidance
+- PR creation process efficiency and Linear integration effectiveness
+- Missing implementation guidelines or unclear test coverage requirements
+- Development environment setup or tooling issues encountered
+**Documentation**: All feedback automatically logged to docs/development/dev-wf-feedback.md 
