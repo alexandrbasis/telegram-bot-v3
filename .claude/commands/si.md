@@ -153,5 +153,21 @@ Note: Skip this step when continuing implementation or addressing Code Review Re
 
 ## IMPLEMENTATION GUIDANCE
 
-**Code Quality**: Follow project conventions, write clean code with error handling  
-**Testing**: Strict TDD approach - tests first, then implementation, comprehensive block-by-block coverage 
+**Code Quality**: Follow project conventions, write clean code with error handling
+**Testing**: Strict TDD approach - tests first, then implementation, comprehensive block-by-block coverage
+
+## Workflow Feedback Collection
+
+### Step 6: Collect Workflow Feedback
+```
+After completing implementation, engage the workflow-feedback-collector agent to gather improvement insights about instruction clarity, process efficiency, and missing guidance that could benefit future developers.
+```
+
+**Agent Trigger**: Use workflow-feedback-collector agent
+**Focus Areas**:
+- Effectiveness of TDD Red-Green-Refactor cycle instructions
+- Quality of task documentation for implementation guidance
+- PR creation process efficiency and Linear integration effectiveness
+- Missing implementation guidelines or unclear test coverage requirements
+- Development environment setup or tooling issues encountered
+**Documentation**: All feedback automatically logged to docs/development/dev-wf-feedback.md 

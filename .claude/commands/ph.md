@@ -36,10 +36,26 @@ Post comment using `mcp__linear__create_comment`:
 ```markdown
 🔄 Implementation handover prepared
 
-**Date**: [timestamp]  
-**Progress**: [summary]  
-**Stopping Point**: [where stopped]  
-**Next Step**: [what to do next]  
+**Date**: [timestamp]
+**Progress**: [summary]
+**Stopping Point**: [where stopped]
+**Next Step**: [what to do next]
 
 Task ready for continuation.
 ```
+
+## Workflow Feedback Collection
+
+### Step 4: Collect Workflow Feedback
+```
+After completing handover preparation, engage the workflow-feedback-collector agent to gather improvement insights about instruction clarity, process efficiency, and missing guidance that could benefit future developers.
+```
+
+**Agent Trigger**: Use workflow-feedback-collector agent
+**Focus Areas**:
+- Completeness of handover documentation templates
+- Effectiveness of context preservation instructions
+- Clarity of continuation guidelines for next developer
+- Missing information that would improve handover quality
+- Process efficiency for context switching scenarios
+**Documentation**: All feedback automatically logged to docs/development/dev-wf-feedback.md

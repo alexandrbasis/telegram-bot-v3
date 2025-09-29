@@ -205,3 +205,19 @@ Task lifecycle complete!
 
 **Pre-Merge**: Review approved, CI green, no conflicts, user approval
 **Post-Merge**: PR merged, changes in target branch, CI passing
+
+## Workflow Feedback Collection
+
+### Step 10: Collect Workflow Feedback
+```
+After completing merge process, engage the workflow-feedback-collector agent to gather improvement insights about instruction clarity, process efficiency, and missing guidance that could benefit future developers.
+```
+
+**Agent Trigger**: Use workflow-feedback-collector agent
+**Focus Areas**:
+- Effectiveness of documentation update automation
+- Quality of changelog generation process and templates
+- Merge strategy appropriateness and branch cleanup efficiency
+- Task archival process completeness
+- Integration between documentation, changelog, and Linear updates
+**Documentation**: All feedback automatically logged to docs/development/dev-wf-feedback.md
