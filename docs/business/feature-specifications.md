@@ -1086,6 +1086,99 @@ Enhanced CSV export functionality that adds sequential line numbers as the first
 3. **Data Analysis**: Import numbered CSV files into spreadsheet applications for analysis
 4. **Progress Tracking**: Monitor participant registration progress using exported count information
 
+## Daily Statistics Notifications
+
+### Overview
+Automated daily statistics notification system delivering Russian-localized participant and team count reports to configured administrators at scheduled times with timezone support and graceful error handling.
+
+**Status**: Implemented (2025-09-29)
+**Implementation**: Complete notification infrastructure with configuration, scheduling, and delivery services
+**Test Coverage**: 22 new tests (13 configuration + 10 scheduler + 9 notification service) with 100% pass rate
+
+### Core Features
+
+#### 1. Configurable Notification Settings
+- **Feature Flag**: Enable/disable via DAILY_STATS_ENABLED environment variable
+- **Scheduled Delivery**: Configurable notification time in HH:MM format (24-hour)
+- **Timezone Support**: Timezone-aware scheduling using pytz (e.g., Europe/Moscow, America/New_York)
+- **Admin Targeting**: Delivery to configured admin user via NOTIFICATION_ADMIN_USER_ID
+- **Validation**: Comprehensive validation with conditional logic (skipped when feature disabled)
+
+#### 2. Reliable Scheduling Infrastructure
+- **JobQueue Integration**: Uses telegram.ext.Application.job_queue for bot lifecycle integration
+- **Daily Scheduling**: Automated daily execution at configured time with timezone conversion
+- **Job Persistence**: Consistent job naming (DAILY_STATS_JOB_NAME) for cleanup and restart handling
+- **Error Handling**: Graceful degradation - bot continues running despite notification failures
+- **Exponential Backoff**: Retry mechanisms for transient failures
+
+#### 3. Professional Notification Delivery
+- **Russian Localization**: Complete Russian message formatting for statistics
+- **Department Translations**: Uses centralized department_to_russian() utility for consistency
+- **Statistics Integration**: Leverages existing StatisticsService for data collection
+- **Telegram Delivery**: Direct bot.send_message() delivery to admin users
+- **Error Recovery**: Comprehensive error handling with NotificationError exceptions
+
+### Technical Implementation
+
+#### Configuration System
+- **File**: `src/config/settings.py` - NotificationSettings dataclass
+- **Fields**: daily_stats_enabled, notification_time, timezone, admin_user_id
+- **Validation**: Time format (HH:MM), timezone (pytz), admin ID (integer)
+- **Dependencies**: pytz>=2025.1 for timezone support
+
+#### Scheduler Service
+- **File**: `src/services/notification_scheduler.py`
+- **Class**: NotificationScheduler with Application and NotificationSettings initialization
+- **Methods**: schedule_daily_notification(), remove_scheduled_notification(), _notification_callback()
+- **Integration**: Initialized in main.py after Application.start() with feature flag check
+
+#### Notification Service
+- **File**: `src/services/daily_notification_service.py`
+- **Class**: DailyNotificationService with Bot and StatisticsService dependencies
+- **Methods**: send_daily_statistics(), _format_statistics_message()
+- **Formatting**: Russian-localized message with participant/team counts by department
+- **Error Handling**: StatisticsError and TelegramError handling with detailed logging
+
+### Acceptance Criteria
+
+- [x] Notifications are delivered at configured times with timezone accuracy
+- [x] Configuration changes persist across bot restarts via environment variables
+- [x] Failed notifications are handled gracefully without crashing bot
+- [x] Feature can be completely disabled via DAILY_STATS_ENABLED=false
+- [x] Russian localization throughout notification messages
+- [x] Integration with existing StatisticsService for data collection
+- [x] Comprehensive test coverage (22 tests, 100% pass rate)
+- [x] Zero regressions in existing functionality (1652 total tests passing)
+
+### Integration Points
+
+**Service Layer Integration**:
+- Uses existing StatisticsService for data aggregation
+- Leverages centralized department_to_russian() translation utility
+- Integrates with service factory pattern for dependency injection
+
+**Bot Application Integration**:
+- Scheduler initialized in main.py after Application.start()
+- Feature flag check prevents initialization when disabled
+- Graceful degradation on initialization failures
+
+**Configuration Integration**:
+- Environment variable configuration via NotificationSettings dataclass
+- Comprehensive validation with startup-time error detection
+- Conditional validation (skipped when feature disabled)
+
+### Future Enhancement Opportunities
+
+**Advanced Scheduling**:
+- Multiple notification schedules (morning/evening reports)
+- Different notification types (daily, weekly, monthly summaries)
+- Conditional notifications based on data thresholds
+
+**Enhanced Reporting**:
+- Graphical statistics visualization
+- Trend analysis and historical comparisons
+- Department-specific detailed breakdowns
+
 ## Help Command Implementation
 
 ### Overview

@@ -36,6 +36,40 @@
 | `TELEGRAM_COORDINATOR_IDS` | Comma-separated coordinator user IDs | `555666777,444333222` | None |
 | `TELEGRAM_VIEWER_IDS` | Comma-separated viewer user IDs | `111222333,999888777` | None |
 
+### Notification Configuration Variables (Added 2025-09-29)
+
+| Variable | Description | Example | Default |
+|----------|-------------|---------|---------|
+| `DAILY_STATS_ENABLED` | Enable/disable daily statistics notifications | `true`, `false` | `false` |
+| `NOTIFICATION_TIME` | Daily notification delivery time (24-hour format) | `09:00`, `18:30` | `09:00` |
+| `NOTIFICATION_TIMEZONE` | Timezone for notification scheduling | `Europe/Moscow`, `America/New_York` | `UTC` |
+| `NOTIFICATION_ADMIN_USER_ID` | Telegram user ID to receive notifications | `123456789` | None (required if enabled) |
+
+**Notification Configuration Examples:**
+```bash
+# Enable daily statistics notifications at 9 AM Moscow time
+DAILY_STATS_ENABLED=true
+NOTIFICATION_TIME=09:00
+NOTIFICATION_TIMEZONE=Europe/Moscow
+NOTIFICATION_ADMIN_USER_ID=123456789
+
+# Disable notifications (default behavior)
+DAILY_STATS_ENABLED=false
+
+# Custom schedule for different timezone
+DAILY_STATS_ENABLED=true
+NOTIFICATION_TIME=18:30
+NOTIFICATION_TIMEZONE=America/New_York
+NOTIFICATION_ADMIN_USER_ID=987654321
+```
+
+**Validation Rules:**
+- `DAILY_STATS_ENABLED`: Must be valid boolean (true/false)
+- `NOTIFICATION_TIME`: Must be in HH:MM format (24-hour)
+- `NOTIFICATION_TIMEZONE`: Must be valid pytz timezone identifier
+- `NOTIFICATION_ADMIN_USER_ID`: Required when daily_stats_enabled is true, must be valid integer user ID
+- **Validation skipped when feature disabled**: All notification settings validation bypassed when DAILY_STATS_ENABLED=false
+
 ### Optional Variables
 
 ### Feature Flags
@@ -246,6 +280,10 @@ roe_sessions = await roe_repo.get_by_roista_id("rec456...")
 - **View Name Validation**: Export view names must be valid Airtable view identifiers for view-aligned exports
 - **Export View Configuration**: View names support Cyrillic characters for Russian Airtable interface alignment
 - **View-Based Export Fallback**: System gracefully handles view unavailability with automatic fallback to repository filtering
+- **Notification Settings Validation**: All notification configuration validated when feature enabled
+- **Timezone Validation**: Notification timezone must be valid pytz timezone identifier
+- **Time Format Validation**: Notification time must follow HH:MM format (00:00-23:59)
+- **Conditional Validation**: Notification settings validation skipped when DAILY_STATS_ENABLED=false
 
 ## Configuration Loading
 

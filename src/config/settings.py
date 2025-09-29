@@ -9,8 +9,11 @@ application behavior.
 import json
 import os
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+
+import pytz
 
 from src.data.airtable.airtable_client import AirtableConfig
 
@@ -548,6 +551,83 @@ class ApplicationSettings:
             raise ValueError("Operation timeout must be positive")
 
 
+def _parse_admin_user_id() -> Optional[int]:
+    """
+    Parse DAILY_STATS_ADMIN_USER_ID from environment variable.
+    Returns None if not set or empty.
+    """
+    admin_id_str = os.getenv("DAILY_STATS_ADMIN_USER_ID", "").strip()
+    if not admin_id_str:
+        return None
+    return int(admin_id_str)
+
+
+@dataclass
+class NotificationSettings:
+    """Daily statistics notification configuration settings."""
+
+    # Feature flag
+    daily_stats_enabled: bool = field(
+        default_factory=lambda: os.getenv(
+            "ENABLE_DAILY_STATS_NOTIFICATION", "false"
+        ).lower()
+        == "true"
+    )
+
+    # Notification time in HH:MM format
+    notification_time: str = field(
+        default_factory=lambda: os.getenv("DAILY_STATS_NOTIFICATION_TIME", "09:00")
+    )
+
+    # Timezone for scheduling (pytz timezone string)
+    timezone: str = field(
+        default_factory=lambda: os.getenv("DAILY_STATS_TIMEZONE", "Europe/Moscow")
+    )
+
+    # Admin user ID for notification delivery
+    admin_user_id: Optional[int] = field(default_factory=_parse_admin_user_id)
+
+    def validate(self) -> None:
+        """
+        Validate notification settings.
+
+        Raises:
+            ValueError: If settings are invalid when feature is enabled
+        """
+        # If feature is disabled, no validation needed
+        if not self.daily_stats_enabled:
+            return
+
+        # Validate time format (HH:MM)
+        try:
+            datetime.strptime(self.notification_time, "%H:%M")
+        except ValueError:
+            raise ValueError(
+                f"Invalid time format: {self.notification_time}. "
+                "Expected HH:MM format (e.g., '09:30')"
+            )
+
+        # Validate timezone using pytz
+        try:
+            pytz.timezone(self.timezone)
+        except pytz.UnknownTimeZoneError:
+            raise ValueError(
+                f"Invalid timezone: {self.timezone}. "
+                "Must be a valid pytz timezone (e.g., 'Europe/Moscow', 'UTC')"
+            )
+
+        # Validate admin user ID is set when feature is enabled
+        if self.admin_user_id is None:
+            raise ValueError(
+                "admin_user_id is required when daily stats notification is enabled. "
+                "Set DAILY_STATS_ADMIN_USER_ID environment variable."
+            )
+
+        # Validate admin user ID is a positive integer
+        if self.admin_user_id <= 0:
+            raise ValueError("admin_user_id must be a positive integer")
+
+
 @dataclass
 class Settings:
     """
@@ -561,6 +641,7 @@ class Settings:
     telegram: TelegramSettings = field(default_factory=TelegramSettings)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
     application: ApplicationSettings = field(default_factory=ApplicationSettings)
+    notification: NotificationSettings = field(default_factory=NotificationSettings)
 
     def __post_init__(self) -> None:
         """Validate all settings after initialization."""
@@ -577,6 +658,7 @@ class Settings:
         self.telegram.validate()
         self.logging.validate()
         self.application.validate()
+        self.notification.validate()
 
     def is_development(self) -> bool:
         """Check if running in development environment."""
@@ -657,6 +739,12 @@ class Settings:
                 "environment": self.application.environment,
                 "debug": self.application.debug,
                 "max_concurrent": self.application.max_concurrent_operations,
+            },
+            "notification": {
+                "enabled": self.notification.daily_stats_enabled,
+                "time": self.notification.notification_time,
+                "timezone": self.notification.timezone,
+                "admin_user_id": self.notification.admin_user_id,
             },
         }
 
