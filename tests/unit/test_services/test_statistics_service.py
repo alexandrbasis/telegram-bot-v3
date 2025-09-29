@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import AsyncMock, Mock, patch
 from datetime import datetime
 
-from src.services.statistics_service import StatisticsService
+from src.services.statistics_service import StatisticsService, StatisticsError
 from src.models.department_statistics import DepartmentStatistics
 from src.data.repositories.participant_repository import RepositoryError
 from src.models.participant import Participant, Department, Role
@@ -61,8 +61,8 @@ class TestStatisticsService:
 
     async def test_collect_statistics_basic_aggregation(self, service, mock_repository, sample_participants):
         """Test basic statistics collection and aggregation."""
-        # Arrange
-        mock_repository.list_all.return_value = sample_participants
+        # Arrange - mock pagination behavior: return all participants on first call, empty on second
+        mock_repository.list_all.side_effect = [sample_participants, []]
 
         # Act
         result = await service.collect_statistics()
@@ -71,10 +71,10 @@ class TestStatisticsService:
         assert isinstance(result, DepartmentStatistics)
         assert result.total_participants == 4
         assert result.total_teams == 2
-        assert result.teams_by_department[Department.ROE.value] == 2
-        assert result.teams_by_department[Department.CHAPEL.value] == 1
-        assert "unassigned" in result.teams_by_department
-        assert result.teams_by_department["unassigned"] == 1
+        assert result.participants_by_department[Department.ROE.value] == 2
+        assert result.participants_by_department[Department.CHAPEL.value] == 1
+        assert "unassigned" in result.participants_by_department
+        assert result.participants_by_department["unassigned"] == 1
 
     async def test_collect_statistics_empty_database(self, service, mock_repository):
         """Test statistics collection with empty database."""
@@ -87,7 +87,7 @@ class TestStatisticsService:
         # Assert
         assert result.total_participants == 0
         assert result.total_teams == 0
-        assert len(result.teams_by_department) == 0
+        assert len(result.participants_by_department) == 0
 
     async def test_collect_statistics_repository_error(self, service, mock_repository):
         """Test error handling for repository failures."""
@@ -95,7 +95,7 @@ class TestStatisticsService:
         mock_repository.list_all.side_effect = RepositoryError("Database connection failed")
 
         # Act & Assert
-        with pytest.raises(RepositoryError):
+        with pytest.raises(StatisticsError):
             await service.collect_statistics()
 
     async def test_collect_statistics_performance_within_limits(self, service, mock_repository):
@@ -147,7 +147,7 @@ class TestStatisticsService:
                 record_id="rec2"
             ),
         ]
-        mock_repository.list_all.return_value = candidates_only
+        mock_repository.list_all.side_effect = [candidates_only, []]
 
         # Act
         result = await service.collect_statistics()
@@ -155,9 +155,9 @@ class TestStatisticsService:
         # Assert
         assert result.total_participants == 2
         assert result.total_teams == 0
-        # Candidates are counted in teams_by_department
-        assert result.teams_by_department[Department.ROE.value] == 1
-        assert result.teams_by_department[Department.CHAPEL.value] == 1
+        # Candidates are counted in participants_by_department
+        assert result.participants_by_department[Department.ROE.value] == 1
+        assert result.participants_by_department[Department.CHAPEL.value] == 1
 
     async def test_collect_statistics_timestamp_accuracy(self, service, mock_repository):
         """Test that collection timestamp is accurate."""
@@ -185,3 +185,48 @@ class TestStatisticsService:
         # Act & Assert
         with pytest.raises(TypeError):
             StatisticsService()
+
+    async def test_collect_statistics_with_pagination(self, service, mock_repository):
+        """Test that statistics service handles pagination correctly."""
+        # Arrange - mock repository to return data in batches
+        batch1 = [
+            Participant(
+                full_name_ru="Participant 1",
+                role=Role.TEAM,
+                department=Department.ROE,
+                record_id="rec1"
+            ),
+            Participant(
+                full_name_ru="Participant 2",
+                role=Role.CANDIDATE,
+                department=Department.CHAPEL,
+                record_id="rec2"
+            )
+        ]
+        batch2 = [
+            Participant(
+                full_name_ru="Participant 3",
+                role=Role.CANDIDATE,
+                department=Department.ROE,
+                record_id="rec3"
+            )
+        ]
+
+        # Configure mock to return batches then empty list
+        mock_repository.list_all.side_effect = [batch1, batch2, []]
+
+        # Act
+        result = await service.collect_statistics()
+
+        # Assert
+        assert result.total_participants == 3
+        assert result.total_teams == 1
+        assert result.participants_by_department[Department.ROE.value] == 2
+        assert result.participants_by_department[Department.CHAPEL.value] == 1
+
+        # Verify pagination was used with correct parameters
+        calls = mock_repository.list_all.call_args_list
+        assert len(calls) == 3
+        assert calls[0][1] == {'limit': 100, 'offset': 0}
+        assert calls[1][1] == {'limit': 100, 'offset': 100}
+        assert calls[2][1] == {'limit': 100, 'offset': 200}

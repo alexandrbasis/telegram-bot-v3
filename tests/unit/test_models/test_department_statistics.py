@@ -23,14 +23,14 @@ class TestDepartmentStatistics:
         # Act
         stats = DepartmentStatistics(
             total_participants=20,
-            teams_by_department=teams_by_dept,
+            participants_by_department=teams_by_dept,
             total_teams=10,
             collection_timestamp=timestamp
         )
 
         # Assert
         assert stats.total_participants == 20
-        assert stats.teams_by_department == teams_by_dept
+        assert stats.participants_by_department == teams_by_dept
         assert stats.total_teams == 10
         assert stats.collection_timestamp == timestamp
 
@@ -39,14 +39,14 @@ class TestDepartmentStatistics:
         # Arrange & Act
         stats = DepartmentStatistics(
             total_participants=0,
-            teams_by_department={},
+            participants_by_department={},
             total_teams=0,
             collection_timestamp=datetime.now()
         )
 
         # Assert
         assert stats.total_participants == 0
-        assert stats.teams_by_department == {}
+        assert stats.participants_by_department == {}
         assert stats.total_teams == 0
 
     def test_create_statistics_with_unassigned_department(self):
@@ -57,14 +57,14 @@ class TestDepartmentStatistics:
         # Act
         stats = DepartmentStatistics(
             total_participants=10,
-            teams_by_department=teams_by_dept,
+            participants_by_department=teams_by_dept,
             total_teams=5,
             collection_timestamp=datetime.now()
         )
 
         # Assert
-        assert "unassigned" in stats.teams_by_department
-        assert stats.teams_by_department["unassigned"] == 2
+        assert "unassigned" in stats.participants_by_department
+        assert stats.participants_by_department["unassigned"] == 2
 
     def test_negative_participants_validation(self):
         """Test validation fails for negative participant count."""
@@ -72,7 +72,7 @@ class TestDepartmentStatistics:
         with pytest.raises(ValueError):
             DepartmentStatistics(
                 total_participants=-1,
-                teams_by_department={},
+                participants_by_department={},
                 total_teams=0,
                 collection_timestamp=datetime.now()
             )
@@ -83,7 +83,7 @@ class TestDepartmentStatistics:
         with pytest.raises(ValueError):
             DepartmentStatistics(
                 total_participants=5,
-                teams_by_department={},
+                participants_by_department={},
                 total_teams=-1,
                 collection_timestamp=datetime.now()
             )
@@ -94,81 +94,81 @@ class TestDepartmentStatistics:
         with pytest.raises(ValueError):
             DepartmentStatistics(
                 total_participants=5,
-                teams_by_department={"ROE": -1},
+                participants_by_department={"ROE": -1},
                 total_teams=2,
                 collection_timestamp=datetime.now()
             )
 
     def test_serialization_to_dict(self):
-        """Test serialization to dictionary format."""
+        """Test serialization to dictionary format using Pydantic's model_dump."""
         # Arrange
         timestamp = datetime(2025, 9, 28, 15, 30, 0)
         stats = DepartmentStatistics(
             total_participants=15,
-            teams_by_department={"ROE": 5, "Chapel": 2},
+            participants_by_department={"ROE": 5, "Chapel": 2},
             total_teams=7,
             collection_timestamp=timestamp
         )
 
         # Act
-        result = stats.to_dict()
+        result = stats.model_dump()
 
         # Assert
         assert isinstance(result, dict)
         assert result["total_participants"] == 15
-        assert result["teams_by_department"] == {"ROE": 5, "Chapel": 2}
+        assert result["participants_by_department"] == {"ROE": 5, "Chapel": 2}
         assert result["total_teams"] == 7
-        assert result["collection_timestamp"] == timestamp.isoformat()
+        assert result["collection_timestamp"] == timestamp
 
     def test_serialization_to_json(self):
-        """Test JSON serialization."""
+        """Test JSON serialization using Pydantic's model_dump_json."""
         # Arrange
         stats = DepartmentStatistics(
             total_participants=10,
-            teams_by_department={"ROE": 3},
+            participants_by_department={"ROE": 3},
             total_teams=3,
             collection_timestamp=datetime.now()
         )
 
         # Act
-        json_str = stats.to_json()
+        json_str = stats.model_dump_json()
 
         # Assert
         assert isinstance(json_str, str)
         assert "total_participants" in json_str
-        assert "teams_by_department" in json_str
+        assert "participants_by_department" in json_str
         assert "10" in json_str
 
     def test_create_from_dict(self):
-        """Test creation from dictionary."""
+        """Test creation from dictionary using Pydantic's validation."""
         # Arrange
         data = {
             "total_participants": 25,
-            "teams_by_department": {"ROE": 8, "Kitchen": 3},
+            "participants_by_department": {"ROE": 8, "Kitchen": 3},
             "total_teams": 11,
             "collection_timestamp": "2025-09-28T15:30:00"
         }
 
         # Act
-        stats = DepartmentStatistics.from_dict(data)
+        stats = DepartmentStatistics(**data)
 
         # Assert
         assert stats.total_participants == 25
-        assert stats.teams_by_department == {"ROE": 8, "Kitchen": 3}
+        assert stats.participants_by_department == {"ROE": 8, "Kitchen": 3}
         assert stats.total_teams == 11
         assert stats.collection_timestamp == datetime(2025, 9, 28, 15, 30, 0)
 
     def test_create_from_json(self):
-        """Test creation from JSON string."""
+        """Test creation from JSON string using Pydantic's model_validate_json."""
         # Arrange
-        json_data = '{"total_participants": 12, "teams_by_department": {"Chapel": 4}, "total_teams": 4, "collection_timestamp": "2025-09-28T10:00:00"}'
+        json_data = '{"total_participants": 12, "participants_by_department": {"Chapel": 4}, "total_teams": 4, "collection_timestamp": "2025-09-28T10:00:00"}'
 
         # Act
-        stats = DepartmentStatistics.from_json(json_data)
+        stats = DepartmentStatistics.model_validate_json(json_data)
 
         # Assert
         assert stats.total_participants == 12
-        assert stats.teams_by_department == {"Chapel": 4}
+        assert stats.participants_by_department == {"Chapel": 4}
         assert stats.total_teams == 4
 
     def test_equality_comparison(self):
@@ -177,13 +177,13 @@ class TestDepartmentStatistics:
         timestamp = datetime.now()
         stats1 = DepartmentStatistics(
             total_participants=10,
-            teams_by_department={"ROE": 5},
+            participants_by_department={"ROE": 5},
             total_teams=5,
             collection_timestamp=timestamp
         )
         stats2 = DepartmentStatistics(
             total_participants=10,
-            teams_by_department={"ROE": 5},
+            participants_by_department={"ROE": 5},
             total_teams=5,
             collection_timestamp=timestamp
         )
@@ -197,13 +197,13 @@ class TestDepartmentStatistics:
         timestamp = datetime.now()
         stats1 = DepartmentStatistics(
             total_participants=10,
-            teams_by_department={"ROE": 5},
+            participants_by_department={"ROE": 5},
             total_teams=5,
             collection_timestamp=timestamp
         )
         stats2 = DepartmentStatistics(
             total_participants=15,
-            teams_by_department={"ROE": 5},
+            participants_by_department={"ROE": 5},
             total_teams=5,
             collection_timestamp=timestamp
         )
@@ -216,7 +216,7 @@ class TestDepartmentStatistics:
         # Arrange
         stats = DepartmentStatistics(
             total_participants=20,
-            teams_by_department={"ROE": 8, "Chapel": 4},
+            participants_by_department={"ROE": 8, "Chapel": 4},
             total_teams=12,
             collection_timestamp=datetime.now()
         )
