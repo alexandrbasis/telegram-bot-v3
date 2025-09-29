@@ -171,7 +171,9 @@ class NotificationScheduler:
                 return
 
             job_data = context.job.data
-            admin_id = job_data.get("admin_user_id") if isinstance(job_data, dict) else None
+            admin_id = (
+                job_data.get("admin_user_id") if isinstance(job_data, dict) else None
+            )
 
             if not admin_id:
                 logger.error("No admin_user_id in job data, cannot send notification")
