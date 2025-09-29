@@ -1,11 +1,22 @@
 name: PR Review
 
+# Triggers:
+# 1. New PRs that already include the 'needs-ai-review' label.
+# 2. Adding the 'needs-ai-review' label to an existing PR (fire on each add).
+# 3. Manual runs via the GitHub Actions UI (workflow_dispatch).
+# PRs that only touch files under tasks/** are ignored.
+
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
+    types:
+      - labeled
+    paths-ignore:
+      - 'tasks/**'
+  workflow_dispatch:
 
 jobs:
   review:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'needs-ai-review')
     runs-on: ubuntu-latest
     permissions:
       contents: read
