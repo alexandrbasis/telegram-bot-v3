@@ -61,8 +61,8 @@ class TestStatisticsService:
 
     async def test_collect_statistics_basic_aggregation(self, service, mock_repository, sample_participants):
         """Test basic statistics collection and aggregation."""
-        # Arrange - mock pagination behavior: return all participants on first call, empty on second
-        mock_repository.list_all.side_effect = [sample_participants, []]
+        # Arrange - mock single call behavior
+        mock_repository.list_all.return_value = sample_participants
 
         # Act
         result = await service.collect_statistics()
@@ -147,7 +147,7 @@ class TestStatisticsService:
                 record_id="rec2"
             ),
         ]
-        mock_repository.list_all.side_effect = [candidates_only, []]
+        mock_repository.list_all.return_value = candidates_only
 
         # Act
         result = await service.collect_statistics()
@@ -186,10 +186,10 @@ class TestStatisticsService:
         with pytest.raises(TypeError):
             StatisticsService()
 
-    async def test_collect_statistics_with_pagination(self, service, mock_repository):
-        """Test that statistics service handles pagination correctly."""
-        # Arrange - mock repository to return data in batches
-        batch1 = [
+    async def test_collect_statistics_single_call_optimization(self, service, mock_repository):
+        """Test that statistics service uses single optimized call instead of pagination."""
+        # Arrange - mock repository to return all data in single call
+        all_participants = [
             Participant(
                 full_name_ru="Participant 1",
                 role=Role.TEAM,
@@ -201,9 +201,7 @@ class TestStatisticsService:
                 role=Role.CANDIDATE,
                 department=Department.CHAPEL,
                 record_id="rec2"
-            )
-        ]
-        batch2 = [
+            ),
             Participant(
                 full_name_ru="Participant 3",
                 role=Role.CANDIDATE,
@@ -212,8 +210,8 @@ class TestStatisticsService:
             )
         ]
 
-        # Configure mock to return batches then empty list
-        mock_repository.list_all.side_effect = [batch1, batch2, []]
+        # Configure mock to return all participants in single call
+        mock_repository.list_all.return_value = all_participants
 
         # Act
         result = await service.collect_statistics()
@@ -224,9 +222,50 @@ class TestStatisticsService:
         assert result.participants_by_department[Department.ROE.value] == 2
         assert result.participants_by_department[Department.CHAPEL.value] == 1
 
-        # Verify pagination was used with correct parameters
+        # Verify single call was made (optimized approach)
         calls = mock_repository.list_all.call_args_list
-        assert len(calls) == 3
-        assert calls[0][1] == {'limit': 100, 'offset': 0}
-        assert calls[1][1] == {'limit': 100, 'offset': 100}
-        assert calls[2][1] == {'limit': 100, 'offset': 200}
+        assert len(calls) == 1
+        # Verify called without pagination parameters
+        assert calls[0][1] == {} or calls[0][1] is None
+
+    async def test_collect_statistics_with_string_departments(self, service, mock_repository):
+        """Test statistics collection handles string department values correctly."""
+        # Arrange - participants with string department values (edge case)
+        # Use model_construct to bypass Pydantic validation for this edge case test
+        participants_with_string_depts = [
+            Participant.model_construct(
+                full_name_ru="String Dept Participant 1",
+                role=Role.CANDIDATE,
+                department="Engineering",  # String instead of Department enum
+                record_id="rec1"
+            ),
+            Participant.model_construct(
+                full_name_ru="String Dept Participant 2",
+                role=Role.TEAM,
+                department="Marketing",  # String instead of Department enum
+                record_id="rec2"
+            ),
+            Participant(
+                full_name_ru="Normal Enum Participant",
+                role=Role.CANDIDATE,
+                department=Department.ROE,  # Normal Department enum
+                record_id="rec3"
+            ),
+        ]
+        mock_repository.list_all.return_value = participants_with_string_depts
+
+        # Act
+        result = await service.collect_statistics()
+
+        # Assert
+        assert result.total_participants == 3
+        assert result.total_teams == 1
+
+        # String departments should be handled correctly
+        assert "Engineering" in result.participants_by_department
+        assert "Marketing" in result.participants_by_department
+        assert Department.ROE.value in result.participants_by_department
+
+        assert result.participants_by_department["Engineering"] == 1
+        assert result.participants_by_department["Marketing"] == 1
+        assert result.participants_by_department[Department.ROE.value] == 1

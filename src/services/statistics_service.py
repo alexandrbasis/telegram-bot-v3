@@ -5,7 +5,6 @@ Provides efficient statistics collection from Airtable with performance optimiza
 rate limiting compliance, and in-memory aggregation for daily reporting.
 """
 
-import asyncio
 import logging
 from collections import defaultdict
 from datetime import datetime
@@ -64,32 +63,12 @@ class StatisticsService:
         collection_start = datetime.now()
 
         try:
-            # Use paginated processing to control memory usage
-            batch_size = 100
-            offset = 0
-            all_participants = []
-            participants_processed = 0
-
-            while True:
-                # Fetch participants in batches to control memory usage
-                batch = await self.repository.list_all(
-                    limit=batch_size, offset=offset
-                )
-                if not batch:
-                    break
-
-                all_participants.extend(batch)
-                offset += batch_size
-                participants_processed += len(batch)
-
-                # Yield control periodically for better concurrency
-                if offset % 500 == 0:
-                    await asyncio.sleep(0)
-
-                logger.debug(
-                    f"Processed batch: {len(batch)} participants "
-                    f"(total: {participants_processed})"
-                )
+            # Fetch all participants in single request
+            # Airtable doesn't support offset pagination
+            # Repository will use max_records internally to prevent unlimited fetches
+            logger.debug("Fetching all participants from repository")
+            all_participants = await self.repository.list_all()
+            participants_processed = len(all_participants)
 
             logger.debug(
                 f"Retrieved {len(all_participants)} participants from repository"
@@ -161,11 +140,12 @@ class StatisticsService:
                 "Unable to collect statistics at this time"
             ) from e
         except Exception as e:
-            processed_count = (
-                participants_processed
-                if 'participants_processed' in locals()
-                else 0
-            )
+            # Use try/except to safely access participants_processed variable
+            try:
+                processed_count = participants_processed
+            except NameError:
+                processed_count = 0
+
             logger.error(
                 f"Unexpected error during statistics collection after processing "
                 f"{processed_count} participants"
