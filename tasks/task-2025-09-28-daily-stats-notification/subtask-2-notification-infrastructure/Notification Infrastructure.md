@@ -148,7 +148,7 @@ Enable administrators to receive automated daily statistics notifications at con
 
 **Step 3: Notification Service (100% Complete)**
 - ✅ Created `DailyNotificationService` with Russian message formatting
-- ✅ Implemented department name mapping (🎭 Палорма, ⛪️ Секуэла, 🎨 Роя, 📿 Клаусура, ❓ Без отдела)
+- ✅ Uses centralized `department_to_russian()` from `src/utils/translations.py` (РОЭ, Чапл, Кухня, Декорации, Администрация, Духовенство, Ректорат, и т.д.)
 - ✅ Integrated with `StatisticsService` for data collection
 - ✅ Added `send_daily_statistics()` method with Telegram bot delivery
 - ✅ Updated `NotificationScheduler._notification_callback()` with service integration
