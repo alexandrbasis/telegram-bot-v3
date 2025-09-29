@@ -91,6 +91,9 @@ class NotificationScheduler:
             )
 
             # Schedule the daily job
+            if self.application.job_queue is None:
+                raise SchedulerError("JobQueue is not available")
+
             self.application.job_queue.run_daily(
                 callback=self._notification_callback,
                 time=notification_time,
@@ -124,6 +127,11 @@ class NotificationScheduler:
         rescheduling or cleanup.
         """
         try:
+            # Check if job_queue is available
+            if self.application.job_queue is None:
+                logger.warning("JobQueue is not available, cannot remove jobs")
+                return
+
             # Get all jobs with this name
             jobs = self.application.job_queue.get_jobs_by_name(DAILY_STATS_JOB_NAME)
 
@@ -158,8 +166,12 @@ class NotificationScheduler:
             logger.info("Daily notification job triggered")
 
             # Extract admin user ID from job data
-            job_data = context.job.data if hasattr(context.job, "data") else {}
-            admin_id = job_data.get("admin_user_id")
+            if context.job is None or context.job.data is None:
+                logger.error("Job or job data is None, cannot send notification")
+                return
+
+            job_data = context.job.data
+            admin_id = job_data.get("admin_user_id") if isinstance(job_data, dict) else None
 
             if not admin_id:
                 logger.error("No admin_user_id in job data, cannot send notification")
