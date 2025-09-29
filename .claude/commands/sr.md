@@ -242,3 +242,19 @@ Create `Code Review - [Task Title].md` in task directory:
 - [ ] Linear updated with start notification and results
 - [ ] Clear next steps provided
 - [ ] Professional, constructive tone maintained
+
+## Workflow Feedback Collection
+
+### Step 6: Collect Workflow Feedback
+```
+After completing code review, engage the workflow-feedback-collector agent to gather improvement insights about instruction clarity, process efficiency, and missing guidance that could benefit future developers.
+```
+
+**Agent Trigger**: Use workflow-feedback-collector agent
+**Focus Areas**:
+- Effectiveness of review criteria and quality standards
+- Adequacy of test execution requirements and tooling
+- Clarity of issue categorization guidelines (Critical/Major/Minor)
+- Missing review checklist items or evaluation criteria
+- Time efficiency of the review process and potential automation opportunities
+**Documentation**: All feedback automatically logged to docs/development/dev-wf-feedback.md

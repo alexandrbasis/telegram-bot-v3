@@ -78,3 +78,19 @@ docker build -t app:ci .
 - [ ] Docker build and smoke test pass
 - [ ] GitHub CI status shows green checkmark
 - [ ] Ready for clean merge to main branch
+
+## Workflow Feedback Collection
+
+### Step 7: Collect Workflow Feedback
+```
+After completing CI fixes, engage the workflow-feedback-collector agent to gather improvement insights about instruction clarity, process efficiency, and missing guidance that could benefit future developers.
+```
+
+**Agent Trigger**: Use workflow-feedback-collector agent
+**Focus Areas**:
+- Accuracy of CI troubleshooting instructions and tool references
+- Effectiveness of local validation commands vs. CI environment
+- Missing preventive measures that could avoid common CI failures
+- Efficiency of the fix-validate-retry cycle
+- Tool version discrepancies or environment-specific issues encountered
+**Documentation**: All feedback automatically logged to docs/development/dev-wf-feedback.md

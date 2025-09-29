@@ -289,3 +289,19 @@ tasks/
 - **ID**: [Created after technical approval]
 - **URL**: [Link]
 - **Status Flow**: Business Review → Ready for Implementation → In Progress → Ready for Review → In Review → Testing → Done
+
+## Workflow Feedback Collection
+
+### Step 6: Collect Workflow Feedback
+```
+After completing task creation, engage the workflow-feedback-collector agent to gather improvement insights about instruction clarity, process efficiency, and missing guidance that could benefit future developers.
+```
+
+**Agent Trigger**: Use workflow-feedback-collector agent
+**Focus Areas**:
+- Clarity of business requirements and approval process
+- Effectiveness of technical decomposition instructions
+- Adequacy of test planning guidelines
+- Task splitting criteria and complexity assessment accuracy
+- Any missing information that slowed down the task creation process
+**Documentation**: All feedback automatically logged to docs/development/dev-wf-feedback.md
