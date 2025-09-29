@@ -863,3 +863,247 @@ class TestViewConfiguration:
                 ValueError, match="Participant export view name cannot be empty"
             ):
                 settings.validate()
+
+
+class TestNotificationSettings:
+    """Test suite for NotificationSettings functionality."""
+
+    def test_default_values(self):
+        """Test default values for notification settings."""
+        with patch.dict(os.environ, {}, clear=True):
+            from src.config.settings import NotificationSettings
+
+            settings = NotificationSettings()
+
+            # Feature should be disabled by default
+            assert settings.daily_stats_enabled is False
+            assert settings.notification_time == "09:00"  # Default morning time
+            assert settings.timezone == "Europe/Moscow"  # Default timezone
+            assert settings.admin_user_id is None  # No default admin
+
+    def test_environment_variable_loading(self):
+        """Test loading notification settings from environment."""
+        env_vars = {
+            "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+            "DAILY_STATS_NOTIFICATION_TIME": "18:30",
+            "DAILY_STATS_TIMEZONE": "America/New_York",
+            "DAILY_STATS_ADMIN_USER_ID": "123456789",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import NotificationSettings
+
+            settings = NotificationSettings()
+
+            assert settings.daily_stats_enabled is True
+            assert settings.notification_time == "18:30"
+            assert settings.timezone == "America/New_York"
+            assert settings.admin_user_id == 123456789
+
+    def test_validation_success_when_disabled(self):
+        """Test validation passes when feature is disabled."""
+        with patch.dict(
+            os.environ, {"ENABLE_DAILY_STATS_NOTIFICATION": "false"}, clear=True
+        ):
+            from src.config.settings import NotificationSettings
+
+            settings = NotificationSettings()
+            settings.validate()  # Should not raise
+
+    def test_validation_success_when_enabled_with_valid_config(self):
+        """Test validation passes when enabled with all required fields."""
+        env_vars = {
+            "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+            "DAILY_STATS_NOTIFICATION_TIME": "10:30",
+            "DAILY_STATS_TIMEZONE": "Europe/Moscow",
+            "DAILY_STATS_ADMIN_USER_ID": "987654321",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import NotificationSettings
+
+            settings = NotificationSettings()
+            settings.validate()  # Should not raise
+
+    def test_validation_invalid_time_format(self):
+        """Test validation failure with invalid time format."""
+        env_vars = {
+            "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+            "DAILY_STATS_NOTIFICATION_TIME": "25:99",  # Invalid time
+            "DAILY_STATS_ADMIN_USER_ID": "123456789",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import NotificationSettings
+
+            settings = NotificationSettings()
+
+            with pytest.raises(ValueError) as exc_info:
+                settings.validate()
+
+            assert "time format" in str(exc_info.value).lower()
+
+    def test_validation_invalid_timezone(self):
+        """Test validation failure with invalid timezone."""
+        env_vars = {
+            "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+            "DAILY_STATS_NOTIFICATION_TIME": "10:00",
+            "DAILY_STATS_TIMEZONE": "Invalid/Timezone",
+            "DAILY_STATS_ADMIN_USER_ID": "123456789",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import NotificationSettings
+
+            settings = NotificationSettings()
+
+            with pytest.raises(ValueError) as exc_info:
+                settings.validate()
+
+            assert "timezone" in str(exc_info.value).lower()
+
+    def test_validation_missing_admin_user_id_when_enabled(self):
+        """Test validation failure when enabled but admin user ID is missing."""
+        env_vars = {
+            "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+            "DAILY_STATS_NOTIFICATION_TIME": "10:00",
+            "DAILY_STATS_TIMEZONE": "Europe/Moscow",
+            # Missing DAILY_STATS_ADMIN_USER_ID
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import NotificationSettings
+
+            settings = NotificationSettings()
+
+            with pytest.raises(ValueError) as exc_info:
+                settings.validate()
+
+            assert "admin_user_id" in str(exc_info.value).lower()
+
+    def test_validation_invalid_admin_user_id_type(self):
+        """Test validation failure with invalid admin user ID (not an integer)."""
+        env_vars = {
+            "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+            "DAILY_STATS_NOTIFICATION_TIME": "10:00",
+            "DAILY_STATS_TIMEZONE": "Europe/Moscow",
+            "DAILY_STATS_ADMIN_USER_ID": "not_a_number",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import NotificationSettings
+
+            # Should fail during initialization when trying to convert to int
+            with pytest.raises(ValueError):
+                NotificationSettings()
+
+    def test_time_parsing_various_formats(self):
+        """Test that various valid time formats are accepted."""
+        test_cases = [
+            "00:00",  # Midnight
+            "09:30",  # Morning
+            "12:00",  # Noon
+            "18:45",  # Evening
+            "23:59",  # End of day
+        ]
+
+        for time_str in test_cases:
+            env_vars = {
+                "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+                "DAILY_STATS_NOTIFICATION_TIME": time_str,
+                "DAILY_STATS_TIMEZONE": "Europe/Moscow",
+                "DAILY_STATS_ADMIN_USER_ID": "123456789",
+            }
+
+            with patch.dict(os.environ, env_vars, clear=True):
+                from src.config.settings import NotificationSettings
+
+                settings = NotificationSettings()
+                settings.validate()  # Should not raise
+                assert settings.notification_time == time_str
+
+    def test_timezone_validation_common_timezones(self):
+        """Test that common timezones are accepted."""
+        test_timezones = [
+            "Europe/Moscow",
+            "America/New_York",
+            "Asia/Tokyo",
+            "UTC",
+            "Europe/London",
+        ]
+
+        for tz in test_timezones:
+            env_vars = {
+                "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+                "DAILY_STATS_NOTIFICATION_TIME": "10:00",
+                "DAILY_STATS_TIMEZONE": tz,
+                "DAILY_STATS_ADMIN_USER_ID": "123456789",
+            }
+
+            with patch.dict(os.environ, env_vars, clear=True):
+                from src.config.settings import NotificationSettings
+
+                settings = NotificationSettings()
+                settings.validate()  # Should not raise
+                assert settings.timezone == tz
+
+
+class TestSettingsWithNotifications:
+    """Test integration of NotificationSettings into main Settings class."""
+
+    def test_settings_includes_notification_section(self):
+        """Test that main Settings includes notification configuration."""
+        env_vars = {
+            "AIRTABLE_API_KEY": "test_key",
+            "AIRTABLE_BASE_ID": "test_base",
+            "TELEGRAM_BOT_TOKEN": "test_token",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import NotificationSettings, Settings
+
+            settings = Settings()
+
+            # Should have notification section
+            assert hasattr(settings, "notification")
+            assert isinstance(settings.notification, NotificationSettings)
+
+    def test_settings_validates_notification_section(self):
+        """Test that Settings validation includes notification validation."""
+        env_vars = {
+            "AIRTABLE_API_KEY": "test_key",
+            "AIRTABLE_BASE_ID": "test_base",
+            "TELEGRAM_BOT_TOKEN": "test_token",
+            "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+            "DAILY_STATS_NOTIFICATION_TIME": "invalid_time",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import Settings
+
+            with pytest.raises(ValueError):
+                Settings()  # Should fail validation
+
+    def test_settings_to_dict_includes_notification(self):
+        """Test that to_dict() includes notification settings."""
+        env_vars = {
+            "AIRTABLE_API_KEY": "test_key",
+            "AIRTABLE_BASE_ID": "test_base",
+            "TELEGRAM_BOT_TOKEN": "test_token",
+            "ENABLE_DAILY_STATS_NOTIFICATION": "true",
+            "DAILY_STATS_NOTIFICATION_TIME": "10:00",
+            "DAILY_STATS_TIMEZONE": "Europe/Moscow",
+            "DAILY_STATS_ADMIN_USER_ID": "123456789",
+        }
+
+        with patch.dict(os.environ, env_vars, clear=True):
+            from src.config.settings import Settings
+
+            settings = Settings()
+            settings_dict = settings.to_dict()
+
+            # Should include notification section
+            assert "notification" in settings_dict
+            assert settings_dict["notification"]["enabled"] is True
+            assert settings_dict["notification"]["time"] == "10:00"
+            assert settings_dict["notification"]["timezone"] == "Europe/Moscow"
