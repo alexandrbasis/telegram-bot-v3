@@ -43,10 +43,10 @@ def sample_statistics():
     return DepartmentStatistics(
         total_participants=150,
         participants_by_department={
-            "Palorm": 50,
-            "Secuela": 45,
-            "Rocha": 35,
-            "Clausura": 20,
+            "ROE": 50,
+            "Chapel": 45,
+            "Kitchen": 35,
+            "Decoration": 20,
         },
         total_teams=15,
         collection_timestamp=datetime(2025, 9, 29, 23, 30, 0),
@@ -97,11 +97,11 @@ class TestMessageFormatting:
         # Verify department breakdown header
         assert "По отделам:" in message
 
-        # Verify all department counts with Russian names
-        assert "🎭 Палорма: 50 чел." in message
-        assert "⛪️ Секуэла: 45 чел." in message
-        assert "🎨 Роя: 35 чел." in message
-        assert "📿 Клаусура: 20 чел." in message
+        # Verify all department counts with correct Russian translations
+        assert "РОЭ: 50 чел." in message
+        assert "Чапл: 45 чел." in message
+        assert "Кухня: 35 чел." in message
+        assert "Декорации: 20 чел." in message
 
     def test_format_statistics_message_with_empty_departments(
         self, notification_service
@@ -129,7 +129,7 @@ class TestMessageFormatting:
         stats_with_unassigned = DepartmentStatistics(
             total_participants=25,
             participants_by_department={
-                "Palorm": 20,
+                "ROE": 20,
                 "unassigned": 5,
             },
             total_teams=2,
@@ -138,8 +138,8 @@ class TestMessageFormatting:
 
         message = notification_service._format_statistics_message(stats_with_unassigned)
 
-        assert "🎭 Палорма: 20 чел." in message
-        assert "❓ Без отдела: 5 чел." in message
+        assert "РОЭ: 20 чел." in message
+        assert "Не указано: 5 чел." in message
 
 
 class TestNotificationDelivery:
@@ -230,13 +230,13 @@ class TestDepartmentNameMapping:
         message = notification_service._format_statistics_message(sample_statistics)
 
         # Verify English names are NOT in the message (translated to Russian)
-        assert "Palorm" not in message or "Палорма" in message
-        assert "Secuela" not in message or "Секуэла" in message
-        assert "Rocha" not in message or "Роя" in message
-        assert "Clausura" not in message or "Клаусура" in message
+        assert "ROE" not in message or "РОЭ" in message
+        assert "Chapel" not in message or "Чапл" in message
+        assert "Kitchen" not in message or "Кухня" in message
+        assert "Decoration" not in message or "Декорации" in message
 
         # Verify Russian names ARE in the message
-        assert "Палорма" in message
-        assert "Секуэла" in message
-        assert "Роя" in message
-        assert "Клаусура" in message
+        assert "РОЭ" in message
+        assert "Чапл" in message
+        assert "Кухня" in message
+        assert "Декорации" in message

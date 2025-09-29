@@ -6,13 +6,13 @@ to configured admin users with Russian localization and error handling.
 """
 
 import logging
-from typing import Dict
 
 from telegram import Bot
 from telegram.error import TelegramError
 
 from src.models.department_statistics import DepartmentStatistics
 from src.services.statistics_service import StatisticsError, StatisticsService
+from src.utils.translations import department_to_russian
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +30,6 @@ class DailyNotificationService:
     Integrates with StatisticsService for data collection and Telegram Bot
     for message delivery with professional Russian-localized formatting.
     """
-
-    # Department name mapping: English → Russian with emoji
-    DEPARTMENT_NAMES: Dict[str, str] = {
-        "Palorm": "🎭 Палорма",
-        "Secuela": "⛪️ Секуэла",
-        "Rocha": "🎨 Роя",
-        "Clausura": "📿 Клаусура",
-        "unassigned": "❓ Без отдела",
-    }
 
     def __init__(self, bot: Bot, statistics_service: StatisticsService):
         """
@@ -60,7 +51,7 @@ class DailyNotificationService:
             statistics: Statistics data to format
 
         Returns:
-            Formatted message string with Russian text and emoji
+            Formatted message string with Russian text
         """
         # Build message header
         message_lines = [
@@ -72,11 +63,14 @@ class DailyNotificationService:
             "По отделам:",
         ]
 
-        # Add department breakdown
+        # Add department breakdown with Russian translations
         for dept_name, count in statistics.participants_by_department.items():
-            # Translate department name to Russian with emoji
-            russian_name = self.DEPARTMENT_NAMES.get(dept_name, f"❓ {dept_name}")
-            message_lines.append(f"{russian_name}: {count} чел.")
+            # Use centralized translation utility
+            if dept_name == "unassigned":
+                russian_name = "Не указано"
+            else:
+                russian_name = department_to_russian(dept_name)
+            message_lines.append(f"  • {russian_name}: {count} чел.")
 
         return "\n".join(message_lines)
 
