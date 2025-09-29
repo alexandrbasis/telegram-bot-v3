@@ -12,6 +12,10 @@ import pytz
 from telegram.ext import Application, ContextTypes
 
 from src.config.settings import NotificationSettings
+from src.services.daily_notification_service import (
+    DailyNotificationService,
+    NotificationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,16 +37,23 @@ class NotificationScheduler:
     with proper timezone handling and error recovery.
     """
 
-    def __init__(self, application: Application, settings: NotificationSettings):
+    def __init__(
+        self,
+        application: Application,
+        settings: NotificationSettings,
+        notification_service: DailyNotificationService,
+    ):
         """
         Initialize notification scheduler.
 
         Args:
             application: Telegram Application instance with JobQueue
             settings: Notification configuration settings
+            notification_service: Service for delivering notifications
         """
         self.application = application
         self.settings = settings
+        self.notification_service = notification_service
         logger.info(
             "Initialized NotificationScheduler (enabled: %s)",
             settings.daily_stats_enabled,
@@ -137,8 +148,8 @@ class NotificationScheduler:
         """
         Callback function executed by JobQueue at scheduled time.
 
-        This will be implemented to call the DailyNotificationService
-        once it's available (Step 3).
+        Extracts admin user ID from job data and delegates to
+        DailyNotificationService for statistics collection and delivery.
 
         Args:
             context: Telegram context with job data and bot instance
@@ -146,24 +157,34 @@ class NotificationScheduler:
         try:
             logger.info("Daily notification job triggered")
 
-            # TODO: Implement in Step 3 - call DailyNotificationService
-            # For now, just log that the job was triggered
+            # Extract admin user ID from job data
             job_data = context.job.data if hasattr(context.job, "data") else {}
             admin_id = job_data.get("admin_user_id")
 
-            logger.info(
-                "Daily notification callback executed (admin: %s)",
-                admin_id,
-            )
+            if not admin_id:
+                logger.error("No admin_user_id in job data, cannot send notification")
+                return
 
-            # Placeholder for Step 3:
-            # notification_service = DailyNotificationService(...)
-            # await notification_service.send_daily_statistics(admin_id)
+            logger.info("Executing daily notification callback for admin: %s", admin_id)
+
+            # Delegate to notification service for statistics delivery
+            await self.notification_service.send_daily_statistics(admin_id)
+
+            logger.info("Daily notification delivered successfully")
+
+        except NotificationError as e:
+            logger.error(
+                "Notification error in daily callback: %s",
+                type(e).__name__,
+                exc_info=True,
+            )
+            # Error already logged by DailyNotificationService
+            # Bot continues running despite notification failure
 
         except Exception as e:
             logger.error(
-                "Error in daily notification callback: %s",
-                e,
+                "Unexpected error in daily notification callback: %s",
+                type(e).__name__,
                 exc_info=True,
             )
-            # TODO: Implement retry logic with exponential backoff in Step 3
+            # Bot continues running despite unexpected error

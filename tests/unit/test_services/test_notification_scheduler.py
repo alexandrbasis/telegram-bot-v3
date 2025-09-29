@@ -18,6 +18,7 @@ import pytz
 from telegram.ext import Application
 
 from src.config.settings import NotificationSettings
+from src.services.daily_notification_service import DailyNotificationService
 
 
 class TestNotificationSchedulerInitialization:
@@ -33,15 +34,21 @@ class TestNotificationSchedulerInitialization:
             timezone="Europe/Moscow",
             admin_user_id=123456789,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         # Act
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Assert
         assert scheduler.application == app
         assert scheduler.settings == settings
+        assert scheduler.notification_service == notification_service
         assert scheduler.settings.daily_stats_enabled is True
 
     def test_scheduler_initialization_when_disabled(self):
@@ -54,11 +61,16 @@ class TestNotificationSchedulerInitialization:
             timezone="Europe/Moscow",
             admin_user_id=None,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         # Act
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Assert
         assert scheduler.application == app
@@ -84,10 +96,15 @@ class TestNotificationScheduling:
             timezone="Europe/Moscow",
             admin_user_id=123456789,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Act
         await scheduler.schedule_daily_notification()
@@ -126,10 +143,15 @@ class TestNotificationScheduling:
             timezone="Europe/Moscow",
             admin_user_id=None,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Act
         await scheduler.schedule_daily_notification()
@@ -163,10 +185,15 @@ class TestNotificationScheduling:
                 timezone=tz_str,
                 admin_user_id=123456789,
             )
+            notification_service = Mock(spec=DailyNotificationService)
 
             from src.services.notification_scheduler import NotificationScheduler
 
-            scheduler = NotificationScheduler(application=app, settings=settings)
+            scheduler = NotificationScheduler(
+                application=app,
+                settings=settings,
+                notification_service=notification_service,
+            )
 
             # Act
             await scheduler.schedule_daily_notification()
@@ -203,10 +230,15 @@ class TestJobPersistence:
             timezone="Europe/Moscow",
             admin_user_id=123456789,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Act
         await scheduler.remove_scheduled_notification()
@@ -231,10 +263,15 @@ class TestJobPersistence:
             timezone="Europe/Moscow",
             admin_user_id=123456789,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Act - Should not raise exception
         await scheduler.remove_scheduled_notification()
@@ -272,10 +309,15 @@ class TestErrorHandling:
             timezone="Europe/Moscow",
             admin_user_id=123456789,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Act
         await scheduler.schedule_daily_notification()
@@ -308,10 +350,15 @@ class TestErrorHandling:
             timezone="Europe/Moscow",
             admin_user_id=123456789,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Act & Assert - Should log error but not raise
         with patch("src.services.notification_scheduler.logger") as mock_logger:
@@ -339,10 +386,15 @@ class TestSchedulerJobNaming:
             timezone="Europe/Moscow",
             admin_user_id=123456789,
         )
+        notification_service = Mock(spec=DailyNotificationService)
 
         from src.services.notification_scheduler import NotificationScheduler
 
-        scheduler = NotificationScheduler(application=app, settings=settings)
+        scheduler = NotificationScheduler(
+            application=app,
+            settings=settings,
+            notification_service=notification_service,
+        )
 
         # Act
         await scheduler.schedule_daily_notification()

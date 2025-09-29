@@ -26,7 +26,11 @@ from src.bot.handlers.help_handlers import handle_help_command
 from src.bot.handlers.schedule_handlers import get_schedule_handlers
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
+from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
+from src.services.daily_notification_service import DailyNotificationService
 from src.services.file_logging_service import FileLoggingService
+from src.services.notification_scheduler import NotificationScheduler
+from src.services.statistics_service import StatisticsService
 from src.utils.single_instance import InstanceLock
 
 logger = logging.getLogger(__name__)
@@ -295,6 +299,44 @@ async def run_bot() -> None:
 
                 await app.initialize()
                 await app.start()
+
+                # Initialize notification scheduler if enabled
+                settings = app.bot_data.get("settings")
+                if settings and settings.notification.daily_stats_enabled:
+                    try:
+                        logger.info("Initializing daily notification scheduler")
+
+                        # Create repository and services
+                        repository = AirtableParticipantRepository(
+                            settings=settings.database
+                        )
+                        statistics_service = StatisticsService(repository=repository)
+                        notification_service = DailyNotificationService(
+                            bot=app.bot, statistics_service=statistics_service
+                        )
+
+                        # Create and schedule notification
+                        scheduler = NotificationScheduler(
+                            application=app,
+                            settings=settings.notification,
+                            notification_service=notification_service,
+                        )
+                        await scheduler.schedule_daily_notification()
+
+                        logger.info(
+                            "Daily notification scheduled for %s %s",
+                            settings.notification.notification_time,
+                            settings.notification.timezone,
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "Failed to initialize notification scheduler: %s",
+                            e,
+                            exc_info=True,
+                        )
+                        logger.warning("Bot will continue without daily notifications")
+                else:
+                    logger.debug("Daily notifications are disabled in configuration")
 
                 updater = app.updater
                 if updater is None:
