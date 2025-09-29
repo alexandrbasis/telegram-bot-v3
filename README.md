@@ -16,6 +16,7 @@ This bot serves as a centralized participant management system for Tres Dias spi
 - **Location-based Search**: Room and floor-based participant discovery with interactive UI
 - **Role-based Access Control**: Three-tier authorization hierarchy (admin/coordinator/viewer) with granular data filtering and handler-level enforcement
 - **Enhanced Security**: Role-based data filtering prevents unauthorized access to sensitive participant information
+- **Daily Statistics Notifications**: Automated daily statistics delivery with timezone-aware scheduling and Russian localization
 
 ## 🏗️ Technical Architecture
 
@@ -313,6 +314,12 @@ AIRTABLE_BASE_ID=appRp7Vby2JMzN0mC
 TELEGRAM_ADMIN_IDS=123456789,987654321
 TELEGRAM_COORDINATOR_IDS=555666777,444333222
 TELEGRAM_VIEWER_IDS=111222333,999888777
+
+# Daily Statistics Notifications (Optional - disabled by default)
+DAILY_STATS_ENABLED=false  # Set to true to enable
+NOTIFICATION_TIME=09:00     # 24-hour format (HH:MM)
+NOTIFICATION_TIMEZONE=UTC   # e.g., Europe/Moscow, America/New_York
+NOTIFICATION_ADMIN_USER_ID=123456789  # Required when enabled
 
 # Optional
 AIRTABLE_TABLE_NAME=Participants

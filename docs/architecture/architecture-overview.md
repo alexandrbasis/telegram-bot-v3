@@ -293,6 +293,22 @@ All bot handlers now implement mandatory authorization checks using decorator-ba
 - Service factory integration with proper dependency injection
 - Comprehensive error handling with StatisticsError security
 
+**Daily Notification Service** (2025-09-29):
+- Automated daily statistics notifications with timezone-aware scheduling
+- Russian-localized message formatting using centralized department translations
+- Integration with StatisticsService for data collection
+- Telegram delivery via bot.send_message() with comprehensive error handling
+- NotificationError custom exception for secure error propagation
+- Graceful degradation ensuring bot continues running despite notification failures
+
+**Notification Scheduler** (2025-09-29):
+- JobQueue-based scheduling using telegram.ext.Application.job_queue
+- Timezone-aware daily notification scheduling with pytz support
+- HH:MM time parsing and datetime conversion for precise scheduling
+- Job persistence with consistent naming (DAILY_STATS_JOB_NAME)
+- Exponential backoff retry mechanisms for transient failures
+- Feature flag integration (daily_stats_enabled) for optional functionality
+
 **Enhanced Export Services with View Alignment** (Updated 2025-09-27):
 - **Participant Export Service**: Extended with view-driven architecture for Airtable alignment
   - **View-Aligned Exports**: All participant exports use configurable "Кандидаты" view for consistent column ordering
