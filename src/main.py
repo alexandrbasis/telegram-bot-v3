@@ -26,12 +26,11 @@ from src.bot.handlers.help_handlers import handle_help_command
 from src.bot.handlers.schedule_handlers import get_schedule_handlers
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
-from src.data.airtable.airtable_client import AirtableClient
-from src.data.airtable.airtable_participant_repo import AirtableParticipantRepository
 from src.services.daily_notification_service import DailyNotificationService
 from src.services.file_logging_service import FileLoggingService
 from src.services.notification_scheduler import NotificationScheduler
 from src.services.statistics_service import StatisticsService
+from src.services.service_factory import get_participant_repository
 from src.utils.single_instance import InstanceLock
 
 logger = logging.getLogger(__name__)
@@ -307,10 +306,8 @@ async def run_bot() -> None:
                     try:
                         logger.info("Initializing daily notification scheduler")
 
-                        # Create Airtable client and repository
-                        airtable_config = settings.get_airtable_config()
-                        client = AirtableClient(airtable_config)
-                        repository = AirtableParticipantRepository(client=client)
+                        # Reuse repository factory to ensure proper client configuration
+                        repository = get_participant_repository()
 
                         # Create services
                         statistics_service = StatisticsService(repository=repository)

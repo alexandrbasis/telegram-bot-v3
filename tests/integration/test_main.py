@@ -245,11 +245,20 @@ class TestMainBotRunning:
     @pytest.mark.asyncio
     async def test_run_bot_function(self):
         """Test that run_bot function properly starts the bot."""
-        with patch("src.main.create_application") as mock_create_app:
+        with (
+            patch("src.main.create_application") as mock_create_app,
+            patch("src.main.get_participant_repository") as mock_get_repo,
+            patch("src.main.StatisticsService") as mock_stats_service,
+            patch("src.main.DailyNotificationService") as mock_notification_service,
+            patch("src.main.NotificationScheduler") as mock_notification_scheduler,
+        ):
 
             mock_app = Mock(spec=Application)
             mock_app.run_polling = AsyncMock()
+            mock_app.bot_data = {"settings": Mock()}
+            mock_app.bot_data["settings"].notification.daily_stats_enabled = False
             mock_create_app.return_value = mock_app
+            mock_notification_scheduler.return_value = AsyncMock()
 
             from src.main import run_bot
 
@@ -258,11 +267,13 @@ class TestMainBotRunning:
             # Should create application and run polling
             mock_create_app.assert_called_once()
             mock_app.run_polling.assert_called_once()
+            mock_get_repo.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_run_bot_retries_on_conflict(self):
         """Test that run_bot retries startup when Telegram reports a conflict."""
         settings_mock = Mock()
+        settings_mock.notification.daily_stats_enabled = False
         settings_mock.telegram.get_startup_retry_config.return_value = {
             "attempts": 2,
             "delay_seconds": 0.1,
@@ -317,6 +328,10 @@ class TestMainBotRunning:
             patch.object(
                 main_module.asyncio, "sleep", new_callable=AsyncMock
             ) as mock_sleep,
+            patch.object(main_module, "get_participant_repository") as mock_get_repo,
+            patch.object(main_module, "StatisticsService") as mock_stats_service,
+            patch.object(main_module, "DailyNotificationService") as mock_notif_service,
+            patch.object(main_module, "NotificationScheduler") as mock_scheduler,
         ):
 
             task = asyncio.create_task(main_module.run_bot())
@@ -329,6 +344,11 @@ class TestMainBotRunning:
             second_updater.start_polling.assert_awaited()
 
             mock_sleep.assert_awaited_with(0.1)
+
+            mock_get_repo.assert_not_called()
+            mock_stats_service.assert_not_called()
+            mock_notif_service.assert_not_called()
+            mock_scheduler.assert_not_called()
 
             task.cancel()
             try:
