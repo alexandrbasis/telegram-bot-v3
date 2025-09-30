@@ -1,10 +1,10 @@
 """Tests for notification admin command handlers."""
 
-import pytest
 from datetime import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from telegram import Update, User, Message
+import pytest
+from telegram import Message, Update, User
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.notification_admin_handlers import (
@@ -12,7 +12,7 @@ from src.bot.handlers.notification_admin_handlers import (
     handle_set_notification_time_command,
     handle_test_stats_command,
 )
-from src.config.settings import Settings, NotificationSettings
+from src.config.settings import NotificationSettings, Settings
 
 
 @pytest.fixture
@@ -89,9 +89,7 @@ class TestNotificationsCommand:
         assert "❌ Выключены" in reply_text
 
     @pytest.mark.asyncio
-    async def test_enable_notifications(
-        self, mock_update, mock_context, mock_settings
-    ):
+    async def test_enable_notifications(self, mock_update, mock_context, mock_settings):
         """Test enabling notifications via 'on' argument."""
         # Arrange
         mock_context.args = ["on"]
@@ -287,13 +285,17 @@ class TestTestStatsCommand:
     ):
         """Test successful test notification delivery."""
         # Arrange
-        with patch(
-            "src.bot.handlers.notification_admin_handlers.get_participant_repository"
-        ) as mock_repo_factory, patch(
-            "src.bot.handlers.notification_admin_handlers.StatisticsService"
-        ) as mock_stats_service_class, patch(
-            "src.bot.handlers.notification_admin_handlers.DailyNotificationService"
-        ) as mock_notif_service_class:
+        with (
+            patch(
+                "src.bot.handlers.notification_admin_handlers.get_participant_repository"
+            ) as mock_repo_factory,
+            patch(
+                "src.bot.handlers.notification_admin_handlers.StatisticsService"
+            ) as mock_stats_service_class,
+            patch(
+                "src.bot.handlers.notification_admin_handlers.DailyNotificationService"
+            ) as mock_notif_service_class,
+        ):
 
             mock_repo = MagicMock()
             mock_repo_factory.return_value = mock_repo
@@ -320,13 +322,17 @@ class TestTestStatsCommand:
     ):
         """Test handling notification delivery failure."""
         # Arrange
-        with patch(
-            "src.bot.handlers.notification_admin_handlers.get_participant_repository"
-        ) as mock_repo_factory, patch(
-            "src.bot.handlers.notification_admin_handlers.StatisticsService"
-        ) as mock_stats_service_class, patch(
-            "src.bot.handlers.notification_admin_handlers.DailyNotificationService"
-        ) as mock_notif_service_class:
+        with (
+            patch(
+                "src.bot.handlers.notification_admin_handlers.get_participant_repository"
+            ) as mock_repo_factory,
+            patch(
+                "src.bot.handlers.notification_admin_handlers.StatisticsService"
+            ) as mock_stats_service_class,
+            patch(
+                "src.bot.handlers.notification_admin_handlers.DailyNotificationService"
+            ) as mock_notif_service_class,
+        ):
 
             mock_repo = MagicMock()
             mock_repo_factory.return_value = mock_repo

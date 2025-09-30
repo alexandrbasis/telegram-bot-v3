@@ -84,9 +84,7 @@ async def handle_notifications_command(
     choice = args[0].lower()
     if choice in {"on", "enable", "true"}:
         settings.notification.daily_stats_enabled = True
-        logger.info(
-            f"User {user.id} ({user.username}) enabled daily notifications"
-        )
+        logger.info(f"User {user.id} ({user.username}) enabled daily notifications")
         await message.reply_text(
             "✅ Ежедневные уведомления о статистике включены.\n"
             f"Время отправки: {settings.notification.notification_time} "
@@ -94,13 +92,12 @@ async def handle_notifications_command(
         )
     elif choice in {"off", "disable", "false"}:
         settings.notification.daily_stats_enabled = False
-        logger.info(
-            f"User {user.id} ({user.username}) disabled daily notifications"
-        )
+        logger.info(f"User {user.id} ({user.username}) disabled daily notifications")
         await message.reply_text("✅ Ежедневные уведомления о статистике выключены.")
     else:
         await message.reply_text(
-            "⚠️ Неизвестная опция. Используйте `/notifications on` или `/notifications off`.",
+            "⚠️ Неизвестная опция. Используйте `/notifications on` или "
+            "`/notifications off`.",
             parse_mode="Markdown",
         )
 
@@ -136,9 +133,7 @@ async def handle_set_notification_time_command(
 
     # Check admin permission
     if not is_admin_user(user.id, settings):
-        await message.reply_text(
-            "🚫 У вас нет прав для настройки времени уведомлений."
-        )
+        await message.reply_text("🚫 У вас нет прав для настройки времени уведомлений.")
         return
 
     # Parse arguments
