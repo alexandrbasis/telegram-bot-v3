@@ -84,13 +84,16 @@ Administrators can configure and control daily statistics notifications directly
       - **2025-09-30T07:15Z** — ♻️ Updated src/main.py:172-220: added initialize_notification_scheduler() async function as post_init callback, registered callback with app.post_init in create_application(), properly handles conditional initialization based on settings.notification.daily_stats_enabled
       - **2025-09-30T07:15Z** — ♻️ Updated src/main.py:354-356: removed inline scheduler initialization from run_bot() function, replaced with explanatory comment about post_init pattern, ensuring clean separation of concerns and proper lifecycle management
 
-  - [ ] Sub-step 2.2: Register notification admin commands with CommandHandler
+  - [x] Sub-step 2.2: Register notification admin commands with CommandHandler
     - **Directory**: `src/`
     - **Files to create/modify**: `src/main.py`
     - **Accept**: CommandHandler instances for /notifications, /set_notification_time, /test_stats registered in create_application()
     - **Tests**: `tests/integration/test_bot_handlers/test_notification_integration.py` - Test handler registration, end-to-end command execution
     - **Done**: Commands are properly registered and accessible to admin users through the bot
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - **2025-09-30T07:25Z** — ✅ Created tests/integration/test_bot_handlers/test_notification_integration.py: 4 integration tests verifying proper command registration for /notifications, /set_notification_time, and /test_stats commands
+      - **2025-09-30T07:25Z** — ♻️ Updated src/main.py:26-30: imported notification admin handler functions (handle_notifications_command, handle_set_notification_time_command, handle_test_stats_command)
+      - **2025-09-30T07:25Z** — ♻️ Updated src/main.py:173-182: registered three CommandHandler instances for notification admin commands with proper logging
 
 ## Testing Strategy
 - [ ] Unit tests: Command handlers in tests/unit/test_bot_handlers/

@@ -23,6 +23,11 @@ from src.bot.handlers.export_conversation_handlers import (
 )
 from src.bot.handlers.export_handlers import handle_export_command
 from src.bot.handlers.help_handlers import handle_help_command
+from src.bot.handlers.notification_admin_handlers import (
+    handle_notifications_command,
+    handle_set_notification_time_command,
+    handle_test_stats_command,
+)
 from src.bot.handlers.schedule_handlers import get_schedule_handlers
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
@@ -164,6 +169,17 @@ def create_application() -> Application:
     logger.info("Adding help command handler")
     help_handler = CommandHandler("help", handle_help_command)
     app.add_handler(help_handler)
+
+    # Add notification admin command handlers (admin-only)
+    logger.info("Adding notification admin command handlers")
+    notifications_handler = CommandHandler("notifications", handle_notifications_command)
+    app.add_handler(notifications_handler)
+
+    set_time_handler = CommandHandler("set_notification_time", handle_set_notification_time_command)
+    app.add_handler(set_time_handler)
+
+    test_stats_handler = CommandHandler("test_stats", handle_test_stats_command)
+    app.add_handler(test_stats_handler)
 
     # Store settings in bot_data for handlers to access
     app.bot_data["settings"] = settings
