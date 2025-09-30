@@ -73,13 +73,16 @@ Administrators can configure and control daily statistics notifications directly
       - **2025-09-30T06:50Z** — ✳️ Created src/bot/handlers/notification_admin_handlers.py: implemented three admin commands - handle_notifications_command() for status/enable/disable, handle_set_notification_time_command() for time/timezone configuration, handle_test_stats_command() for immediate test notifications. All handlers include auth_utils.is_admin_user() validation, Russian localization, and comprehensive error handling
 
 - [ ] Step 2: Integrate Scheduler with Main Application using post_init
-  - [ ] Sub-step 2.1: Add post_init scheduler initialization to main.py
+  - [x] Sub-step 2.1: Add post_init scheduler initialization to main.py
     - **Directory**: `src/`
     - **Files to create/modify**: `src/main.py`
     - **Accept**: Uses Application.post_init callback to initialize scheduler after bot starts, checks notification settings, handles errors gracefully
     - **Tests**: `tests/unit/test_main.py` - Test post_init callback, conditional initialization, error handling
     - **Done**: Application properly initializes scheduler after bot startup using post_init pattern
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - **2025-09-30T07:10Z** — ✅ Updated tests/unit/test_main.py: added TestNotificationSchedulerIntegration class with 4 comprehensive tests covering post_init callback registration, scheduler initialization when enabled/disabled, and error handling
+      - **2025-09-30T07:15Z** — ♻️ Updated src/main.py:172-220: added initialize_notification_scheduler() async function as post_init callback, registered callback with app.post_init in create_application(), properly handles conditional initialization based on settings.notification.daily_stats_enabled
+      - **2025-09-30T07:15Z** — ♻️ Updated src/main.py:354-356: removed inline scheduler initialization from run_bot() function, replaced with explanatory comment about post_init pattern, ensuring clean separation of concerns and proper lifecycle management
 
   - [ ] Sub-step 2.2: Register notification admin commands with CommandHandler
     - **Directory**: `src/`

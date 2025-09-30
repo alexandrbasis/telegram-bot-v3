@@ -168,6 +168,57 @@ def create_application() -> Application:
     # Store settings in bot_data for handlers to access
     app.bot_data["settings"] = settings
 
+    # Register post_init callback for notification scheduler initialization
+    async def initialize_notification_scheduler(application: Application) -> None:
+        """
+        Post-initialization callback to set up notification scheduler.
+
+        Called after application is fully initialized but before polling starts.
+        This ensures proper lifecycle management and clean separation of concerns.
+
+        Args:
+            application: The initialized Application instance
+        """
+        settings = application.bot_data.get("settings")
+        if not settings or not settings.notification.daily_stats_enabled:
+            logger.debug("Daily notifications are disabled, skipping scheduler setup")
+            return
+
+        try:
+            logger.info("Initializing daily notification scheduler via post_init")
+
+            # Reuse repository factory to ensure proper client configuration
+            repository = get_participant_repository()
+
+            # Create services
+            statistics_service = StatisticsService(repository=repository)
+            notification_service = DailyNotificationService(
+                bot=application.bot, statistics_service=statistics_service
+            )
+
+            # Create and schedule notification
+            scheduler = NotificationScheduler(
+                application=application,
+                settings=settings.notification,
+                notification_service=notification_service,
+            )
+            await scheduler.schedule_daily_notification()
+
+            logger.info(
+                "Daily notification scheduled for %s %s",
+                settings.notification.notification_time,
+                settings.notification.timezone,
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to initialize notification scheduler: %s",
+                e,
+                exc_info=True,
+            )
+            logger.warning("Bot will continue without daily notifications")
+
+    app.post_init = initialize_notification_scheduler
+
     # Register global error handler for better diagnostics
     async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
         err = getattr(context, "error", None)
@@ -300,43 +351,9 @@ async def run_bot() -> None:
                 await app.initialize()
                 await app.start()
 
-                # Initialize notification scheduler if enabled
-                settings = app.bot_data.get("settings")
-                if settings and settings.notification.daily_stats_enabled:
-                    try:
-                        logger.info("Initializing daily notification scheduler")
-
-                        # Reuse repository factory to ensure proper client configuration
-                        repository = get_participant_repository()
-
-                        # Create services
-                        statistics_service = StatisticsService(repository=repository)
-                        notification_service = DailyNotificationService(
-                            bot=app.bot, statistics_service=statistics_service
-                        )
-
-                        # Create and schedule notification
-                        scheduler = NotificationScheduler(
-                            application=app,
-                            settings=settings.notification,
-                            notification_service=notification_service,
-                        )
-                        await scheduler.schedule_daily_notification()
-
-                        logger.info(
-                            "Daily notification scheduled for %s %s",
-                            settings.notification.notification_time,
-                            settings.notification.timezone,
-                        )
-                    except Exception as e:
-                        logger.error(
-                            "Failed to initialize notification scheduler: %s",
-                            e,
-                            exc_info=True,
-                        )
-                        logger.warning("Bot will continue without daily notifications")
-                else:
-                    logger.debug("Daily notifications are disabled in configuration")
+                # Note: Notification scheduler is initialized via post_init callback
+                # registered in create_application(). This ensures proper lifecycle
+                # management and clean separation of concerns.
 
                 updater = app.updater
                 if updater is None:
