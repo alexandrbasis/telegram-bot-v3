@@ -308,6 +308,9 @@ All bot handlers now implement mandatory authorization checks using decorator-ba
 - Job persistence with consistent naming (DAILY_STATS_JOB_NAME)
 - Exponential backoff retry mechanisms for transient failures
 - Feature flag integration (daily_stats_enabled) for optional functionality
+- **post_init Integration Pattern** (2025-09-30): Scheduler initialized via Application.post_init callback for proper lifecycle management
+- **Runtime Reconfiguration** (2025-09-30): Scheduler instance stored in bot_data enabling admin commands to reschedule jobs without restart
+- **Reschedule Capability** (2025-09-30): reschedule_notification() method enables immediate configuration changes through admin commands
 
 **Enhanced Export Services with View Alignment** (Updated 2025-09-27):
 - **Participant Export Service**: Extended with view-driven architecture for Airtable alignment
@@ -402,6 +405,43 @@ All bot handlers now implement mandatory authorization checks using decorator-ba
 - **Reply Keyboard Navigation**: Mobile-optimized keyboards for search mode selection
 - **State-based Routing**: Proper conversation state management between different search types
 - **Context Preservation**: Seamless transitions between search modes while maintaining user context
+
+## Application Lifecycle Integration
+
+### post_init Pattern for Scheduler Initialization (2025-09-30)
+
+The bot uses the Application.post_init pattern for proper notification scheduler initialization, ensuring all dependencies are ready before scheduler starts.
+
+**Implementation Pattern**:
+```python
+# src/main.py - Scheduler initialization using post_init callback
+async def initialize_notification_scheduler(application: Application) -> None:
+    """Initialize notification scheduler after Application starts."""
+    settings = application.bot_data.get("settings")
+
+    # Always create scheduler instance (stored in bot_data for handler access)
+    scheduler = NotificationScheduler(application, settings.notification)
+    application.bot_data["scheduler"] = scheduler
+
+    # Conditionally schedule based on feature flag
+    if settings.notification.daily_stats_enabled:
+        await scheduler.schedule_daily_notification()
+
+# Register post_init callback
+application.post_init = initialize_notification_scheduler
+```
+
+**Key Benefits**:
+- **Proper Lifecycle Management**: Scheduler initializes AFTER bot starts, ensuring all dependencies ready
+- **Separation of Concerns**: Initialization logic separated from bot startup flow
+- **Handler Access**: Scheduler stored in bot_data enables admin command integration
+- **Runtime Reconfiguration**: Admin commands can access scheduler to reschedule jobs immediately
+- **Graceful Error Handling**: Initialization failures don't prevent bot startup
+
+**Integration with Admin Commands** (2025-09-30):
+- `/notifications` command accesses scheduler from bot_data to enable/disable notifications
+- `/set_notification_time` command calls scheduler.reschedule_notification() for immediate updates
+- Changes take effect without bot restart through direct scheduler access
 
 ## Component Integration
 
