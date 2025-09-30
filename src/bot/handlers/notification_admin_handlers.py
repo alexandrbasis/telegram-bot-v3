@@ -83,17 +83,58 @@ async def handle_notifications_command(
     # Handle enable/disable
     choice = args[0].lower()
     if choice in {"on", "enable", "true"}:
+        was_enabled = settings.notification.daily_stats_enabled
         settings.notification.daily_stats_enabled = True
         logger.info(f"User {user.id} ({user.username}) enabled daily notifications")
-        await message.reply_text(
-            "✅ Ежедневные уведомления о статистике включены.\n"
-            f"Время отправки: {settings.notification.notification_time} "
-            f"({settings.notification.timezone})"
-        )
+
+        # Reschedule notification if scheduler is available
+        scheduler = context.bot_data.get("notification_scheduler")
+        if scheduler and not was_enabled:
+            try:
+                await scheduler.schedule_daily_notification()
+                await message.reply_text(
+                    "✅ Ежедневные уведомления о статистике включены и запланированы.\n"
+                    f"Время отправки: {settings.notification.notification_time} "
+                    f"({settings.notification.timezone})"
+                )
+            except Exception as e:
+                logger.error(f"Failed to schedule notification: {e}", exc_info=True)
+                await message.reply_text(
+                    "⚠️ Уведомления включены, но не удалось запланировать отправку. "
+                    "Проверьте логи."
+                )
+        else:
+            await message.reply_text(
+                "✅ Ежедневные уведомления о статистике включены.\n"
+                f"Время отправки: {settings.notification.notification_time} "
+                f"({settings.notification.timezone})"
+            )
+
     elif choice in {"off", "disable", "false"}:
+        was_enabled = settings.notification.daily_stats_enabled
         settings.notification.daily_stats_enabled = False
         logger.info(f"User {user.id} ({user.username}) disabled daily notifications")
-        await message.reply_text("✅ Ежедневные уведомления о статистике выключены.")
+
+        # Remove scheduled notification if scheduler is available
+        scheduler = context.bot_data.get("notification_scheduler")
+        if scheduler and was_enabled:
+            try:
+                await scheduler.remove_scheduled_notification()
+                await message.reply_text(
+                    "✅ Ежедневные уведомления о статистике выключены и "
+                    "удалены из расписания."
+                )
+            except Exception as e:
+                logger.error(f"Failed to remove notification: {e}", exc_info=True)
+                await message.reply_text(
+                    "⚠️ Уведомления выключены, но не удалось удалить из расписания. "
+                    "Проверьте логи."
+                )
+        else:
+            await message.reply_text(
+                "✅ Ежедневные уведомления о статистике выключены."
+            )
+
     else:
         await message.reply_text(
             "⚠️ Неизвестная опция. Используйте `/notifications on` или "
@@ -191,12 +232,38 @@ async def handle_set_notification_time_command(
         f"{time_str} {timezone_str}"
     )
 
-    await message.reply_text(
-        f"✅ Время уведомлений обновлено:\n"
-        f"Время: {time_str}\n"
-        f"Часовой пояс: {timezone_str}\n\n"
-        f"⚠️ Изменения вступят в силу после перезапуска бота."
-    )
+    # Reschedule notification if enabled and scheduler is available
+    scheduler = context.bot_data.get("notification_scheduler")
+    if scheduler and settings.notification.daily_stats_enabled:
+        try:
+            await scheduler.reschedule_notification()
+            await message.reply_text(
+                f"✅ Время уведомлений обновлено и перепланировано:\n"
+                f"Время: {time_str}\n"
+                f"Часовой пояс: {timezone_str}\n\n"
+                f"Изменения вступили в силу немедленно."
+            )
+        except Exception as e:
+            logger.error(f"Failed to reschedule notification: {e}", exc_info=True)
+            await message.reply_text(
+                f"✅ Время уведомлений обновлено:\n"
+                f"Время: {time_str}\n"
+                f"Часовой пояс: {timezone_str}\n\n"
+                f"⚠️ Не удалось перепланировать уведомления. Проверьте логи."
+            )
+    else:
+        # Construct message with conditional note about disabled state
+        disabled_note = (
+            "ℹ️ Уведомления в данный момент выключены."
+            if not settings.notification.daily_stats_enabled
+            else ""
+        )
+        await message.reply_text(
+            f"✅ Время уведомлений обновлено:\n"
+            f"Время: {time_str}\n"
+            f"Часовой пояс: {timezone_str}\n\n"
+            f"{disabled_note}"
+        )
 
 
 async def handle_test_stats_command(

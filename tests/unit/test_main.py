@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
+from src.config.settings import reset_settings
 from src.main import configure_logging, create_application
 
 
@@ -278,6 +279,9 @@ class TestNotificationSchedulerIntegration:
             patch("src.main.DailyNotificationService") as mock_notif_service,
             patch("src.main.NotificationScheduler") as mock_scheduler_class,
         ):
+            # Reset cached settings to ensure fresh configuration
+            reset_settings()
+
             # Setup mocks
             mock_builder = Mock()
             mock_builder.token.return_value = mock_builder
@@ -311,7 +315,7 @@ class TestNotificationSchedulerIntegration:
 
     @pytest.mark.asyncio
     async def test_post_init_skips_scheduler_when_disabled(self):
-        """Test that post_init callback skips scheduler when notifications disabled."""
+        """Test that post_init callback skips scheduling when notifications disabled."""
         # Create mock settings with notifications disabled
         mock_settings = Mock()
         mock_settings.telegram.bot_token = "test_bot_token"
@@ -327,6 +331,9 @@ class TestNotificationSchedulerIntegration:
             patch("src.main.get_search_conversation_handler"),
             patch("src.main.get_export_conversation_handler"),
             patch("src.main.get_schedule_handlers", return_value=[]),
+            patch("src.main.get_participant_repository") as mock_repo_factory,
+            patch("src.main.StatisticsService") as mock_stats_service,
+            patch("src.main.DailyNotificationService") as mock_notif_service,
             patch("src.main.NotificationScheduler") as mock_scheduler_class,
         ):
             # Setup mocks
@@ -340,6 +347,10 @@ class TestNotificationSchedulerIntegration:
             mock_builder.build.return_value = mock_app
             mock_app_builder.return_value = mock_builder
 
+            mock_scheduler = Mock()
+            mock_scheduler.schedule_daily_notification = AsyncMock()
+            mock_scheduler_class.return_value = mock_scheduler
+
             # Act
             app = create_application()
 
@@ -349,8 +360,10 @@ class TestNotificationSchedulerIntegration:
             # Simulate calling post_init
             await app.post_init(app)
 
-            # Assert scheduler was NOT initialized
-            mock_scheduler_class.assert_not_called()
+            # Assert scheduler instance was created (for runtime reconfiguration)
+            # but schedule_daily_notification was NOT called since notifications are disabled
+            mock_scheduler_class.assert_called_once()
+            mock_scheduler.schedule_daily_notification.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_post_init_handles_scheduler_errors_gracefully(self):
@@ -375,6 +388,9 @@ class TestNotificationSchedulerIntegration:
                 side_effect=Exception("Repository error"),
             ),
         ):
+            # Reset cached settings to ensure fresh configuration
+            reset_settings()
+
             # Setup mocks
             mock_builder = Mock()
             mock_builder.token.return_value = mock_builder
@@ -393,7 +409,9 @@ class TestNotificationSchedulerIntegration:
             try:
                 await app.post_init(app)
             except Exception as e:
-                pytest.fail(f"post_init should handle errors gracefully, but raised: {e}")
+                pytest.fail(
+                    f"post_init should handle errors gracefully, but raised: {e}"
+                )
 
     def test_create_application_registers_post_init(self):
         """Test that create_application properly registers post_init callback."""
@@ -409,6 +427,9 @@ class TestNotificationSchedulerIntegration:
             patch("src.main.get_export_conversation_handler"),
             patch("src.main.get_schedule_handlers", return_value=[]),
         ):
+            # Reset cached settings to ensure fresh configuration
+            reset_settings()
+
             # Setup mocks
             mock_builder = Mock()
             mock_builder.token.return_value = mock_builder

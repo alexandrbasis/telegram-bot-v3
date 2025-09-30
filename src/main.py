@@ -172,10 +172,14 @@ def create_application() -> Application:
 
     # Add notification admin command handlers (admin-only)
     logger.info("Adding notification admin command handlers")
-    notifications_handler = CommandHandler("notifications", handle_notifications_command)
+    notifications_handler = CommandHandler(
+        "notifications", handle_notifications_command
+    )
     app.add_handler(notifications_handler)
 
-    set_time_handler = CommandHandler("set_notification_time", handle_set_notification_time_command)
+    set_time_handler = CommandHandler(
+        "set_notification_time", handle_set_notification_time_command
+    )
     app.add_handler(set_time_handler)
 
     test_stats_handler = CommandHandler("test_stats", handle_test_stats_command)
@@ -192,13 +196,13 @@ def create_application() -> Application:
         Called after application is fully initialized but before polling starts.
         This ensures proper lifecycle management and clean separation of concerns.
 
+        The scheduler instance is stored in bot_data so admin handlers can
+        access it for runtime reconfiguration.
+
         Args:
             application: The initialized Application instance
         """
         settings = application.bot_data.get("settings")
-        if not settings or not settings.notification.daily_stats_enabled:
-            logger.debug("Daily notifications are disabled, skipping scheduler setup")
-            return
 
         try:
             logger.info("Initializing daily notification scheduler via post_init")
@@ -212,19 +216,29 @@ def create_application() -> Application:
                 bot=application.bot, statistics_service=statistics_service
             )
 
-            # Create and schedule notification
+            # Create scheduler instance (always create, even if disabled)
             scheduler = NotificationScheduler(
                 application=application,
                 settings=settings.notification,
                 notification_service=notification_service,
             )
-            await scheduler.schedule_daily_notification()
 
-            logger.info(
-                "Daily notification scheduled for %s %s",
-                settings.notification.notification_time,
-                settings.notification.timezone,
-            )
+            # Store scheduler in bot_data for admin handlers to access
+            application.bot_data["notification_scheduler"] = scheduler
+
+            # Schedule notification if enabled
+            if settings.notification.daily_stats_enabled:
+                await scheduler.schedule_daily_notification()
+                logger.info(
+                    "Daily notification scheduled for %s %s",
+                    settings.notification.notification_time,
+                    settings.notification.timezone,
+                )
+            else:
+                logger.debug(
+                    "Daily notifications are disabled, scheduler ready but not scheduled"
+                )
+
         except Exception as e:
             logger.error(
                 "Failed to initialize notification scheduler: %s",
