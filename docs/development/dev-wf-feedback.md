@@ -3254,3 +3254,125 @@ The workflow efficiency is operating at optimal levels. Strategic improvements f
 ### Priority: Low
 
 ---
+## 2025-09-30 - CI Fix Workflow (/fci) - Development Workflow Improvement Specialist
+
+### Issue/Observation
+
+**Context**: Fixed CI pipeline failures for PR #76 (AGB-80-admin-commands-integration)
+
+CI pipeline failed on Format Check despite all local code quality checks passing. Investigation revealed the local branch was ahead of remote by 2 commits, causing confusion about why local checks passed but CI failed. Additionally, integration tests needed updating after adding 3 new command handlers to main.py (notification admin commands).
+
+**Time Impact**: ~8 minutes total
+- 5 minutes investigating local/remote sync issue
+- 3 minutes identifying test update requirements
+
+**Confusion Point**: Local diagnostic checks (black, isort, mypy, flake8) all passed, but CI failed on black formatting
+
+**Root Causes**:
+1. CI was running on older remote code, while local branch had newer commits with fixes
+2. Test `test_create_application_adds_conversation_handler` expected 5 handlers but found 8 after adding notification commands
+
+**Resolution Steps**:
+1. Identified local branch ahead of remote using git log comparison
+2. Pushed local commits to trigger new CI run
+3. Found test failure due to handler count mismatch
+4. Updated test assertions from 5 to 8 handlers and added validation for new commands
+5. All CI checks passed: Type Check, Security, Format Check, Lint, Tests + Coverage (3.11 & 3.12), Docker Build
+
+### Impact
+
+**Development Time**: Lost 8 minutes on investigation that could have been prevented with better workflow instructions
+
+**Workflow Gap**: The /fci workflow assumes CI failure = code quality issue in current code, but doesn't account for:
+- CI running on different code than local branch (sync issue)
+- Local/remote branch divergence scenarios
+- Integration test maintenance when adding handlers to core application files
+
+**Developer Experience**: Created confusion and false debugging paths when all local checks passed but CI failed
+
+### Suggested Improvement
+
+#### 1. Critical Gap - Branch Sync Check
+**Priority: HIGH**
+
+Add Step 0 to /fci workflow: "Verify Branch Sync"
+
+```bash
+# Check if local branch is in sync with remote
+git status
+git log origin/<branch>..HEAD --oneline
+```
+
+**Rationale**: This single step would have immediately revealed the 2 unpushed commits and explained the local/remote discrepancy, saving 5+ minutes of investigation.
+
+**Implementation**: Update /.claude/commands/fci.md with new Step 0 before diagnostic checks.
+
+#### 2. Test Impact Analysis
+**Priority: MEDIUM**
+
+When modifying core files like `src/main.py`, add explicit instruction to check related integration tests:
+- "If modifying src/main.py handler registration, verify tests/integration/test_main.py handler count assertions"
+- Add test discovery command: `rg 'add_handler' tests/ -l` to find affected tests
+
+**Rationale**: Integration tests often have hard-coded expectations about handler counts or application structure. Proactive checking prevents test failures after push.
+
+**Implementation**: 
+- Add to /fci workflow after code quality fixes
+- Add to CLAUDE.md development guidelines for main.py modifications
+
+#### 3. Consolidated Diagnostic Command
+**Priority: MEDIUM**
+
+Create single script to run all CI checks locally:
+
+```bash
+./scripts/ci-check-local.sh
+# Runs: black --check, isort --check-only, flake8, mypy, pytest with coverage
+```
+
+**Rationale**: Currently these commands are scattered across CLAUDE.md and /fci instructions. A single consolidated script ensures consistency and reduces copy-paste errors.
+
+**Implementation**: Create new script in `/scripts/` directory with all CI check commands.
+
+#### 4. Enhanced Test Failure Messages
+**Priority: LOW**
+
+When handler count assertions fail, test output should suggest: "Handler count mismatch detected. Check src/main.py for new add_handler() calls and update test expectations."
+
+**Rationale**: Improves developer experience by providing actionable guidance directly in test failures.
+
+**Implementation**: Update test_main.py assertions with custom error messages.
+
+### What Worked Well
+
+1. **Parallel Diagnostic Execution**: Running black, isort, flake8, mypy in parallel was efficient and caught issues quickly
+2. **Local Test Suite**: Running full test suite (1676 tests, 87% coverage) before pushing caught the integration test issue proactively
+3. **VERIFICATION REQUIREMENTS Section**: The consolidated CI validation command in the workflow was exactly what was needed for final verification
+
+### Documentation Gap
+
+**Missing Documentation**: The relationship between code changes and integration test maintenance isn't documented. 
+
+**Needed Addition**: Developers adding handlers to main.py should know to check test_main.py handler count assertions proactively.
+
+**Suggested Location**: Add to CLAUDE.md under "Testing" section or create new "Integration Test Maintenance" guide.
+
+### Workflow Assumptions That Didn't Match Reality
+
+1. **Assumption**: CI failure = code quality issue in current code
+   **Reality**: CI may be running on different code version than local branch (sync issue)
+
+2. **Assumption**: Local checks passing = CI will pass
+   **Reality**: Local/remote divergence can cause false confidence in local checks
+
+3. **Assumption**: Code quality fixes are sufficient
+   **Reality**: Integration test maintenance may be required when modifying core application structure
+
+### Priority: HIGH
+
+**Immediate Action Items**:
+1. Add branch sync check as Step 0 in /fci workflow
+2. Document integration test maintenance requirements for main.py modifications
+3. Consider creating consolidated ci-check-local.sh script
+
+---
