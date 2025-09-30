@@ -1,5 +1,5 @@
 # Task: Admin Commands Integration
-**Created**: 2025-09-28 | **Status**: Business Review
+**Created**: 2025-09-28 | **Status**: In Progress | **Started**: 2025-09-30
 
 ## Business Requirements (Gate 1 - Approval Required)
 ### Primary Objective
@@ -46,12 +46,12 @@ Implement administrative commands for notification configuration and integrate t
 - **Status Flow**: Business Review → Ready for Implementation → In Progress → In Review → Testing → Done
 
 ### PR Details
-- **Branch**: [Name]
-- **PR URL**: [Link]
-- **Status**: [Draft/Review/Merged]
+- **Branch**: feature/AGB-80-admin-commands-integration
+- **PR URL**: [To be created]
+- **Status**: In Development
 
 ## Business Context
-[One-line user value statement after approval]
+Administrators can configure and control daily statistics notifications directly through bot commands without requiring code changes or bot restarts.
 
 ## Technical Requirements
 - [ ] Create notification admin handlers with auth_utils integration
@@ -61,14 +61,16 @@ Implement administrative commands for notification configuration and integrate t
 - [ ] Ensure proper error handling and user feedback
 
 ## Implementation Steps & Change Log
-- [ ] Step 1: Add Administrative Commands with Permission Integration
-  - [ ] Sub-step 1.1: Create notification configuration handlers using auth_utils
+- [x] Step 1: Add Administrative Commands with Permission Integration
+  - [x] Sub-step 1.1: Create notification configuration handlers using auth_utils
     - **Directory**: `src/bot/handlers/`
     - **Files to create/modify**: `src/bot/handlers/notification_admin_handlers.py`
     - **Accept**: Commands /notifications, /set_notification_time, /test_stats with auth_utils.is_admin_user() validation, timezone input parsing, immediate feedback
     - **Tests**: `tests/unit/test_bot_handlers/test_notification_admin_handlers.py` - Test admin permission validation, time parsing, error messages
     - **Done**: Handlers validate admin permissions, parse time/timezone input, provide clear user feedback
-    - **Changelog**: [Record changes made with file paths and line ranges]
+    - **Changelog**:
+      - **2025-09-30T06:45Z** — ✅ Created tests/unit/test_bot_handlers/test_notification_admin_handlers.py: comprehensive test suite with 16 tests covering admin permission validation, time parsing, timezone validation, enable/disable functionality, and test notification delivery
+      - **2025-09-30T06:50Z** — ✳️ Created src/bot/handlers/notification_admin_handlers.py: implemented three admin commands - handle_notifications_command() for status/enable/disable, handle_set_notification_time_command() for time/timezone configuration, handle_test_stats_command() for immediate test notifications. All handlers include auth_utils.is_admin_user() validation, Russian localization, and comprehensive error handling
 
 - [ ] Step 2: Integrate Scheduler with Main Application using post_init
   - [ ] Sub-step 2.1: Add post_init scheduler initialization to main.py
