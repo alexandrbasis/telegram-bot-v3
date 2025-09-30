@@ -70,6 +70,12 @@ NOTIFICATION_ADMIN_USER_ID=987654321
 - `NOTIFICATION_ADMIN_USER_ID`: Required when daily_stats_enabled is true, must be valid integer user ID
 - **Validation skipped when feature disabled**: All notification settings validation bypassed when DAILY_STATS_ENABLED=false
 
+**Runtime Reconfiguration** (Added 2025-09-30):
+- Admin commands `/notifications`, `/set_notification_time`, and `/test_stats` enable runtime configuration changes
+- Changes take effect immediately without requiring bot restart
+- Scheduler uses post_init pattern for proper lifecycle integration
+- Configuration changes persist across bot restarts when environment variables are updated
+
 ### Optional Variables
 
 ### Feature Flags

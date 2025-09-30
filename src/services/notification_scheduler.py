@@ -152,6 +152,27 @@ class NotificationScheduler:
                 exc_info=True,
             )
 
+    async def reschedule_notification(self) -> None:
+        """
+        Reschedule notification with current settings.
+
+        Removes any existing scheduled jobs and creates a new one with
+        the current configuration. This enables runtime configuration changes
+        to take effect immediately without bot restart.
+
+        Raises:
+            SchedulerError: If rescheduling fails
+        """
+        logger.info("Rescheduling notification with updated settings")
+
+        # Remove existing jobs first
+        await self.remove_scheduled_notification()
+
+        # Schedule with new settings
+        await self.schedule_daily_notification()
+
+        logger.info("Notification successfully rescheduled")
+
     async def _notification_callback(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Callback function executed by JobQueue at scheduled time.

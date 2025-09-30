@@ -732,6 +732,91 @@ Admin: /auth_refresh
 Bot: ✅ Кэш авторизации очищен. Роли пользователей будут обновлены при следующем обращении.
 ```
 
+### /notifications (New - 2025-09-30)
+**Authorization Required**: Admin-level access only
+
+Admin-only command to view and manage daily statistics notification settings.
+
+**Functionality**:
+- View current notification status (enabled/disabled)
+- Display configured notification time and timezone
+- Toggle notifications on/off
+- Changes take effect immediately without bot restart
+- Integration with notification scheduler for runtime reconfiguration
+
+**Usage Examples**:
+```
+Admin: /notifications
+Bot: 📊 Настройки уведомлений:
+     Статус: Включено ✅
+     Время: 09:00 (Europe/Moscow)
+
+     Используйте /set_notification_time для изменения времени
+
+     [Выключить уведомления] [Тестовое уведомление]
+
+Admin clicks: [Выключить уведомления]
+Bot: ✅ Ежедневные уведомления выключены
+```
+
+### /set_notification_time (New - 2025-09-30)
+**Authorization Required**: Admin-level access only
+
+Admin-only command to configure daily statistics notification delivery time and timezone.
+
+**Functionality**:
+- Set notification time in HH:MM format (24-hour)
+- Configure timezone using pytz identifiers (e.g., Europe/Moscow, America/New_York)
+- Validate time format and timezone before applying changes
+- Changes take effect immediately with automatic job rescheduling
+- No bot restart required
+
+**Usage Examples**:
+```
+Admin: /set_notification_time 09:00 Europe/Moscow
+Bot: ✅ Время уведомлений установлено на 09:00 (Europe/Moscow)
+
+Admin: /set_notification_time 18:30
+Bot: ✅ Время уведомлений установлено на 18:30 (текущий часовой пояс: UTC)
+
+Admin: /set_notification_time invalid
+Bot: ❌ Неверный формат времени. Используйте HH:MM (например: 09:00)
+     Опционально укажите часовой пояс (например: Europe/Moscow)
+```
+
+**Input Validation**:
+- Time format: HH:MM (00:00-23:59)
+- Timezone: Valid pytz timezone identifier (optional, defaults to current timezone)
+- Error messages provide clear guidance for correct format
+
+### /test_stats (New - 2025-09-30)
+**Authorization Required**: Admin-level access only
+
+Admin-only command to immediately trigger a test statistics notification for verification purposes.
+
+**Functionality**:
+- Send immediate statistics notification to admin user
+- Bypass scheduled delivery time for testing
+- Use same formatting and data as scheduled notifications
+- Verify notification system configuration without waiting for scheduled time
+
+**Usage Example**:
+```
+Admin: /test_stats
+Bot: 📤 Отправка тестового уведомления...
+     ✅ Тестовое уведомление отправлено
+
+[Admin receives statistics notification immediately]
+```
+
+**Integration Notes**:
+- All three commands use `auth_utils.is_admin_user()` for permission validation
+- Commands enable runtime notification reconfiguration without bot restart
+- Scheduler instance stored in `bot_data` for handler access
+- `/notifications` command calls `scheduler.schedule_daily_notification()` when enabling
+- `/set_notification_time` command calls `scheduler.reschedule_notification()` when time changes
+- Complete Russian localization with emoji indicators
+
 ## Data Export Commands
 
 ### /export

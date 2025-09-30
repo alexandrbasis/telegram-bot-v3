@@ -23,6 +23,11 @@ from src.bot.handlers.export_conversation_handlers import (
 )
 from src.bot.handlers.export_handlers import handle_export_command
 from src.bot.handlers.help_handlers import handle_help_command
+from src.bot.handlers.notification_admin_handlers import (
+    handle_notifications_command,
+    handle_set_notification_time_command,
+    handle_test_stats_command,
+)
 from src.bot.handlers.schedule_handlers import get_schedule_handlers
 from src.bot.handlers.search_conversation import get_search_conversation_handler
 from src.config.settings import Settings, get_settings
@@ -165,8 +170,84 @@ def create_application() -> Application:
     help_handler = CommandHandler("help", handle_help_command)
     app.add_handler(help_handler)
 
+    # Add notification admin command handlers (admin-only)
+    logger.info("Adding notification admin command handlers")
+    notifications_handler = CommandHandler(
+        "notifications", handle_notifications_command
+    )
+    app.add_handler(notifications_handler)
+
+    set_time_handler = CommandHandler(
+        "set_notification_time", handle_set_notification_time_command
+    )
+    app.add_handler(set_time_handler)
+
+    test_stats_handler = CommandHandler("test_stats", handle_test_stats_command)
+    app.add_handler(test_stats_handler)
+
     # Store settings in bot_data for handlers to access
     app.bot_data["settings"] = settings
+
+    # Register post_init callback for notification scheduler initialization
+    async def initialize_notification_scheduler(application: Application) -> None:
+        """
+        Post-initialization callback to set up notification scheduler.
+
+        Called after application is fully initialized but before polling starts.
+        This ensures proper lifecycle management and clean separation of concerns.
+
+        The scheduler instance is stored in bot_data so admin handlers can
+        access it for runtime reconfiguration.
+
+        Args:
+            application: The initialized Application instance
+        """
+        settings = application.bot_data.get("settings")
+
+        try:
+            logger.info("Initializing daily notification scheduler via post_init")
+
+            # Reuse repository factory to ensure proper client configuration
+            repository = get_participant_repository()
+
+            # Create services
+            statistics_service = StatisticsService(repository=repository)
+            notification_service = DailyNotificationService(
+                bot=application.bot, statistics_service=statistics_service
+            )
+
+            # Create scheduler instance (always create, even if disabled)
+            scheduler = NotificationScheduler(
+                application=application,
+                settings=settings.notification,
+                notification_service=notification_service,
+            )
+
+            # Store scheduler in bot_data for admin handlers to access
+            application.bot_data["notification_scheduler"] = scheduler
+
+            # Schedule notification if enabled
+            if settings.notification.daily_stats_enabled:
+                await scheduler.schedule_daily_notification()
+                logger.info(
+                    "Daily notification scheduled for %s %s",
+                    settings.notification.notification_time,
+                    settings.notification.timezone,
+                )
+            else:
+                logger.debug(
+                    "Daily notifications are disabled, scheduler ready but not scheduled"
+                )
+
+        except Exception as e:
+            logger.error(
+                "Failed to initialize notification scheduler: %s",
+                e,
+                exc_info=True,
+            )
+            logger.warning("Bot will continue without daily notifications")
+
+    app.post_init = initialize_notification_scheduler
 
     # Register global error handler for better diagnostics
     async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -300,43 +381,9 @@ async def run_bot() -> None:
                 await app.initialize()
                 await app.start()
 
-                # Initialize notification scheduler if enabled
-                settings = app.bot_data.get("settings")
-                if settings and settings.notification.daily_stats_enabled:
-                    try:
-                        logger.info("Initializing daily notification scheduler")
-
-                        # Reuse repository factory to ensure proper client configuration
-                        repository = get_participant_repository()
-
-                        # Create services
-                        statistics_service = StatisticsService(repository=repository)
-                        notification_service = DailyNotificationService(
-                            bot=app.bot, statistics_service=statistics_service
-                        )
-
-                        # Create and schedule notification
-                        scheduler = NotificationScheduler(
-                            application=app,
-                            settings=settings.notification,
-                            notification_service=notification_service,
-                        )
-                        await scheduler.schedule_daily_notification()
-
-                        logger.info(
-                            "Daily notification scheduled for %s %s",
-                            settings.notification.notification_time,
-                            settings.notification.timezone,
-                        )
-                    except Exception as e:
-                        logger.error(
-                            "Failed to initialize notification scheduler: %s",
-                            e,
-                            exc_info=True,
-                        )
-                        logger.warning("Bot will continue without daily notifications")
-                else:
-                    logger.debug("Daily notifications are disabled in configuration")
+                # Note: Notification scheduler is initialized via post_init callback
+                # registered in create_application(). This ensures proper lifecycle
+                # management and clean separation of concerns.
 
                 updater = app.updater
                 if updater is None:

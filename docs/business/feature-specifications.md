@@ -1423,6 +1423,118 @@ Comprehensive export system with filtering capabilities and dedicated export ser
 **Implementation**: Extended export services with filtering and multi-table support
 **Test Coverage**: 35+ new tests across all export services (87-91% coverage)
 
+## Admin Commands for Notification Configuration
+
+### Overview
+Administrative command interface for managing daily statistics notifications directly through bot commands, enabling real-time configuration changes without requiring code modifications or bot restarts.
+
+**Status**: Implemented (2025-09-30)
+**Implementation**: Three admin commands with runtime reconfiguration capability
+**Test Coverage**: 24 tests (16 handler + 4 integration + 4 main.py tests) - 100% pass rate
+
+### Core Features
+
+#### 1. Notification Status and Control (`/notifications`)
+- **View Current Settings**: Display notification status (enabled/disabled), configured time, and timezone
+- **Toggle Functionality**: Enable or disable notifications through interactive buttons
+- **Immediate Effect**: Changes take effect without bot restart via scheduler access from bot_data
+- **User Feedback**: Clear Russian messages confirming configuration changes
+- **Admin-Only Access**: Protected by `auth_utils.is_admin_user()` validation
+
+#### 2. Notification Time Configuration (`/set_notification_time`)
+- **Time Configuration**: Set notification delivery time in HH:MM format (24-hour)
+- **Timezone Support**: Configure timezone using pytz identifiers (Europe/Moscow, America/New_York, etc.)
+- **Input Validation**: Comprehensive validation of time format and timezone before applying
+- **Immediate Rescheduling**: Uses `scheduler.reschedule_notification()` for instant configuration updates
+- **No Restart Required**: Changes applied immediately through runtime scheduler reconfiguration
+
+#### 3. Test Notification Delivery (`/test_stats`)
+- **Immediate Trigger**: Send test statistics notification bypassing scheduled time
+- **Verification Tool**: Verify notification system configuration without waiting for scheduled delivery
+- **Same Format**: Uses identical formatting and data as scheduled notifications
+- **Quick Testing**: Admin can test notification delivery at any time for validation
+
+### Technical Implementation
+
+#### Handler Architecture
+- **File**: `src/bot/handlers/notification_admin_handlers.py` (275 lines)
+- **Functions**:
+  - `handle_notifications_command()` - Status display and enable/disable functionality
+  - `handle_set_notification_time_command()` - Time/timezone configuration with validation
+  - `handle_test_stats_command()` - Immediate test notification delivery
+- **Authorization**: All handlers use `auth_utils.is_admin_user()` for access control
+- **Localization**: Complete Russian interface with emoji indicators
+
+#### Scheduler Integration
+- **post_init Pattern**: Scheduler initialized via Application.post_init callback
+- **bot_data Storage**: Scheduler instance stored in `application.bot_data["scheduler"]` for handler access
+- **Runtime Reconfiguration Methods**:
+  - `schedule_daily_notification()` - Enable notifications with immediate scheduling
+  - `remove_scheduled_notification()` - Disable notifications by removing job
+  - `reschedule_notification()` - Update notification time with job rescheduling
+
+#### Main Application Integration
+- **File**: `src/main.py`
+- **Initialization**: `initialize_notification_scheduler()` async function as post_init callback
+- **Command Registration**: Three CommandHandler instances registered in `create_application()`
+- **Error Handling**: Graceful degradation - bot continues running if notification init fails
+
+### Acceptance Criteria
+
+- [x] Admin users can view current notification configuration through `/notifications` command
+- [x] Admin users can toggle notifications on/off with immediate effect
+- [x] Admin users can configure notification time and timezone through `/set_notification_time`
+- [x] Configuration changes take effect immediately without bot restart
+- [x] Invalid inputs (time format, timezone) handled with helpful Russian error messages
+- [x] Test notifications deliver successfully when triggered via `/test_stats`
+- [x] All commands protected by admin permission validation
+- [x] Scheduler uses post_init pattern for proper lifecycle management
+- [x] Commands are properly registered and accessible through bot
+- [x] Complete test coverage with 24 passing tests (100% pass rate)
+- [x] No regressions in existing bot functionality
+- [x] Code quality checks passed (black, isort, flake8, mypy)
+
+### Business Value
+
+#### Administrative Efficiency
+- **No Code Changes**: Configuration changes through bot commands instead of code modifications
+- **No Restart Required**: Immediate configuration updates without bot downtime
+- **Self-Service Management**: Admins can manage notifications without developer intervention
+- **Quick Verification**: Test command enables immediate validation of notification delivery
+
+#### Operational Benefits
+- **Reduced Deployment Friction**: No deployments needed for configuration changes
+- **Faster Response**: Admins can adjust notification schedule based on operational needs
+- **Easy Testing**: Test command simplifies notification system validation
+- **Better Control**: Fine-grained control over notification timing and status
+
+### Integration Points
+
+**Existing System Integration**:
+- **Authorization System**: Uses existing `auth_utils.is_admin_user()` for security
+- **Notification Scheduler**: Integrates with existing NotificationScheduler service
+- **Statistics Service**: Leverages existing StatisticsService for data collection
+- **Bot Application**: Seamless integration with bot conversation patterns
+
+**post_init Pattern Benefits**:
+- **Proper Lifecycle**: Scheduler initializes after bot starts with all dependencies ready
+- **Handler Access**: Scheduler instance in bot_data enables admin command integration
+- **Clean Architecture**: Separation of initialization from bot startup flow
+
+### Future Enhancement Opportunities
+
+**Advanced Configuration**:
+- Multiple notification schedules (morning/evening reports)
+- User-specific notification preferences
+- Notification content customization through commands
+- Schedule presets for common configurations
+
+**Enhanced Management**:
+- Notification history and audit logs
+- Delivery status monitoring through commands
+- Bulk notification management for multiple admins
+- Scheduled configuration changes (e.g., weekend schedule)
+
 ## Interactive Export Conversation UI
 
 ### Overview
