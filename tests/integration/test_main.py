@@ -154,8 +154,10 @@ class TestMainBotApplication:
 
             app = create_application()
 
-            # Should add conversation handler plus standalone commands (export_direct, logging, help)
-            assert mock_app.add_handler.call_count == 5
+            # Should add conversation handler plus standalone commands
+            # 8 handlers: search, export conversation, export_direct, logging, help,
+            # notifications, set_notification_time, test_stats
+            assert mock_app.add_handler.call_count == 8
 
             # First call should be the search conversation handler
             mock_app.add_handler.assert_any_call(mock_conversation_handler)
@@ -177,11 +179,14 @@ class TestMainBotApplication:
                 ["export"]
             )  # We know export conversation handler provides "export" command
 
-            # Should have export (from conversation), export_direct (legacy), logging, and help commands
+            # Should have all expected commands including notification admin commands
             assert "export" in command_commands
             assert "export_direct" in command_commands
             assert "logging" in command_commands
             assert "help" in command_commands
+            assert "notifications" in command_commands
+            assert "set_notification_time" in command_commands
+            assert "test_stats" in command_commands
 
     @pytest.mark.asyncio
     async def test_create_application_configures_logging(self):
