@@ -111,6 +111,44 @@ Administrators can configure and control daily statistics notifications directly
 - [x] Code quality checks passed (black, isort, flake8, mypy)
 - [ ] Code review approved
 
+## Code Review Fixes (2025-09-30)
+
+### Critical Issues Addressed
+
+**Issue #1: Runtime Configuration Changes**
+- **Problem**: Admin commands only mutated settings without rescheduling the notification job
+- **Solution**:
+  - Added `reschedule_notification()` method to NotificationScheduler
+  - Store scheduler instance in `bot_data` for handler access
+  - Updated `/notifications` command to schedule/remove jobs when toggling
+  - Updated `/set_notification_time` command to reschedule when time changes
+  - Removed "restart required" warning - changes now take effect immediately
+- **Files Modified**:
+  - `src/services/notification_scheduler.py` (+20 lines)
+  - `src/bot/handlers/notification_admin_handlers.py` (+40 lines refactored)
+  - `src/main.py` (+10 lines refactored)
+
+**Issue #2: Test Isolation Failure**
+- **Problem**: `create_application()` caches settings globally, causing test dependencies
+- **Solution**:
+  - Added `reset_settings()` calls in test setup to ensure fresh configuration per test
+  - Updated test expectations to match new behavior (scheduler always created, conditionally scheduled)
+- **Files Modified**:
+  - `tests/unit/test_main.py` (+4 lines, test logic updated)
+
+### Test Results After Fixes
+- **All 33 notification tests passing** (100% pass rate)
+- **Code quality checks**: black ✅, isort ✅, flake8 ✅, mypy ✅
+- Runtime reconfiguration verified through test coverage
+
+### Changelog - Code Review Fixes
+- **2025-09-30T10:15Z** — ♻️ Updated src/services/notification_scheduler.py:155-174: Added reschedule_notification() method to enable runtime reconfiguration by removing and re-creating scheduled jobs with updated settings
+- **2025-09-30T10:20Z** — ♻️ Updated src/bot/handlers/notification_admin_handlers.py:83-140: Refactored handle_notifications_command() to call scheduler.schedule_daily_notification() when enabling and scheduler.remove_scheduled_notification() when disabling, enabling immediate effect without restart
+- **2025-09-30T10:25Z** — ♻️ Updated src/bot/handlers/notification_admin_handlers.py:223-266: Refactored handle_set_notification_time_command() to call scheduler.reschedule_notification() when time changes, removed "restart required" warning, changes now take effect immediately
+- **2025-09-30T10:30Z** — ♻️ Updated src/main.py:188-244: Refactored initialize_notification_scheduler() to always create scheduler instance (stored in bot_data for handler access), conditionally schedule based on enabled flag, enabling runtime reconfiguration
+- **2025-09-30T10:35Z** — ♻️ Updated tests/unit/test_main.py:18,283,383,420: Added reset_settings() import and calls in test setup to fix test isolation issues caused by cached settings
+- **2025-09-30T10:40Z** — ♻️ Updated tests/unit/test_main.py:317-366: Updated test_post_init_skips_scheduler_when_disabled expectations to match new behavior where scheduler is created but not scheduled when disabled
+
 ## Implementation Summary
 
 ### Features Delivered
