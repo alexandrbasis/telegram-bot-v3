@@ -29,8 +29,8 @@ from src.config.settings import Settings, get_settings
 from src.services.daily_notification_service import DailyNotificationService
 from src.services.file_logging_service import FileLoggingService
 from src.services.notification_scheduler import NotificationScheduler
-from src.services.statistics_service import StatisticsService
 from src.services.service_factory import get_participant_repository
+from src.services.statistics_service import StatisticsService
 from src.utils.single_instance import InstanceLock
 
 logger = logging.getLogger(__name__)
