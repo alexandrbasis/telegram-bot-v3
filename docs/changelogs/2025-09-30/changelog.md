@@ -36,12 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Merge Details
 
 ### Admin Commands Integration (AGB-80)
-- **PR**: [#76](https://github.com/alexandrbasis/telegram-bot-v3/pull/76)
+- **PR**: [#76](https://github.com/alexandrbasis/telegram-bot-v3/pull/76) - ✅ MERGED
 - **Branch**: feature/AGB-80-admin-commands-integration
-- **Status**: In Review
+- **Merge SHA**: de2b4bb5c718e18a5de9cf547ede44b11794d3c8
+- **Merge Date**: 2025-09-30T13:42:44+03:00
+- **Merge URL**: https://github.com/alexandrbasis/telegram-bot-v3/pull/76
 - **Test Results**: 33 notification tests passing (100% pass rate)
   - 16 unit tests for admin command handlers
   - 4 unit tests for post_init integration
   - 4 integration tests for command registration
   - 9 additional tests for runtime reconfiguration and test isolation fixes
-- **Code Quality**: All checks passing (black, isort, flake8, mypy)
+- **Code Quality**: All checks passing (Type Check, Format Check, Lint, Security, Tests 3.11/3.12, Docker Build)
+- **Linear Issue**: [AGB-80](https://linear.app/alexandrbasis/issue/AGB-80/subtask-3-admin-commands-integration) - Status: Done
