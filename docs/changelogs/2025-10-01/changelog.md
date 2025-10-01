@@ -20,11 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## PR Details
 
 ### Notification Message Format Enhancement (AGB-82)
-- **PR**: [#77](https://github.com/alexandrbasis/telegram-bot-v3/pull/77) - In Review
-- **Branch**: basisalexandr/agb-82-notification-message-format-enhancement-add-candidate-count
-- **Status**: Open - In Review
+- **PR**: [#77](https://github.com/alexandrbasis/telegram-bot-v3/pull/77) - ✅ MERGED
+- **Branch**: basisalexandr/agb-82-notification-message-format-enhancement-add-candidate-count (deleted after merge)
+- **Status**: ✅ Merged to main
 - **Created**: 2025-10-01
-- **Linear Issue**: [AGB-82](https://linear.app/alexandrbasis/issue/AGB-82/notification-message-format-enhancement-add-candidate-count-display) - Status: In Review
+- **Merged**: 2025-10-01T11:53:15Z
+- **Merge SHA**: 89005374c75af1fc48c218d64f0b46225dce0fee (short: 8900537)
+- **Linear Issue**: [AGB-82](https://linear.app/alexandrbasis/issue/AGB-82/notification-message-format-enhancement-add-candidate-count-display) - Status: ✅ Done
 - **Test Results**: 1680 tests passing, 9 skipped (100% pass rate)
   - 3 new unit tests for model validation and field addition
   - 4 new unit tests for candidate counting logic covering edge cases
