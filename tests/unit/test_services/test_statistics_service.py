@@ -173,9 +173,7 @@ class TestStatisticsService:
         assert result.participants_by_department[Department.ROE.value] == 1
         assert result.participants_by_department[Department.CHAPEL.value] == 1
 
-    async def test_collect_statistics_with_teams_only(
-        self, service, mock_repository
-    ):
+    async def test_collect_statistics_with_teams_only(self, service, mock_repository):
         """Test statistics with only team members (no candidates)."""
         # Arrange
         teams_only = [
