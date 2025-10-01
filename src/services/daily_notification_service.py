@@ -53,24 +53,28 @@ class DailyNotificationService:
         Returns:
             Formatted message string with Russian text
         """
-        # Build message header
+        # Format date as DD.MM.YYYY
+        formatted_date = statistics.collection_timestamp.strftime("%d.%m.%Y")
+
+        # Build message header with date
         message_lines = [
-            "📊 Ежедневная статистика участников",
+            f"📊 Статистика участников {formatted_date}",
             "",
             f"👥 Всего участников: {statistics.total_participants}",
-            f"👫 Всего команд: {statistics.total_teams}",
+            f"👤 Всего кандидатов: {statistics.total_candidates}",
+            f"👫 Все члены команды: {statistics.total_teams}",
             "",
-            "По отделам:",
+            "  По отделам:",
         ]
 
-        # Add department breakdown with Russian translations
+        # Add department breakdown with Russian translations and increased indentation
         for dept_name, count in statistics.participants_by_department.items():
             # Use centralized translation utility
             if dept_name == "unassigned":
                 russian_name = "Не указано"
             else:
                 russian_name = department_to_russian(dept_name)
-            message_lines.append(f"  • {russian_name}: {count} чел.")
+            message_lines.append(f"    • {russian_name}: {count} чел.")
 
         return "\n".join(message_lines)
 
