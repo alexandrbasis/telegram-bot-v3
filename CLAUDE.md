@@ -62,6 +62,26 @@ pip install -r requirements/base.txt   # Production dependencies
 ./venv/bin/flake8 path/to/file.py --select=E501
 ```
 
+### Pre-Commit Hooks
+```bash
+# Install pre-commit hooks (one-time setup for new developers)
+./scripts/install-hooks.sh
+
+# Hooks run automatically on every commit
+# To bypass (not recommended): git commit --no-verify
+
+# The hook automatically performs:
+# - Syntax validation
+# - isort (auto-fix)
+# - black (auto-fix)
+# - flake8 linting
+# - mypy type checking
+# - Quick unit tests for modified modules
+# - Security checks (merge conflicts, debug code, large files)
+
+# See docs/development/pre-commit-hooks.md for full documentation
+```
+
 ### Running the Bot
 ```bash
 # Using the startup script (recommended)
@@ -134,6 +154,7 @@ Comprehensive project documentation:
 - [docs/business/](mdc:docs/business): Business requirements and user stories
 - [docs/data-integration/](mdc:docs/data-integration): Airtable integration and data flow documentation
 - [docs/development/](mdc:docs/development): Development guides and workflows
+  - [pre-commit-hooks.md](mdc:docs/development/pre-commit-hooks.md): Pre-commit hooks setup and usage
 - [docs/technical/](mdc:docs/technical): Technical specifications and API documentation
 
 ### [tasks/](mdc:tasks)
@@ -240,5 +261,10 @@ Advanced editing workflow features:
 
 - Add and commit automatically whenever an entire task is finished
 - Use descriptive commit messages that capture the full scope of changes
+- **Pre-commit hooks are active**: They automatically check code quality before each commit
+  - Hooks run: syntax validation, formatting (isort + black), linting (flake8), type checking (mypy), and quick tests
+  - Hooks auto-fix formatting issues and re-stage files
+  - To bypass hooks in emergencies only: `git commit --no-verify`
+  - See [docs/development/pre-commit-hooks.md](mdc:docs/development/pre-commit-hooks.md) for details
 
 ## EXTREMELY IMPORTANT: Code Quality Checks
