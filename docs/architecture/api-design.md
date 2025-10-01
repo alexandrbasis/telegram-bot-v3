@@ -692,8 +692,9 @@ class StatisticsService:
 @dataclass
 class DepartmentStatistics:
     total_participants: int                    # Total number of participants
+    total_candidates: int                      # Total number of candidates (role=CANDIDATE)
     participants_by_department: Dict[str, int] # Department → participant count mapping
-    total_teams: int                          # Total number of teams
+    total_teams: int                          # Total number of team members (role=TEAM)
     collection_timestamp: datetime           # When statistics were collected (UTC)
 ```
 

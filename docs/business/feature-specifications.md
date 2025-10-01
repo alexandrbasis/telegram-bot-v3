@@ -1091,9 +1091,10 @@ Enhanced CSV export functionality that adds sequential line numbers as the first
 ### Overview
 Automated daily statistics notification system delivering Russian-localized participant and team count reports to configured administrators at scheduled times with timezone support and graceful error handling.
 
-**Status**: Implemented (2025-09-29)
+**Status**: Enhanced (2025-10-01)
 **Implementation**: Complete notification infrastructure with configuration, scheduling, and delivery services
-**Test Coverage**: 22 new tests (13 configuration + 10 scheduler + 9 notification service) with 100% pass rate
+**Test Coverage**: Enhanced with candidate count statistics and improved message formatting
+**Latest Enhancement**: Added candidate count display and improved Russian message format with date header
 
 ### Core Features
 
@@ -1112,9 +1113,13 @@ Automated daily statistics notification system delivering Russian-localized part
 - **Exponential Backoff**: Retry mechanisms for transient failures
 
 #### 3. Professional Notification Delivery
-- **Russian Localization**: Complete Russian message formatting for statistics
+- **Russian Localization**: Complete Russian message formatting for statistics with date in DD.MM.YYYY format
+- **Enhanced Message Format**: Header shows "Статистика участников DD.MM.YYYY" with simplified text
+- **Candidate Count Display**: Separate "Всего кандидатов" line showing participants with role=CANDIDATE
+- **Renamed Team Label**: "Все члены команды" instead of "Всего команд" for clarity
+- **Improved Indentation**: Department breakdown indented (2 spaces for "По отделам:", 4 spaces for departments)
 - **Department Translations**: Uses centralized department_to_russian() utility for consistency
-- **Statistics Integration**: Leverages existing StatisticsService for data collection
+- **Statistics Integration**: Leverages enhanced StatisticsService with candidate counting
 - **Telegram Delivery**: Direct bot.send_message() delivery to admin users
 - **Error Recovery**: Comprehensive error handling with NotificationError exceptions
 
@@ -1136,7 +1141,12 @@ Automated daily statistics notification system delivering Russian-localized part
 - **File**: `src/services/daily_notification_service.py`
 - **Class**: DailyNotificationService with Bot and StatisticsService dependencies
 - **Methods**: send_daily_statistics(), _format_statistics_message()
-- **Formatting**: Russian-localized message with participant/team counts by department
+- **Formatting**: Enhanced Russian-localized message with:
+  - Header with date in DD.MM.YYYY format (e.g., "01.10.2025")
+  - Separate candidate count line ("Всего кандидатов")
+  - Renamed team member count ("Все члены команды")
+  - Improved department breakdown indentation
+  - Participant/team/candidate counts by department
 - **Error Handling**: StatisticsError and TelegramError handling with detailed logging
 
 ### Acceptance Criteria
@@ -1149,6 +1159,11 @@ Automated daily statistics notification system delivering Russian-localized part
 - [x] Integration with existing StatisticsService for data collection
 - [x] Comprehensive test coverage (22 tests, 100% pass rate)
 - [x] Zero regressions in existing functionality (1652 total tests passing)
+- [x] Message includes separate candidate count line (2025-10-01)
+- [x] Message header includes date in DD.MM.YYYY format (2025-10-01)
+- [x] Team member count renamed to "Все члены команды" (2025-10-01)
+- [x] Department breakdown properly indented (2025-10-01)
+- [x] Total participants calculation accurate (total = candidates + team members) (2025-10-01)
 
 ### Integration Points
 
