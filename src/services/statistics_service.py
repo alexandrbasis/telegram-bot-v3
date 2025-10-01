@@ -77,6 +77,7 @@ class StatisticsService:
             # Initialize aggregation counters
             total_participants = len(all_participants)
             total_teams = 0
+            total_candidates = 0
             participants_by_department: Dict[str, int] = defaultdict(int)
 
             # Aggregate statistics in memory for optimal performance
@@ -84,6 +85,10 @@ class StatisticsService:
                 # Count teams (participants with TEAM role)
                 if participant.role == Role.TEAM:
                     total_teams += 1
+
+                # Count candidates (participants with CANDIDATE role)
+                if participant.role == Role.CANDIDATE:
+                    total_candidates += 1
 
                 # Aggregate by department (count all participants)
                 if participant.department:
@@ -119,13 +124,14 @@ class StatisticsService:
                 total_participants=total_participants,
                 participants_by_department=participants_by_dept_dict,
                 total_teams=total_teams,
+                total_candidates=total_candidates,
                 collection_timestamp=collection_timestamp,
             )
 
             logger.info(
                 f"Statistics collection completed in {collection_duration:.2f}s: "
-                f"{total_participants} participants, {total_teams} teams, "
-                f"{len(participants_by_dept_dict)} departments"
+                f"{total_participants} participants, {total_candidates} candidates, "
+                f"{total_teams} teams, {len(participants_by_dept_dict)} departments"
             )
 
             return statistics
