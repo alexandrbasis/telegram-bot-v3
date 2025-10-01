@@ -48,8 +48,9 @@ def sample_statistics():
             "Kitchen": 35,
             "Decoration": 20,
         },
-        total_teams=15,
-        collection_timestamp=datetime(2025, 9, 29, 23, 30, 0),
+        total_teams=106,
+        total_candidates=44,
+        collection_timestamp=datetime(2025, 10, 1, 23, 30, 0),
     )
 
 
@@ -85,61 +86,73 @@ class TestMessageFormatting:
         """Test message formatting with valid statistics data."""
         message = notification_service._format_statistics_message(sample_statistics)
 
-        # Verify Russian header
-        assert "📊 Ежедневная статистика участников" in message
+        # Verify new Russian header with date
+        assert "📊 Статистика участников 01.10.2025" in message
+        # Old header should NOT be present
+        assert "Ежедневная статистика участников" not in message
 
         # Verify total participants
         assert "👥 Всего участников: 150" in message
 
-        # Verify total teams
-        assert "👫 Всего команд: 15" in message
+        # Verify total candidates (NEW)
+        assert "👤 Всего кандидатов: 44" in message
 
-        # Verify department breakdown header
-        assert "По отделам:" in message
+        # Verify team members with new label
+        assert "👫 Все члены команды: 106" in message
+        # Old label should NOT be present
+        assert "Всего команд" not in message
 
-        # Verify all department counts with correct Russian translations
-        assert "РОЭ: 50 чел." in message
-        assert "Чапл: 45 чел." in message
-        assert "Кухня: 35 чел." in message
-        assert "Декорации: 20 чел." in message
+        # Verify department breakdown header with indentation
+        assert "  По отделам:" in message
+
+        # Verify all department counts with correct Russian translations and indentation
+        assert "    • РОЭ: 50 чел." in message
+        assert "    • Чапл: 45 чел." in message
+        assert "    • Кухня: 35 чел." in message
+        assert "    • Декорации: 20 чел." in message
 
     def test_format_statistics_message_with_empty_departments(
         self, notification_service
     ):
         """Test message formatting when no department data available."""
+        test_date = datetime(2025, 10, 1, 12, 0, 0)
         empty_stats = DepartmentStatistics(
             total_participants=0,
             participants_by_department={},
             total_teams=0,
-            collection_timestamp=datetime.now(),
+            total_candidates=0,
+            collection_timestamp=test_date,
         )
 
         message = notification_service._format_statistics_message(empty_stats)
 
-        assert "📊 Ежедневная статистика участников" in message
+        assert "📊 Статистика участников 01.10.2025" in message
         assert "👥 Всего участников: 0" in message
-        assert "👫 Всего команд: 0" in message
+        assert "👤 Всего кандидатов: 0" in message
+        assert "👫 Все члены команды: 0" in message
         # Should still have department header but no department lines
-        assert "По отделам:" in message
+        assert "  По отделам:" in message
 
     def test_format_statistics_message_with_unassigned_participants(
         self, notification_service
     ):
         """Test message formatting includes unassigned participants."""
+        test_date = datetime(2025, 10, 1, 12, 0, 0)
         stats_with_unassigned = DepartmentStatistics(
             total_participants=25,
             participants_by_department={
                 "ROE": 20,
                 "unassigned": 5,
             },
-            total_teams=2,
-            collection_timestamp=datetime.now(),
+            total_teams=15,
+            total_candidates=10,
+            collection_timestamp=test_date,
         )
 
         message = notification_service._format_statistics_message(stats_with_unassigned)
 
-        assert "РОЭ: 20 чел." in message
-        assert "Не указано: 5 чел." in message
+        assert "    • РОЭ: 20 чел." in message
+        assert "    • Не указано: 5 чел." in message
 
 
 class TestNotificationDelivery:
@@ -162,7 +175,7 @@ class TestNotificationDelivery:
         mock_bot.send_message.assert_called_once()
         call_args = mock_bot.send_message.call_args
         assert call_args.kwargs["chat_id"] == admin_user_id
-        assert "📊 Ежедневная статистика участников" in call_args.kwargs["text"]
+        assert "📊 Статистика участников" in call_args.kwargs["text"]
 
     @pytest.mark.asyncio
     async def test_send_notification_handles_statistics_error(

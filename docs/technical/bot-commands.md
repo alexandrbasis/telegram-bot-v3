@@ -789,7 +789,7 @@ Bot: ❌ Неверный формат времени. Используйте HH
 - Timezone: Valid pytz timezone identifier (optional, defaults to current timezone)
 - Error messages provide clear guidance for correct format
 
-### /test_stats (New - 2025-09-30)
+### /test_stats (New - 2025-09-30, Enhanced 2025-10-01)
 **Authorization Required**: Admin-level access only
 
 Admin-only command to immediately trigger a test statistics notification for verification purposes.
@@ -800,13 +800,28 @@ Admin-only command to immediately trigger a test statistics notification for ver
 - Use same formatting and data as scheduled notifications
 - Verify notification system configuration without waiting for scheduled time
 
+**Enhanced Message Format (2025-10-01)**:
+```
+📊 Статистика участников 01.10.2025
+
+👥 Всего участников: 135
+👤 Всего кандидатов: 29
+👫 Все члены команды: 106
+
+  По отделам:
+    • Не указано: 76 чел.
+    • Ректорат: 1 чел.
+    • Кухня: 9 чел.
+    ...
+```
+
 **Usage Example**:
 ```
 Admin: /test_stats
 Bot: 📤 Отправка тестового уведомления...
      ✅ Тестовое уведомление отправлено
 
-[Admin receives statistics notification immediately]
+[Admin receives statistics notification with enhanced format immediately]
 ```
 
 **Integration Notes**:

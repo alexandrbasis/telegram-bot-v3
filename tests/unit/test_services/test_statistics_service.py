@@ -74,6 +74,7 @@ class TestStatisticsService:
         assert isinstance(result, DepartmentStatistics)
         assert result.total_participants == 4
         assert result.total_teams == 2
+        assert result.total_candidates == 2  # 2 CANDIDATE role participants
         assert result.participants_by_department[Department.ROE.value] == 2
         assert result.participants_by_department[Department.CHAPEL.value] == 1
         assert "unassigned" in result.participants_by_department
@@ -90,6 +91,7 @@ class TestStatisticsService:
         # Assert
         assert result.total_participants == 0
         assert result.total_teams == 0
+        assert result.total_candidates == 0
         assert len(result.participants_by_department) == 0
 
     async def test_collect_statistics_repository_error(self, service, mock_repository):
@@ -166,8 +168,45 @@ class TestStatisticsService:
         # Assert
         assert result.total_participants == 2
         assert result.total_teams == 0
+        assert result.total_candidates == 2  # All participants are candidates
         # Candidates are counted in participants_by_department
         assert result.participants_by_department[Department.ROE.value] == 1
+        assert result.participants_by_department[Department.CHAPEL.value] == 1
+
+    async def test_collect_statistics_with_teams_only(self, service, mock_repository):
+        """Test statistics with only team members (no candidates)."""
+        # Arrange
+        teams_only = [
+            Participant(
+                full_name_ru="Команда 1",
+                role=Role.TEAM,
+                department=Department.ROE,
+                record_id="rec1",
+            ),
+            Participant(
+                full_name_ru="Команда 2",
+                role=Role.TEAM,
+                department=Department.CHAPEL,
+                record_id="rec2",
+            ),
+            Participant(
+                full_name_ru="Команда 3",
+                role=Role.TEAM,
+                department=Department.ROE,
+                record_id="rec3",
+            ),
+        ]
+        mock_repository.list_all.return_value = teams_only
+
+        # Act
+        result = await service.collect_statistics()
+
+        # Assert
+        assert result.total_participants == 3
+        assert result.total_teams == 3  # All participants are team members
+        assert result.total_candidates == 0  # No candidates
+        # Teams are counted in participants_by_department
+        assert result.participants_by_department[Department.ROE.value] == 2
         assert result.participants_by_department[Department.CHAPEL.value] == 1
 
     async def test_collect_statistics_timestamp_accuracy(
@@ -234,6 +273,7 @@ class TestStatisticsService:
         # Assert
         assert result.total_participants == 3
         assert result.total_teams == 1
+        assert result.total_candidates == 2  # 2 CANDIDATE role participants
         assert result.participants_by_department[Department.ROE.value] == 2
         assert result.participants_by_department[Department.CHAPEL.value] == 1
 

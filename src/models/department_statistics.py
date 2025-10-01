@@ -39,6 +39,10 @@ class DepartmentStatistics(BaseModel):
         ..., ge=0, description="Total number of teams across all departments"
     )
 
+    total_candidates: int = Field(
+        ..., ge=0, description="Total number of candidates across all departments"
+    )
+
     collection_timestamp: datetime = Field(
         ..., description="Timestamp when statistics were collected"
     )
@@ -65,5 +69,6 @@ class DepartmentStatistics(BaseModel):
         )
         return (
             f"DepartmentStatistics(participants={self.total_participants}, "
+            f"candidates={self.total_candidates}, "
             f"teams={self.total_teams}, departments=[{dept_summary}])"
         )
